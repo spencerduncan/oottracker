@@ -1,27 +1,72 @@
 # OoT/MM Combined Randomizer Integration
 
-**Document Version:** 1.0
+**Document Version:** 1.1
 **Date:** 2025-12-31
 **Status:** Planning / Analysis
+**Last Updated:** 2025-12-31 (corrected ROM architecture)
+
+---
+
+## ⚠️ IMPORTANT CORRECTION
+
+**This document was written based on an incorrect assumption about OoTMM's architecture.**
+
+### Original (Incorrect) Assumption
+The document initially assumed OoTMM involved tracking two separate games/ROMs simultaneously or sequentially.
+
+### Actual OoTMM Architecture
+[OoTMM](https://ootmm.com/) creates a **single combined ROM** that merges both games:
+- Both OoT and MM are embedded in one ROM file
+- MM is placed at a 32 MiB offset (0x2000000) within the ROM
+- Players switch between games at specific locations:
+  - **Happy Mask Shop door** (OoT) ↔ **Clock Tower door** (MM)
+  - These doors serve as the crossover point between games
+- The game **auto-saves when switching** between OoT and MM
+- **Single save file** shared between both games
+- Only one game is "active" at a time (OoT mode or MM mode)
+
+### Impact on Requirements
+This significantly **simplifies** some requirements while adding **new challenges**:
+
+**Simplified:**
+- ✅ No need to track two separate emulator instances
+- ✅ No need for multi-game connection management
+- ✅ Unified save file structure (though complex)
+- ✅ Single ROM hash for detection
+
+**New Challenges:**
+- ⚠️ Need to detect which "mode" (OoT vs MM) the ROM is currently in
+- ⚠️ Combined save file has both OoT and MM data structures
+- ⚠️ RAM addresses differ depending on active game mode
+- ⚠️ Memory layout changes dynamically during gameplay
+
+**Revised Effort Estimate:** 600-900 hours (down from 800-1,200) - approximately 4-6 months
+
+Sources:
+- [OoTMM GitHub Repository](https://github.com/OoTMM/OoTMM)
+- [OoTMM Official Website](https://ootmm.com/)
+- [OoTMM Wiki](https://ootmm.wiki.gg/)
+
+---
 
 ## Executive Summary
 
-This document analyzes the requirements for extending OOTTracker to support combined Ocarina of Time (OoT) and Majora's Mask (MM) randomizers, where items and locations from both games are shuffled together.
+This document analyzes the requirements for extending OOTTracker to support [OoTMM](https://ootmm.com/) (Ocarina of Time + Majora's Mask combined randomizer), where items and locations from both games are shuffled together in a single ROM.
 
 ### Key Findings
 
-- **Effort Estimate:** 800-1,200 hours (5-7 months with 1 developer)
-- **Complexity:** Very High
-- **Feasibility:** Technically possible, architecturally challenging
-- **Recommendation:** Requires significant planning and phased implementation
+- **Effort Estimate:** 600-900 hours (4-6 months with 1 developer)
+- **Complexity:** High (reduced from Very High)
+- **Feasibility:** Technically feasible, requires careful architecture
+- **Recommendation:** Requires planning and phased implementation
 
 ### Major Challenges
 
-1. **Dual game memory tracking** - Monitor two N64 games simultaneously
-2. **Different save/RAM structures** - MM has fundamentally different memory layout
-3. **Item system mismatch** - Many MM items don't exist in OoT and vice versa
+1. **Game mode detection** - Detect if ROM is in OoT mode or MM mode
+2. **Dual save structure parsing** - Parse unified save file with both games' data
+3. **Item system unification** - Many MM items don't exist in OoT and vice versa
 4. **UI complexity** - Need to track twice as many items/locations
-5. **Dungeon structure** - 4 MM dungeons + 3 MM transformations vs OoT's structure
+5. **Dynamic memory addressing** - RAM layout changes based on active game
 6. **Time mechanics** - MM's 3-day cycle has no OoT equivalent
 
 ---
@@ -178,17 +223,19 @@ A combined randomizer shuffles items and locations across both Ocarina of Time a
 
 ## Technical Requirements
 
-### 1. Dual Game Detection
+### 1. OoTMM ROM Detection & Game Mode Detection
 
-**Requirement:** Detect which game (OoT or MM) is currently running
+**Requirement:** Detect OoTMM ROM and determine which game mode (OoT or MM) is currently active
 
-**Approaches:**
+#### Part A: ROM Detection (Simpler than expected!)
 
-#### Option A: ROM Hash Detection
+Since OoTMM creates a single combined ROM, we only need to detect ONE ROM type:
+
 ```rust
 pub enum GameVersion {
     OcarinaOfTime { version: OotVersion },
     MajorasMask { version: MmVersion },
+    OoTMM { version: OoTMMVersion }, // NEW: Single combined ROM
 }
 
 pub fn detect_game(rom_hash: &[u8]) -> Option<GameVersion> {
@@ -199,53 +246,96 @@ pub fn detect_game(rom_hash: &[u8]) -> Option<GameVersion> {
         MM_USA_HASH => Some(GameVersion::MajorasMask {
             version: MmVersion::UsaV10
         }),
+        OOTMM_HASH => Some(GameVersion::OoTMM {
+            version: OoTMMVersion::detect_from_rom(rom_hash)
+        }),
         _ => None,
     }
 }
 ```
 
-#### Option B: Memory Signature Detection
-- Check for game-specific memory patterns
-- Example: OoT has specific actor IDs, MM has different ones
+#### Part B: Game Mode Detection (NEW requirement!)
 
-#### Option C: Manual User Selection
-- User indicates which game they're playing
-- Simplest but requires manual intervention
+**Challenge:** Once we know it's an OoTMM ROM, we need to detect which game is currently active.
 
-**Recommendation:** Option A + Option C fallback
+**Approaches:**
 
-### 2. Separate Memory Parsers
+**Option 1: Scene Detection**
+```rust
+pub enum OoTMMGameMode {
+    OcarinaOfTime,
+    MajorasMask,
+}
 
-**Requirement:** Parse save/RAM for both games
+pub fn detect_active_game(ram: &[u8]) -> OoTMMGameMode {
+    // Check current scene ID
+    let scene_id = read_u8(&ram, SCENE_ID_OFFSET);
+
+    match scene_id {
+        // OoT scene IDs (0x00-0x65 typically)
+        0x00..=0x65 => OoTMMGameMode::OcarinaOfTime,
+        // MM scene IDs (higher range or specific offset)
+        _ => OoTMMGameMode::MajorasMask,
+    }
+}
+```
+
+**Option 2: Memory Region Detection**
+- Check if active memory region is OoT section or MM section
+- MM data starts at 0x2000000 offset in ROM
+- RAM addresses will differ based on which game is loaded
+
+**Option 3: Game State Variable**
+- OoTMM likely has a custom variable tracking active game
+- Need to reverse engineer or consult OoTMM developers
+- Most reliable but requires finding the variable
+
+**Recommendation:** Option 3 (game state variable) with Option 1 (scene detection) as fallback
+
+### 2. Combined Save File Parser
+
+**Requirement:** Parse unified OoTMM save file containing both games' data
+
+**Key Insight:** OoTMM uses a **single save file** that stores data for both games. When the player switches between games, both saves are preserved.
 
 **New Modules Needed:**
 
 ```
 crate/oottracker/src/
-├── save.rs         # Rename to save_oot.rs
-├── save_mm.rs      # NEW: MM save parser
-├── ram.rs          # Rename to ram_oot.rs
-├── ram_mm.rs       # NEW: MM RAM parser
-├── save.rs         # NEW: Trait abstraction
-└── ram.rs          # NEW: Trait abstraction
+├── oot/
+│   ├── save.rs     # OoT save parser (refactored)
+│   └── ram.rs      # OoT RAM parser (refactored)
+├── mm/
+│   ├── save.rs     # NEW: MM save parser
+│   └── ram.rs      # NEW: MM RAM parser
+└── ootmm/
+    ├── save.rs     # NEW: Combined save parser
+    └── ram.rs      # NEW: Combined RAM parser
 ```
 
-**Trait Abstraction:**
+**Unified Save Structure:**
 
 ```rust
-pub trait SaveData: Protocol {
-    type Inventory;
-    type DungeonItems;
-    type QuestStatus;
+pub struct OoTMMSave {
+    pub active_game: OoTMMGameMode,
 
-    fn game_mode(&self) -> GameMode;
-    fn link_age(&self) -> LinkAge;
-    fn inventory(&self) -> &Self::Inventory;
-    fn dungeon_items(&self, dungeon: DungeonId) -> Self::DungeonItems;
+    // OoT save data
+    pub oot: OotSave,
+
+    // MM save data
+    pub mm: MmSave,
+
+    // OoTMM-specific metadata
+    pub crossover_count: u32,  // How many times player switched games
+    pub last_crossover_scene: u8,
 }
 
 pub struct OotSave {
-    // Current OoT save structure
+    // Existing OoT save structure from save.rs
+    pub inventory: Inventory,
+    pub quest_status: QuestStatus,
+    pub dungeon_items: [DungeonItems; 9],
+    // ...
 }
 
 pub struct MmSave {
@@ -254,14 +344,53 @@ pub struct MmSave {
     pub time_of_day: MmTime, // 3-day cycle
     pub bomber_notebook: BomberNotebook,
     pub stray_fairies: [u8; 4], // Per dungeon
+    pub remains: [bool; 4],     // Boss remains
+    pub owl_statues: u32,       // Activated owl statues (bitfield)
     // ... MM-specific fields
 }
 
-impl SaveData for OotSave { /* ... */ }
-impl SaveData for MmSave { /* ... */ }
+impl Protocol for OoTMMSave {
+    async fn read<'a, R: Read + Unpin>(read: &'a mut R) -> Result<Self, ReadError> {
+        // Read combined save structure
+        // OoTMM save format layout TBD - need to research or reverse engineer
+        let active_game = read.read_u8().await?;
+        let oot = OotSave::read(read).await?;
+        let mm = MmSave::read(read).await?;
+
+        Ok(Self {
+            active_game: active_game.into(),
+            oot,
+            mm,
+            crossover_count: read.read_u32().await?,
+            last_crossover_scene: read.read_u8().await?,
+        })
+    }
+}
 ```
 
-**Effort:** 2-3 weeks per game parser
+**Trait Abstraction (optional but recommended):**
+
+```rust
+pub trait GameSave: Protocol {
+    type Inventory;
+    type DungeonItems;
+    type QuestStatus;
+
+    fn game_mode(&self) -> GameMode;
+    fn inventory(&self) -> &Self::Inventory;
+    fn dungeon_items(&self, dungeon: DungeonId) -> Self::DungeonItems;
+}
+
+impl GameSave for OotSave { /* ... */ }
+impl GameSave for MmSave { /* ... */ }
+```
+
+**Challenges:**
+- OoTMM save format is not yet documented
+- Need to reverse engineer save structure or consult OoTMM developers
+- Save file may have additional metadata for cross-game state
+
+**Effort:** 3-4 weeks (2 weeks for MM parser + 1 week for OoTMM integration + 1 week for testing)
 
 ### 3. Unified Item Model
 
