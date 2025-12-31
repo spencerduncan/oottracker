@@ -57,11 +57,13 @@ This document analyzes the requirements for extending OOTTracker to support [OoT
 
 ### Key Findings
 
-- **Effort Estimate:** 600-900 hours (4-6 months with 1 developer)
+- **Effort Estimate:** 800-1,080 hours base (6-9 months with 1 developer)
+- **With Logic Tracking:** +325-465 hours (adds 2-3 months)
 - **Complexity:** High (reduced from Very High)
 - **Feasibility:** Technically feasible, requires careful architecture
 - **Recommendation:** Requires planning and phased implementation
 - **Deployment:** Local or self-hosted only (not integrated with official tracker)
+- **Logic Tracking:** Optional but highly recommended for OoTMM
 
 ### Major Challenges
 
@@ -71,6 +73,7 @@ This document analyzes the requirements for extending OOTTracker to support [OoT
 4. **UI complexity** - Need to track twice as many items/locations
 5. **Dynamic memory addressing** - RAM layout changes based on active game
 6. **Time mechanics** - MM's 3-day cycle has no OoT equivalent
+7. **Logic tracking** - Optional but recommended: show accessible checks in real-time
 
 ---
 
@@ -717,6 +720,282 @@ impl MultiGameTracker {
 
 **Effort:** 2-3 weeks
 
+### 9. Logic Tracking (Optional but Highly Valuable)
+
+**Requirement:** Show which uncollected checks are currently accessible based on player's items
+
+**Current State:** OOTTracker does **NOT** implement logic tracking. It only tracks:
+- ✅ Which checks have been collected (via RAM/save file)
+- ✅ Current inventory and items
+- ❌ Which uncollected checks are accessible with current items
+
+#### The Discovery: Logic Data Exists But Is Discarded
+
+**Critical finding:** The OoT Randomizer data **includes logic requirements for every check**, but OOTTracker is explicitly throwing them away!
+
+**File:** `crate/ootr-dynamic/src/region.rs:21-25`
+```rust
+#[serde(default)]
+pub events: BTreeMap<String, String>,    // ← String value is the logic rule!
+#[serde(default)]
+pub locations: BTreeMap<String, String>,  // ← String value is the logic rule!
+#[serde(default)]
+pub exits: BTreeMap<String, String>,      // ← String value is the logic rule!
+```
+
+**File:** `crate/ootr-dynamic/src/lib.rs:198-200`
+```rust
+events: raw_region.events.into_keys().collect(),     // ← Throws away logic!
+locations: raw_region.locations.into_keys().collect(), // ← Throws away logic!
+exits: raw_region.exits.into_keys().collect(),       // ← Throws away logic!
+```
+
+**What the randomizer provides (example from region JSON):**
+```json
+{
+  "locations": {
+    "Deku Tree Compass Chest": "is_adult or Slingshot",
+    "KF GS House of Twins": "is_child and can_child_attack",
+    "Forest Temple GS Lobby": "can_use(Hookshot) or (can_use(Boomerang) and logic_forest_outside_backdoor)"
+  },
+  "exits": {
+    "Death Mountain": "true",
+    "Death Mountain Summit": "((can_blast_or_smash or Goron_Bracelet) and ...)"
+  }
+}
+```
+
+Each check has:
+- **Key:** Check name (e.g., "Deku Tree Compass Chest")
+- **Value:** Logic expression string (e.g., "is_adult or Slingshot")
+
+**Currently:** OOTTracker keeps only the keys (check names) and discards the values (logic expressions).
+
+#### Implementation Requirements
+
+To add logic tracking, you need:
+
+**1. Preserve Logic Strings** (~50 LOC changed)
+```rust
+// OLD (current code)
+pub struct Region<R: Rando> {
+    pub locations: HashSet<String>,  // Only names!
+}
+
+// NEW (with logic)
+pub struct Region<R: Rando> {
+    pub locations: HashMap<String, String>,  // name → requirement
+    pub exits: HashMap<String, String>,
+    pub events: HashMap<String, String>,
+}
+```
+
+**2. Logic Expression Parser** (~500-800 LOC)
+
+Parse Python-style logic expressions:
+```rust
+pub enum LogicExpr {
+    // Operators
+    And(Box<LogicExpr>, Box<LogicExpr>),
+    Or(Box<LogicExpr>, Box<LogicExpr>),
+    Not(Box<LogicExpr>),
+
+    // Checks
+    HasItem(String),           // "Slingshot"
+    CanUse(String),            // "can_use(Hookshot)"
+    IsAge(Age),                // "is_adult", "is_child"
+    LogicTrick(String),        // "logic_forest_outside_backdoor"
+
+    // Constants
+    True,
+    False,
+}
+
+impl LogicExpr {
+    pub fn parse(expr: &str) -> Result<Self, ParseError> {
+        // Parse expressions like:
+        // "is_adult or Slingshot"
+        // "can_use(Hookshot) and (Bomb_Bag or Bombchus_in_logic)"
+        // "((can_blast_or_smash or Goron_Bracelet) and ...)"
+    }
+}
+```
+
+**3. Logic Evaluator** (~300-500 LOC)
+```rust
+impl LogicExpr {
+    pub fn evaluate(&self, state: &ModelState) -> bool {
+        match self {
+            LogicExpr::And(a, b) => a.evaluate(state) && b.evaluate(state),
+            LogicExpr::Or(a, b) => a.evaluate(state) || b.evaluate(state),
+            LogicExpr::Not(expr) => !expr.evaluate(state),
+
+            LogicExpr::HasItem(item) => state.ram.save.inventory.has(item),
+            LogicExpr::CanUse(item) => state.can_use_item(item),
+            LogicExpr::IsAge(age) => state.ram.save.link_age == age,
+            LogicExpr::LogicTrick(trick) => state.knowledge.tricks_enabled.contains(trick),
+
+            LogicExpr::True => true,
+            LogicExpr::False => false,
+        }
+    }
+}
+```
+
+**4. Region Accessibility Solver** (~400-600 LOC)
+
+Breadth-first search to find all accessible regions:
+```rust
+pub struct LogicSolver<R: Rando> {
+    regions: Arc<Vec<Arc<Region<R>>>>,
+}
+
+impl<R: Rando> LogicSolver<R> {
+    pub fn accessible_checks(&self, state: &ModelState) -> HashSet<String> {
+        let mut accessible = HashSet::new();
+        let mut visited = HashSet::new();
+        let mut queue = VecDeque::new();
+
+        // Start from root region
+        queue.push_back("Root");
+
+        while let Some(region_name) = queue.pop_front() {
+            if visited.contains(region_name) {
+                continue;
+            }
+            visited.insert(region_name);
+
+            let region = self.find_region(region_name);
+
+            // Check all locations in this region
+            for (location, requirement) in &region.locations {
+                let logic = LogicExpr::parse(requirement).unwrap();
+                if logic.evaluate(state) {
+                    accessible.insert(location.clone());
+                }
+            }
+
+            // Check all exits from this region
+            for (exit, requirement) in &region.exits {
+                let logic = LogicExpr::parse(requirement).unwrap();
+                if logic.evaluate(state) {
+                    queue.push_back(exit);
+                }
+            }
+        }
+
+        accessible
+    }
+}
+```
+
+**5. UI Integration** (~200-300 LOC)
+
+Display accessible checks with visual indicators:
+```rust
+// In ui.rs
+pub fn render_location(&self, location: &str, state: &ModelState) -> Element {
+    let is_collected = state.is_collected(location);
+    let is_accessible = state.is_accessible(location); // NEW
+
+    let color = match (is_collected, is_accessible) {
+        (true, _) => Color::GREEN,      // Collected
+        (false, true) => Color::YELLOW, // Accessible now
+        (false, false) => Color::GRAY,  // Not accessible yet
+    };
+
+    // Render with appropriate styling...
+}
+```
+
+#### For OoTMM: Combined Logic
+
+OoTMM logic would be even more complex:
+
+**Cross-Game Requirements:**
+```json
+{
+  "OoT Forest Temple Boss Key Chest": "MM_Zora_Mask and can_use(Hookshot)",
+  "MM Snowhead Temple Boss": "OoT_Fire_Arrows or MM_Fire_Arrows"
+}
+```
+
+**Game-Specific Logic:**
+- OoT logic expressions use OoT items and tricks
+- MM logic uses MM items, transformations, and time-based checks
+- Cross-game logic references items from both games
+
+**Implementation Challenges:**
+1. Parse both OoT and MM logic syntax (may differ)
+2. Handle cross-game item references
+3. Evaluate combined state (OoT items + MM items)
+4. Region accessibility across game boundary (Happy Mask Shop ↔ Clock Tower)
+5. Time-based requirements (MM's 3-day cycle affects accessibility)
+
+**OoTMM-Specific Examples:**
+```rust
+// MM transformation checks
+"is_deku" => state.mm.ram.transformation == Transformation::Deku
+"is_goron" => state.mm.ram.transformation == Transformation::Goron
+"is_zora" => state.mm.ram.transformation == Transformation::Zora
+
+// Time-based checks
+"is_day_1" => state.mm.ram.time_of_day.day() == 1
+"at_night" => state.mm.ram.time_of_day.is_night()
+
+// Cross-game checks
+"has_oot_hookshot" => state.oot.ram.save.inventory.has("Hookshot")
+"has_mm_hookshot" => state.mm.ram.save.inventory.has("Hookshot")
+```
+
+#### Effort Estimate
+
+**Without OoTMM (OoT only):**
+- Stop discarding logic strings: 1 hour
+- Logic parser: 40-60 hours
+- Logic evaluator: 20-30 hours
+- Solver implementation: 30-40 hours
+- UI integration: 15-25 hours
+- Testing: 20-30 hours
+- **Total: 125-185 hours** (~3-4 weeks)
+
+**With OoTMM (both games + cross-game):**
+- OoT logic: 125-185 hours (above)
+- MM logic parser extensions: 30-40 hours
+- MM-specific evaluators: 40-50 hours
+- Cross-game logic: 40-60 hours
+- Combined solver: 30-40 hours
+- OoTMM UI: 20-30 hours
+- Testing both games: 40-60 hours
+- **Total: 325-465 hours** (~8-12 weeks)
+
+#### Priority Assessment
+
+**Without Logic Tracking:**
+- Tracker shows only what's been collected
+- User must manually determine what's accessible
+- Similar to paper tracker + memory
+
+**With Logic Tracking:**
+- Highlights accessible checks in real-time
+- Significant UX improvement
+- Reduces mental load
+- Enables "sphere tracking" (progression analysis)
+- Major differentiator vs simpler trackers
+
+**Recommendation:**
+- **For OoT-only fork:** Logic tracking is valuable but optional (adds ~150 hours)
+- **For OoTMM implementation:** Logic tracking is **highly recommended** (cross-game navigation is complex without it)
+- **Phased approach:** Implement basic check tracking first, add logic later as Phase 2
+
+#### Alternative: External Logic Solver
+
+Instead of implementing in tracker, could:
+1. Call OoT Randomizer's Python logic solver directly via PyO3
+2. Pass current state, get back list of accessible checks
+3. Much simpler (~50-80 hours instead of 150+)
+4. But: requires Python runtime, slower, harder to extend for OoTMM
+
 ---
 
 ## Architecture Changes
@@ -1065,7 +1344,7 @@ crate/oottracker/src/
 
 ## Effort Estimation
 
-### By Phase
+### By Phase (Without Logic Tracking)
 
 | Phase | Duration | LOC | Complexity | Risk |
 |-------|----------|-----|------------|------|
@@ -1079,31 +1358,58 @@ crate/oottracker/src/
 | **7. Testing** | 3-4 weeks | ~2,000 | Medium | High |
 | **TOTAL** | **26-36 weeks** | **~15,600** | **Very High** | **High** |
 
+### With Logic Tracking (Optional but Recommended)
+
+| Phase | Duration | LOC | Complexity | Risk |
+|-------|----------|-----|------------|------|
+| **Above phases** | 26-36 weeks | ~15,600 | Very High | High |
+| **8. Logic Tracking** | 8-12 weeks | ~2,200 | Very High | High |
+| **TOTAL** | **34-48 weeks** | **~17,800** | **Very High** | **High** |
+
+**Logic Tracking Breakdown:**
+- Logic expression parser: 500-800 LOC
+- Logic evaluator: 300-500 LOC
+- Region solver: 400-600 LOC
+- OoTMM cross-game logic: 400-600 LOC
+- UI integration: 200-300 LOC
+- Testing: 400-600 LOC
+
 ### By Developer
 
 **1 Senior Developer (Full-time):**
-- Timeline: 26-36 weeks (6-9 months)
+- Without logic: 26-36 weeks (6-9 months)
+- With logic: 34-48 weeks (8-12 months)
 - Assumes: Strong Rust, OoT/MM knowledge, emulator experience
 
 **2 Developers (Full-time):**
-- Timeline: 16-20 weeks (4-5 months)
+- Without logic: 16-20 weeks (4-5 months)
+- With logic: 20-28 weeks (5-7 months)
 - Requires: Good coordination, clear architecture
 
 **1 Developer (Part-time 50%):**
-- Timeline: 52-72 weeks (12-18 months)
+- Without logic: 52-72 weeks (12-18 months)
+- With logic: 68-96 weeks (16-24 months)
 
 ### Cost Estimate (Developer Time)
 
-**Hourly Breakdown:**
+**Without Logic Tracking:**
 - Planning: 80-120 hours
 - Implementation: 600-800 hours
 - Testing: 120-160 hours
 - **Total: 800-1,080 hours**
+- **At $100/hour:** $80,000-$108,000
+- **At $50/hour:** $40,000-$54,000
 
-**At $100/hour:** $80,000-$108,000
-**At $50/hour:** $40,000-$54,000
+**With Logic Tracking:**
+- Above: 800-1,080 hours
+- Logic implementation: 325-465 hours
+- **Total: 1,125-1,545 hours**
+- **At $100/hour:** $112,500-$154,500
+- **At $50/hour:** $56,250-$77,250
 
 ### Lines of Code Estimate
+
+**Without Logic Tracking:**
 
 | Component | New LOC | Modified LOC | Total |
 |-----------|---------|--------------|-------|
@@ -1114,12 +1420,20 @@ crate/oottracker/src/
 | UI | 3,800 | 500 | 4,300 |
 | Auto-tracking | 1,400 | 200 | 1,600 |
 | Tests | 2,000 | 0 | 2,000 |
-| **TOTAL** | **~15,500** | **~1,400** | **~16,900** |
+| **SUBTOTAL** | **~15,500** | **~1,400** | **~16,900** |
+
+**With Logic Tracking (Optional):**
+
+| Component | New LOC | Modified LOC | Total |
+|-----------|---------|--------------|-------|
+| Above subtotal | 15,500 | 1,400 | 16,900 |
+| Logic tracking | 2,200 | 50 | 2,250 |
+| **TOTAL** | **~17,700** | **~1,450** | **~19,150** |
 
 **Code Growth:**
 - Current codebase: ~15,700 LOC
-- After MM integration: ~32,600 LOC
-- **Growth: +107%**
+- After MM integration (no logic): ~32,600 LOC (+107%)
+- After MM integration (with logic): ~34,850 LOC (+122%)
 
 ---
 
