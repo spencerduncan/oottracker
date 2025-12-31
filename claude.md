@@ -4,7 +4,9 @@ This document provides context for AI assistants (like Claude) working on the OO
 
 ## Project Overview
 
-**OOTTracker** is Fenhl's item tracker for the Ocarina of Time Randomizer (OoTR). It helps speedrunners and players track randomized item locations, dungeon information, and progression during OoT randomizer playthroughs.
+**OOTTracker** is an item tracker for the Ocarina of Time Randomizer (OoTR). It helps speedrunners and players track randomized item locations, dungeon information, and progression during OoT randomizer playthroughs.
+
+**Note:** This repository is a **fork** of [Fenhl's original OOTTracker](https://github.com/fenhl/oottracker). The original project is live at https://oottracker.fenhl.net/.
 
 ### Key Features
 - **Auto-tracking:** Real-time memory reading from BizHawk, Project64, and RetroArch emulators
@@ -12,10 +14,11 @@ This document provides context for AI assistants (like Claude) working on the OO
 - **Networked tracking:** WebSocket-based synchronization for multiworld and tournament play
 - **Knowledge inference:** Extracts hints from text boxes, dungeon screens, and game state
 
-### Live Deployments
-- Web app: https://oottracker.fenhl.net/
-- Production server runs on Linux with nginx reverse proxy
-- Active user community via OoT Randomizer Discord
+### Deployment Notes for This Fork
+- **Web deployment:** Requires your own server/hosting (does not use oottracker.fenhl.net)
+- **Local development:** Can run web server locally on `localhost`
+- **Production setup:** Requires nginx configuration, PostgreSQL database, systemd service setup
+- Refer to `assets/oottracker-web.service` and `assets/*.nginx` for deployment configuration
 
 ## Architecture
 

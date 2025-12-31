@@ -53,12 +53,15 @@ Sources:
 
 This document analyzes the requirements for extending OOTTracker to support [OoTMM](https://ootmm.com/) (Ocarina of Time + Majora's Mask combined randomizer), where items and locations from both games are shuffled together in a single ROM.
 
+**Important:** This analysis is for a **fork** of the original OOTTracker project. Any implementation would be deployed independently (local server or your own hosting), not on the official oottracker.fenhl.net website.
+
 ### Key Findings
 
 - **Effort Estimate:** 600-900 hours (4-6 months with 1 developer)
 - **Complexity:** High (reduced from Very High)
 - **Feasibility:** Technically feasible, requires careful architecture
 - **Recommendation:** Requires planning and phased implementation
+- **Deployment:** Local or self-hosted only (not integrated with official tracker)
 
 ### Major Challenges
 

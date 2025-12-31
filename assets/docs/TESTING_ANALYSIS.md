@@ -4,6 +4,8 @@
 **Project Version:** 0.7.4
 **Current Test Coverage:** 0%
 
+**Note:** This analysis is for a **fork** of [Fenhl's original OOTTracker](https://github.com/fenhl/oottracker).
+
 ## Executive Summary
 
 This document provides a comprehensive analysis of the OOTTracker codebase's testability and estimates the effort required to achieve various levels of test coverage.
@@ -144,6 +146,7 @@ unimplemented!("unknown boss reward index: {n}")
 
 ```rust
 // Line 130 - Cannot mock WebSocket
+// Note: Hardcoded to official website - fork would need to change this URL
 tokio_tungstenite::connect_async("wss://oottracker.fenhl.net/websocket").await?
 ```
 
