@@ -3,9 +3,12 @@
 pub mod mm;
 pub mod oot;
 
+pub use mm::MmItem;
+pub use oot::OotItem;
+
 /// Combined item enum for both games.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Item {
-    Oot(oot::OotItem),
-    Mm(mm::MmItem),
+    Oot(OotItem),
+    Mm(MmItem),
 }
