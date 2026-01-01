@@ -12,9 +12,9 @@ pub enum Token {
     Ident(String),
 
     // Operators
-    And,        // &&
-    Or,         // ||
-    Not,        // !
+    And, // &&
+    Or,  // ||
+    Not, // !
 
     // Delimiters
     LParen,

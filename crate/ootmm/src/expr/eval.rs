@@ -1,8 +1,8 @@
 //! Expression evaluator.
 //! TODO: Implement (Issue #16)
 
-use thiserror::Error;
 use crate::expr::Expr;
+use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum EvalError {

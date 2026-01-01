@@ -5,16 +5,16 @@
 //! - `event(MIDO_MOVED) || setting(skip_child_zelda)`
 //! - `between(DAY1_AM_6_00, DAY1_PM_6_00)`
 
-mod token;
-mod lexer;
 mod ast;
-mod parser;
 mod eval;
+mod lexer;
+mod parser;
+mod token;
 
 pub mod builtins;
 
-pub use token::Token;
-pub use lexer::{Lexer, LexError};
 pub use ast::Expr;
-pub use parser::{Parser, ParseError, parse};
-pub use eval::{EvalContext, EvalError, eval};
+pub use eval::{eval, EvalContext, EvalError};
+pub use lexer::{LexError, Lexer};
+pub use parser::{parse, ParseError, Parser};
+pub use token::Token;

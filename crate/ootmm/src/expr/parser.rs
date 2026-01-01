@@ -1,8 +1,8 @@
 //! Expression parser.
 //! TODO: Implement (Issue #12)
 
-use thiserror::Error;
 use crate::expr::Expr;
+use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ParseError {
