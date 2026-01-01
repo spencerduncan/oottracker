@@ -134,32 +134,40 @@ impl Default for Ram {
     }
 }
 
+/// Raw byte data for constructing a `Ram` instance.
+///
+/// This struct groups the raw memory data required to construct a `Ram`,
+/// reducing the number of parameters needed for `Ram::new()`.
+struct RawRamData<'a> {
+    save: &'a [u8],
+    input_p1_raw_pad: &'a [u8],
+    current_scene_id: u8,
+    current_scene_switch_flags: &'a [u8],
+    current_scene_chest_flags: &'a [u8],
+    current_scene_room_clear_flags: &'a [u8],
+    current_text_box_id: &'a [u8],
+    text_box_contents: &'a [u8],
+    pause_state: &'a [u8],
+    pause_changing: &'a [u8],
+    pause_screen_idx: &'a [u8],
+}
+
 impl Ram {
-    fn new(
-        save: &[u8],
-        input_p1_raw_pad: &[u8],
-        current_scene_id: u8,
-        current_scene_switch_flags: &[u8],
-        current_scene_chest_flags: &[u8],
-        current_scene_room_clear_flags: &[u8],
-        current_text_box_id: &[u8],
-        text_box_contents: &[u8],
-        pause_state: &[u8],
-        pause_changing: &[u8],
-        pause_screen_idx: &[u8],
-    ) -> Result<Self, DecodeError> {
+    fn new(data: RawRamData<'_>) -> Result<Self, DecodeError> {
         Ok(Self {
-            save: Save::from_save_data(save)?,
-            input_p1_raw_pad: Pad::from_bits_truncate(BigEndian::read_u16(input_p1_raw_pad)),
-            current_scene_id,
-            current_scene_switch_flags: BigEndian::read_u32(current_scene_switch_flags),
-            current_scene_chest_flags: BigEndian::read_u32(current_scene_chest_flags),
-            current_scene_room_clear_flags: BigEndian::read_u32(current_scene_room_clear_flags),
-            current_text_box_id: BigEndian::read_u16(current_text_box_id),
-            text_box_contents: text_box_contents.try_into()?,
-            pause_state: BigEndian::read_u16(pause_state),
-            pause_changing: BigEndian::read_u16(pause_changing) != 0,
-            pause_screen_idx: BigEndian::read_u16(pause_screen_idx),
+            save: Save::from_save_data(data.save)?,
+            input_p1_raw_pad: Pad::from_bits_truncate(BigEndian::read_u16(data.input_p1_raw_pad)),
+            current_scene_id: data.current_scene_id,
+            current_scene_switch_flags: BigEndian::read_u32(data.current_scene_switch_flags),
+            current_scene_chest_flags: BigEndian::read_u32(data.current_scene_chest_flags),
+            current_scene_room_clear_flags: BigEndian::read_u32(
+                data.current_scene_room_clear_flags,
+            ),
+            current_text_box_id: BigEndian::read_u16(data.current_text_box_id),
+            text_box_contents: data.text_box_contents.try_into()?,
+            pause_state: BigEndian::read_u16(data.pause_state),
+            pause_changing: BigEndian::read_u16(data.pause_changing) != 0,
+            pause_screen_idx: BigEndian::read_u16(data.pause_screen_idx),
         })
     }
 
@@ -180,25 +188,25 @@ impl Ram {
                 _ => return Err(DecodeError::Index(RANGES[2])),
             };
             let (chest_flags, room_clear_flags) = chest_and_room_clear.split_at(4);
-            Ok(Self::new(
-                &save,
-                &input_p1_raw_pad,
+            Self::new(RawRamData {
+                save: &save,
+                input_p1_raw_pad: &input_p1_raw_pad,
                 current_scene_id,
-                &current_scene_switch_flags,
-                chest_flags,
-                room_clear_flags,
-                &current_text_box_id,
-                &text_box_contents,
-                pause_ctx
+                current_scene_switch_flags: &current_scene_switch_flags,
+                current_scene_chest_flags: chest_flags,
+                current_scene_room_clear_flags: room_clear_flags,
+                current_text_box_id: &current_text_box_id,
+                text_box_contents: &text_box_contents,
+                pause_state: pause_ctx
                     .get(0x00..0x02)
                     .ok_or(DecodeError::Index(RANGES[12]))?,
-                pause_ctx
+                pause_changing: pause_ctx
                     .get(0x10..0x12)
                     .ok_or(DecodeError::Index(RANGES[12]))?,
-                pause_ctx
+                pause_screen_idx: pause_ctx
                     .get(0x14..0x16)
                     .ok_or(DecodeError::Index(RANGES[12]))?,
-            )?)
+            })
         } else {
             Err(DecodeError::Ranges)
         }
@@ -219,25 +227,25 @@ impl Ram {
         )) = ranges.into_iter().map(Borrow::borrow).collect_tuple()
         {
             let (chest_flags, room_clear_flags) = chest_and_room_clear.split_at(4);
-            Ok(Self::new(
+            Self::new(RawRamData {
                 save,
                 input_p1_raw_pad,
                 current_scene_id,
                 current_scene_switch_flags,
-                chest_flags,
-                room_clear_flags,
+                current_scene_chest_flags: chest_flags,
+                current_scene_room_clear_flags: room_clear_flags,
                 current_text_box_id,
                 text_box_contents,
-                pause_ctx
+                pause_state: pause_ctx
                     .get(0x00..0x02)
                     .ok_or(DecodeError::Index(RANGES[12]))?,
-                pause_ctx
+                pause_changing: pause_ctx
                     .get(0x10..0x12)
                     .ok_or(DecodeError::Index(RANGES[12]))?,
-                pause_ctx
+                pause_screen_idx: pause_ctx
                     .get(0x14..0x16)
                     .ok_or(DecodeError::Index(RANGES[12]))?,
-            )?)
+            })
         } else {
             Err(DecodeError::Ranges)
         }
