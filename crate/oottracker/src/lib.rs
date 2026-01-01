@@ -8,7 +8,6 @@
 )]
 #![allow(
     clippy::large_enum_variant,
-    clippy::result_large_err,
     clippy::result_unit_err,
     clippy::too_many_arguments,
     clippy::type_complexity,
