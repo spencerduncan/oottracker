@@ -104,6 +104,26 @@ jobs:
       - name: Run tests
         run: cargo test -p ootr -p ootr-dynamic -p oottracker-derive
 
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: coverage
+      - name: Install cargo-tarpaulin
+        run: cargo install cargo-tarpaulin
+      - name: Generate coverage
+        run: cargo tarpaulin -p ootr -p ootr-dynamic -p oottracker-derive --out xml --output-dir coverage
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage/cobertura.xml
+          fail_ci_if_error: false
+          verbose: true
+
   docs:
     name: Documentation
     runs-on: ubuntu-latest
