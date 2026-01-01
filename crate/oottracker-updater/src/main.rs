@@ -1,58 +1,37 @@
-#![deny(rust_2018_idioms, unused, unused_crate_dependencies, unused_import_braces, unused_qualifications, warnings)]
+#![deny(
+    rust_2018_idioms,
+    unused,
+    unused_crate_dependencies,
+    unused_import_braces,
+    unused_qualifications,
+    warnings
+)]
 #![forbid(unsafe_code)]
-
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use {
-    std::{
-        fmt,
-        io,
-        path::PathBuf,
-        sync::Arc,
-        time::Duration,
-    },
     futures::future::FutureExt as _,
     iced::{
-        Application,
-        Command,
-        Element,
-        Length,
-        Settings,
         alignment,
         widget::{
-            button::{
-                self,
-                Button,
-            },
-            Column,
-            Row,
-            Text,
+            button::{self, Button},
+            Column, Row, Text,
         },
-        window::{
-            self,
-            Icon,
-        },
+        window::{self, Icon},
+        Application, Command, Element, Length, Settings,
     },
     iced_native::command::Action,
     image::DynamicImage,
     itertools::Itertools as _,
-    open::that as open,
-    tokio::{
-        io::AsyncWriteExt as _,
-        time::sleep,
-    },
-    tokio_stream::StreamExt as _,
-    wheel::{
-        FromArc,
-        fs::File,
-    },
     oottracker::{
-        github::{
-            ReleaseAsset,
-            Repo,
-        },
+        github::{ReleaseAsset, Repo},
         ui::images,
     },
+    open::that as open,
+    std::{fmt, io, path::PathBuf, sync::Arc, time::Duration},
+    tokio::{io::AsyncWriteExt as _, time::sleep},
+    tokio_stream::StreamExt as _,
+    wheel::{fs::File, FromArc},
 };
 
 #[cfg(target_arch = "x86")]
@@ -110,67 +89,102 @@ impl Application for App {
     type Flags = PathBuf;
 
     fn new(path: PathBuf) -> (Self, Command<Result<Message, Error>>) {
-        (App {
-            path,
-            state: State::Init,
-            discord_invite_btn: button::State::default(),
-            discord_channel_btn: button::State::default(),
-            new_issue_btn: button::State::default(),
-        }, Command::single(Action::Future(async {
-            let client = reqwest::Client::builder()
-                .user_agent(concat!("oottracker-updater/", env!("CARGO_PKG_VERSION")))
-                .build()?;
-            let release = Repo::new("fenhl", "oottracker").latest_release(&client).await?.ok_or(Error::NoReleases)?;
-            let (asset,) = release.assets.into_iter()
-                .filter(|asset| asset.name.ends_with(PLATFORM_SUFFIX))
-                .collect_tuple().ok_or(Error::MissingAsset)?;
-            Ok(Message::ReleaseAsset(client, asset))
-        }.boxed())))
+        (
+            App {
+                path,
+                state: State::Init,
+                discord_invite_btn: button::State::default(),
+                discord_channel_btn: button::State::default(),
+                new_issue_btn: button::State::default(),
+            },
+            Command::single(Action::Future(
+                async {
+                    let client = reqwest::Client::builder()
+                        .user_agent(concat!("oottracker-updater/", env!("CARGO_PKG_VERSION")))
+                        .build()?;
+                    let release = Repo::new("fenhl", "oottracker")
+                        .latest_release(&client)
+                        .await?
+                        .ok_or(Error::NoReleases)?;
+                    let (asset,) = release
+                        .assets
+                        .into_iter()
+                        .filter(|asset| asset.name.ends_with(PLATFORM_SUFFIX))
+                        .collect_tuple()
+                        .ok_or(Error::MissingAsset)?;
+                    Ok(Message::ReleaseAsset(client, asset))
+                }
+                .boxed(),
+            )),
+        )
     }
 
-    fn title(&self) -> String { format!("updating the OoT tracker…") }
+    fn title(&self) -> String {
+        format!("updating the OoT tracker…")
+    }
 
     fn update(&mut self, msg: Result<Message, Error>) -> Command<Result<Message, Error>> {
         match msg {
             Ok(Message::ReleaseAsset(client, asset)) => {
                 self.state = State::WaitExit;
-                Command::single(Action::Future(async {
-                    sleep(Duration::from_secs(1)).await;
-                    Ok(Message::WaitedExit(client, asset))
-                }.boxed()))
+                Command::single(Action::Future(
+                    async {
+                        sleep(Duration::from_secs(1)).await;
+                        Ok(Message::WaitedExit(client, asset))
+                    }
+                    .boxed(),
+                ))
             }
             Ok(Message::WaitedExit(client, asset)) => {
                 self.state = State::Download;
-                Command::single(Action::Future(async move {
-                    Ok(Message::Response(client.get(asset.browser_download_url).send().await?.error_for_status()?))
-                }.boxed()))
+                Command::single(Action::Future(
+                    async move {
+                        Ok(Message::Response(
+                            client
+                                .get(asset.browser_download_url)
+                                .send()
+                                .await?
+                                .error_for_status()?,
+                        ))
+                    }
+                    .boxed(),
+                ))
             }
             Ok(Message::Response(response)) => {
                 self.state = State::Replace;
                 let path = self.path.clone();
-                Command::single(Action::Future(async move {
-                    let mut data = response.bytes_stream();
-                    let mut exe_file = File::create(path).await?;
-                    while let Some(chunk) = data.try_next().await? {
-                        exe_file.write_all(chunk.as_ref()).await?;
+                Command::single(Action::Future(
+                    async move {
+                        let mut data = response.bytes_stream();
+                        let mut exe_file = File::create(path).await?;
+                        while let Some(chunk) = data.try_next().await? {
+                            exe_file.write_all(chunk.as_ref()).await?;
+                        }
+                        Ok(Message::Downloaded(exe_file))
                     }
-                    Ok(Message::Downloaded(exe_file))
-                }.boxed()))
+                    .boxed(),
+                ))
             }
             Ok(Message::Downloaded(exe_file)) => {
                 self.state = State::WaitDownload;
-                Command::single(Action::Future(async move {
-                    exe_file.sync_all().await?;
-                    Ok(Message::WaitedDownload)
-                }.boxed()))
+                Command::single(Action::Future(
+                    async move {
+                        exe_file.sync_all().await?;
+                        Ok(Message::WaitedDownload)
+                    }
+                    .boxed(),
+                ))
             }
             Ok(Message::WaitedDownload) => {
                 self.state = State::Launch;
                 let path = self.path.clone();
-                Command::single(Action::Future(async move {
-                    std::process::Command::new(path).spawn()?;
-                    Ok(Message::Done)
-                }.boxed()))
+                Command::single(Action::Future(
+                    async move {
+                        std::process::Command::new(path).spawn()?;
+                        Ok(Message::Done)
+                    }
+                    .boxed(),
+                ))
             }
             Ok(Message::Done) => {
                 self.state = State::Done;
@@ -183,7 +197,9 @@ impl Application for App {
                 Command::none()
             }
             Ok(Message::DiscordChannel) => {
-                if let Err(e) = open("https://discord.com/channels/274180765816848384/476723801032491008") {
+                if let Err(e) =
+                    open("https://discord.com/channels/274180765816848384/476723801032491008")
+                {
                     self.state = State::Error(e.into());
                 }
                 Command::none()
@@ -263,11 +279,13 @@ impl fmt::Display for Error {
             Self::Io(e) => write!(f, "I/O error: {}", e),
             Self::MissingAsset => write!(f, "release does not have a download for this platform"),
             Self::NoReleases => write!(f, "there are no released versions"),
-            Self::Reqwest(e) => if let Some(url) = e.url() {
-                write!(f, "HTTP error at {}: {}", url, e)
-            } else {
-                write!(f, "HTTP error: {}", e)
-            },
+            Self::Reqwest(e) => {
+                if let Some(url) = e.url() {
+                    write!(f, "HTTP error at {}: {}", url, e)
+                } else {
+                    write!(f, "HTTP error: {}", e)
+                }
+            }
             Self::Wheel(e) => e.fmt(f),
         }
     }
@@ -279,7 +297,12 @@ fn main(Args { path }: Args) -> iced::Result {
     App::run(Settings {
         window: window::Settings {
             size: (320, 240),
-            icon: Icon::from_rgba(icon.as_flat_samples().as_slice().to_owned(), icon.width(), icon.height()).ok(), // simply omit the icon if loading it fails
+            icon: Icon::from_rgba(
+                icon.as_flat_samples().as_slice().to_owned(),
+                icon.width(),
+                icon.height(),
+            )
+            .ok(), // simply omit the icon if loading it fails
             ..window::Settings::default()
         },
         ..Settings::with_flags(path)

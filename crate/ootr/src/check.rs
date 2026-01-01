@@ -1,19 +1,22 @@
 use {
-    std::fmt,
+    crate::{
+        model::{Dungeon, Medallion},
+        region::Mq,
+        Rando,
+    },
     derivative::Derivative,
     quote_value::QuoteValue,
-    crate::{
-        Rando,
-        model::{
-            Dungeon,
-            Medallion,
-        },
-        region::Mq,
-    },
+    std::fmt,
 };
 
 #[derive(Derivative, QuoteValue)]
-#[derivative(Debug(bound = ""), Clone(bound = ""), PartialEq(bound = ""), Eq(bound = ""), Hash(bound = ""))]
+#[derivative(
+    Debug(bound = ""),
+    Clone(bound = ""),
+    PartialEq(bound = ""),
+    Eq(bound = ""),
+    Hash(bound = "")
+)]
 #[quote_value(where(R::RegionName: QuoteValue))]
 pub enum Check<R: Rando> {
     /// Constructed using `at` or `here`.
@@ -41,7 +44,13 @@ impl<R: Rando> fmt::Display for Check<R> {
         match self {
             Check::AnonymousEvent(at_check, id) => write!(f, "requirement {} for {}", id, at_check),
             Check::Event(event) => write!(f, "event: {}", event),
-            Check::Exit { from, from_mq, to } => write!(f, "{} ({}) → {}", from, from_mq.map_or_else(|| format!("overworld"), |mq| mq.to_string()), to),
+            Check::Exit { from, from_mq, to } => write!(
+                f,
+                "{} ({}) → {}",
+                from,
+                from_mq.map_or_else(|| "overworld".to_owned(), |mq| mq.to_string()),
+                to
+            ),
             Check::Location(loc) => loc.fmt(f),
             Check::LogicHelper(fn_name) => write!(f, "logic helper {:?}", fn_name),
             Check::Mq(dungeon) => write!(f, "is {} MQ or vanilla", dungeon),

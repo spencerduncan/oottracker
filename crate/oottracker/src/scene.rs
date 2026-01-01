@@ -2,11 +2,7 @@
 //!
 //! The entry points are the types [`SceneFlags`] and [`GoldSkulltulas`]. All other types appear in their fields.
 
-use {
-    std::fmt,
-    oottracker_derive::scene_flags,
-    crate::Ram,
-};
+use {crate::Ram, oottracker_derive::scene_flags, std::fmt};
 
 pub(crate) struct Scene(pub(crate) &'static str);
 

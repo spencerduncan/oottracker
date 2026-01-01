@@ -1,21 +1,12 @@
 use {
+    crate::{model::Dungeon, Rando},
+    async_proto::Protocol,
+    quote_value::QuoteValue,
+    serde::{Deserialize, Serialize},
     std::{
         collections::HashSet,
         fmt,
-        hash::{
-            Hash,
-            Hasher,
-        },
-    },
-    async_proto::Protocol,
-    quote_value::QuoteValue,
-    serde::{
-        Deserialize,
-        Serialize,
-    },
-    crate::{
-        Rando,
-        model::Dungeon,
+        hash::{Hash, Hasher},
     },
 };
 

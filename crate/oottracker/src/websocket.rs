@@ -1,21 +1,12 @@
 #![allow(deprecated)] // avoid deprecation errors in the Protocol derivation for ClientMessage
 
 use {
-    std::{
-        fmt,
-        num::NonZeroU8,
+    crate::{
+        ui::{CellRender, DoubleTrackerLayout, TrackerLayout},
+        ModelDelta, ModelState, Save,
     },
     async_proto::Protocol,
-    crate::{
-        ModelDelta,
-        ModelState,
-        Save,
-        ui::{
-            CellRender,
-            TrackerLayout,
-            DoubleTrackerLayout,
-        },
-    },
+    std::{fmt, num::NonZeroU8},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Protocol)]
@@ -112,15 +103,9 @@ pub enum ClientMessage {
 #[derive(Protocol)]
 pub enum ServerMessage {
     Ping,
-    Error {
-        debug: String,
-        display: String,
-    },
+    Error { debug: String, display: String },
     Init(Vec<CellRender>),
-    Update {
-        cell_id: u8,
-        new_cell: CellRender,
-    },
+    Update { cell_id: u8, new_cell: CellRender },
     InitRaw(ModelState),
     UpdateRaw(ModelDelta),
 }

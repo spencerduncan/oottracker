@@ -1,48 +1,24 @@
 use {
+    crate::{
+        save::{self, Save},
+        scene::{Scene, SceneFlags},
+    },
+    async_proto::{Protocol, ReadError, WriteError},
+    bitflags::bitflags,
+    byteorder::{BigEndian, ByteOrder as _},
+    derive_more::From,
+    itertools::Itertools as _,
+    serde::{Deserialize, Serialize},
     std::{
         array::TryFromSliceError,
         borrow::Borrow,
         fmt,
         future::Future,
         io::prelude::*,
-        ops::{
-            AddAssign,
-            Sub,
-        },
+        ops::{AddAssign, Sub},
         pin::Pin,
     },
-    async_proto::{
-        Protocol,
-        ReadError,
-        WriteError,
-    },
-    bitflags::bitflags,
-    byteorder::{
-        BigEndian,
-        ByteOrder as _,
-    },
-    derive_more::From,
-    itertools::Itertools as _,
-    serde::{
-        Deserialize,
-        Serialize,
-    },
-    tokio::io::{
-        AsyncRead,
-        AsyncReadExt as _,
-        AsyncWrite,
-        AsyncWriteExt as _,
-    },
-    crate::{
-        save::{
-            self,
-            Save,
-        },
-        scene::{
-            Scene,
-            SceneFlags,
-        },
-    },
+    tokio::io::{AsyncRead, AsyncReadExt as _, AsyncWrite, AsyncWriteExt as _},
 };
 
 pub const SIZE: usize = 0x80_0000;
@@ -50,14 +26,22 @@ pub const NUM_RANGES: usize = 8;
 pub const TEXT_LEN: usize = 0xc0;
 pub const PAUSE_CTX_LEN: usize = 0x16;
 pub static RANGES: [u32; NUM_RANGES * 2] = [
-    save::ADDR, save::SIZE as u32,
-    0x1c84b4, 2, // buttons currently pressed on controller 1
-    0x1c8545, 1, // current scene ID
-    0x1ca1c8, 4, // current scene's switch flags
-    0x1ca1d8, 8, // current scene's chest and room clear flags
-    0x1d8870, 2, // current text box ID
-    0x1d887e, TEXT_LEN as u32, // current/most recent text box contents
-    0x1d8dd4, PAUSE_CTX_LEN as u32, // relevant parts of z64_game.pause_ctxt
+    save::ADDR,
+    save::SIZE as u32,
+    0x1c84b4,
+    2, // buttons currently pressed on controller 1
+    0x1c8545,
+    1, // current scene ID
+    0x1ca1c8,
+    4, // current scene's switch flags
+    0x1ca1d8,
+    8, // current scene's chest and room clear flags
+    0x1d8870,
+    2, // current text box ID
+    0x1d887e,
+    TEXT_LEN as u32, // current/most recent text box contents
+    0x1d8dd4,
+    PAUSE_CTX_LEN as u32, // relevant parts of z64_game.pause_ctxt
 ];
 
 #[derive(Debug, From, Clone)]
@@ -189,7 +173,8 @@ impl Ram {
             current_text_box_id,
             text_box_contents,
             pause_ctx,
-        )) = ranges.into_iter().collect_tuple() {
+        )) = ranges.into_iter().collect_tuple()
+        {
             let current_scene_id = match current_scene_id[..] {
                 [current_scene_id] => current_scene_id,
                 _ => return Err(DecodeError::Index(RANGES[2])),
@@ -204,16 +189,24 @@ impl Ram {
                 room_clear_flags,
                 &current_text_box_id,
                 &text_box_contents,
-                pause_ctx.get(0x00..0x02).ok_or(DecodeError::Index(RANGES[12]))?,
-                pause_ctx.get(0x10..0x12).ok_or(DecodeError::Index(RANGES[12]))?,
-                pause_ctx.get(0x14..0x16).ok_or(DecodeError::Index(RANGES[12]))?,
+                pause_ctx
+                    .get(0x00..0x02)
+                    .ok_or(DecodeError::Index(RANGES[12]))?,
+                pause_ctx
+                    .get(0x10..0x12)
+                    .ok_or(DecodeError::Index(RANGES[12]))?,
+                pause_ctx
+                    .get(0x14..0x16)
+                    .ok_or(DecodeError::Index(RANGES[12]))?,
             )?)
         } else {
             Err(DecodeError::Ranges)
         }
     }
 
-    pub fn from_ranges<'a, R: Borrow<[u8]> + ?Sized + 'a, I: IntoIterator<Item = &'a R>>(ranges: I) -> Result<Self, DecodeError> {
+    pub fn from_ranges<'a, R: Borrow<[u8]> + ?Sized + 'a, I: IntoIterator<Item = &'a R>>(
+        ranges: I,
+    ) -> Result<Self, DecodeError> {
         if let Some((
             save,
             input_p1_raw_pad,
@@ -223,7 +216,8 @@ impl Ram {
             current_text_box_id,
             text_box_contents,
             pause_ctx,
-        )) = ranges.into_iter().map(Borrow::borrow).collect_tuple() {
+        )) = ranges.into_iter().map(Borrow::borrow).collect_tuple()
+        {
             let (chest_flags, room_clear_flags) = chest_and_room_clear.split_at(4);
             Ok(Self::new(
                 save,
@@ -234,9 +228,15 @@ impl Ram {
                 room_clear_flags,
                 current_text_box_id,
                 text_box_contents,
-                pause_ctx.get(0x00..0x02).ok_or(DecodeError::Index(RANGES[12]))?,
-                pause_ctx.get(0x10..0x12).ok_or(DecodeError::Index(RANGES[12]))?,
-                pause_ctx.get(0x14..0x16).ok_or(DecodeError::Index(RANGES[12]))?,
+                pause_ctx
+                    .get(0x00..0x02)
+                    .ok_or(DecodeError::Index(RANGES[12]))?,
+                pause_ctx
+                    .get(0x10..0x12)
+                    .ok_or(DecodeError::Index(RANGES[12]))?,
+                pause_ctx
+                    .get(0x14..0x16)
+                    .ok_or(DecodeError::Index(RANGES[12]))?,
             )?)
         } else {
             Err(DecodeError::Ranges)
@@ -249,10 +249,23 @@ impl Ram {
     ///
     /// This method may panic if `ram_data` doesn't contain a valid OoT RAM dump.
     pub fn from_bytes(ram_data: &[u8]) -> Result<Self, DecodeError> {
-        if ram_data.len() != SIZE { return Err(DecodeError::Size(ram_data.len())) }
-        Self::from_ranges(RANGES.iter().tuples().map(|(&start, &len)|
-            ram_data.get(start as usize..(start + len) as usize).ok_or(DecodeError::IndexRange { start, end: start + len })
-        ).try_collect::<_, Vec<_>, _>()?)
+        if ram_data.len() != SIZE {
+            return Err(DecodeError::Size(ram_data.len()));
+        }
+        Self::from_ranges(
+            RANGES
+                .iter()
+                .tuples()
+                .map(|(&start, &len)| {
+                    ram_data.get(start as usize..(start + len) as usize).ok_or(
+                        DecodeError::IndexRange {
+                            start,
+                            end: start + len,
+                        },
+                    )
+                })
+                .try_collect::<_, Vec<_>, _>()?,
+        )
     }
 
     pub fn to_ranges(&self) -> [Vec<u8>; NUM_RANGES] {
@@ -260,9 +273,12 @@ impl Ram {
         chest_and_room_clear.extend_from_slice(&self.current_scene_chest_flags.to_be_bytes());
         chest_and_room_clear.extend_from_slice(&self.current_scene_room_clear_flags.to_be_bytes());
         let mut pause_ctx = vec![0; PAUSE_CTX_LEN];
-        pause_ctx.splice(0x00..0x02, self.pause_state.to_be_bytes().into_iter());
-        pause_ctx.splice(0x10..0x12, if self.pause_changing { 1u16 } else { 0 }.to_be_bytes().into_iter());
-        pause_ctx.splice(0x14..0x16, self.pause_screen_idx.to_be_bytes().into_iter());
+        pause_ctx.splice(0x00..0x02, self.pause_state.to_be_bytes());
+        pause_ctx.splice(
+            0x10..0x12,
+            if self.pause_changing { 1u16 } else { 0 }.to_be_bytes(),
+        );
+        pause_ctx.splice(0x14..0x16, self.pause_screen_idx.to_be_bytes());
         [
             self.save.to_save_data(),
             self.input_p1_raw_pad.bits().to_be_bytes().into(),
@@ -278,7 +294,10 @@ impl Ram {
     /// Returns the scene flags, with flags for the current scene updated properly.
     pub(crate) fn scene_flags(&self) -> SceneFlags {
         let mut flags = self.save.scene_flags;
-        if let Some(flags_scene) = Scene::current(self).ok().and_then(|current_scene| flags.get_mut(current_scene)) {
+        if let Some(flags_scene) = Scene::current(self)
+            .ok()
+            .and_then(|current_scene| flags.get_mut(current_scene))
+        {
             flags_scene.set_chests(self.current_scene_chest_flags);
             flags_scene.set_switches(self.current_scene_switch_flags);
             flags_scene.set_room_clear(self.current_scene_room_clear_flags);
@@ -293,12 +312,17 @@ impl Ram {
 
 impl From<Save> for Ram {
     fn from(save: Save) -> Self {
-        Self { save, ..Self::default() }
+        Self {
+            save,
+            ..Self::default()
+        }
     }
 }
 
 impl Protocol for Ram {
-    fn read<'a, R: AsyncRead + Unpin + Send + 'a>(stream: &'a mut R) -> Pin<Box<dyn Future<Output = Result<Self, ReadError>> + Send + 'a>> {
+    fn read<'a, R: AsyncRead + Unpin + Send + 'a>(
+        stream: &'a mut R,
+    ) -> Pin<Box<dyn Future<Output = Result<Self, ReadError>> + Send + 'a>> {
         Box::pin(async move {
             let mut ranges = Vec::with_capacity(NUM_RANGES);
             for (_, len) in RANGES.iter().copied().tuples() {
@@ -306,11 +330,15 @@ impl Protocol for Ram {
                 stream.read_exact(&mut buf).await?;
                 ranges.push(buf);
             }
-            Ok(Self::from_range_bufs(ranges).map_err(|e| ReadError::Custom(format!("failed to decode RAM data: {e:?}")))?)
+            Self::from_range_bufs(ranges)
+                .map_err(|e| ReadError::Custom(format!("failed to decode RAM data: {e:?}")))
         })
     }
 
-    fn write<'a, W: AsyncWrite + Unpin + Send + 'a>(&'a self, sink: &'a mut W) -> Pin<Box<dyn Future<Output = Result<(), WriteError>> + Send + 'a>> {
+    fn write<'a, W: AsyncWrite + Unpin + Send + 'a>(
+        &'a self,
+        sink: &'a mut W,
+    ) -> Pin<Box<dyn Future<Output = Result<(), WriteError>> + Send + 'a>> {
         Box::pin(async move {
             for range in self.to_ranges() {
                 sink.write_all(&range).await?;
@@ -326,7 +354,8 @@ impl Protocol for Ram {
             stream.read_exact(&mut buf)?;
             ranges.push(buf);
         }
-        Ok(Self::from_range_bufs(ranges).map_err(|e| ReadError::Custom(format!("failed to decode RAM data: {e:?}")))?)
+        Self::from_range_bufs(ranges)
+            .map_err(|e| ReadError::Custom(format!("failed to decode RAM data: {e:?}")))
     }
 
     fn write_sync(&self, sink: &mut impl Write) -> Result<(), WriteError> {
@@ -339,10 +368,22 @@ impl Protocol for Ram {
 
 impl AddAssign<Delta> for Ram {
     fn add_assign(&mut self, rhs: Delta) {
-        let Delta { save, input_p1_raw_pad, current_scene_data, text_box_data, pause_data } = rhs;
+        let Delta {
+            save,
+            input_p1_raw_pad,
+            current_scene_data,
+            text_box_data,
+            pause_data,
+        } = rhs;
         self.save = &self.save + &save;
         self.input_p1_raw_pad = input_p1_raw_pad;
-        if let Some((current_scene_id, current_scene_switch_flags, current_scene_chest_flags, current_scene_room_clear_flags)) = current_scene_data {
+        if let Some((
+            current_scene_id,
+            current_scene_switch_flags,
+            current_scene_chest_flags,
+            current_scene_room_clear_flags,
+        )) = current_scene_data
+        {
             self.current_scene_id = current_scene_id;
             self.current_scene_switch_flags = current_scene_switch_flags;
             self.current_scene_chest_flags = current_scene_chest_flags;
@@ -360,11 +401,23 @@ impl AddAssign<Delta> for Ram {
     }
 }
 
-impl<'a, 'b> Sub<&'b Ram> for &'a Ram {
+impl Sub<&Ram> for &Ram {
     type Output = Delta;
 
     fn sub(self, rhs: &Ram) -> Delta {
-        let Ram { ref save, input_p1_raw_pad, current_scene_id, current_scene_switch_flags, current_scene_chest_flags, current_scene_room_clear_flags, current_text_box_id, text_box_contents, pause_state, pause_changing, pause_screen_idx } = *self;
+        let Ram {
+            ref save,
+            input_p1_raw_pad,
+            current_scene_id,
+            current_scene_switch_flags,
+            current_scene_chest_flags,
+            current_scene_room_clear_flags,
+            current_text_box_id,
+            text_box_contents,
+            pause_state,
+            pause_changing,
+            pause_screen_idx,
+        } = *self;
         Delta {
             save: save - &rhs.save,
             input_p1_raw_pad,
@@ -372,14 +425,31 @@ impl<'a, 'b> Sub<&'b Ram> for &'a Ram {
                 && current_scene_switch_flags == rhs.current_scene_switch_flags
                 && current_scene_chest_flags == rhs.current_scene_chest_flags
                 && current_scene_room_clear_flags == rhs.current_scene_room_clear_flags
-            { None } else { Some((current_scene_id, current_scene_switch_flags, current_scene_chest_flags, current_scene_room_clear_flags)) },
+            {
+                None
+            } else {
+                Some((
+                    current_scene_id,
+                    current_scene_switch_flags,
+                    current_scene_chest_flags,
+                    current_scene_room_clear_flags,
+                ))
+            },
             text_box_data: if current_text_box_id == rhs.current_text_box_id
                 && text_box_contents == rhs.text_box_contents
-            { None } else { Some((current_text_box_id, text_box_contents)) },
+            {
+                None
+            } else {
+                Some((current_text_box_id, text_box_contents))
+            },
             pause_data: if pause_state == rhs.pause_state
                 && pause_changing == rhs.pause_changing
                 && pause_screen_idx == rhs.pause_screen_idx
-            { None } else { Some((pause_state, pause_changing, pause_screen_idx)) },
+            {
+                None
+            } else {
+                Some((pause_state, pause_changing, pause_screen_idx))
+            },
         }
     }
 }

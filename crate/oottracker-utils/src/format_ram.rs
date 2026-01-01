@@ -1,20 +1,21 @@
-#![deny(rust_2018_idioms, unused, unused_import_braces, unused_lifetimes, unused_qualifications, warnings)]
+#![deny(
+    rust_2018_idioms,
+    unused,
+    unused_import_braces,
+    unused_lifetimes,
+    unused_qualifications,
+    warnings
+)]
 #![forbid(unsafe_code)]
 
 use {
+    oottracker::ram::{self, Ram},
     std::{
         fs::File,
-        io::{
-            self,
-            prelude::*,
-        },
+        io::{self, prelude::*},
         path::PathBuf,
     },
     thiserror::Error,
-    oottracker::ram::{
-        self,
-        Ram,
-    },
 };
 
 #[derive(clap::Parser)]
@@ -25,8 +26,10 @@ struct Args {
 
 #[derive(Debug, Error)]
 enum Error {
-    #[error(transparent)] Decode(#[from] ram::DecodeError),
-    #[error(transparent)] Io(#[from] io::Error),
+    #[error(transparent)]
+    Decode(#[from] ram::DecodeError),
+    #[error(transparent)]
+    Io(#[from] io::Error),
 }
 
 #[wheel::main]

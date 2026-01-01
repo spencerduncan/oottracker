@@ -1,55 +1,34 @@
-#![deny(rust_2018_idioms, unused, unused_crate_dependencies, unused_import_braces, unused_qualifications, warnings)]
+#![deny(
+    rust_2018_idioms,
+    unused,
+    unused_crate_dependencies,
+    unused_import_braces,
+    unused_qualifications,
+    warnings
+)]
 #![allow(unused_extern_crates)] // apparently rocket-derive still uses `extern crate`
 #![forbid(unsafe_code)]
 
 use {
-    std::{
-        collections::hash_map::{
-            self,
-            HashMap,
-        },
-        fmt,
-        sync::Arc,
-        time::{
-            Duration,
-            Instant,
-        },
-    },
-    async_proto::{
-        ReadError,
-        WriteError,
-    },
+    crate::{mw::MwState, restream::RestreamState},
+    async_proto::{ReadError, WriteError},
     derive_more::From,
     futures::{
-        future::{
-            FutureExt as _,
-            TryFutureExt as _,
-        },
+        future::{FutureExt as _, TryFutureExt as _},
         stream::TryStreamExt as _,
     },
     lazy_regex::regex_is_match,
+    oottracker::{Knowledge, ModelState, Ram, TrackerCtx},
     rocket::http::Status,
-    sqlx::{
-        PgPool,
-        postgres::PgConnectOptions,
-        types::Json,
+    sqlx::{postgres::PgConnectOptions, types::Json, PgPool},
+    std::{
+        collections::hash_map::{self, HashMap},
+        fmt,
+        sync::Arc,
+        time::{Duration, Instant},
     },
-    tokio::sync::{
-        Mutex,
-        RwLock,
-        watch::*,
-    },
+    tokio::sync::{watch::*, Mutex, RwLock},
     warp::Filter as _,
-    oottracker::{
-        Knowledge,
-        ModelState,
-        Ram,
-        TrackerCtx,
-    },
-    crate::{
-        mw::MwState,
-        restream::RestreamState,
-    },
 };
 
 mod http;
@@ -81,7 +60,9 @@ impl RoomState {
     fn from_model(name: &str, model: ModelState) -> Self {
         let (tx, rx) = channel(());
         Self {
-            tx, rx, model,
+            tx,
+            rx,
+            model,
             name: name.to_owned(),
             last_saved: Instant::now(),
         }
@@ -95,15 +76,23 @@ impl RoomState {
     }
 
     pub(crate) async fn force_save(&mut self, pool: &PgPool) -> Result<(), Error> {
-        let ModelState { ref knowledge, ref ram, .. } = self.model; //TODO include tracker context
-        //TODO versioning (e.g. to recover RAM from previous versions)
+        let ModelState {
+            ref knowledge,
+            ref ram,
+            ..
+        } = self.model; //TODO include tracker context
+                        //TODO versioning (e.g. to recover RAM from previous versions)
         sqlx::query!("INSERT INTO rooms (name, knowledge, ram) VALUES ($1, $2, $3) ON CONFLICT (name) DO UPDATE SET knowledge = EXCLUDED.knowledge, ram = EXCLUDED.ram", self.name, serde_json::to_value(knowledge)?, &ram.to_ranges()[..]).execute(pool).await?;
         self.last_saved = Instant::now();
         Ok(())
     }
 }
 
-async fn get_room<T>(rooms: &Rooms, name: String, f: impl FnOnce(&RoomState) -> T) -> Result<T, Error> {
+async fn get_room<T>(
+    rooms: &Rooms,
+    name: String,
+    f: impl FnOnce(&RoomState) -> T,
+) -> Result<T, Error> {
     let mut rooms = rooms.lock().await;
     Ok(f(match rooms.entry(name.clone()) {
         hash_map::Entry::Occupied(entry) => entry.into_mut(),
@@ -111,14 +100,21 @@ async fn get_room<T>(rooms: &Rooms, name: String, f: impl FnOnce(&RoomState) -> 
     }))
 }
 
-async fn edit_room(pool: &PgPool, rooms: &Rooms, name: String, f: impl FnOnce(&mut RoomState) -> Result<(), Error>) -> Result<(), Error> {
+async fn edit_room(
+    pool: &PgPool,
+    rooms: &Rooms,
+    name: String,
+    f: impl FnOnce(&mut RoomState) -> Result<(), Error>,
+) -> Result<(), Error> {
     let mut rooms = rooms.lock().await;
     let room = match rooms.entry(name.clone()) {
         hash_map::Entry::Occupied(entry) => entry.into_mut(),
         hash_map::Entry::Vacant(entry) => entry.insert(RoomState::new(&name)?),
     };
     f(room)?;
-    room.tx.send(()).expect("failed to notify websockets about state change");
+    room.tx
+        .send(())
+        .expect("failed to notify websockets about state change");
     room.save(pool).await?;
     Ok(())
 }
@@ -170,12 +166,27 @@ impl<'r> rocket::response::Responder<'r, 'static> for Error {
 
 #[wheel::main(rocket)]
 async fn main() -> Result<(), Error> {
-    let pool = PgPool::connect_with(PgConnectOptions::default().database("oottracker").application_name("oottracker-web")).await?;
+    let pool = PgPool::connect_with(
+        PgConnectOptions::default()
+            .database("oottracker")
+            .application_name("oottracker-web"),
+    )
+    .await?;
     let rooms = {
         let mut rooms = HashMap::default();
-        let mut query = sqlx::query!(r#"SELECT name, knowledge AS "knowledge: Json<Knowledge>", ram FROM rooms"#).fetch(&pool);
+        let mut query = sqlx::query!(
+            r#"SELECT name, knowledge AS "knowledge: Json<Knowledge>", ram FROM rooms"#
+        )
+        .fetch(&pool);
         while let Some(room) = query.try_next().await? {
-            let state = RoomState::from_model(&room.name, ModelState { knowledge: room.knowledge.0, ram: Ram::from_range_bufs(room.ram)?, tracker_ctx: TrackerCtx::default() });
+            let state = RoomState::from_model(
+                &room.name,
+                ModelState {
+                    knowledge: room.knowledge.0,
+                    ram: Ram::from_range_bufs(room.ram)?,
+                    tracker_ctx: TrackerCtx::default(),
+                },
+            );
             rooms.insert(room.name, state);
         }
         Rooms::new(Mutex::new(rooms))
@@ -184,11 +195,7 @@ async fn main() -> Result<(), Error> {
     let restreams = {
         //TODO remove hardcoded restream, allow configuring active restreams somehow
         let mut map = HashMap::default();
-        let multiworld_3v3 = vec![
-            vec!["a1", "b1"],
-            vec!["a2", "b2"],
-            vec!["a3", "b3"],
-        ];
+        let multiworld_3v3 = vec![vec!["a1", "b1"], vec!["a2", "b2"], vec!["a3", "b3"]];
         map.insert(format!("fenhl"), RestreamState::new(multiworld_3v3));
         Restreams::new(RwLock::new(map))
     };
@@ -198,14 +205,24 @@ async fn main() -> Result<(), Error> {
         let rooms = Rooms::clone(&rooms);
         let restreams = Restreams::clone(&restreams);
         let mw_rooms = MwRooms::clone(&mw_rooms);
-        let handler = warp::ws().and_then(move |ws| websocket::ws_handler(pool.clone(), Rooms::clone(&rooms), Restreams::clone(&restreams), MwRooms::clone(&mw_rooms), ws));
+        let handler = warp::ws().and_then(move |ws| {
+            websocket::ws_handler(
+                pool.clone(),
+                Rooms::clone(&rooms),
+                Restreams::clone(&restreams),
+                MwRooms::clone(&mw_rooms),
+                ws,
+            )
+        });
         tokio::spawn(warp::serve(handler).run(([127, 0, 0, 1], 24808))).err_into()
     };
-    let rocket_task = tokio::spawn(http::rocket(pool, rooms, restreams, mw_rooms).launch()).map(|res| match res {
-        Ok(Ok(_)) => Ok(()),
-        Ok(Err(e)) => Err(Error::from(e)),
-        Err(e) => Err(Error::from(e)),
-    });
+    let rocket_task = tokio::spawn(http::rocket(pool, rooms, restreams, mw_rooms).launch()).map(
+        |res| match res {
+            Ok(Ok(_)) => Ok(()),
+            Ok(Err(e)) => Err(Error::from(e)),
+            Err(e) => Err(Error::from(e)),
+        },
+    );
     let ((), ()) = tokio::try_join!(websocket_task, rocket_task)?;
     Ok(())
 }

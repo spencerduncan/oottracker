@@ -1,66 +1,38 @@
+#[cfg(feature = "firebase")]
+use crate::firebase;
 use {
-    std::{
-        any::TypeId,
-        collections::hash_map::DefaultHasher,
-        fmt,
-        hash::{
-            Hash,
-            Hasher as _,
-        },
-        io::{
-            self,
-            prelude::*,
-        },
-        net::Ipv4Addr,
-        pin::Pin,
-        sync::Arc,
-        time::Duration,
+    crate::{
+        proto::{self, Packet, TCP_PORT},
+        ram::{self, Ram},
+        websocket, ModelState,
     },
     async_proto::Protocol as _,
     derive_more::From,
     futures::{
         future::Future,
-        stream::{
-            self,
-            SplitSink,
-            SplitStream,
-            Stream,
-            StreamExt as _,
-            TryStreamExt as _,
-        },
+        stream::{self, SplitSink, SplitStream, Stream, StreamExt as _, TryStreamExt as _},
     },
     itertools::Itertools as _,
+    std::{
+        any::TypeId,
+        collections::hash_map::DefaultHasher,
+        fmt,
+        hash::{Hash, Hasher as _},
+        io::{self, prelude::*},
+        net::Ipv4Addr,
+        pin::Pin,
+        sync::Arc,
+        time::Duration,
+    },
     tokio::{
-        net::{
-            TcpListener,
-            TcpStream,
-            UdpSocket,
-        },
+        net::{TcpListener, TcpStream, UdpSocket},
         sync::Mutex,
         time::sleep,
     },
     tokio_stream::wrappers::TcpListenerStream,
-    tokio_tungstenite::{
-        MaybeTlsStream,
-        WebSocketStream,
-        tungstenite,
-    },
+    tokio_tungstenite::{tungstenite, MaybeTlsStream, WebSocketStream},
     wheel::FromArc,
-    crate::{
-        ModelState,
-        proto::{
-            self,
-            Packet,
-            TCP_PORT,
-        },
-        ram::{
-            self,
-            Ram,
-        },
-        websocket,
-    },
 };
-#[cfg(feature = "firebase")] use crate::firebase;
 
 #[derive(Debug, From, FromArc, Clone)]
 pub enum Error {
@@ -89,7 +61,9 @@ impl fmt::Display for Error {
             Error::Io(e) => write!(f, "I/O error: {}", e),
             Error::Protocol(e) => e.fmt(f),
             Error::RamDecode(e) => write!(f, "error decoding game RAM: {:?}", e),
-            Error::UnexpectedWebsocketMessage => write!(f, "unexpected WebSocket message kind from server"),
+            Error::UnexpectedWebsocketMessage => {
+                write!(f, "unexpected WebSocket message kind from server")
+            }
             Error::Websocket { display, .. } => display.fmt(f),
             Error::Write(e) => e.fmt(f),
         }
@@ -101,10 +75,15 @@ pub trait Connection: fmt::Debug + Send + Sync {
     fn can_change_state(&self) -> bool;
     fn display_kind(&self) -> &'static str;
     fn packet_stream(&self) -> Pin<Box<dyn Stream<Item = Result<Packet, Error>> + Send>>;
-    fn set_state(&self, model: &ModelState) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send>>;
+    fn set_state(
+        &self,
+        model: &ModelState,
+    ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send>>;
 
     #[cfg(feature = "firebase")]
-    fn firebase_app(&self) -> Option<&dyn firebase::App> { None }
+    fn firebase_app(&self) -> Option<&dyn firebase::App> {
+        None
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -117,8 +96,12 @@ impl Connection for NullConnection {
         state.finish()
     }
 
-    fn can_change_state(&self) -> bool { false }
-    fn display_kind(&self) -> &'static str { "nothing" }
+    fn can_change_state(&self) -> bool {
+        false
+    }
+    fn display_kind(&self) -> &'static str {
+        "nothing"
+    }
 
     fn packet_stream(&self) -> Pin<Box<dyn Stream<Item = Result<Packet, Error>> + Send>> {
         Box::pin(stream::pending())
@@ -130,7 +113,8 @@ impl Connection for NullConnection {
 }
 
 type WsStream = Arc<Mutex<SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>>>;
-type WsSink = Arc<Mutex<SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, tungstenite::Message>>>;
+type WsSink =
+    Arc<Mutex<SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, tungstenite::Message>>>;
 
 pub struct WebConnection {
     room: String,
@@ -140,8 +124,16 @@ pub struct WebConnection {
 
 impl WebConnection {
     pub async fn new(room: impl ToString) -> Result<WebConnection, async_proto::WriteError> {
-        let (mut sink, stream) = tokio_tungstenite::connect_async("wss://oottracker.fenhl.net/websocket").await?.0.split();
-        websocket::ClientMessage::SubscribeRaw { room: room.to_string() }.write_ws(&mut sink).await?;
+        let (mut sink, stream) =
+            tokio_tungstenite::connect_async("wss://oottracker.fenhl.net/websocket")
+                .await?
+                .0
+                .split();
+        websocket::ClientMessage::SubscribeRaw {
+            room: room.to_string(),
+        }
+        .write_ws(&mut sink)
+        .await?;
         Ok(WebConnection {
             room: room.to_string(),
             sink: Arc::new(Mutex::new(sink)),
@@ -164,27 +156,47 @@ impl Connection for WebConnection {
         state.finish()
     }
 
-    fn can_change_state(&self) -> bool { true } //TODO support for read-only (passwordless) connections?
-    fn display_kind(&self) -> &'static str { "web" }
+    fn can_change_state(&self) -> bool {
+        true
+    } //TODO support for read-only (passwordless) connections?
+    fn display_kind(&self) -> &'static str {
+        "web"
+    }
 
     fn packet_stream(&self) -> Pin<Box<dyn Stream<Item = Result<Packet, Error>> + Send>> {
         let stream = Arc::clone(&self.stream);
         Box::pin(stream::unfold(stream, |stream| async move {
             loop {
                 let stream_clone = Arc::clone(&stream);
-                break match websocket::ServerMessage::read_ws(&mut *stream_clone.lock().await).await {
+                break match websocket::ServerMessage::read_ws(&mut *stream_clone.lock().await).await
+                {
                     Ok(websocket::ServerMessage::Ping) => continue,
-                    Ok(websocket::ServerMessage::Error { debug, display }) => Some((Err(Error::Websocket { debug, display }), stream)),
-                    Ok(websocket::ServerMessage::Init(_)) | Ok(websocket::ServerMessage::Update { .. }) => Some((Err(Error::UnexpectedWebsocketMessage), stream)),
-                    Ok(websocket::ServerMessage::InitRaw(model)) => Some((Ok(Packet::ModelInit(model)), stream)),
-                    Ok(websocket::ServerMessage::UpdateRaw(delta)) => Some((Ok(Packet::ModelDelta(delta)), stream)),
-                    Err(e) => Some((Err(Error::Protocol(proto::ReadError::Packet(Arc::new(e)))), stream)),
+                    Ok(websocket::ServerMessage::Error { debug, display }) => {
+                        Some((Err(Error::Websocket { debug, display }), stream))
+                    }
+                    Ok(websocket::ServerMessage::Init(_))
+                    | Ok(websocket::ServerMessage::Update { .. }) => {
+                        Some((Err(Error::UnexpectedWebsocketMessage), stream))
+                    }
+                    Ok(websocket::ServerMessage::InitRaw(model)) => {
+                        Some((Ok(Packet::ModelInit(model)), stream))
+                    }
+                    Ok(websocket::ServerMessage::UpdateRaw(delta)) => {
+                        Some((Ok(Packet::ModelDelta(delta)), stream))
+                    }
+                    Err(e) => Some((
+                        Err(Error::Protocol(proto::ReadError::Packet(Arc::new(e)))),
+                        stream,
+                    )),
                 };
             }
         }))
     }
 
-    fn set_state(&self, model: &ModelState) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send>> {
+    fn set_state(
+        &self,
+        model: &ModelState,
+    ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send>> {
         let room = self.room.clone();
         let state = model.clone();
         let sink = Arc::clone(&self.sink);
@@ -206,7 +218,9 @@ pub struct FirebaseConnection {
 
 #[cfg(feature = "firebase")]
 impl FirebaseConnection {
-    pub fn new<A: firebase::App + Default + Clone + Send>(room: firebase::Room<A>) -> FirebaseConnection {
+    pub fn new<A: firebase::App + Default + Clone + Send>(
+        room: firebase::Room<A>,
+    ) -> FirebaseConnection {
         FirebaseConnection {
             app: Box::new(A::default()),
             room: room.to_dyn(),
@@ -223,23 +237,29 @@ impl Connection for FirebaseConnection {
         state.finish()
     }
 
-    fn can_change_state(&self) -> bool { true } //TODO support for read-only (passwordless) connections?
-    fn display_kind(&self) -> &'static str { "Firebase" }
+    fn can_change_state(&self) -> bool {
+        true
+    } //TODO support for read-only (passwordless) connections?
+    fn display_kind(&self) -> &'static str {
+        "Firebase"
+    }
 
     fn packet_stream(&self) -> Pin<Box<dyn Stream<Item = Result<Packet, Error>> + Send>> {
         Box::pin(
-            self.room.subscribe()
+            self.room
+                .subscribe()
                 .map_ok(|(cell, new_value)| Packet::UpdateCell(cell, new_value))
-                .err_into()
+                .err_into(),
         )
     }
 
-    fn set_state(&self, model: &ModelState) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send>> {
+    fn set_state(
+        &self,
+        model: &ModelState,
+    ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send>> {
         let room = self.room.clone();
         let model = model.clone();
-        Box::pin(async move {
-            Ok(room.set_state(&model).await?)
-        })
+        Box::pin(async move { Ok(room.set_state(&model).await?) })
     }
 
     fn firebase_app(&self) -> Option<&dyn firebase::App> {
@@ -257,8 +277,12 @@ impl Connection for TcpConnection {
         state.finish()
     }
 
-    fn can_change_state(&self) -> bool { false } //TODO support for two-way TCP connections?
-    fn display_kind(&self) -> &'static str { "TCP" }
+    fn can_change_state(&self) -> bool {
+        false
+    } //TODO support for two-way TCP connections?
+    fn display_kind(&self) -> &'static str {
+        "TCP"
+    }
 
     fn packet_stream(&self) -> Pin<Box<dyn Stream<Item = Result<Packet, Error>> + Send>> {
         Box::pin(
@@ -266,7 +290,7 @@ impl Connection for TcpConnection {
                 .map_ok(|listener| TcpListenerStream::new(listener).err_into::<Error>())
                 .try_flatten()
                 .map_ok(|tcp_stream| proto::read(tcp_stream).err_into::<Error>())
-                .try_flatten()
+                .try_flatten(),
         )
     }
 
@@ -288,21 +312,31 @@ impl Connection for RetroArchConnection {
         state.finish()
     }
 
-    fn can_change_state(&self) -> bool { false }
-    fn display_kind(&self) -> &'static str { "RetroArch" }
+    fn can_change_state(&self) -> bool {
+        false
+    }
+    fn display_kind(&self) -> &'static str {
+        "RetroArch"
+    }
 
     fn packet_stream(&self) -> Pin<Box<dyn Stream<Item = Result<Packet, Error>> + Send>> {
         let port = self.port;
-        Box::pin(stream::try_unfold(Box::pin(async move {
-            let sock = UdpSocket::bind((Ipv4Addr::UNSPECIFIED, 0)).await?;
-            sock.connect((Ipv4Addr::LOCALHOST, port)).await?;
-            Ok::<_, Error>(sock)
-        }) as Pin<Box<dyn Future<Output = _> + Send>>, |sock| async move {
-            sleep(Duration::from_secs(1)).await;
-            let sock = sock.await?;
-            let ram = retroarch_read_ram(&sock).await?;
-            Ok(Some((Packet::RamInit(ram), Box::pin(async move { Ok(sock) }) as Pin<Box<dyn Future<Output = _> + Send>>)))
-        }))
+        Box::pin(stream::try_unfold(
+            Box::pin(async move {
+                let sock = UdpSocket::bind((Ipv4Addr::UNSPECIFIED, 0)).await?;
+                sock.connect((Ipv4Addr::LOCALHOST, port)).await?;
+                Ok::<_, Error>(sock)
+            }) as Pin<Box<dyn Future<Output = _> + Send>>,
+            |sock| async move {
+                sleep(Duration::from_secs(1)).await;
+                let sock = sock.await?;
+                let ram = retroarch_read_ram(&sock).await?;
+                Ok(Some((
+                    Packet::RamInit(ram),
+                    Box::pin(async move { Ok(sock) }) as Pin<Box<dyn Future<Output = _> + Send>>,
+                )))
+            },
+        ))
     }
 
     fn set_state(&self, _: &ModelState) -> Pin<Box<dyn Future<Output = Result<(), Error>> + Send>> {
@@ -314,41 +348,57 @@ impl Connection for RetroArchConnection {
 /// but there is a Python implementation at
 /// <https://github.com/eadmaster/console_hiscore/blob/master/tools/retroarchpythonapi.py>
 async fn retroarch_read_ram(sock: &UdpSocket) -> Result<Ram, Error> {
-    let ranges = stream::iter(ram::RANGES.iter().copied().tuples()).then(|(start, len)| async move {
-        let start = 0x8000_0000 + start; // ram::RANGES uses RDRAM addresses but READ_CORE_MEMORY uses system bus addresses
-        // make sure we're word-aligned on both ends
-        let offset_in_word = start & 0x3;
-        let mut aligned_start = (start - offset_in_word) as usize;
-        let mut aligned_len = len + offset_in_word;
-        if aligned_len % 0x3 != 0 { aligned_len += 4 - (aligned_len & 0x3) }
-        let mut packet_buf = [0; 4096];
-        let mut ram_buf = Vec::with_capacity(aligned_len as usize);
-        let mut prefix = Vec::with_capacity(21);
-        let mut msg = Vec::with_capacity(26);
-        while aligned_len > 0 {
-            // make sure the hex-encoded response fits into the 4096-byte buffer RetroArch uses
-            // each encoded byte requires 3 bytes of buffer space (the whitespace plus the 2-character hex encoding)
-            const MAX_ENCODED_BYTES_PER_BUFFER: u32 = (4_096 - "READ_CORE_MEMORY ffffffff 9999\n".len() as u32) / 3;
-
-            // using READ_CORE_MEMORY instead of READ_CORE_RAM as suggested in https://github.com/libretro/RetroArch/blob/0357b6c/command.h#L430-L437
-            let count = aligned_len.min(MAX_ENCODED_BYTES_PER_BUFFER);
-            prefix.clear();
-            write!(&mut prefix, "READ_CORE_MEMORY {:x} ", aligned_start).expect("failed to compose packet");
-            msg.clear();
-            write!(&mut msg, "READ_CORE_MEMORY {:x} ", aligned_start).expect("failed to compose packet");
-            writeln!(&mut msg, "{}", count).expect("failed to compose packet");
-            sock.send(&msg).await?;
-            let packet_len = sock.recv(&mut packet_buf).await?;
-            let response = &packet_buf[prefix.len()..packet_len - 1];
-            let words = response.split(|&sep| sep == b' ').map(|byte| u8::from_str_radix(&String::from_utf8_lossy(byte), 16).expect("invalid byte representation")).tuples();
-            for (b3, b2, b1, b0) in words {
-                ram_buf.extend_from_slice(&[b0, b1, b2, b3]);
+    let ranges = stream::iter(ram::RANGES.iter().copied().tuples())
+        .then(|(start, len)| async move {
+            let start = 0x8000_0000 + start; // ram::RANGES uses RDRAM addresses but READ_CORE_MEMORY uses system bus addresses
+                                             // make sure we're word-aligned on both ends
+            let offset_in_word = start & 0x3;
+            let mut aligned_start = (start - offset_in_word) as usize;
+            let mut aligned_len = len + offset_in_word;
+            if aligned_len % 0x3 != 0 {
+                aligned_len += 4 - (aligned_len & 0x3)
             }
-            //if words.into_buffer().next().is_some() { panic!("did not receive a whole number of words") }
-            aligned_start += count as usize;
-            aligned_len -= count;
-        }
-        Ok::<Vec<u8>, Error>(ram_buf[offset_in_word as usize..(offset_in_word + len) as usize].to_owned())
-    }).try_collect::<Vec<_>>().await?;
+            let mut packet_buf = [0; 4096];
+            let mut ram_buf = Vec::with_capacity(aligned_len as usize);
+            let mut prefix = Vec::with_capacity(21);
+            let mut msg = Vec::with_capacity(26);
+            while aligned_len > 0 {
+                // make sure the hex-encoded response fits into the 4096-byte buffer RetroArch uses
+                // each encoded byte requires 3 bytes of buffer space (the whitespace plus the 2-character hex encoding)
+                const MAX_ENCODED_BYTES_PER_BUFFER: u32 =
+                    (4_096 - "READ_CORE_MEMORY ffffffff 9999\n".len() as u32) / 3;
+
+                // using READ_CORE_MEMORY instead of READ_CORE_RAM as suggested in https://github.com/libretro/RetroArch/blob/0357b6c/command.h#L430-L437
+                let count = aligned_len.min(MAX_ENCODED_BYTES_PER_BUFFER);
+                prefix.clear();
+                write!(&mut prefix, "READ_CORE_MEMORY {:x} ", aligned_start)
+                    .expect("failed to compose packet");
+                msg.clear();
+                write!(&mut msg, "READ_CORE_MEMORY {:x} ", aligned_start)
+                    .expect("failed to compose packet");
+                writeln!(&mut msg, "{}", count).expect("failed to compose packet");
+                sock.send(&msg).await?;
+                let packet_len = sock.recv(&mut packet_buf).await?;
+                let response = &packet_buf[prefix.len()..packet_len - 1];
+                let words = response
+                    .split(|&sep| sep == b' ')
+                    .map(|byte| {
+                        u8::from_str_radix(&String::from_utf8_lossy(byte), 16)
+                            .expect("invalid byte representation")
+                    })
+                    .tuples();
+                for (b3, b2, b1, b0) in words {
+                    ram_buf.extend_from_slice(&[b0, b1, b2, b3]);
+                }
+                //if words.into_buffer().next().is_some() { panic!("did not receive a whole number of words") }
+                aligned_start += count as usize;
+                aligned_len -= count;
+            }
+            Ok::<Vec<u8>, Error>(
+                ram_buf[offset_in_word as usize..(offset_in_word + len) as usize].to_owned(),
+            )
+        })
+        .try_collect::<Vec<_>>()
+        .await?;
     Ok(Ram::from_range_bufs(ranges)?)
 }

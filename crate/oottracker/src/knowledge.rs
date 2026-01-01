@@ -1,41 +1,21 @@
 use {
+    async_proto::{Protocol, ReadError, WriteError},
+    collect_mac::collect,
+    derivative::Derivative,
+    derive_more::From,
+    itertools::Itertools as _,
+    ootr::{item::Item, model::*, region::Mq},
+    serde::{Deserialize, Serialize},
+    serde_json::{json, Value as Json},
     std::{
-        collections::{
-            HashMap,
-            HashSet,
-        },
+        collections::{HashMap, HashSet},
         fmt,
         future::Future,
         io::prelude::*,
         ops::BitAnd,
         pin::Pin,
     },
-    async_proto::{
-        Protocol,
-        ReadError,
-        WriteError,
-    },
-    collect_mac::collect,
-    derivative::Derivative,
-    derive_more::From,
-    itertools::Itertools as _,
-    serde::{
-        Deserialize,
-        Serialize,
-    },
-    serde_json::{
-        Value as Json,
-        json,
-    },
-    tokio::io::{
-        AsyncRead,
-        AsyncWrite,
-    },
-    ootr::{
-        item::Item,
-        model::*,
-        region::Mq,
-    },
+    tokio::io::{AsyncRead, AsyncWrite},
 };
 
 #[derive(Derivative, Debug, Clone, Copy, PartialEq, Eq, Protocol, Deserialize, Serialize)]
@@ -66,7 +46,8 @@ pub struct Knowledge {
     pub mq: HashMap<Dungeon, Mq>,
     pub active_trials: HashMap<Medallion, bool>,
     pub dungeon_reward_locations: HashMap<DungeonReward, DungeonRewardLocation>,
-    #[derivative(Default(value = "Some(HashMap::default())"))] //TODO include exits that are never shuffled
+    #[derivative(Default(value = "Some(HashMap::default())"))]
+    //TODO include exits that are never shuffled
     pub exits: Option<HashMap<String, HashMap<String, String>>>, //TODO remove option wrapping
     pub progression_mode: ProgressionMode, //TODO automatically determine from remaining model state
 }
@@ -186,7 +167,12 @@ impl Knowledge {
     }
 
     pub fn get_exit<'a>(&'a self, from: &str, to: &'a str) -> Option<&'a str> {
-        self.exits.as_ref().map_or(Some(to), |exits| exits.get(from).and_then(|region_exits| region_exits.get(to)).map(String::as_ref))
+        self.exits.as_ref().map_or(Some(to), |exits| {
+            exits
+                .get(from)
+                .and_then(|region_exits| region_exits.get(to))
+                .map(String::as_ref)
+        })
     }
 }
 
@@ -223,14 +209,23 @@ impl BitAnd for Knowledge {
     type Output = Result<Knowledge, Contradiction>;
 
     fn bitand(self, rhs: Knowledge) -> Result<Knowledge, Contradiction> {
-        let Knowledge { bool_settings, string_settings, tricks, mq, active_trials, dungeon_reward_locations, exits: _ /*TODO*/, progression_mode: _ /*TODO*/ } = self;
+        let Knowledge {
+            bool_settings,
+            string_settings,
+            tricks,
+            mq,
+            active_trials,
+            dungeon_reward_locations,
+            exits: _,            /*TODO*/
+            progression_mode: _, /*TODO*/
+        } = self;
         Ok(Knowledge {
             bool_settings: {
                 let mut bool_settings = bool_settings;
                 for (name, rhs_enabled) in rhs.bool_settings {
                     if let Some(&lhs_enabled) = bool_settings.get(&name) {
                         if lhs_enabled != rhs_enabled {
-                            return Err(Contradiction::BoolSetting { name, lhs_enabled })
+                            return Err(Contradiction::BoolSetting { name, lhs_enabled });
                         }
                     } else {
                         bool_settings.insert(name, rhs_enabled);
@@ -245,9 +240,10 @@ impl BitAnd for Knowledge {
                         let values = lhs_values & &rhs_values;
                         if values.is_empty() {
                             return Err(Contradiction::StringSetting {
-                                name, rhs_values,
+                                name,
+                                rhs_values,
                                 lhs_values: lhs_values.clone(),
-                            })
+                            });
                         }
                         string_settings.insert(name, values);
                     } else {
@@ -261,7 +257,7 @@ impl BitAnd for Knowledge {
                     for (name, rhs_enabled) in rhs_tricks {
                         if let Some(&lhs_enabled) = tricks.get(&name) {
                             if lhs_enabled != rhs_enabled {
-                                return Err(Contradiction::Trick { name, lhs_enabled })
+                                return Err(Contradiction::Trick { name, lhs_enabled });
                             }
                         } else {
                             tricks.insert(name, rhs_enabled);
@@ -274,7 +270,7 @@ impl BitAnd for Knowledge {
                         return Err(Contradiction::Trick {
                             name: lhs_trick.clone(),
                             lhs_enabled: true,
-                        })
+                        });
                     } else {
                         None
                     }
@@ -286,7 +282,7 @@ impl BitAnd for Knowledge {
                         return Err(Contradiction::Trick {
                             name: rhs_trick.clone(),
                             lhs_enabled: false,
-                        })
+                        });
                     } else {
                         None
                     }
@@ -300,7 +296,7 @@ impl BitAnd for Knowledge {
                 for (dungeon, rhs_mq) in rhs.mq {
                     if let Some(&lhs_mq) = mq.get(&dungeon) {
                         if lhs_mq != rhs_mq {
-                            return Err(Contradiction::Mq { dungeon, lhs_mq })
+                            return Err(Contradiction::Mq { dungeon, lhs_mq });
                         }
                     } else {
                         mq.insert(dungeon, rhs_mq);
@@ -313,7 +309,7 @@ impl BitAnd for Knowledge {
                 for (trial, rhs_active) in rhs.active_trials {
                     if let Some(&lhs_active) = active_trials.get(&trial) {
                         if lhs_active != rhs_active {
-                            return Err(Contradiction::Trial { trial, lhs_active })
+                            return Err(Contradiction::Trial { trial, lhs_active });
                         }
                     } else {
                         active_trials.insert(trial, rhs_active);
@@ -326,7 +322,11 @@ impl BitAnd for Knowledge {
                 for (reward, rhs_location) in rhs.dungeon_reward_locations {
                     if let Some(&lhs_location) = dungeon_reward_locations.get(&reward) {
                         if lhs_location != rhs_location {
-                            return Err(Contradiction::DungeonRewardLocation { reward, lhs_location, rhs_location })
+                            return Err(Contradiction::DungeonRewardLocation {
+                                reward,
+                                lhs_location,
+                                rhs_location,
+                            });
                         }
                     } else {
                         dungeon_reward_locations.insert(reward, rhs_location);
@@ -334,14 +334,16 @@ impl BitAnd for Knowledge {
                 }
                 dungeon_reward_locations
             },
-            exits: None, //TODO
+            exits: None,                               //TODO
             progression_mode: ProgressionMode::Normal, //TODO this should actually be recalculated from the rest of the knowledge, use a dummy value for now
         })
     }
 }
 
 impl Protocol for Knowledge {
-    fn read<'a, R: AsyncRead + Unpin + Send + 'a>(stream: &'a mut R) -> Pin<Box<dyn Future<Output = Result<Knowledge, ReadError>> + Send + 'a>> {
+    fn read<'a, R: AsyncRead + Unpin + Send + 'a>(
+        stream: &'a mut R,
+    ) -> Pin<Box<dyn Future<Output = Result<Knowledge, ReadError>> + Send + 'a>> {
         Box::pin(async move {
             Ok(match u8::read(stream).await? {
                 0 => Knowledge {
@@ -361,7 +363,10 @@ impl Protocol for Knowledge {
         })
     }
 
-    fn write<'a, W: AsyncWrite + Unpin + Send + 'a>(&'a self, sink: &'a mut W) -> Pin<Box<dyn Future<Output = Result<(), WriteError>> + Send + 'a>> {
+    fn write<'a, W: AsyncWrite + Unpin + Send + 'a>(
+        &'a self,
+        sink: &'a mut W,
+    ) -> Pin<Box<dyn Future<Output = Result<(), WriteError>> + Send + 'a>> {
         Box::pin(async move {
             if *self == Knowledge::default() {
                 1u8.write(sink).await?;
@@ -370,10 +375,18 @@ impl Protocol for Knowledge {
             } else {
                 0u8.write(sink).await?;
                 self.bool_settings.write(sink).await?;
-                self.tricks.as_ref().expect("non-vanilla Knowledge should have Some in tricks field").write(sink).await?;
+                self.tricks
+                    .as_ref()
+                    .expect("non-vanilla Knowledge should have Some in tricks field")
+                    .write(sink)
+                    .await?;
                 self.dungeon_reward_locations.write(sink).await?;
                 self.mq.write(sink).await?;
-                self.exits.as_ref().expect("non-vanilla Knowledge should have Some in exits field").write(sink).await?;
+                self.exits
+                    .as_ref()
+                    .expect("non-vanilla Knowledge should have Some in exits field")
+                    .write(sink)
+                    .await?;
                 self.active_trials.write(sink).await?;
                 self.string_settings.write(sink).await?;
                 self.progression_mode.write(sink).await?;
@@ -408,10 +421,16 @@ impl Protocol for Knowledge {
         } else {
             0u8.write_sync(sink)?;
             self.bool_settings.write_sync(sink)?;
-            self.tricks.as_ref().expect("non-vanilla Knowledge should have Some in tricks field").write_sync(sink)?;
+            self.tricks
+                .as_ref()
+                .expect("non-vanilla Knowledge should have Some in tricks field")
+                .write_sync(sink)?;
             self.dungeon_reward_locations.write_sync(sink)?;
             self.mq.write_sync(sink)?;
-            self.exits.as_ref().expect("non-vanilla Knowledge should have Some in exits field").write_sync(sink)?;
+            self.exits
+                .as_ref()
+                .expect("non-vanilla Knowledge should have Some in exits field")
+                .write_sync(sink)?;
             self.active_trials.write_sync(sink)?;
             self.string_settings.write_sync(sink)?;
         }
@@ -421,7 +440,8 @@ impl Protocol for Knowledge {
 
 #[derive(Default, Deserialize, Serialize)]
 #[serde(default)]
-struct KnowledgeJson { // knowledge in what should eventually be a superset of the plando format. TODO always use this type instead of `Knowledge`
+struct KnowledgeJson {
+    // knowledge in what should eventually be a superset of the plando format. TODO always use this type instead of `Knowledge`
     settings: HashMap<String, Json>,
     dungeons: HashMap<String, Mq>,
     trials: HashMap<Medallion, TrialActive>,
@@ -432,18 +452,45 @@ struct KnowledgeJson { // knowledge in what should eventually be a superset of t
 
 impl From<Knowledge> for KnowledgeJson {
     fn from(knowledge: Knowledge) -> Self {
-        let Knowledge { bool_settings, string_settings, tricks, mq, active_trials, dungeon_reward_locations, exits: _, progression_mode } = knowledge;
-        let mut settings = bool_settings.into_iter().map(|(setting, enabled)| (setting, json!(enabled))).collect::<HashMap<_, _>>();
-        settings.extend(string_settings.into_iter().map(|(setting, values)| (setting, json!(values))));
-        settings.insert(format!("allowed_tricks"), json!(tricks));
+        let Knowledge {
+            bool_settings,
+            string_settings,
+            tricks,
+            mq,
+            active_trials,
+            dungeon_reward_locations,
+            exits: _,
+            progression_mode,
+        } = knowledge;
+        let mut settings = bool_settings
+            .into_iter()
+            .map(|(setting, enabled)| (setting, json!(enabled)))
+            .collect::<HashMap<_, _>>();
+        settings.extend(
+            string_settings
+                .into_iter()
+                .map(|(setting, values)| (setting, json!(values))),
+        );
+        settings.insert("allowed_tricks".to_string(), json!(tricks));
         let mut locations = HashMap::<_, Vec<Item>>::new();
         for (reward, loc) in dungeon_reward_locations {
-            locations.entry(loc.as_str().to_owned()).or_default().push(reward.into());
+            locations
+                .entry(loc.as_str().to_owned())
+                .or_default()
+                .push(reward.into());
         }
         Self {
-            settings, progression_mode, locations,
-            dungeons: mq.into_iter().map(|(dungeon, mq)| (dungeon.rando_name().to_owned(), mq)).collect(),
-            trials: active_trials.into_iter().map(|(trial, active)| (trial, active.into())).collect(),
+            settings,
+            progression_mode,
+            locations,
+            dungeons: mq
+                .into_iter()
+                .map(|(dungeon, mq)| (dungeon.rando_name().to_owned(), mq))
+                .collect(),
+            trials: active_trials
+                .into_iter()
+                .map(|(trial, active)| (trial, active.into()))
+                .collect(),
             entrances: HashMap::default(), //TODO
         }
     }
@@ -475,33 +522,71 @@ impl TryFrom<KnowledgeJson> for Knowledge {
     type Error = KnowledgeFromJsonError;
 
     fn try_from(knowledge: KnowledgeJson) -> Result<Self, KnowledgeFromJsonError> {
-        let KnowledgeJson { settings, dungeons, trials, entrances: _, locations, progression_mode } = knowledge;
+        let KnowledgeJson {
+            settings,
+            dungeons,
+            trials,
+            entrances: _,
+            locations,
+            progression_mode,
+        } = knowledge;
         let mut bool_settings = HashMap::default();
         let mut string_settings = HashMap::default();
         let mut tricks = HashMap::default();
         for (name, value) in settings {
             if name == "allowed_tricks" {
                 tricks = serde_json::from_value(value)?;
-                continue
+                continue;
             }
             match value {
-                Json::Bool(enabled) => { bool_settings.insert(name, enabled); }
-                Json::Array(values) => { string_settings.insert(name, values.into_iter().map(|value| serde_json::from_value(value)).try_collect()?); }
+                Json::Bool(enabled) => {
+                    bool_settings.insert(name, enabled);
+                }
+                Json::Array(values) => {
+                    string_settings.insert(
+                        name,
+                        values
+                            .into_iter()
+                            .map(serde_json::from_value)
+                            .try_collect()?,
+                    );
+                }
                 _ => return Err(KnowledgeFromJsonError::ValueType(value)),
             }
         }
         let mut dungeon_reward_locations = HashMap::default();
         for (loc, items) in locations {
-            let loc = loc.parse().map_err(|()| KnowledgeFromJsonError::UnknownLocation(loc))?;
+            let loc = loc
+                .parse()
+                .map_err(|()| KnowledgeFromJsonError::UnknownLocation(loc))?;
             for item in items {
-                let item = item.clone().try_into().map_err(|()| KnowledgeFromJsonError::UnknownItem(item))?;
+                let item = item
+                    .clone()
+                    .try_into()
+                    .map_err(|()| KnowledgeFromJsonError::UnknownItem(item))?;
                 dungeon_reward_locations.insert(item, loc);
             }
         }
         Ok(Self {
-            bool_settings, string_settings, dungeon_reward_locations, progression_mode,
-            mq: dungeons.into_iter().map(|(dungeon, mq)| Ok::<_, KnowledgeFromJsonError>((dungeon.parse().map_err(|()| KnowledgeFromJsonError::UnknownDungeon(dungeon))?, mq))).try_collect()?,
-            active_trials: trials.into_iter().map(|(trial, active)| (trial, active.into())).collect(),
+            bool_settings,
+            string_settings,
+            dungeon_reward_locations,
+            progression_mode,
+            mq: dungeons
+                .into_iter()
+                .map(|(dungeon, mq)| {
+                    Ok::<_, KnowledgeFromJsonError>((
+                        dungeon
+                            .parse()
+                            .map_err(|()| KnowledgeFromJsonError::UnknownDungeon(dungeon))?,
+                        mq,
+                    ))
+                })
+                .try_collect()?,
+            active_trials: trials
+                .into_iter()
+                .map(|(trial, active)| (trial, active.into()))
+                .collect(),
             exits: Some(HashMap::default()), //TODO
             tricks: Some(tricks),
         })
@@ -517,7 +602,11 @@ enum TrialActive {
 
 impl From<bool> for TrialActive {
     fn from(active: bool) -> Self {
-        if active { Self::Active } else { Self::Inactive }
+        if active {
+            Self::Active
+        } else {
+            Self::Inactive
+        }
     }
 }
 

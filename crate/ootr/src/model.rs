@@ -1,20 +1,11 @@
 use {
-    std::{
-        fmt,
-        str::FromStr,
-    },
+    crate::item::Item,
     async_proto::Protocol,
     enum_iterator::Sequence,
     quote_value::QuoteValue,
-    serde::{
-        Deserialize,
-        Serialize,
-    },
-    serde_plain::{
-        derive_deserialize_from_fromstr,
-        derive_serialize_from_display,
-    },
-    crate::item::Item,
+    serde::{Deserialize, Serialize},
+    serde_plain::{derive_deserialize_from_fromstr, derive_serialize_from_display},
+    std::{fmt, str::FromStr},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Protocol, QuoteValue)]
@@ -49,10 +40,12 @@ impl FromStr for Dungeon {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Dungeon, ()> {
-        MainDungeon::from_str(s).map(Dungeon::Main).or_else(|_| match s {
+        MainDungeon::from_str(s).map(Dungeon::Main).or(match s {
             "Ice Cavern" => Ok(Dungeon::IceCavern),
             "Bottom of the Well" => Ok(Dungeon::BottomOfTheWell),
-            "Gerudo Training Ground" | "Gerudo Training Grounds" => Ok(Dungeon::GerudoTrainingGround),
+            "Gerudo Training Ground" | "Gerudo Training Grounds" => {
+                Ok(Dungeon::GerudoTrainingGround)
+            }
             "Ganon's Castle" | "Ganons Castle" => Ok(Dungeon::GanonsCastle),
             _ => Err(()),
         })
@@ -227,7 +220,9 @@ impl fmt::Display for MainDungeon {
 derive_deserialize_from_fromstr!(MainDungeon, "main dungeon");
 derive_serialize_from_display!(MainDungeon);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Sequence, Protocol, Deserialize, Serialize, QuoteValue)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Hash, Sequence, Protocol, Deserialize, Serialize, QuoteValue,
+)]
 pub enum Medallion {
     Light,
     Forest,

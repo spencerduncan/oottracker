@@ -1,14 +1,6 @@
 use {
-    std::{
-        env,
-        fs,
-        path::Path,
-        process::Command,
-    },
-    wheel::traits::{
-        IoResultExt as _,
-        SyncCommandOutputExt as _,
-    },
+    std::{env, fs, path::Path, process::Command},
+    wheel::traits::{IoResultExt as _, SyncCommandOutputExt as _},
 };
 
 #[cfg(windows)]
@@ -27,8 +19,13 @@ fn main() -> wheel::Result {
     let source_path = source_path.canonicalize().at(source_path)?;
     let ext_tools_dir = Path::new("OotAutoTracker/BizHawk/ExternalTools");
     fs::create_dir_all(&ext_tools_dir).at(&ext_tools_dir)?;
-    for target_path in &[Path::new("OotAutoTracker/src/oottracker.dll"), &ext_tools_dir.join("oottracker.dll")] {
-        if target_path.read_link().is_ok() { std::fs::remove_file(target_path).at(target_path)?; }
+    for target_path in &[
+        Path::new("OotAutoTracker/src/oottracker.dll"),
+        &ext_tools_dir.join("oottracker.dll"),
+    ] {
+        if target_path.read_link().is_ok() {
+            std::fs::remove_file(target_path).at(target_path)?;
+        }
         std::os::windows::fs::symlink_file(&source_path, target_path).at(target_path)?;
     }
     let mut dotnet_command = Command::new("dotnet");

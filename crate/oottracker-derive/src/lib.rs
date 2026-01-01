@@ -1,43 +1,31 @@
-#![deny(rust_2018_idioms, unused, unused_crate_dependencies, unused_import_braces, unused_lifetimes, unused_qualifications, warnings)]
+#![deny(
+    rust_2018_idioms,
+    unused,
+    unused_crate_dependencies,
+    unused_import_braces,
+    unused_lifetimes,
+    unused_qualifications,
+    warnings
+)]
 #![forbid(unsafe_code)]
 
 use {
+    convert_case::{Case, Casing as _},
+    itertools::Itertools as _,
+    proc_macro::TokenStream,
+    proc_macro2::{Literal, Span},
+    quote::quote,
     std::{
-        fs::{
-            self,
-            File,
-        },
+        fs::{self, File},
         io::prelude::*,
         path::Path,
     },
-    convert_case::{
-        Case,
-        Casing as _,
-    },
-    itertools::Itertools as _,
-    proc_macro::TokenStream,
-    proc_macro2::{
-        Literal,
-        Span,
-    },
-    quote::quote,
     syn::{
-        Expr,
-        Ident,
-        Index,
-        LitInt,
-        LitStr,
-        Token,
-        Visibility,
-        braced,
-        bracketed,
-        parse::{
-            Parse,
-            ParseStream,
-            Result,
-        },
+        braced, bracketed,
+        parse::{Parse, ParseStream, Result},
         parse_macro_input,
         punctuated::Punctuated,
+        Expr, Ident, Index, LitInt, LitStr, Token, Visibility,
     },
 };
 
@@ -53,9 +41,22 @@ pub fn version(_: TokenStream) -> TokenStream {
 pub fn embed_image(input: TokenStream) -> TokenStream {
     let img_path = parse_macro_input!(input as LitStr).value();
     let img_path = Path::new(&img_path);
-    let name = Ident::new(&img_path.file_name().expect("empty filename").to_string_lossy().split('.').next().expect("empty filename").to_case(Case::Snake), Span::call_site());
+    let name = Ident::new(
+        &img_path
+            .file_name()
+            .expect("empty filename")
+            .to_string_lossy()
+            .split('.')
+            .next()
+            .expect("empty filename")
+            .to_case(Case::Snake),
+        Span::call_site(),
+    );
     let mut buf = Vec::default();
-    File::open(img_path).expect("failed to open image to embed").read_to_end(&mut buf).expect("failed to read image to embed");
+    File::open(img_path)
+        .expect("failed to open image to embed")
+        .read_to_end(&mut buf)
+        .expect("failed to read image to embed");
     let contents_lit = Literal::byte_string(&buf);
     TokenStream::from(quote! {
         pub fn #name<T: FromEmbeddedImage>() -> T {
@@ -68,23 +69,46 @@ pub fn embed_image(input: TokenStream) -> TokenStream {
 pub fn embed_images(input: TokenStream) -> TokenStream {
     let dir_path = parse_macro_input!(input as LitStr).value();
     let dir_path = Path::new(&dir_path);
-    let name = Ident::new(&dir_path.file_name().expect("empty filename").to_string_lossy().to_case(Case::Snake), Span::call_site());
+    let name = Ident::new(
+        &dir_path
+            .file_name()
+            .expect("empty filename")
+            .to_string_lossy()
+            .to_case(Case::Snake),
+        Span::call_site(),
+    );
     let name_all = Ident::new(&format!("{}_all", name), Span::call_site());
-    let img_consts = fs::read_dir(dir_path).expect("failed to open images dir") //TODO compile error instead of panic
+    let img_consts = fs::read_dir(dir_path)
+        .expect("failed to open images dir") //TODO compile error instead of panic
         .filter_map(|img_path| match img_path {
-            Ok(img_path) => if img_path.file_name().to_str().map_or(false, |file_name| file_name.starts_with('.')) { None } else { Some(Ok(img_path)) },
+            Ok(img_path) => {
+                if img_path
+                    .file_name()
+                    .to_str()
+                    .is_some_and(|file_name| file_name.starts_with('.'))
+                {
+                    None
+                } else {
+                    Some(Ok(img_path))
+                }
+            }
             Err(e) => Some(Err(e)),
         })
-        .map(|img_path| img_path.and_then(|img_path| Ok({
-            let name = img_path.file_name();
-            let name = name.to_string_lossy();
-            let name = name.split('.').next().expect("empty filename");
-            let mut buf = Vec::default();
-            File::open(img_path.path())?.read_to_end(&mut buf)?;
-            let lit = Literal::byte_string(&buf);
-            quote!(consts.insert(#name, #lit);)
-        })))
-        .try_collect::<_, Vec<_>, _>().expect("failed to read images"); //TODO compile error instead of panic
+        .map(|img_path| {
+            img_path.and_then(|img_path| {
+                Ok({
+                    let name = img_path.file_name();
+                    let name = name.to_string_lossy();
+                    let name = name.split('.').next().expect("empty filename");
+                    let mut buf = Vec::default();
+                    File::open(img_path.path())?.read_to_end(&mut buf)?;
+                    let lit = Literal::byte_string(&buf);
+                    quote!(consts.insert(#name, #lit);)
+                })
+            })
+        })
+        .try_collect::<_, Vec<_>, _>()
+        .expect("failed to read images"); //TODO compile error instead of panic
     TokenStream::from(quote! {
         pub fn #name<T: FromEmbeddedImage>(name: &str) -> T {
             static IMG_CONSTS: ::once_cell::sync::Lazy<::std::collections::HashMap<&'static str, &'static [u8]>> = ::once_cell::sync::Lazy::new(|| {
@@ -119,10 +143,25 @@ enum FlagName {
 impl FlagName {
     fn to_ident(&self) -> Ident {
         match self {
-            FlagName::Event(lit) | FlagName::Lit(lit) => Ident::new(&lit.value().replace('&', "AND").to_case(Case::ScreamingSnake), lit.span()),
+            FlagName::Event(lit) | FlagName::Lit(lit) => Ident::new(
+                &lit.value()
+                    .replace('&', "AND")
+                    .to_case(Case::ScreamingSnake),
+                lit.span(),
+            ),
             FlagName::Ident(ident) => ident.clone(),
-            FlagName::Entrance(from, to) => Ident::new(&format!("ENTRANCE_{}_TO_{}", from.value().to_case(Case::ScreamingSnake), to.value().to_case(Case::ScreamingSnake)), to.span()),
-            FlagName::Prereq(id, at_check) => Ident::new(&format!("REQ_{}_FOR_{}", id, at_check.to_ident()), id.span()),
+            FlagName::Entrance(from, to) => Ident::new(
+                &format!(
+                    "ENTRANCE_{}_TO_{}",
+                    from.value().to_case(Case::ScreamingSnake),
+                    to.value().to_case(Case::ScreamingSnake)
+                ),
+                to.span(),
+            ),
+            FlagName::Prereq(id, at_check) => Ident::new(
+                &format!("REQ_{}_FOR_{}", id, at_check.to_ident()),
+                id.span(),
+            ),
         }
     }
 }
@@ -132,7 +171,7 @@ impl Parse for FlagName {
         let lookahead = input.lookahead1();
         if lookahead.peek(Ident) {
             let ident = input.parse::<Ident>()?;
-            if ident.to_string() == "event" {
+            if ident == "event" {
                 input.parse().map(FlagName::Event)
             } else {
                 Ok(FlagName::Ident(ident))
@@ -212,13 +251,27 @@ impl Parse for FlagsList {
         let content;
         braced!(content in input);
         let fields = content.parse_terminated(Flags::parse)?;
-        Ok(FlagsList { vis, struct_token, name, field_ty, num_fields, fields })
+        Ok(FlagsList {
+            vis,
+            struct_token,
+            name,
+            field_ty,
+            num_fields,
+            fields,
+        })
     }
 }
 
 #[proc_macro]
 pub fn flags_list(input: TokenStream) -> TokenStream {
-    let FlagsList { vis, struct_token, name, field_ty, num_fields, fields } = parse_macro_input!(input as FlagsList);
+    let FlagsList {
+        vis,
+        struct_token,
+        name,
+        field_ty,
+        num_fields,
+        fields,
+    } = parse_macro_input!(input as FlagsList);
     let field_ty_size = match &field_ty.to_string()[..] {
         "i8" | "u8" => 1,
         "i16" | "u16" => 2,
@@ -238,12 +291,20 @@ pub fn flags_list(input: TokenStream) -> TokenStream {
         };
         all_fields[idx] = Some(fields);
     }
-    let fields_tys = (0..num_fields).map(|i|
-        Ident::new(&format!("{}{}", name, i), Span::call_site())
-    ).collect_vec();
-    let contents = all_fields.iter().zip(&fields_tys).map(|(fields, fields_ty)| {
-        if fields.is_some() { quote!(#vis #fields_ty) } else { quote!(#fields_ty) }
-    }).collect_vec();
+    let fields_tys = (0..num_fields)
+        .map(|i| Ident::new(&format!("{}{}", name, i), Span::call_site()))
+        .collect_vec();
+    let contents = all_fields
+        .iter()
+        .zip(&fields_tys)
+        .map(|(fields, fields_ty)| {
+            if fields.is_some() {
+                quote!(#vis #fields_ty)
+            } else {
+                quote!(#fields_ty)
+            }
+        })
+        .collect_vec();
     let tup_idxs = (0..num_fields).map(Index::from).collect_vec();
     let mut entrance_prereqs = Vec::default();
     let mut event_checks = Vec::default();
@@ -386,7 +447,9 @@ enum SceneName {
 impl SceneName {
     fn to_field(&self) -> Ident {
         match self {
-            SceneName::Ident(ident) => Ident::new(&ident.to_string().to_case(Case::Snake), ident.span()),
+            SceneName::Ident(ident) => {
+                Ident::new(&ident.to_string().to_case(Case::Snake), ident.span())
+            }
             SceneName::Lit(lit) => Ident::new(&lit.value().to_case(Case::Snake), lit.span()),
         }
     }
@@ -445,19 +508,28 @@ impl SceneFieldsKind {
         }
     }
 
-    fn end_idx(&self) -> usize { self.start_idx() + 4 }
+    fn end_idx(&self) -> usize {
+        self.start_idx() + 4
+    }
 
     fn ty(&self, scene_name: &SceneName) -> Ident {
-        Ident::new(&format!("{}{}", scene_name.to_type(), match self {
-            SceneFieldsKind::Chests => "Chests",
-            SceneFieldsKind::Switches => "Switches",
-            SceneFieldsKind::RoomClear => "RoomClear",
-            SceneFieldsKind::Collectible => "Collectible",
-            SceneFieldsKind::Unused => "Unused",
-            SceneFieldsKind::VisitedRooms => "VisitedRooms",
-            SceneFieldsKind::VisitedFloors => "VisitedFloors",
-            SceneFieldsKind::GoldSkulltulas => "GoldSkulltulas",
-        }), Span::call_site())
+        Ident::new(
+            &format!(
+                "{}{}",
+                scene_name.to_type(),
+                match self {
+                    SceneFieldsKind::Chests => "Chests",
+                    SceneFieldsKind::Switches => "Switches",
+                    SceneFieldsKind::RoomClear => "RoomClear",
+                    SceneFieldsKind::Collectible => "Collectible",
+                    SceneFieldsKind::Unused => "Unused",
+                    SceneFieldsKind::VisitedRooms => "VisitedRooms",
+                    SceneFieldsKind::VisitedFloors => "VisitedFloors",
+                    SceneFieldsKind::GoldSkulltulas => "GoldSkulltulas",
+                }
+            ),
+            Span::call_site(),
+        )
     }
 }
 
@@ -481,23 +553,27 @@ impl TryFrom<Ident> for SceneFieldsKind {
 
 impl quote::ToTokens for SceneFieldsKind {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        Ident::new(match self {
-            SceneFieldsKind::Chests => "chests",
-            SceneFieldsKind::Switches => "switches",
-            SceneFieldsKind::RoomClear => "room_clear",
-            SceneFieldsKind::Collectible => "collectible",
-            SceneFieldsKind::Unused => "unused",
-            SceneFieldsKind::VisitedRooms => "visited_rooms",
-            SceneFieldsKind::VisitedFloors => "visited_floors",
-            SceneFieldsKind::GoldSkulltulas => "gold_skulltulas",
-        }, Span::call_site()).to_tokens(tokens)
+        Ident::new(
+            match self {
+                SceneFieldsKind::Chests => "chests",
+                SceneFieldsKind::Switches => "switches",
+                SceneFieldsKind::RoomClear => "room_clear",
+                SceneFieldsKind::Collectible => "collectible",
+                SceneFieldsKind::Unused => "unused",
+                SceneFieldsKind::VisitedRooms => "visited_rooms",
+                SceneFieldsKind::VisitedFloors => "visited_floors",
+                SceneFieldsKind::GoldSkulltulas => "gold_skulltulas",
+            },
+            Span::call_site(),
+        )
+        .to_tokens(tokens)
     }
 }
 
 #[allow(dead_code)] // Fields used by Parse impl
 enum RegionName {
     One(LitStr),
-    Multiple(Expr),
+    Multiple(Box<Expr>),
 }
 
 impl Parse for RegionName {
@@ -505,14 +581,14 @@ impl Parse for RegionName {
         if input.peek(LitStr) {
             input.parse().map(RegionName::One)
         } else {
-            input.parse().map(RegionName::Multiple)
+            input.parse().map(|e| RegionName::Multiple(Box::new(e)))
         }
     }
 }
 
 #[allow(dead_code)] // Variants used by Parse impl
 enum SceneData {
-    RegionName(RegionName),
+    RegionName(Box<RegionName>),
     Fields {
         kind: SceneFieldsKind,
         fields: Punctuated<Flag, Token![,]>,
@@ -525,7 +601,7 @@ impl Parse for SceneData {
         Ok(match &*ident.to_string() {
             "region_name" => {
                 input.parse::<Token![:]>()?;
-                SceneData::RegionName(input.parse()?)
+                SceneData::RegionName(Box::new(input.parse()?))
             }
             _ => {
                 input.parse::<Token![:]>()?;
@@ -549,7 +625,13 @@ struct Scene {
 
 impl Scene {
     fn fields(&self) -> impl Iterator<Item = (&SceneFieldsKind, &Punctuated<Flag, Token![,]>)> {
-        self.data.iter().filter_map(|data| if let SceneData::Fields { kind, fields } = data { Some((kind, fields)) } else { None })
+        self.data.iter().filter_map(|data| {
+            if let SceneData::Fields { kind, fields } = data {
+                Some((kind, fields))
+            } else {
+                None
+            }
+        })
     }
 }
 
@@ -580,7 +662,12 @@ impl Parse for SceneFlags {
         let content;
         braced!(content in input);
         let scenes = content.parse_terminated(Scene::parse)?;
-        Ok(SceneFlags { vis, struct_token, name, scenes })
+        Ok(SceneFlags {
+            vis,
+            struct_token,
+            name,
+            scenes,
+        })
     }
 }
 
@@ -590,23 +677,39 @@ fn converted_scene_skulls_idx(scene_idx: usize) -> usize {
 
 #[proc_macro]
 pub fn scene_flags(input: TokenStream) -> TokenStream {
-    let SceneFlags { vis, struct_token, name, scenes } = parse_macro_input!(input as SceneFlags);
+    let SceneFlags {
+        vis,
+        struct_token,
+        name,
+        scenes,
+    } = parse_macro_input!(input as SceneFlags);
     let scene_size = 0x1c;
     let num_scenes = 0x65usize;
-    let skull_scenes = scenes.iter()
-        .filter(|scene| scene.fields().any(|(kind, _)| *kind == SceneFieldsKind::GoldSkulltulas))
+    let skull_scenes = scenes
+        .iter()
+        .filter(|scene| {
+            scene
+                .fields()
+                .any(|(kind, _)| *kind == SceneFieldsKind::GoldSkulltulas)
+        })
         .map(|Scene { idx, .. }| idx)
         .collect_vec();
-    let contents = scenes.iter().map(|Scene { name, .. }| {
-        let scene_field = name.to_field();
-        let scene_ty = name.to_type();
-        quote!(#vis #scene_field: #scene_ty)
-    }).collect_vec();
-    let skull_contents = scenes.iter().filter(|Scene { idx, .. }| skull_scenes.contains(&idx)).map(|Scene { name, .. }| {
-        let scene_field = name.to_field();
-        let fields_ty = SceneFieldsKind::GoldSkulltulas.ty(&name);
-        quote!(#vis #scene_field: #fields_ty)
-    });
+    let contents = scenes
+        .iter()
+        .map(|Scene { name, .. }| {
+            let scene_field = name.to_field();
+            let scene_ty = name.to_type();
+            quote!(#vis #scene_field: #scene_ty)
+        })
+        .collect_vec();
+    let skull_contents = scenes
+        .iter()
+        .filter(|Scene { idx, .. }| skull_scenes.contains(&idx))
+        .map(|Scene { name, .. }| {
+            let scene_field = name.to_field();
+            let fields_ty = SceneFieldsKind::GoldSkulltulas.ty(name);
+            quote!(#vis #scene_field: #fields_ty)
+        });
     let mut entrance_prereqs = Vec::default();
     let mut event_checks = Vec::default();
     let mut location_checks = Vec::default();
@@ -645,12 +748,11 @@ pub fn scene_flags(input: TokenStream) -> TokenStream {
             }
         }
     }
-    let get_mut_items = scenes.iter()
-        .map(|Scene { name, .. }| {
-            let name_lit = name.to_lit();
-            let scene_field = name.to_field();
-            quote!(#name_lit => Some(&mut self.#scene_field))
-        });
+    let get_mut_items = scenes.iter().map(|Scene { name, .. }| {
+        let name_lit = name.to_lit();
+        let scene_field = name.to_field();
+        quote!(#name_lit => Some(&mut self.#scene_field))
+    });
     let try_from_items = scenes.iter()
         .map(|Scene { idx, name, .. }| {
             let scene_field = name.to_field();
@@ -666,17 +768,24 @@ pub fn scene_flags(input: TokenStream) -> TokenStream {
             let scene_skulls_idx = converted_scene_skulls_idx(idx.base10_parse::<usize>().expect("failed to parse scene index"));
             quote!(#scene_field: #scene_ty::try_from(raw_data[#scene_skulls_idx]).map_err(|()| raw_data.clone())?)
         });
-    let into_items = scenes.iter()
+    let into_items = scenes.iter().map(|Scene { idx, name, .. }| {
+        let scene_field = name.to_field();
+        let start_idx = idx
+            .base10_parse::<usize>()
+            .expect("failed to parse scene index")
+            * scene_size;
+        let end_idx = start_idx + scene_size;
+        quote!(buf.splice(#start_idx..#end_idx, Vec::from(value.#scene_field));)
+    });
+    let skull_into_items = scenes
+        .iter()
+        .filter(|Scene { idx, .. }| skull_scenes.contains(&idx))
         .map(|Scene { idx, name, .. }| {
             let scene_field = name.to_field();
-            let start_idx = idx.base10_parse::<usize>().expect("failed to parse scene index") * scene_size;
-            let end_idx = start_idx + scene_size;
-            quote!(buf.splice(#start_idx..#end_idx, Vec::from(value.#scene_field));)
-        });
-    let skull_into_items = scenes.iter().filter(|Scene { idx, .. }| skull_scenes.contains(&idx))
-        .map(|Scene { idx, name, .. }| {
-            let scene_field = name.to_field();
-            let scene_skulls_idx = converted_scene_skulls_idx(idx.base10_parse::<usize>().expect("failed to parse scene index"));
+            let scene_skulls_idx = converted_scene_skulls_idx(
+                idx.base10_parse::<usize>()
+                    .expect("failed to parse scene index"),
+            );
             quote!(buf[#scene_skulls_idx] = u8::from(value.#scene_field);)
         });
     let decls = scenes.iter().map(|scene| {
@@ -789,37 +898,43 @@ pub fn scene_flags(input: TokenStream) -> TokenStream {
             #(#subdecls)*
         }
     }).collect_vec();
-    let skull_decls = scenes.iter().filter_map(|scene| {
-        scene.fields().find(|(kind, _)| **kind == SceneFieldsKind::GoldSkulltulas).map(|(kind, fields)| {
-            let fields_ty = kind.ty(&scene.name);
-            let fields = fields.iter().map(|Flag { name, value }| {
-                let name_ident = name.to_ident();
-                quote!(const #name_ident = #value;)
-            });
-            quote! {
-                ::bitflags::bitflags! {
-                    #[derive(Default)]
-                    #vis struct #fields_ty: u8 {
-                        #(#fields)*
-                    }
-                }
+    let skull_decls = scenes
+        .iter()
+        .filter_map(|scene| {
+            scene
+                .fields()
+                .find(|(kind, _)| **kind == SceneFieldsKind::GoldSkulltulas)
+                .map(|(kind, fields)| {
+                    let fields_ty = kind.ty(&scene.name);
+                    let fields = fields.iter().map(|Flag { name, value }| {
+                        let name_ident = name.to_ident();
+                        quote!(const #name_ident = #value;)
+                    });
+                    quote! {
+                        ::bitflags::bitflags! {
+                            #[derive(Default)]
+                            #vis struct #fields_ty: u8 {
+                                #(#fields)*
+                            }
+                        }
 
-                impl<'a> ::std::convert::TryFrom<u8> for #fields_ty {
-                    type Error = ();
+                        impl<'a> ::std::convert::TryFrom<u8> for #fields_ty {
+                            type Error = ();
 
-                    fn try_from(raw_data: u8) -> Result<#fields_ty, ()> {
-                        Ok(#fields_ty::from_bits_truncate(raw_data))
-                    }
-                }
+                            fn try_from(raw_data: u8) -> Result<#fields_ty, ()> {
+                                Ok(#fields_ty::from_bits_truncate(raw_data))
+                            }
+                        }
 
-                impl From<#fields_ty> for u8 {
-                    fn from(value: #fields_ty) -> u8 {
-                        value.bits()
+                        impl From<#fields_ty> for u8 {
+                            fn from(value: #fields_ty) -> u8 {
+                                value.bits()
+                            }
+                        }
                     }
-                }
-            }
+                })
         })
-    }).collect_vec();
+        .collect_vec();
     let from_id_arms = scenes.iter().map(|Scene { idx, name, .. }| {
         let name_lit = name.to_lit();
         quote!(#idx => #name_lit)

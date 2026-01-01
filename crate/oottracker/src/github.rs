@@ -1,13 +1,9 @@
 use {
-    std::future::Future,
-    reqwest::{
-        Body,
-        Client,
-        StatusCode,
-    },
+    reqwest::{Body, Client, StatusCode},
     semver::Version,
     serde::Deserialize,
     serde_json::json,
+    std::future::Future,
     url::Url,
 };
 
@@ -49,70 +45,118 @@ impl Repo {
     }
 
     pub async fn latest_release(&self, client: &Client) -> reqwest::Result<Option<Release>> {
-        let response = client.get(&format!("https://api.github.com/repos/{}/{}/releases/latest", self.user, self.name))
-            .send().await?;
-        if response.status() == StatusCode::NOT_FOUND { return Ok(None) } // no releases yet
-        Ok(Some(
-            response.error_for_status()?
-                .json::<Release>().await?
-        ))
+        let response = client
+            .get(format!(
+                "https://api.github.com/repos/{}/{}/releases/latest",
+                self.user, self.name
+            ))
+            .send()
+            .await?;
+        if response.status() == StatusCode::NOT_FOUND {
+            return Ok(None);
+        } // no releases yet
+        Ok(Some(response.error_for_status()?.json::<Release>().await?))
     }
 
-    pub fn latest_release_sync(&self, client: &reqwest::blocking::Client) -> reqwest::Result<Option<Release>> {
-        let response = client.get(&format!("https://api.github.com/repos/{}/{}/releases/latest", self.user, self.name))
+    pub fn latest_release_sync(
+        &self,
+        client: &reqwest::blocking::Client,
+    ) -> reqwest::Result<Option<Release>> {
+        let response = client
+            .get(format!(
+                "https://api.github.com/repos/{}/{}/releases/latest",
+                self.user, self.name
+            ))
             .send()?;
-        if response.status() == StatusCode::NOT_FOUND { return Ok(None) } // no releases yet
-        Ok(Some(
-            response.error_for_status()?
-                .json::<Release>()?
-        ))
+        if response.status() == StatusCode::NOT_FOUND {
+            return Ok(None);
+        } // no releases yet
+        Ok(Some(response.error_for_status()?.json::<Release>()?))
     }
 
-    pub async fn release_by_tag(&self, client: &Client, tag: &str) -> reqwest::Result<Option<Release>> {
-        let response = client.get(&format!("https://api.github.com/repos/{}/{}/releases/tags/{}", self.user, self.name, tag))
-            .send().await?;
-        if response.status() == StatusCode::NOT_FOUND { return Ok(None) } // no release with this tag
-        Ok(Some(
-            response.error_for_status()?
-                .json::<Release>().await?
-        ))
+    pub async fn release_by_tag(
+        &self,
+        client: &Client,
+        tag: &str,
+    ) -> reqwest::Result<Option<Release>> {
+        let response = client
+            .get(format!(
+                "https://api.github.com/repos/{}/{}/releases/tags/{}",
+                self.user, self.name, tag
+            ))
+            .send()
+            .await?;
+        if response.status() == StatusCode::NOT_FOUND {
+            return Ok(None);
+        } // no release with this tag
+        Ok(Some(response.error_for_status()?.json::<Release>().await?))
     }
 
     /// Creates a draft release, which can be published using `Repo::publish_release`.
-    pub async fn create_release(&self, client: &Client, name: String, tag_name: String, body: String) -> reqwest::Result<Release> {
-        Ok(
-            client.post(&format!("https://api.github.com/repos/{}/{}/releases", self.user, self.name))
-                .json(&json!({
-                    "body": body,
-                    "draft": true,
-                    "name": name,
-                    "tag_name": tag_name
-                }))
-                .send().await?
-                .error_for_status()?
-                .json::<Release>().await?
-        )
+    pub async fn create_release(
+        &self,
+        client: &Client,
+        name: String,
+        tag_name: String,
+        body: String,
+    ) -> reqwest::Result<Release> {
+        client
+            .post(format!(
+                "https://api.github.com/repos/{}/{}/releases",
+                self.user, self.name
+            ))
+            .json(&json!({
+                "body": body,
+                "draft": true,
+                "name": name,
+                "tag_name": tag_name
+            }))
+            .send()
+            .await?
+            .error_for_status()?
+            .json::<Release>()
+            .await
     }
 
-    pub async fn publish_release(&self, client: &Client, release: Release) -> reqwest::Result<Release> {
-        Ok(
-            client.patch(&format!("https://api.github.com/repos/{}/{}/releases/{}", self.user, self.name, release.id))
-                .json(&json!({"draft": false}))
-                .send().await?
-                .error_for_status()?
-                .json::<Release>().await?
-        )
+    pub async fn publish_release(
+        &self,
+        client: &Client,
+        release: Release,
+    ) -> reqwest::Result<Release> {
+        client
+            .patch(format!(
+                "https://api.github.com/repos/{}/{}/releases/{}",
+                self.user, self.name, release.id
+            ))
+            .json(&json!({"draft": false}))
+            .send()
+            .await?
+            .error_for_status()?
+            .json::<Release>()
+            .await
     }
 
-    pub fn release_attach<'a>(&self, client: &'a Client, release: &'a Release, name: &'a str, content_type: &'static str, body: impl Into<Body> + 'a) -> impl Future<Output = reqwest::Result<()>> + 'a {
+    pub fn release_attach<'a>(
+        &self,
+        client: &'a Client,
+        release: &'a Release,
+        name: &'a str,
+        content_type: &'static str,
+        body: impl Into<Body> + 'a,
+    ) -> impl Future<Output = reqwest::Result<()>> + 'a {
         let mut headers = reqwest::header::HeaderMap::new();
-        headers.insert(reqwest::header::CONTENT_TYPE, reqwest::header::HeaderValue::from_static(content_type));
+        headers.insert(
+            reqwest::header::CONTENT_TYPE,
+            reqwest::header::HeaderValue::from_static(content_type),
+        );
         async move {
-            client.post(&release.upload_url.replace("{?name,label}", ""))
+            client
+                .post(release.upload_url.replace("{?name,label}", ""))
                 .query(&[("name", name)])
                 .headers(headers)
                 .body(body)
-                .send().await?
+                .send()
+                .await?
                 .error_for_status()?;
             Ok(())
         }

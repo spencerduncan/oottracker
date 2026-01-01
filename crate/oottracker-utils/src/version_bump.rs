@@ -1,19 +1,19 @@
-#![deny(rust_2018_idioms, unused, unused_import_braces, unused_lifetimes, unused_qualifications, warnings)]
+#![deny(
+    rust_2018_idioms,
+    unused,
+    unused_import_braces,
+    unused_lifetimes,
+    unused_qualifications,
+    warnings
+)]
 #![forbid(unsafe_code)]
 
 use {
-    std::num::ParseIntError,
-    semver::{
-        BuildMetadata,
-        Prerelease,
-        Version,
-    },
-    tokio::{
-        fs,
-        io,
-    },
-    toml_edit::TomlError,
     oottracker_utils::version,
+    semver::{BuildMetadata, Prerelease, Version},
+    std::num::ParseIntError,
+    tokio::{fs, io},
+    toml_edit::TomlError,
 };
 
 #[derive(clap::Parser)]
@@ -22,17 +22,19 @@ enum Args {
     Major,
     Minor,
     Patch,
-    Exact {
-        version: Version,
-    },
+    Exact { version: Version },
 }
 
 #[derive(Debug, thiserror::Error)]
 enum Error {
-    #[error(transparent)] Io(#[from] io::Error),
-    #[error(transparent)] ParseInt(#[from] ParseIntError),
-    #[error(transparent)] Plist(#[from] plist::Error),
-    #[error(transparent)] Toml(#[from] TomlError),
+    #[error(transparent)]
+    Io(#[from] io::Error),
+    #[error(transparent)]
+    ParseInt(#[from] ParseIntError),
+    #[error(transparent)]
+    Plist(#[from] plist::Error),
+    #[error(transparent)]
+    Toml(#[from] TomlError),
     #[error("found Cargo manifest without “package” entry")]
     MissingPackageEntry,
     #[error("found “package” entry in Cargo manifest without “version” entry")]
@@ -66,9 +68,21 @@ fn increment_major(v: &mut Version) {
 #[wheel::main]
 async fn main(args: Args) -> Result<(), Error> {
     let version = match args {
-        Args::Major => { let mut version = version::version().await; increment_major(&mut version); version }
-        Args::Minor => { let mut version = version::version().await; increment_minor(&mut version); version }
-        Args::Patch => { let mut version = version::version().await; increment_patch(&mut version); version }
+        Args::Major => {
+            let mut version = version::version().await;
+            increment_major(&mut version);
+            version
+        }
+        Args::Minor => {
+            let mut version = version::version().await;
+            increment_minor(&mut version);
+            version
+        }
+        Args::Patch => {
+            let mut version = version::version().await;
+            increment_patch(&mut version);
+            version
+        }
         Args::Exact { version } => version,
     };
     println!("new version: {}", version);
@@ -79,9 +93,18 @@ async fn main(args: Args) -> Result<(), Error> {
     let mut crates = fs::read_dir("crate").await?;
     while let Some(entry) = crates.next_entry().await? {
         let manifest_path = entry.path().join("Cargo.toml");
-        let mut manifest = fs::read_to_string(&manifest_path).await?.parse::<toml_edit::Document>()?;
-        *manifest.as_table_mut().get_mut("package").ok_or(Error::MissingPackageEntry)?.as_table_mut().ok_or(Error::PackageIsNotTable)?.get_mut("version").ok_or(Error::MissingVersionEntry)?
-            = toml_edit::Item::Value(toml_edit::Value::from(version.to_string()).decorated(" ", ""));
+        let mut manifest = fs::read_to_string(&manifest_path)
+            .await?
+            .parse::<toml_edit::Document>()?;
+        *manifest
+            .as_table_mut()
+            .get_mut("package")
+            .ok_or(Error::MissingPackageEntry)?
+            .as_table_mut()
+            .ok_or(Error::PackageIsNotTable)?
+            .get_mut("version")
+            .ok_or(Error::MissingVersionEntry)? =
+            toml_edit::Item::Value(toml_edit::Value::from(version.to_string()).decorated(" ", ""));
         fs::write(manifest_path, manifest.to_string().into_bytes()).await?;
     }
     Ok(())

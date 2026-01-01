@@ -1,11 +1,8 @@
 use {
-    std::collections::BTreeMap,
-    serde::Deserialize,
-    ootr::{
-        model::Dungeon,
-        region::Mq,
-    },
     crate::RandoErr,
+    ootr::{model::Dungeon, region::Mq},
+    serde::Deserialize,
+    std::collections::BTreeMap,
 };
 
 #[derive(Deserialize)]
@@ -35,6 +32,10 @@ pub(crate) fn parse_dungeon_info(mut s: &str) -> Result<Option<(Dungeon, Mq)>, R
         } else {
             Mq::Vanilla
         };
-        Some((s.parse().map_err(|()| RandoErr::UnknownRegionFilename(s.to_owned()))?, mq))
+        Some((
+            s.parse()
+                .map_err(|()| RandoErr::UnknownRegionFilename(s.to_owned()))?,
+            mq,
+        ))
     })
 }
