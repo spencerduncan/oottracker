@@ -78,7 +78,9 @@ pub async fn write(
     Ok(())
 }
 
-pub fn handshake_sync(tcp_stream: &mut std::net::TcpStream) -> Result<(), async_proto::WriteError> {
-    VERSION.write_sync(tcp_stream)?;
+pub fn handshake_sync(
+    tcp_stream: &mut std::net::TcpStream,
+) -> Result<(), Box<async_proto::WriteError>> {
+    VERSION.write_sync(tcp_stream).map_err(Box::new)?;
     Ok(())
 }
