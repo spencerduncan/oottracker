@@ -80,14 +80,8 @@ mod tests {
     #[test]
     fn test_by_name_mm_specific() {
         // Items unique to MM
-        assert_eq!(
-            Item::by_name("DekuMask"),
-            Some(Item::Mm(MmItem::DekuMask))
-        );
-        assert_eq!(
-            Item::by_name("deku_mask"),
-            Some(Item::Mm(MmItem::DekuMask))
-        );
+        assert_eq!(Item::by_name("DekuMask"), Some(Item::Mm(MmItem::DekuMask)));
+        assert_eq!(Item::by_name("deku_mask"), Some(Item::Mm(MmItem::DekuMask)));
         assert_eq!(
             Item::by_name("OdolwaRemains"),
             Some(Item::Mm(MmItem::OdolwaRemains))
