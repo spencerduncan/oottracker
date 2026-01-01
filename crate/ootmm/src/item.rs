@@ -1,4 +1,4 @@
-//! Item definitions for OoT and MM.
+//! Item types for OoT and MM.
 
 pub mod mm;
 pub mod oot;
