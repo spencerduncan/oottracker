@@ -135,8 +135,6 @@ fn derive_rando_inner(ty: Ident) -> Result<proc_macro2::TokenStream, Error> {
     let cache_dir = project_dirs.cache_dir();
     let client = reqwest::blocking::Client::builder()
         .user_agent(concat!("oottracker/", env!("CARGO_PKG_VERSION")))
-        .http2_prior_knowledge()
-        .use_rustls_tls()
         .https_only(true)
         .build()?;
     let rando_path = cache_dir.join("ootr-latest");

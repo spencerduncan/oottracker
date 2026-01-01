@@ -212,8 +212,9 @@ impl<'p> ootr::Rando for Rando<'p> {
     fn setting_infos(&self) -> Result<Arc<HashSet<String>>, RandoErr> {
         if self.setting_infos.borrow().is_none() {
             let mut settings = HashSet::default();
-            for setting in self.import("SettingsList")?.getattr("setting_infos")?.iter()? {
-                settings.insert(setting?.getattr("name")?.extract()?);
+            // setting_infos is a dict where keys are setting names, so iterate directly
+            for setting_name in self.import("SettingsList")?.getattr("SettingInfos")?.getattr("setting_infos")?.iter()? {
+                settings.insert(setting_name?.extract()?);
             }
             *self.setting_infos.borrow_mut() = Some(Arc::new(settings));
         }
