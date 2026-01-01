@@ -49,6 +49,9 @@ mod text;
 pub mod ui;
 pub mod websocket;
 
+#[cfg(test)]
+pub mod test_utils;
+
 #[derive(Debug, Default, Clone, PartialEq, Eq, Protocol, Deserialize, Serialize)]
 pub struct ModelState {
     pub knowledge: Knowledge,
