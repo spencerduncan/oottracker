@@ -17,3 +17,6 @@ pub mod error;
 pub mod expr;
 pub mod item;
 pub mod region;
+
+// Re-export item types for convenience
+pub use item::{Item, MmItem, OotItem};
