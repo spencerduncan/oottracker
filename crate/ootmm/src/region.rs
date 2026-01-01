@@ -371,10 +371,7 @@ exits:
         assert_eq!(region.exits[0].target, "lost_woods");
         assert_eq!(region.exits[0].exit_type, ExitType::Overworld);
         assert_eq!(region.exits[1].exit_type, ExitType::Dungeon);
-        assert_eq!(
-            region.exits[1].logic,
-            Some("has(KokiriSword)".to_string())
-        );
+        assert_eq!(region.exits[1].logic, Some("has(KokiriSword)".to_string()));
     }
 
     #[test]
