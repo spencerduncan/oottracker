@@ -799,6 +799,7 @@ impl TrackerCellKind {
                 },
                 overlay: if Check::<ootr_static::Rando>::Location(check.to_string())
                     .checked(state)
+                    .unwrap_or(None)
                     .unwrap_or(false)
                 {
                     //TODO allow ootr_dynamic::Rando
@@ -812,6 +813,7 @@ impl TrackerCellKind {
                 style: CellStyle::Normal,
                 overlay: if Check::<ootr_static::Rando>::Location(check.to_string())
                     .checked(state)
+                    .unwrap_or(None)
                     .unwrap_or(false)
                 {
                     //TODO allow ootr_dynamic::Rando

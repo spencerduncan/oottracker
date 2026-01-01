@@ -3,32 +3,71 @@ use {
     derivative::Derivative,
     derive_more::From,
     ootr::{region::Mq, Rando},
-    std::{fmt, io, sync::Arc},
+    std::{error::Error, fmt, io, sync::Arc},
 };
 
+/// Errors that can occur when checking a check's status.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum CheckError {
+    /// An unknown event name was encountered.
+    UnknownEvent(String),
+    /// An unknown location name was encountered.
+    UnknownLocation(String),
+    /// Logic helpers cannot be checked directly.
+    LogicHelperNotCheckable,
+    /// Setting checks are not yet implemented.
+    SettingCheckNotImplemented,
+    /// Trial-active checks are not yet implemented.
+    TrialActiveCheckNotImplemented,
+    /// Trick checks are not yet implemented.
+    TrickCheckNotImplemented,
+}
+
+impl fmt::Display for CheckError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            CheckError::UnknownEvent(name) => write!(f, "unknown event name: {}", name),
+            CheckError::UnknownLocation(name) => write!(f, "unknown location name: {}", name),
+            CheckError::LogicHelperNotCheckable => write!(f, "logic helpers can't be checked"),
+            CheckError::SettingCheckNotImplemented => write!(f, "setting checks not implemented"),
+            CheckError::TrialActiveCheckNotImplemented => {
+                write!(f, "trial-active checks not implemented")
+            }
+            CheckError::TrickCheckNotImplemented => write!(f, "trick checks not implemented"),
+        }
+    }
+}
+
+impl Error for CheckError {}
+
 pub trait CheckExt {
-    fn checked(&self, model: &ModelState) -> Option<bool>; //TODO change return type to bool once all used checks are implemented
+    /// Check if this check has been completed.
+    ///
+    /// Returns `Ok(Some(true))` if checked, `Ok(Some(false))` if not checked,
+    /// `Ok(None)` if the check status cannot be determined yet, or an error
+    /// if the check type is not supported.
+    fn checked(&self, model: &ModelState) -> Result<Option<bool>, CheckError>;
 }
 
 impl<R: Rando> CheckExt for Check<R> {
-    fn checked(&self, model: &ModelState) -> Option<bool> {
+    fn checked(&self, model: &ModelState) -> Result<Option<bool>, CheckError> {
         // event and location lists from Dev-R as of commit b670183e9aff520c20ac2ee65aa55e3740c5f4b4
         if let Some(checked) = model.ram.save.gold_skulltulas.checked(self) {
-            return Some(checked);
+            return Ok(Some(checked));
         }
         if let Some(checked) = model.ram.scene_flags().checked(self) {
-            return Some(checked);
+            return Ok(Some(checked));
         }
         if let Some(checked) = model.ram.save.event_chk_inf.checked(self) {
-            return Some(checked);
+            return Ok(Some(checked));
         }
         if let Some(checked) = model.ram.save.item_get_inf.checked(self) {
-            return Some(checked);
+            return Ok(Some(checked));
         }
         if let Some(checked) = model.ram.save.inf_table.checked(self) {
-            return Some(checked);
+            return Ok(Some(checked));
         }
-        match self {
+        Ok(match self {
             Check::AnonymousEvent(at_check, id) => match (&**at_check, id) {
                 (Check::Event(event), 0) if *event == "Deku Tree Clear" /*vanilla*/ => Some(
                     model.ram.scene_flags().deku_tree.room_clear.contains(
@@ -132,7 +171,7 @@ impl<R: Rando> CheckExt for Check<R> {
                 "Child Water Temple" => None, //TODO
                 "Water Temple Clear" => None, //TODO
 
-                _ => panic!("unknown event name: {}", event),
+                _ => return Err(CheckError::UnknownEvent(event.clone())),
             },
             Check::Exit { from, to, .. } => Some(model.knowledge.get_exit(from.as_ref(), to.as_ref()).is_some()),
             Check::Location(loc) => match &loc[..] {
@@ -715,14 +754,14 @@ impl<R: Rando> CheckExt for Check<R> {
 
                 "Ganondorf Hint" => None, //TODO check knowledge
 
-                _ => panic!("unknown location name: {}", loc),
+                _ => return Err(CheckError::UnknownLocation(loc.clone())),
             },
-            Check::LogicHelper(_) => panic!("logic helpers can't be checked"),
+            Check::LogicHelper(_) => return Err(CheckError::LogicHelperNotCheckable),
             Check::Mq(_) => Some(false), //TODO disambiguate MQ-ness here instead?
-            Check::Setting(_) => panic!("setting checks not implemented"), //TODO check knowledge
-            Check::TrialActive(_) => panic!("trial-active checks not implemented"), //TODO check knowledge
-            Check::Trick(_) => panic!("trick checks not implemented"), //TODO check knowledge, allow the player to decide their own tricks if unknown
-        }
+            Check::Setting(_) => return Err(CheckError::SettingCheckNotImplemented), //TODO check knowledge
+            Check::TrialActive(_) => return Err(CheckError::TrialActiveCheckNotImplemented), //TODO check knowledge
+            Check::Trick(_) => return Err(CheckError::TrickCheckNotImplemented), //TODO check knowledge, allow the player to decide their own tricks if unknown
+        })
     }
 }
 
