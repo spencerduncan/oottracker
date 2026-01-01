@@ -299,6 +299,7 @@ pub trait App: fmt::Debug + Send + Sync + 'static {
             } => {
                 if Check::<ootr_static::Rando>::Location(check.to_string())
                     .checked(state)
+                    .unwrap_or(None)
                     .unwrap_or(false)
                     != value.as_bool().ok_or_else(|| value.clone())?
                 {
@@ -976,6 +977,7 @@ fn render_cell(cell_kind: TrackerCellKind, state: &ModelState) -> Json {
         Song { song, .. } => json!(state.ram.save.quest_items.contains(song)),
         SongCheck { check, .. } => json!(Check::<ootr_static::Rando>::Location(check.to_string())
             .checked(state)
+            .unwrap_or(None)
             .unwrap_or(false)), //TODO allow ootr_dynamic::Rando
         Spells => json!(match (
             state.ram.save.inv.dins_fire,
