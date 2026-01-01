@@ -1,21 +1,11 @@
 use {
-    std::{
-        fmt,
-        io,
-        sync::Arc,
-    },
     derivative::Derivative,
-    itertools::{
-        EitherOrBoth,
-        Itertools as _,
-    },
+    itertools::{EitherOrBoth, Itertools as _},
     ootr::{
+        region::{Mq, Region},
         Rando,
-        region::{
-            Mq,
-            Region,
-        },
     },
+    std::{fmt, io, sync::Arc},
 };
 
 #[derive(Derivative)]
@@ -30,7 +20,8 @@ pub enum RegionLookupError<R: Rando> {
     UnknownScene(u8),
 }
 
-impl<R: Rando> From<io::Error> for RegionLookupError<R> { //TODO add support for generics to FromArc derive macro
+impl<R: Rando> From<io::Error> for RegionLookupError<R> {
+    //TODO add support for generics to FromArc derive macro
     fn from(e: io::Error) -> RegionLookupError<R> {
         RegionLookupError::Io(Arc::new(e))
     }
@@ -41,8 +32,12 @@ impl<R: Rando> fmt::Display for RegionLookupError<R> {
         match self {
             RegionLookupError::Filename => write!(f, "region file name is not valid UTF-8"),
             RegionLookupError::Io(e) => write!(f, "I/O error: {}", e),
-            RegionLookupError::MixedOverworldAndDungeon => write!(f, "region found in both the overworld and a dungeon"),
-            RegionLookupError::MultipleFound => write!(f, "found multiple regions with the same name"),
+            RegionLookupError::MixedOverworldAndDungeon => {
+                write!(f, "region found in both the overworld and a dungeon")
+            }
+            RegionLookupError::MultipleFound => {
+                write!(f, "found multiple regions with the same name")
+            }
             RegionLookupError::NotFound => write!(f, "region not found"),
             RegionLookupError::Rando(e) => e.fmt(f),
             RegionLookupError::UnknownScene(id) => write!(f, "unknown scene: 0x{:02x}", id),
@@ -58,10 +53,12 @@ pub enum RegionLookup<R: Rando> {
 }
 
 impl<R: Rando> RegionLookup<R> {
-    pub fn new(candidates: impl IntoIterator<Item = Arc<Region<R>>>) -> Result<RegionLookup<R>, RegionLookupError<R>> {
+    pub fn new(
+        candidates: impl IntoIterator<Item = Arc<Region<R>>>,
+    ) -> Result<RegionLookup<R>, RegionLookupError<R>> {
         let mut candidates = candidates.into_iter().collect_vec();
-        Ok(if candidates.len() == 0 {
-            return Err(RegionLookupError::NotFound)
+        Ok(if candidates.is_empty() {
+            return Err(RegionLookupError::NotFound);
         } else if candidates.len() == 1 && candidates[0].dungeon.is_none() {
             RegionLookup::Overworld(candidates.pop().expect("just checked"))
         } else if candidates.iter().all(|region| region.dungeon.is_some()) {
@@ -72,7 +69,9 @@ impl<R: Rando> RegionLookup<R> {
                     Mq::Vanilla => &mut vanilla,
                     Mq::Mq => &mut mq,
                 };
-                if item.is_some() { return Err(RegionLookupError::MultipleFound) }
+                if item.is_some() {
+                    return Err(RegionLookupError::MultipleFound);
+                }
                 *item = Some(region);
             }
             RegionLookup::Dungeon(match (vanilla, mq) {
@@ -82,51 +81,58 @@ impl<R: Rando> RegionLookup<R> {
                 (Some(vanilla), Some(mq)) => EitherOrBoth::Both(vanilla, mq),
             })
         } else {
-            return Err(RegionLookupError::MixedOverworldAndDungeon)
+            return Err(RegionLookupError::MixedOverworldAndDungeon);
         })
     }
 
     pub fn by_name<N: ?Sized>(rando: &R, name: &N) -> Result<RegionLookup<R>, RegionLookupError<R>>
-    where R::RegionName: PartialEq<N> {
+    where
+        R::RegionName: PartialEq<N>,
+    {
         let all_regions = rando.regions().map_err(RegionLookupError::Rando)?;
-        let candidates = all_regions.iter().filter(|region| region.name == *name).cloned().collect_vec();
+        let candidates = all_regions
+            .iter()
+            .filter(|region| region.name == *name)
+            .cloned()
+            .collect_vec();
         RegionLookup::new(candidates)
     }
 }
 
-#[derive(Debug, Clone)]
-struct MissingRegionError(pub String);
-
-impl fmt::Display for MissingRegionError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "missing region: {}", self.0)
-    }
-}
-
-impl std::error::Error for MissingRegionError {}
-
 pub trait RegionExt {
     type R: Rando;
 
-    fn new<'a, N: ?Sized>(rando: &'a Self::R, name: &N) -> Result<RegionLookup<Self::R>, RegionLookupError<Self::R>> where <Self::R as Rando>::RegionName: PartialEq<N>;
+    fn new<N: ?Sized>(
+        rando: &Self::R,
+        name: &N,
+    ) -> Result<RegionLookup<Self::R>, RegionLookupError<Self::R>>
+    where
+        <Self::R as Rando>::RegionName: PartialEq<N>;
     /// A thin wrapper around [`Rando::regions`] with this module's error type.
-    fn all<'a>(rando: &'a Self::R) -> Result<Arc<Vec<Arc<Region<Self::R>>>>, RegionLookupError<Self::R>>;
+    fn all(rando: &Self::R) -> Result<Arc<Vec<Arc<Region<Self::R>>>>, RegionLookupError<Self::R>>;
     fn root(rando: &Self::R) -> Result<Arc<Region<Self::R>>, RegionLookupError<Self::R>>; //TODO glitched param
 }
 
 impl<R: Rando> RegionExt for Region<R> {
     type R = R;
 
-    fn new<'a, N: ?Sized>(rando: &'a R, name: &N) -> Result<RegionLookup<R>, RegionLookupError<R>>
-    where R::RegionName: PartialEq<N> {
+    fn new<N: ?Sized>(rando: &R, name: &N) -> Result<RegionLookup<R>, RegionLookupError<R>>
+    where
+        R::RegionName: PartialEq<N>,
+    {
         RegionLookup::by_name(rando, name)
     }
 
-    fn all<'a>(rando: &'a R) -> Result<Arc<Vec<Arc<Region<R>>>>, RegionLookupError<R>> {
+    fn all(rando: &R) -> Result<Arc<Vec<Arc<Region<R>>>>, RegionLookupError<R>> {
         rando.regions().map_err(RegionLookupError::Rando)
     }
 
     fn root(rando: &R) -> Result<Arc<Region<R>>, RegionLookupError<R>> {
-        Ok(Arc::clone(Region::all(rando)?.iter().find(|region| region.name == "Root").ok_or(RegionLookupError::NotFound)?))
+        Ok(Arc::clone(
+            Region::all(rando)?
+                .iter()
+                .find(|region| region.name == "Root")
+                .ok_or(RegionLookupError::NotFound)?,
+        ))
     }
 }

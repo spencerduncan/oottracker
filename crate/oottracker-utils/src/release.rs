@@ -1,110 +1,112 @@
-#![deny(rust_2018_idioms, unused, unused_import_braces, unused_lifetimes, unused_qualifications, warnings)]
+#![deny(
+    rust_2018_idioms,
+    unused,
+    unused_import_braces,
+    unused_lifetimes,
+    unused_qualifications,
+    warnings
+)]
 #![forbid(unsafe_code)]
 
 use {
-    std::env,
+    ::tokio::{fs, io, process::Command},
     async_proto::Protocol,
     dir_lock::DirLock,
     gres::Percent,
+    std::env,
     thiserror::Error,
-    ::tokio::{
-        fs,
-        io,
-        process::Command,
-    },
     wheel::traits::AsyncCommandOutputExt as _,
 };
-#[cfg(windows)] use {
+#[cfg(windows)]
+use {
+    async_proto::ReadError,
+    async_trait::async_trait,
+    gres::{cli::Cli, Progress, Task},
+    itertools::Itertools as _,
+    lazy_regex::regex_captures,
+    oottracker::github::{Release, Repo},
+    oottracker_utils::version,
+    semver::Version,
     std::{
         cmp::Ordering::*,
         ffi::OsString,
         fmt,
-        io::{
-            Cursor,
-            Read as _,
-            SeekFrom,
-            Write as _,
-        },
+        io::{Cursor, Read as _, SeekFrom, Write as _},
         path::Path,
         process::Stdio,
         sync::Arc,
         time::Duration,
     },
-    async_proto::ReadError,
-    async_trait::async_trait,
-    gres::{
-        Progress,
-        Task,
-        cli::Cli,
-    },
-    itertools::Itertools as _,
-    lazy_regex::regex_captures,
-    semver::Version,
     tempfile::NamedTempFile,
     tokio::{
         fs::File,
-        io::{
-            AsyncBufReadExt as _,
-            AsyncSeekExt as _,
-            BufReader,
-        },
-        process::{
-            Child,
-            ChildStdout,
-        },
+        io::{AsyncBufReadExt as _, AsyncSeekExt as _, BufReader},
+        process::{Child, ChildStdout},
         sync::broadcast,
     },
-    zip::{
-        ZipWriter,
-        result::ZipError,
-        write::FileOptions,
-    },
-    oottracker::github::{
-        Release,
-        Repo,
-    },
-    oottracker_utils::version,
+    zip::{result::ZipError, write::FileOptions, ZipWriter},
 };
-#[cfg(target_os = "macos")] use {
+#[cfg(target_os = "macos")]
+use {
     directories::BaseDirs,
-    git2::{
-        BranchType,
-        Repository,
-        ResetType,
-    },
-    tokio::io::{
-        AsyncWriteExt as _,
-        stdout,
-    },
+    git2::{BranchType, Repository, ResetType},
+    tokio::io::{stdout, AsyncWriteExt as _},
     wheel::traits::IoResultExt as _,
 };
 
-#[cfg(windows)] const MACOS_ADDR: &str = "192.168.178.63";
+#[cfg(windows)]
+const MACOS_ADDR: &str = "192.168.178.63";
 
 #[derive(Debug, Error)]
 enum Error {
-    #[cfg(windows)] #[error(transparent)] BizHawkVersionCheck(#[from] version::BizHawkError),
-    #[cfg(windows)] #[error(transparent)] BroadcastRecv(#[from] broadcast::error::RecvError),
-    #[error(transparent)] DirLock(#[from] dir_lock::Error),
-    #[cfg(target_os = "macos")] #[error(transparent)] Env(#[from] env::VarError),
-    #[cfg(target_os = "macos")] #[error(transparent)] Git(#[from] git2::Error),
-    #[cfg(windows)] #[error(transparent)] InvalidHeaderValue(#[from] reqwest::header::InvalidHeaderValue),
-    #[error(transparent)] Io(#[from] io::Error),
-    #[cfg(windows)] #[error(transparent)] ParseInt(#[from] std::num::ParseIntError),
-    #[cfg(windows)] #[error(transparent)] Read(#[from] ReadError),
-    #[cfg(windows)] #[error(transparent)] ReleaseSend(#[from] broadcast::error::SendError<Release>),
-    #[cfg(windows)] #[error(transparent)] Reqwest(#[from] reqwest::Error),
-    #[cfg(windows)] #[error(transparent)] SemVer(#[from] semver::Error),
-    #[cfg(windows)] #[error(transparent)] Task(#[from] tokio::task::JoinError),
-    #[error(transparent)] Wheel(#[from] wheel::Error),
-    #[cfg(target_os = "macos")] #[error(transparent)] Write(#[from] async_proto::WriteError),
-    #[cfg(windows)] #[error(transparent)] Zip(#[from] ZipError),
+    #[cfg(windows)]
+    #[error(transparent)]
+    BizHawkVersionCheck(#[from] version::BizHawkError),
+    #[cfg(windows)]
+    #[error(transparent)]
+    BroadcastRecv(#[from] broadcast::error::RecvError),
+    #[error(transparent)]
+    DirLock(#[from] dir_lock::Error),
+    #[cfg(target_os = "macos")]
+    #[error(transparent)]
+    Env(#[from] env::VarError),
+    #[cfg(target_os = "macos")]
+    #[error(transparent)]
+    Git(#[from] git2::Error),
+    #[cfg(windows)]
+    #[error(transparent)]
+    InvalidHeaderValue(#[from] reqwest::header::InvalidHeaderValue),
+    #[error(transparent)]
+    Io(#[from] io::Error),
+    #[cfg(windows)]
+    #[error(transparent)]
+    ParseInt(#[from] std::num::ParseIntError),
+    #[cfg(windows)]
+    #[error(transparent)]
+    Read(#[from] ReadError),
+    #[cfg(windows)]
+    #[error(transparent)]
+    ReleaseSend(#[from] broadcast::error::SendError<Release>),
+    #[cfg(windows)]
+    #[error(transparent)]
+    Reqwest(#[from] reqwest::Error),
+    #[cfg(windows)]
+    #[error(transparent)]
+    SemVer(#[from] semver::Error),
+    #[cfg(windows)]
+    #[error(transparent)]
+    Task(#[from] tokio::task::JoinError),
+    #[error(transparent)]
+    Wheel(#[from] wheel::Error),
+    #[cfg(target_os = "macos")]
+    #[error(transparent)]
+    Write(#[from] async_proto::WriteError),
+    #[cfg(windows)]
+    #[error(transparent)]
+    Zip(#[from] ZipError),
     #[cfg(windows)]
     #[error("BizHawk is outdated ({local} installed, {latest} available)")]
-    BizHawkOutdated {
-        latest: Version,
-        local: Version,
-    },
+    BizHawkOutdated { latest: Version, local: Version },
     #[cfg(windows)]
     #[error("locally installed BizHawk is newer than latest release")]
     BizHawkVersionRegression,
@@ -157,13 +159,16 @@ impl fmt::Display for Setup {
 #[cfg(windows)]
 impl Progress for Setup {
     fn progress(&self) -> Percent {
-        Percent::fraction(match self {
-            Self::CreateReqwestClient => 0,
-            Self::CheckVersion(..) => 1,
-            Self::CheckBizHawkVersion(..) => 2,
-            Self::LockRust(..) => 3,
-            Self::UpdateRust(..) => 4,
-        }, 5)
+        Percent::fraction(
+            match self {
+                Self::CreateReqwestClient => 0,
+                Self::CheckVersion(..) => 1,
+                Self::CheckBizHawkVersion(..) => 2,
+                Self::LockRust(..) => 3,
+                Self::UpdateRust(..) => 4,
+            },
+            5,
+        )
     }
 }
 
@@ -172,54 +177,93 @@ impl Progress for Setup {
 impl Task<Result<(reqwest::Client, Repo, Version), Error>> for Setup {
     async fn run(self) -> Result<Result<(reqwest::Client, Repo, Version), Error>, Self> {
         match self {
-            Self::CreateReqwestClient => gres::transpose(async move {
-                let mut headers = reqwest::header::HeaderMap::new();
-                headers.insert(reqwest::header::AUTHORIZATION, reqwest::header::HeaderValue::from_str(&format!("token {}", fs::read_to_string("assets/release-token").await?))?);
-                headers.insert(reqwest::header::USER_AGENT, reqwest::header::HeaderValue::from_static(concat!("oottracker-release/", env!("CARGO_PKG_VERSION"))));
-                let client = reqwest::Client::builder()
-                    .user_agent(concat!("oottracker/", env!("CARGO_PKG_VERSION")))
-                    .default_headers(headers)
-                    .timeout(Duration::from_secs(600))
-                    .http2_prior_knowledge()
-                    .use_rustls_tls()
-                    .https_only(true)
-                    .build()?;
-                Ok(Err(Self::CheckVersion(client)))
-            }).await,
-            Self::CheckVersion(client) => gres::transpose(async move {
-                //TODO make sure working dir is clean and on default branch and up to date with remote and remote is up to date
-                let repo = Repo::new("fenhl", "oottracker");
-                if let Some(latest_release) = repo.latest_release(&client).await? {
-                    let remote_version = latest_release.version()?;
-                    match version::version().await.cmp(&remote_version) {
-                        Less => return Err(Error::VersionRegression),
-                        Equal => return Err(Error::SameVersion),
-                        Greater => {}
+            Self::CreateReqwestClient => {
+                gres::transpose(async move {
+                    let mut headers = reqwest::header::HeaderMap::new();
+                    headers.insert(
+                        reqwest::header::AUTHORIZATION,
+                        reqwest::header::HeaderValue::from_str(&format!(
+                            "token {}",
+                            fs::read_to_string("assets/release-token").await?
+                        ))?,
+                    );
+                    headers.insert(
+                        reqwest::header::USER_AGENT,
+                        reqwest::header::HeaderValue::from_static(concat!(
+                            "oottracker-release/",
+                            env!("CARGO_PKG_VERSION")
+                        )),
+                    );
+                    let client = reqwest::Client::builder()
+                        .user_agent(concat!("oottracker/", env!("CARGO_PKG_VERSION")))
+                        .default_headers(headers)
+                        .timeout(Duration::from_secs(600))
+                        .http2_prior_knowledge()
+                        .use_rustls_tls()
+                        .https_only(true)
+                        .build()?;
+                    Ok(Err(Self::CheckVersion(client)))
+                })
+                .await
+            }
+            Self::CheckVersion(client) => {
+                gres::transpose(async move {
+                    //TODO make sure working dir is clean and on default branch and up to date with remote and remote is up to date
+                    let repo = Repo::new("fenhl", "oottracker");
+                    if let Some(latest_release) = repo.latest_release(&client).await? {
+                        let remote_version = latest_release.version()?;
+                        match version::version().await.cmp(&remote_version) {
+                            Less => return Err(Error::VersionRegression),
+                            Equal => return Err(Error::SameVersion),
+                            Greater => {}
+                        }
                     }
-                }
-                Ok(Err(Self::CheckBizHawkVersion(client, repo)))
-            }).await,
-            Self::CheckBizHawkVersion(client, repo) => gres::transpose(async move {
-                let [major, minor, patch, _] = oottracker_bizhawk::bizhawk_version();
-                let local_version = Version::new(major.into(), minor.into(), patch.into());
-                let remote_version = version::bizhawk_latest(&client).await?;
-                match local_version.cmp(&remote_version) {
-                    Less => return Err(Error::BizHawkOutdated { local: local_version, latest: remote_version }),
-                    Equal => {}
-                    Greater => return Err(Error::BizHawkVersionRegression),
-                }
-                Ok(Err(Self::LockRust(client, repo, local_version)))
-            }).await,
-            Self::LockRust(client, repo, local_version) => gres::transpose(async move {
-                let lock_dir = Path::new(&env::var_os("TEMP").ok_or(Error::MissingEnvar("TEMP"))?).join("syncbin-startup-rust.lock");
-                let lock = DirLock::new(&lock_dir).await?;
-                Ok(Err(Self::UpdateRust(client, repo, local_version, lock))) //TODO update rustup first?
-            }).await,
-            Self::UpdateRust(client, repo, local_version, lock) => gres::transpose(async move {
-                Command::new("rustup").arg("update").arg("stable").check("rustup").await?;
-                lock.drop_async().await?;
-                Ok(Ok((client, repo, local_version)))
-            }).await,
+                    Ok(Err(Self::CheckBizHawkVersion(client, repo)))
+                })
+                .await
+            }
+            Self::CheckBizHawkVersion(client, repo) => {
+                gres::transpose(async move {
+                    let [major, minor, patch, _] = oottracker_bizhawk::bizhawk_version();
+                    let local_version = Version::new(major.into(), minor.into(), patch.into());
+                    let remote_version = version::bizhawk_latest(&client).await?;
+                    match local_version.cmp(&remote_version) {
+                        Less => {
+                            return Err(Error::BizHawkOutdated {
+                                local: local_version,
+                                latest: remote_version,
+                            })
+                        }
+                        Equal => {}
+                        Greater => return Err(Error::BizHawkVersionRegression),
+                    }
+                    Ok(Err(Self::LockRust(client, repo, local_version)))
+                })
+                .await
+            }
+            Self::LockRust(client, repo, local_version) => {
+                gres::transpose(async move {
+                    let lock_dir =
+                        Path::new(&env::var_os("TEMP").ok_or(Error::MissingEnvar("TEMP"))?)
+                            .join("syncbin-startup-rust.lock");
+                    let lock = DirLock::new(&lock_dir).await?;
+                    Ok(Err(Self::UpdateRust(client, repo, local_version, lock)))
+                    //TODO update rustup first?
+                })
+                .await
+            }
+            Self::UpdateRust(client, repo, local_version, lock) => {
+                gres::transpose(async move {
+                    Command::new("rustup")
+                        .arg("update")
+                        .arg("stable")
+                        .check("rustup")
+                        .await?;
+                    lock.drop_async().await?;
+                    Ok(Ok((client, repo, local_version)))
+                })
+                .await
+            }
         }
     }
 }
@@ -236,7 +280,12 @@ enum BuildBizHawk {
 
 #[cfg(windows)]
 impl BuildBizHawk {
-    fn new(client: reqwest::Client, repo: Repo, release_rx: broadcast::Receiver<Release>, version: Version) -> Self {
+    fn new(
+        client: reqwest::Client,
+        repo: Repo,
+        release_rx: broadcast::Receiver<Release>,
+        version: Version,
+    ) -> Self {
         Self::Updater(client, repo, release_rx, version)
     }
 }
@@ -258,14 +307,17 @@ impl fmt::Display for BuildBizHawk {
 #[cfg(windows)]
 impl Progress for BuildBizHawk {
     fn progress(&self) -> Percent {
-        Percent::fraction(match self {
-            Self::Updater(..) => 0,
-            Self::CSharp(..) => 1,
-            Self::BizHawk(..) => 2,
-            Self::Zip(..) => 3,
-            Self::WaitRelease(..) => 4,
-            Self::Upload(..) => 5,
-        }, 6)
+        Percent::fraction(
+            match self {
+                Self::Updater(..) => 0,
+                Self::CSharp(..) => 1,
+                Self::BizHawk(..) => 2,
+                Self::Zip(..) => 3,
+                Self::WaitRelease(..) => 4,
+                Self::Upload(..) => 5,
+            },
+            6,
+        )
     }
 }
 
@@ -346,13 +398,16 @@ impl fmt::Display for BuildGui {
 #[cfg(windows)]
 impl Progress for BuildGui {
     fn progress(&self) -> Percent {
-        Percent::fraction(match self {
-            Self::Updater(..) => 0,
-            Self::X64(..) => 1,
-            Self::ReadX64(..) => 2,
-            Self::WaitRelease(..) => 3,
-            Self::Upload(..) => 4,
-        }, 5)
+        Percent::fraction(
+            match self {
+                Self::Updater(..) => 0,
+                Self::X64(..) => 1,
+                Self::ReadX64(..) => 2,
+                Self::WaitRelease(..) => 3,
+                Self::Upload(..) => 4,
+            },
+            5,
+        )
     }
 }
 
@@ -361,42 +416,80 @@ impl Progress for BuildGui {
 impl Task<Result<(), Error>> for BuildGui {
     async fn run(self) -> Result<Result<(), Error>, Self> {
         match self {
-            Self::Updater(client, repo, release_rx) => gres::transpose(async move {
-                Command::new("cargo").arg("build").arg("--release").arg("--target=x86_64-pc-windows-msvc").arg("--package=oottracker-updater").check("cargo build --package=oottracker-updater").await?;
-                Ok(Err(Self::X64(client, repo, release_rx)))
-            }).await,
-            Self::X64(client, repo, release_rx) => gres::transpose(async move {
-                Command::new("cargo").arg("build").arg("--release").arg("--package=oottracker-gui").check("cargo build --package=oottracker-gui").await?;
-                Ok(Err(Self::ReadX64(client, repo, release_rx)))
-            }).await,
-            Self::ReadX64(client, repo, release_rx) => gres::transpose(async move {
-                let x64_data = fs::read("target/release/oottracker-gui.exe").await?;
-                Ok(Err(Self::WaitRelease(client, repo, release_rx, x64_data)))
-            }).await,
-            Self::WaitRelease(client, repo, mut release_rx, x64_data) => gres::transpose(async move {
-                let release = release_rx.recv().await?;
-                Ok(Err(Self::Upload(client, repo, release, x64_data)))
-            }).await,
-            Self::Upload(client, repo, release, x64_data) => gres::transpose(async move {
-                repo.release_attach(&client, &release, "oottracker-win64.exe", "application/vnd.microsoft.portable-executable", x64_data).await?;
-                Ok(Ok(()))
-            }).await,
+            Self::Updater(client, repo, release_rx) => {
+                gres::transpose(async move {
+                    Command::new("cargo")
+                        .arg("build")
+                        .arg("--release")
+                        .arg("--target=x86_64-pc-windows-msvc")
+                        .arg("--package=oottracker-updater")
+                        .check("cargo build --package=oottracker-updater")
+                        .await?;
+                    Ok(Err(Self::X64(client, repo, release_rx)))
+                })
+                .await
+            }
+            Self::X64(client, repo, release_rx) => {
+                gres::transpose(async move {
+                    Command::new("cargo")
+                        .arg("build")
+                        .arg("--release")
+                        .arg("--package=oottracker-gui")
+                        .check("cargo build --package=oottracker-gui")
+                        .await?;
+                    Ok(Err(Self::ReadX64(client, repo, release_rx)))
+                })
+                .await
+            }
+            Self::ReadX64(client, repo, release_rx) => {
+                gres::transpose(async move {
+                    let x64_data = fs::read("target/release/oottracker-gui.exe").await?;
+                    Ok(Err(Self::WaitRelease(client, repo, release_rx, x64_data)))
+                })
+                .await
+            }
+            Self::WaitRelease(client, repo, mut release_rx, x64_data) => {
+                gres::transpose(async move {
+                    let release = release_rx.recv().await?;
+                    Ok(Err(Self::Upload(client, repo, release, x64_data)))
+                })
+                .await
+            }
+            Self::Upload(client, repo, release, x64_data) => {
+                gres::transpose(async move {
+                    repo.release_attach(
+                        &client,
+                        &release,
+                        "oottracker-win64.exe",
+                        "application/vnd.microsoft.portable-executable",
+                        x64_data,
+                    )
+                    .await?;
+                    Ok(Ok(()))
+                })
+                .await
+            }
         }
     }
 }
 
 #[derive(Protocol)]
 enum MacMessage {
-    Progress {
-        label: String,
-        percent: Percent,
-    },
+    Progress { label: String, percent: Percent },
 }
 
 #[cfg(windows)]
 enum BuildMacOs {
     Connect(reqwest::Client, Repo, broadcast::Receiver<Release>),
-    Remote(String, Percent, reqwest::Client, Repo, broadcast::Receiver<Release>, Child, ChildStdout),
+    Remote(
+        String,
+        Percent,
+        reqwest::Client,
+        Repo,
+        broadcast::Receiver<Release>,
+        Child,
+        ChildStdout,
+    ),
     Disconnect(reqwest::Client, Repo, broadcast::Receiver<Release>, Child),
     Download(reqwest::Client, Repo, broadcast::Receiver<Release>),
     ReadDmg(reqwest::Client, Repo, broadcast::Receiver<Release>),
@@ -514,11 +607,14 @@ impl fmt::Display for BuildPj64 {
 #[cfg(windows)]
 impl Progress for BuildPj64 {
     fn progress(&self) -> Percent {
-        Percent::fraction(match self {
-            Self::CompileJs(..) => 0,
-            Self::WaitRelease(..) => 1,
-            Self::Upload(..) => 2,
-        }, 3)
+        Percent::fraction(
+            match self {
+                Self::CompileJs(..) => 0,
+                Self::WaitRelease(..) => 1,
+                Self::Upload(..) => 2,
+            },
+            3,
+        )
     }
 }
 
@@ -527,39 +623,66 @@ impl Progress for BuildPj64 {
 impl Task<Result<(), Error>> for BuildPj64 {
     async fn run(self) -> Result<Result<(), Error>, Self> {
         match self {
-            Self::CompileJs(client, repo, release_rx) => gres::transpose(async move {
-                let mut buf = Vec::default();
-                writeln!(&mut buf, "const TCP_PORT = {};", oottracker::proto::TCP_PORT)?;
-                writeln!(&mut buf, "const SAVE_ADDR = {};", oottracker::save::ADDR)?;
-                writeln!(&mut buf, "const SAVE_SIZE = {};", oottracker::save::SIZE)?;
-                writeln!(&mut buf, "const RAM_RANGES = [{}];", oottracker::ram::RANGES.iter()
-                    .copied()
-                    .tuples()
-                    .map(|(start, len)| format!("[{}, {}]", start, len))
-                    .join(", ")
-                )?;
-                let mut base = BufReader::new(File::open("assets/oottracker-pj64-base.js").await?).lines();
-                while let Some(line) = base.next_line().await? {
-                    if let Some((_, version)) = regex_captures!("^const VERSION = ([0-9]+);", &line) {
-                        if version.parse::<u8>()? != oottracker::proto::VERSION {
-                            return Err(Error::ProtocolVersionMismatch)
+            Self::CompileJs(client, repo, release_rx) => {
+                gres::transpose(async move {
+                    let mut buf = Vec::default();
+                    writeln!(
+                        &mut buf,
+                        "const TCP_PORT = {};",
+                        oottracker::proto::TCP_PORT
+                    )?;
+                    writeln!(&mut buf, "const SAVE_ADDR = {};", oottracker::save::ADDR)?;
+                    writeln!(&mut buf, "const SAVE_SIZE = {};", oottracker::save::SIZE)?;
+                    writeln!(
+                        &mut buf,
+                        "const RAM_RANGES = [{}];",
+                        oottracker::ram::RANGES
+                            .iter()
+                            .copied()
+                            .tuples()
+                            .map(|(start, len)| format!("[{}, {}]", start, len))
+                            .join(", ")
+                    )?;
+                    let mut base =
+                        BufReader::new(File::open("assets/oottracker-pj64-base.js").await?).lines();
+                    while let Some(line) = base.next_line().await? {
+                        if let Some((_, version)) =
+                            regex_captures!("^const VERSION = ([0-9]+);", &line)
+                        {
+                            if version.parse::<u8>()? != oottracker::proto::VERSION {
+                                return Err(Error::ProtocolVersionMismatch);
+                            }
+                            break;
                         }
-                        break
                     }
-                }
-                let mut base = base.into_inner();
-                base.seek(SeekFrom::Start(0)).await?;
-                io::copy(&mut base, &mut buf).await?;
-                Ok(Err(Self::WaitRelease(client, repo, release_rx, buf)))
-            }).await,
-            Self::WaitRelease(client, repo, mut release_rx, buf) => gres::transpose(async move {
-                let release = release_rx.recv().await?;
-                Ok(Err(Self::Upload(client, repo, release, buf)))
-            }).await,
-            Self::Upload(client, repo, release, buf) => gres::transpose(async move {
-                repo.release_attach(&client, &release, "oottracker-pj64.js", "text/javascript", buf).await?;
-                Ok(Ok(()))
-            }).await,
+                    let mut base = base.into_inner();
+                    base.seek(SeekFrom::Start(0)).await?;
+                    io::copy(&mut base, &mut buf).await?;
+                    Ok(Err(Self::WaitRelease(client, repo, release_rx, buf)))
+                })
+                .await
+            }
+            Self::WaitRelease(client, repo, mut release_rx, buf) => {
+                gres::transpose(async move {
+                    let release = release_rx.recv().await?;
+                    Ok(Err(Self::Upload(client, repo, release, buf)))
+                })
+                .await
+            }
+            Self::Upload(client, repo, release, buf) => {
+                gres::transpose(async move {
+                    repo.release_attach(
+                        &client,
+                        &release,
+                        "oottracker-pj64.js",
+                        "text/javascript",
+                        buf,
+                    )
+                    .await?;
+                    Ok(Ok(()))
+                })
+                .await
+            }
         }
     }
 }
@@ -605,33 +728,82 @@ impl Progress for BuildWeb {
 impl Task<Result<(), Error>> for BuildWeb {
     async fn run(self) -> Result<Result<(), Error>, Self> {
         match self {
-            Self::UpdateRepo => gres::transpose(async move {
-                Command::new("ssh").arg("fenhl.net").arg("cd /opt/git/github.com/fenhl/oottracker/main && git pull --ff-only").check("ssh").await?;
-                Ok(Err(Self::Build))
-            }).await,
-            Self::Build => gres::transpose(async move {
-                Command::new("ssh").arg("fenhl.net").arg(concat!("env -C /opt/git/github.com/fenhl/oottracker/main ", include_str!("../../../assets/web/env.txt"), " cargo build --release --package=oottracker-web")).check("ssh").await?;
-                Ok(Err(Self::Restart))
-            }).await,
-            Self::Restart => gres::transpose(async move {
-                Command::new("ssh").arg("fenhl.net").arg("sudo systemctl restart oottracker-web").check("ssh").await?;
-                Ok(Ok(()))
-            }).await,
+            Self::UpdateRepo => {
+                gres::transpose(async move {
+                    Command::new("ssh")
+                        .arg("fenhl.net")
+                        .arg("cd /opt/git/github.com/fenhl/oottracker/main && git pull --ff-only")
+                        .check("ssh")
+                        .await?;
+                    Ok(Err(Self::Build))
+                })
+                .await
+            }
+            Self::Build => {
+                gres::transpose(async move {
+                    Command::new("ssh")
+                        .arg("fenhl.net")
+                        .arg(concat!(
+                            "env -C /opt/git/github.com/fenhl/oottracker/main ",
+                            include_str!("../../../assets/web/env.txt"),
+                            " cargo build --release --package=oottracker-web"
+                        ))
+                        .check("ssh")
+                        .await?;
+                    Ok(Err(Self::Restart))
+                })
+                .await
+            }
+            Self::Restart => {
+                gres::transpose(async move {
+                    Command::new("ssh")
+                        .arg("fenhl.net")
+                        .arg("sudo systemctl restart oottracker-web")
+                        .check("ssh")
+                        .await?;
+                    Ok(Ok(()))
+                })
+                .await
+            }
         }
     }
 }
 
 #[cfg(windows)]
 enum CreateRelease {
-    CreateNotesFile(Repo, reqwest::Client, broadcast::Sender<Release>, Arc<Cli>, Args),
-    EditNotes(Repo, reqwest::Client, broadcast::Sender<Release>, Arc<Cli>, Args, NamedTempFile),
-    ReadNotes(Repo, reqwest::Client, broadcast::Sender<Release>, NamedTempFile),
+    CreateNotesFile(
+        Repo,
+        reqwest::Client,
+        broadcast::Sender<Release>,
+        Arc<Cli>,
+        Args,
+    ),
+    EditNotes(
+        Repo,
+        reqwest::Client,
+        broadcast::Sender<Release>,
+        Arc<Cli>,
+        Args,
+        NamedTempFile,
+    ),
+    ReadNotes(
+        Repo,
+        reqwest::Client,
+        broadcast::Sender<Release>,
+        NamedTempFile,
+    ),
     Create(Repo, reqwest::Client, broadcast::Sender<Release>, String),
 }
 
 #[cfg(windows)]
 impl CreateRelease {
-    fn new(repo: Repo, client: reqwest::Client, tx: broadcast::Sender<Release>, cli: Arc<Cli>, args: Args) -> Self {
+    fn new(
+        repo: Repo,
+        client: reqwest::Client,
+        tx: broadcast::Sender<Release>,
+        cli: Arc<Cli>,
+        args: Args,
+    ) -> Self {
         Self::CreateNotesFile(repo, client, tx, cli, args)
     }
 }
@@ -651,12 +823,15 @@ impl fmt::Display for CreateRelease {
 #[cfg(windows)]
 impl Progress for CreateRelease {
     fn progress(&self) -> Percent {
-        Percent::fraction(match self {
-            Self::CreateNotesFile(..) => 0,
-            Self::EditNotes(..) => 1,
-            Self::ReadNotes(..) => 2,
-            Self::Create(..) => 3,
-        }, 4)
+        Percent::fraction(
+            match self {
+                Self::CreateNotesFile(..) => 0,
+                Self::EditNotes(..) => 1,
+                Self::ReadNotes(..) => 2,
+                Self::Create(..) => 3,
+            },
+            4,
+        )
     }
 }
 
@@ -665,53 +840,83 @@ impl Progress for CreateRelease {
 impl Task<Result<Release, Error>> for CreateRelease {
     async fn run(self) -> Result<Result<Release, Error>, Self> {
         match self {
-            Self::CreateNotesFile(repo, client, tx, cli, args) => gres::transpose(async move {
-                let notes_file = tokio::task::spawn_blocking(|| {
-                    tempfile::Builder::new()
-                        .prefix("oottracker-release-notes")
-                        .suffix(".md")
-                        .tempfile()
-                }).await??;
-                Ok(Err(Self::EditNotes(repo, client, tx, cli, args, notes_file)))
-            }).await,
-            Self::EditNotes(repo, client, tx, cli, args, notes_file) => gres::transpose(async move {
-                let mut cmd;
-                let (cmd_name, cli_lock) = if let Some(ref editor) = args.release_notes_editor {
-                    cmd = Command::new(editor);
-                    if !args.no_wait {
-                        cmd.arg("--wait");
-                    }
-                    ("editor", Some(cli.lock().await))
-                } else {
-                    if env::var("TERM_PROGRAM").as_deref() == Ok("vscode") && env::var_os("STY").is_none() && env::var_os("SSH_CLIENT").is_none() && env::var_os("SSH_TTY").is_none() {
-                        cmd = Command::new("C:\\Program Files\\Microsoft VS Code\\bin\\code.cmd");
+            Self::CreateNotesFile(repo, client, tx, cli, args) => {
+                gres::transpose(async move {
+                    let notes_file = tokio::task::spawn_blocking(|| {
+                        tempfile::Builder::new()
+                            .prefix("oottracker-release-notes")
+                            .suffix(".md")
+                            .tempfile()
+                    })
+                    .await??;
+                    Ok(Err(Self::EditNotes(
+                        repo, client, tx, cli, args, notes_file,
+                    )))
+                })
+                .await
+            }
+            Self::EditNotes(repo, client, tx, cli, args, notes_file) => {
+                gres::transpose(async move {
+                    let mut cmd;
+                    let (cmd_name, cli_lock) = if let Some(ref editor) = args.release_notes_editor {
+                        cmd = Command::new(editor);
                         if !args.no_wait {
                             cmd.arg("--wait");
                         }
-                        ("code", None)
+                        ("editor", Some(cli.lock().await))
                     } else {
-                        cmd = Command::new("C:\\ProgramData\\chocolatey\\bin\\nano.exe");
-                        ("nano", Some(cli.lock().await))
-                    }
-                };
-                cmd.arg(notes_file.path()).spawn()?.check(cmd_name).await?; // spawn before checking to avoid capturing stdio
-                drop(cli_lock);
-                Ok(Err(Self::ReadNotes(repo, client, tx, notes_file)))
-            }).await,
-            Self::ReadNotes(repo, client, tx, mut notes_file) => gres::transpose(async move {
-                let notes = tokio::task::spawn_blocking(move || {
-                    let mut buf = String::default();
-                    notes_file.read_to_string(&mut buf)?;
-                    if buf.is_empty() { return Err(Error::EmptyReleaseNotes) }
-                    Ok(buf)
-                }).await??;
-                Ok(Err(Self::Create(repo, client, tx, notes)))
-            }).await,
-            Self::Create(repo, client, tx, notes) => gres::transpose(async move {
-                let release = repo.create_release(&client, format!("OoT Tracker {}", version::version().await), format!("v{}", version::version().await), notes).await?;
-                tx.send(release.clone())?;
-                Ok(Ok(release))
-            }).await,
+                        if env::var("TERM_PROGRAM").as_deref() == Ok("vscode")
+                            && env::var_os("STY").is_none()
+                            && env::var_os("SSH_CLIENT").is_none()
+                            && env::var_os("SSH_TTY").is_none()
+                        {
+                            cmd =
+                                Command::new("C:\\Program Files\\Microsoft VS Code\\bin\\code.cmd");
+                            if !args.no_wait {
+                                cmd.arg("--wait");
+                            }
+                            ("code", None)
+                        } else {
+                            cmd = Command::new("C:\\ProgramData\\chocolatey\\bin\\nano.exe");
+                            ("nano", Some(cli.lock().await))
+                        }
+                    };
+                    cmd.arg(notes_file.path()).spawn()?.check(cmd_name).await?; // spawn before checking to avoid capturing stdio
+                    drop(cli_lock);
+                    Ok(Err(Self::ReadNotes(repo, client, tx, notes_file)))
+                })
+                .await
+            }
+            Self::ReadNotes(repo, client, tx, mut notes_file) => {
+                gres::transpose(async move {
+                    let notes = tokio::task::spawn_blocking(move || {
+                        let mut buf = String::default();
+                        notes_file.read_to_string(&mut buf)?;
+                        if buf.is_empty() {
+                            return Err(Error::EmptyReleaseNotes);
+                        }
+                        Ok(buf)
+                    })
+                    .await??;
+                    Ok(Err(Self::Create(repo, client, tx, notes)))
+                })
+                .await
+            }
+            Self::Create(repo, client, tx, notes) => {
+                gres::transpose(async move {
+                    let release = repo
+                        .create_release(
+                            &client,
+                            format!("OoT Tracker {}", version::version().await),
+                            format!("v{}", version::version().await),
+                            notes,
+                        )
+                        .await?;
+                    tx.send(release.clone())?;
+                    Ok(Ok(release))
+                })
+                .await
+            }
         }
     }
 }
@@ -738,7 +943,12 @@ async fn main() -> Result<(), Error> {
 
     macro_rules! progress {
         ($percent:literal, $label:literal) => {{
-            MacMessage::Progress { label: format!($label), percent: Percent::new($percent) }.write(&mut stdout).await?;
+            MacMessage::Progress {
+                label: format!($label),
+                percent: Percent::new($percent),
+            }
+            .write(&mut stdout)
+            .await?;
             stdout.flush().await?;
         }};
     }
@@ -750,7 +960,14 @@ async fn main() -> Result<(), Error> {
     rustup_cmd.arg("self");
     rustup_cmd.arg("update");
     if let Some(base_dirs) = BaseDirs::new() {
-        rustup_cmd.env("PATH", format!("{}:{}", base_dirs.home_dir().join(".cargo").join("bin").display(), env::var("PATH")?));
+        rustup_cmd.env(
+            "PATH",
+            format!(
+                "{}:{}",
+                base_dirs.home_dir().join(".cargo").join("bin").display(),
+                env::var("PATH")?
+            ),
+        );
     }
     rustup_cmd.check("rustup").await?;
     progress!(10, "updating Rust on Mac");
@@ -758,7 +975,14 @@ async fn main() -> Result<(), Error> {
     rustup_cmd.arg("update");
     rustup_cmd.arg("stable");
     if let Some(base_dirs) = BaseDirs::new() {
-        rustup_cmd.env("PATH", format!("{}:{}", base_dirs.home_dir().join(".cargo").join("bin").display(), env::var("PATH")?));
+        rustup_cmd.env(
+            "PATH",
+            format!(
+                "{}:{}",
+                base_dirs.home_dir().join(".cargo").join("bin").display(),
+                env::var("PATH")?
+            ),
+        );
     }
     rustup_cmd.check("rustup").await?;
     lock.drop_async().await?;
@@ -769,23 +993,75 @@ async fn main() -> Result<(), Error> {
     sweep_cmd.arg("-r");
     sweep_cmd.current_dir("/opt/git");
     if let Some(base_dirs) = BaseDirs::new() {
-        sweep_cmd.env("PATH", format!("{}:{}", base_dirs.home_dir().join(".cargo").join("bin").display(), env::var("PATH")?));
+        sweep_cmd.env(
+            "PATH",
+            format!(
+                "{}:{}",
+                base_dirs.home_dir().join(".cargo").join("bin").display(),
+                env::var("PATH")?
+            ),
+        );
     }
     sweep_cmd.check("cargo").await?;
     progress!(25, "updating oottracker repo on Mac");
     let repo = Repository::open("/opt/git/github.com/fenhl/oottracker/main")?;
     let mut origin = repo.find_remote("origin")?;
     origin.fetch(&["main"], None, None)?;
-    repo.reset(&repo.find_branch("origin/main", BranchType::Remote)?.into_reference().peel_to_commit()?.into_object(), ResetType::Hard, None)?;
+    repo.reset(
+        &repo
+            .find_branch("origin/main", BranchType::Remote)?
+            .into_reference()
+            .peel_to_commit()?
+            .into_object(),
+        ResetType::Hard,
+        None,
+    )?;
     progress!(30, "building oottracker-mac.app for x86_64");
-    Command::new("cargo").arg("build").arg("--release").arg("--target=x86_64-apple-darwin").arg("--package=oottracker-gui").env("MACOSX_DEPLOYMENT_TARGET", "10.9").current_dir("/opt/git/github.com/fenhl/oottracker/main").check("cargo").await?;
+    Command::new("cargo")
+        .arg("build")
+        .arg("--release")
+        .arg("--target=x86_64-apple-darwin")
+        .arg("--package=oottracker-gui")
+        .env("MACOSX_DEPLOYMENT_TARGET", "10.9")
+        .current_dir("/opt/git/github.com/fenhl/oottracker/main")
+        .check("cargo")
+        .await?;
     progress!(60, "building oottracker-mac.app for aarch64");
-    Command::new("cargo").arg("build").arg("--release").arg("--target=aarch64-apple-darwin").arg("--package=oottracker-gui").current_dir("/opt/git/github.com/fenhl/oottracker/main").check("cargo").await?;
+    Command::new("cargo")
+        .arg("build")
+        .arg("--release")
+        .arg("--target=aarch64-apple-darwin")
+        .arg("--package=oottracker-gui")
+        .current_dir("/opt/git/github.com/fenhl/oottracker/main")
+        .check("cargo")
+        .await?;
     progress!(90, "creating Universal macOS binary");
-    fs::create_dir("/opt/git/github.com/fenhl/oottracker/main/assets/macos/OoT Tracker.app/Contents/MacOS").await.exist_ok()?;
-    Command::new("lipo").arg("-create").arg("target/aarch64-apple-darwin/release/oottracker-gui").arg("target/x86_64-apple-darwin/release/oottracker-gui").arg("-output").arg("assets/macos/OoT Tracker.app/Contents/MacOS/oottracker-gui").current_dir("/opt/git/github.com/fenhl/oottracker/main").check("lipo").await?;
+    fs::create_dir(
+        "/opt/git/github.com/fenhl/oottracker/main/assets/macos/OoT Tracker.app/Contents/MacOS",
+    )
+    .await
+    .exist_ok()?;
+    Command::new("lipo")
+        .arg("-create")
+        .arg("target/aarch64-apple-darwin/release/oottracker-gui")
+        .arg("target/x86_64-apple-darwin/release/oottracker-gui")
+        .arg("-output")
+        .arg("assets/macos/OoT Tracker.app/Contents/MacOS/oottracker-gui")
+        .current_dir("/opt/git/github.com/fenhl/oottracker/main")
+        .check("lipo")
+        .await?;
     progress!(95, "packing oottracker-mac.dmg");
-    Command::new("hdiutil").arg("create").arg("assets/oottracker-mac.dmg").arg("-volname").arg("OoT Tracker").arg("-srcfolder").arg("assets/macos").arg("-ov").current_dir("/opt/git/github.com/fenhl/oottracker/main").check("hdiutil").await?;
+    Command::new("hdiutil")
+        .arg("create")
+        .arg("assets/oottracker-mac.dmg")
+        .arg("-volname")
+        .arg("OoT Tracker")
+        .arg("-srcfolder")
+        .arg("assets/macos")
+        .arg("-ov")
+        .current_dir("/opt/git/github.com/fenhl/oottracker/main")
+        .check("hdiutil")
+        .await?;
     Ok(())
 }
 
@@ -795,7 +1071,9 @@ async fn main(args: Args) -> Result<(), Error> {
     let cli = Arc::new(Cli::new()?);
     let create_release_cli = Arc::clone(&cli);
     let release_notes_cli = Arc::clone(&cli);
-    let (client, repo, bizhawk_version) = cli.run(Setup::default(), "pre-release checks passed").await??; // don't show release notes editor if version check could still fail
+    let (client, repo, bizhawk_version) = cli
+        .run(Setup::default(), "pre-release checks passed")
+        .await??; // don't show release notes editor if version check could still fail
     let (release_tx, release_rx_bizhawk) = broadcast::channel(1);
     let release_rx_gui = release_tx.subscribe();
     let release_rx_macos = release_tx.subscribe();
@@ -804,7 +1082,18 @@ async fn main(args: Args) -> Result<(), Error> {
     let create_release_client = client.clone();
     let create_release_repo = repo.clone();
     let create_release = tokio::spawn(async move {
-        create_release_cli.run(CreateRelease::new(create_release_repo, create_release_client, release_tx, release_notes_cli, create_release_args), "release created").await?
+        create_release_cli
+            .run(
+                CreateRelease::new(
+                    create_release_repo,
+                    create_release_client,
+                    release_tx,
+                    release_notes_cli,
+                    create_release_args,
+                ),
+                "release created",
+            )
+            .await?
     });
 
     macro_rules! with_metavariable {
@@ -818,11 +1107,73 @@ async fn main(args: Args) -> Result<(), Error> {
     }
 
     build_tasks![
-        { let cli = Arc::clone(&cli); let client = client.clone(); let repo = repo.clone(); async move { tokio::spawn(async move { cli.run(BuildBizHawk::new(client, repo, release_rx_bizhawk, bizhawk_version), "BizHawk build done").await? }).await? } },
-        { let cli = Arc::clone(&cli); let client = client.clone(); let repo = repo.clone(); async move { tokio::spawn(async move { cli.run(BuildGui::new(client, repo, release_rx_gui), "Windows GUI build done").await? }).await? } },
-        { let cli = Arc::clone(&cli); let client = client.clone(); let repo = repo.clone(); async move { tokio::spawn(async move { cli.run(BuildMacOs::new(client, repo, release_rx_macos), "macOS build done").await? }).await? } },
-        { let cli = Arc::clone(&cli); let client = client.clone(); let repo = repo.clone(); async move { tokio::spawn(async move { cli.run(BuildPj64::new(client, repo, release_rx_pj64), "Project64 build done").await? }).await? } },
-        { let cli = Arc::clone(&cli); async move { tokio::spawn(async move { cli.run(BuildWeb::default(), "web build done").await? }).await? } },
+        {
+            let cli = Arc::clone(&cli);
+            let client = client.clone();
+            let repo = repo.clone();
+            async move {
+                tokio::spawn(async move {
+                    cli.run(
+                        BuildBizHawk::new(client, repo, release_rx_bizhawk, bizhawk_version),
+                        "BizHawk build done",
+                    )
+                    .await?
+                })
+                .await?
+            }
+        },
+        {
+            let cli = Arc::clone(&cli);
+            let client = client.clone();
+            let repo = repo.clone();
+            async move {
+                tokio::spawn(async move {
+                    cli.run(
+                        BuildGui::new(client, repo, release_rx_gui),
+                        "Windows GUI build done",
+                    )
+                    .await?
+                })
+                .await?
+            }
+        },
+        {
+            let cli = Arc::clone(&cli);
+            let client = client.clone();
+            let repo = repo.clone();
+            async move {
+                tokio::spawn(async move {
+                    cli.run(
+                        BuildMacOs::new(client, repo, release_rx_macos),
+                        "macOS build done",
+                    )
+                    .await?
+                })
+                .await?
+            }
+        },
+        {
+            let cli = Arc::clone(&cli);
+            let client = client.clone();
+            let repo = repo.clone();
+            async move {
+                tokio::spawn(async move {
+                    cli.run(
+                        BuildPj64::new(client, repo, release_rx_pj64),
+                        "Project64 build done",
+                    )
+                    .await?
+                })
+                .await?
+            }
+        },
+        {
+            let cli = Arc::clone(&cli);
+            async move {
+                tokio::spawn(async move { cli.run(BuildWeb::default(), "web build done").await? })
+                    .await?
+            }
+        },
     ];
     let release = create_release.await??;
     if !args.no_publish {

@@ -1,39 +1,19 @@
 use {
-    std::{
-        fmt,
-        path::PathBuf,
-    },
     derivative::Derivative,
-    enum_iterator::{
-        Sequence,
-        all,
-    },
+    enum_iterator::{all, Sequence},
     iced::{
-        Color,
-        Command,
-        Element,
-        Length,
         alignment,
         widget::{
-            Column,
-            Row,
-            Text,
-            button::{
-                self,
-                Button,
-            },
-            pick_list::{
-                self,
-                PickList,
-            },
-            text_input::{
-                self,
-                TextInput,
-            },
+            button::{self, Button},
+            pick_list::{self, PickList},
+            text_input::{self, TextInput},
+            Column, Row, Text,
         },
+        Color, Command, Element, Length,
     },
     itertools::Itertools as _,
     ootr::Rando,
+    std::{fmt, path::PathBuf},
 };
 
 #[derive(Derivative, Debug)]
@@ -55,7 +35,9 @@ impl SettingsInfo {
     }
 
     fn set_kind(&mut self, new_kind: SettingsInfoKind) {
-        if self.kind() == new_kind { return }
+        if self.kind() == new_kind {
+            return;
+        }
         *self = match new_kind {
             SettingsInfoKind::String => SettingsInfo::String(String::default()),
             SettingsInfoKind::Plando => SettingsInfo::Plando(PathBuf::default()),
@@ -113,9 +95,15 @@ impl text_input::StyleSheet for TextInputStyle {
         }
     }
 
-    fn placeholder_color(&self) -> Color { Color::from_rgb(0.5, 0.5, 0.5) }
-    fn value_color(&self) -> Color { Color::BLACK }
-    fn selection_color(&self) -> Color { Color::from_rgb8(0x0d, 0x7a, 0xff) }
+    fn placeholder_color(&self) -> Color {
+        Color::from_rgb(0.5, 0.5, 0.5)
+    }
+    fn value_color(&self) -> Color {
+        Color::BLACK
+    }
+    fn selection_color(&self) -> Color {
+        Color::from_rgb8(0x0d, 0x7a, 0xff)
+    }
 }
 
 #[derive(Derivative)]
@@ -153,19 +141,25 @@ pub(crate) struct State<R: Rando + 'static> {
 impl<R: Rando + 'static> State<R> {
     pub(crate) fn update(&mut self, msg: Message<R>) -> Command<crate::Message<R>> {
         match msg {
-            Message::EditPlandoPath(new_path) => if let Ok(new_path) = new_path.parse() {
-                if let SettingsInfo::Plando(ref mut path) = self.settings_info {
-                    *path = new_path;
+            Message::EditPlandoPath(new_path) => {
+                if let Ok(new_path) = new_path.parse() {
+                    if let SettingsInfo::Plando(ref mut path) = self.settings_info {
+                        *path = new_path;
+                    }
                 }
-            },
-            Message::EditSettingsString(new_string) => if let SettingsInfo::String(ref mut string) = self.settings_info {
-                *string = new_string;
-            },
-            Message::EditWeightsPath(new_path) => if let Ok(new_path) = new_path.parse() {
-                if let SettingsInfo::Weights(ref mut path) = self.settings_info {
-                    *path = new_path;
+            }
+            Message::EditSettingsString(new_string) => {
+                if let SettingsInfo::String(ref mut string) = self.settings_info {
+                    *string = new_string;
                 }
-            },
+            }
+            Message::EditWeightsPath(new_path) => {
+                if let Ok(new_path) = new_path.parse() {
+                    if let SettingsInfo::Weights(ref mut path) = self.settings_info {
+                        *path = new_path;
+                    }
+                }
+            }
             Message::PickRegion(new_region) => self.current_region = new_region,
             Message::PickSettingsInfo(new_info) => self.settings_info.set_kind(new_info),
         }
@@ -173,16 +167,24 @@ impl<R: Rando + 'static> State<R> {
     }
 
     pub(crate) fn view(&mut self, rando: &R) -> Element<'_, Message<R>> {
-        let mut col = Column::new().push(Row::new()
-            .push(PickList::new(
-                &mut self.region_pick,
-                rando.regions().expect("failed to load regions" /*TODO better error handling */).iter().map(|region| region.name.clone()).collect_vec(),
-                Some(self.current_region.clone()),
-                Message::PickRegion,
-            ))
-            .push(Button::new(&mut self.save_btn, Text::new("Save Game"))) //TODO on_press
-            .push(Button::new(&mut self.reset_btn, Text::new("Reset N64"))) //TODO on_press
-            .spacing(16)
+        let mut col = Column::new().push(
+            Row::new()
+                .push(PickList::new(
+                    &mut self.region_pick,
+                    rando
+                        .regions()
+                        .expect(
+                            "failed to load regions", /*TODO better error handling */
+                        )
+                        .iter()
+                        .map(|region| region.name.clone())
+                        .collect_vec(),
+                    Some(self.current_region.clone()),
+                    Message::PickRegion,
+                ))
+                .push(Button::new(&mut self.save_btn, Text::new("Save Game"))) //TODO on_press
+                .push(Button::new(&mut self.reset_btn, Text::new("Reset N64"))) //TODO on_press
+                .spacing(16),
         );
         match self.current_region.as_ref() {
             "Root" => col = col
@@ -212,8 +214,7 @@ impl<R: Rando + 'static> State<R> {
                 .push(Text::new("TODO replace Master Sword Pedestal location with big “age change” button (age is considered for which checks are in logic and where savewarp goes)")),
             _ => {}
         }
-        col
-            .push(Text::new("TODO checks"))
+        col.push(Text::new("TODO checks"))
             .spacing(16)
             .padding(16)
             .into()

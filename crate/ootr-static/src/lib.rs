@@ -1,27 +1,26 @@
-#![deny(rust_2018_idioms, unused, unused_crate_dependencies, unused_import_braces, unused_lifetimes, unused_qualifications, warnings)]
+#![deny(
+    rust_2018_idioms,
+    unused,
+    unused_crate_dependencies,
+    unused_import_braces,
+    unused_lifetimes,
+    unused_qualifications,
+    warnings
+)]
 #![forbid(unsafe_code)]
 
 use {
-    std::{
-        collections::{
-            HashMap,
-            HashSet,
-        },
-        fmt,
-        sync::Arc,
-    },
     once_cell::sync::Lazy,
-    semver::Version,
     ootr::{
         item::Item,
-        model::{
-            Dungeon,
-            MainDungeon,
-        },
-        region::{
-            Mq,
-            Region,
-        },
+        model::{Dungeon, MainDungeon},
+        region::{Mq, Region},
+    },
+    semver::Version,
+    std::{
+        collections::{HashMap, HashSet},
+        fmt,
+        sync::Arc,
     },
 };
 
@@ -46,7 +45,8 @@ impl ootr::RandoErr for RandoErr {
 pub struct Rando;
 
 pub fn version() -> Version {
-    let version = Version::parse(env!("CARGO_PKG_VERSION")).expect("failed to parse current version");
+    let version =
+        Version::parse(env!("CARGO_PKG_VERSION")).expect("failed to parse current version");
     assert_eq!(version, ootr_static_derive::version!());
     version
 }

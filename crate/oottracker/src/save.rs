@@ -1,52 +1,23 @@
 use {
+    crate::{
+        info_tables::{EventChkInf, InfTable, ItemGetInf},
+        item_ids,
+        scene::{GoldSkulltulas, SceneFlags},
+    },
+    async_proto::{Protocol, ReadError, WriteError},
+    bitflags::bitflags,
+    byteorder::{BigEndian, ByteOrder as _},
+    derivative::Derivative,
+    derive_more::From,
+    ootr::model::{Dungeon, DungeonReward, MainDungeon, Medallion, Stone, TimeRange},
     std::{
         future::Future,
         io::prelude::*,
         num::TryFromIntError,
-        ops::{
-            Add,
-            Sub,
-        },
+        ops::{Add, Sub},
         pin::Pin,
     },
-    async_proto::{
-        Protocol,
-        ReadError,
-        WriteError,
-    },
-    bitflags::bitflags,
-    byteorder::{
-        BigEndian,
-        ByteOrder as _,
-    },
-    derivative::Derivative,
-    derive_more::From,
-    tokio::io::{
-        AsyncRead,
-        AsyncReadExt as _,
-        AsyncWrite,
-        AsyncWriteExt as _,
-    },
-    ootr::model::{
-        Dungeon,
-        DungeonReward,
-        MainDungeon,
-        Medallion,
-        Stone,
-        TimeRange,
-    },
-    crate::{
-        info_tables::{
-            EventChkInf,
-            InfTable,
-            ItemGetInf,
-        },
-        item_ids,
-        scene::{
-            GoldSkulltulas,
-            SceneFlags,
-        },
-    },
+    tokio::io::{AsyncRead, AsyncReadExt as _, AsyncWrite, AsyncWriteExt as _},
 };
 
 pub const ADDR: u32 = 0x11a5d0;
@@ -59,7 +30,9 @@ impl TimeOfDay {
     pub fn matches(&self, range: TimeRange) -> bool {
         match range {
             TimeRange::Day => (0x4555..0xc001).contains(&self.0),
-            TimeRange::Night => (0x0000..0x4555).contains(&self.0) || (0xc001..=0xffff).contains(&self.0),
+            TimeRange::Night => {
+                (0x0000..0x4555).contains(&self.0) || (0xc001..=0xffff).contains(&self.0)
+            }
             TimeRange::Dampe => (0xc001..0xe000).contains(&self.0),
         }
     }
@@ -69,18 +42,20 @@ impl TryFrom<Vec<u8>> for TimeOfDay {
     type Error = Vec<u8>;
 
     fn try_from(raw_data: Vec<u8>) -> Result<TimeOfDay, Vec<u8>> {
-        if raw_data.len() != 2 { return Err(raw_data) }
+        if raw_data.len() != 2 {
+            return Err(raw_data);
+        }
         Ok(TimeOfDay(BigEndian::read_u16(&raw_data)))
     }
 }
 
-impl<'a> From<&'a TimeOfDay> for [u8; 2] {
+impl From<&TimeOfDay> for [u8; 2] {
     fn from(TimeOfDay(repr): &TimeOfDay) -> [u8; 2] {
         repr.to_be_bytes()
     }
 }
 
-impl<'a> From<&'a TimeOfDay> for Vec<u8> {
+impl From<&TimeOfDay> for Vec<u8> {
     fn from(time: &TimeOfDay) -> Vec<u8> {
         <[u8; 2]>::from(time).into()
     }
@@ -96,7 +71,7 @@ pub enum MagicCapacity {
     Large = 2,
 }
 
-impl<'a> From<&'a MagicCapacity> for u8 {
+impl From<&MagicCapacity> for u8 {
     fn from(magic: &MagicCapacity) -> u8 {
         match magic {
             MagicCapacity::None => 0,
@@ -121,7 +96,7 @@ impl TryFrom<u8> for Ocarina {
     fn try_from(raw_data: u8) -> Result<Ocarina, u8> {
         match raw_data {
             item_ids::NONE => Ok(Ocarina::None),
-            item_ids::FAIRY_OCARINA=> Ok(Ocarina::FairyOcarina),
+            item_ids::FAIRY_OCARINA => Ok(Ocarina::FairyOcarina),
             item_ids::OCARINA_OF_TIME => Ok(Ocarina::OcarinaOfTime),
             _ => Err(raw_data),
         }
@@ -389,7 +364,7 @@ impl Inventory {
         for bottle in &mut self.bottles {
             if *bottle == Bottle::None {
                 *bottle = new_bottle;
-                return true
+                return true;
             } else if *bottle == Bottle::RutosLetter && new_bottle == Bottle::RutosLetter {
                 new_bottle = Bottle::Empty;
             }
@@ -398,11 +373,16 @@ impl Inventory {
     }
 
     pub fn emptiable_bottles(&self) -> u8 {
-        self.bottles.iter().filter(|bottle| bottle.emptiable()).count().try_into().expect("there are only 4 bottles")
+        self.bottles
+            .iter()
+            .filter(|bottle| bottle.emptiable())
+            .count()
+            .try_into()
+            .expect("there are only 4 bottles")
     }
 
     pub fn has_rutos_letter(&self) -> bool {
-        self.bottles.iter().any(|bottle| *bottle == Bottle::RutosLetter)
+        self.bottles.contains(&Bottle::RutosLetter)
     }
 
     pub fn set_emptiable_bottles(&mut self, amount: u8) {
@@ -411,19 +391,19 @@ impl Inventory {
             for bottle in &mut self.bottles {
                 if *bottle == Bottle::None {
                     *bottle = Bottle::Empty;
-                    continue 'increment
+                    continue 'increment;
                 }
             }
             for bottle in &mut self.bottles {
                 if *bottle == Bottle::BigPoe {
                     *bottle = Bottle::Empty;
-                    continue 'increment
+                    continue 'increment;
                 }
             }
             for bottle in &mut self.bottles {
                 if *bottle == Bottle::RutosLetter {
                     *bottle = Bottle::Empty;
-                    continue 'increment
+                    continue 'increment;
                 }
             }
             unreachable!("could not increment emptiable bottles")
@@ -432,7 +412,7 @@ impl Inventory {
             for bottle in &mut self.bottles {
                 if bottle.emptiable() {
                     *bottle = Bottle::None;
-                    continue 'decrement
+                    continue 'decrement;
                 }
             }
             unreachable!("could not decrement emptiable bottles")
@@ -441,20 +421,24 @@ impl Inventory {
 
     pub fn toggle_rutos_letter(&mut self) {
         if self.has_rutos_letter() {
-            self.bottles.iter_mut().for_each(|bottle| if *bottle == Bottle::RutosLetter { *bottle = Bottle::None });
+            self.bottles.iter_mut().for_each(|bottle| {
+                if *bottle == Bottle::RutosLetter {
+                    *bottle = Bottle::None
+                }
+            });
         } else {
             // First, try to put the letter into a new bottle.
             for bottle in &mut self.bottles {
                 if *bottle == Bottle::None {
                     *bottle = Bottle::RutosLetter;
-                    return
+                    return;
                 }
             }
             // All 4 bottles obtained, empty one and put Ruto's letter in it.
             for bottle in &mut self.bottles {
                 if bottle.emptiable() {
                     *bottle = Bottle::RutosLetter;
-                    return
+                    return;
                 }
             }
             // All 4 bottles have big poes in them. Replace one of them with Ruto's letter.
@@ -477,7 +461,9 @@ impl TryFrom<Vec<u8>> for Inventory {
             }};
         }
 
-        if raw_data.len() != 0x18 { return Err(raw_data) }
+        if raw_data.len() != 0x18 {
+            return Err(raw_data);
+        }
         Ok(Inventory {
             bow: bool_item!(0x03, item_ids::BOW),
             fire_arrows: bool_item!(0x04, item_ids::FIRE_ARROWS),
@@ -500,30 +486,55 @@ impl TryFrom<Vec<u8>> for Inventory {
                 Bottle::try_from(raw_data[0x14]).map_err(|_| raw_data.clone())?,
                 Bottle::try_from(raw_data[0x15]).map_err(|_| raw_data.clone())?,
             ],
-            adult_trade_item: AdultTradeItem::try_from(raw_data[0x16]).map_err(|_| raw_data.clone())?,
+            adult_trade_item: AdultTradeItem::try_from(raw_data[0x16])
+                .map_err(|_| raw_data.clone())?,
             child_trade_item: ChildTradeItem::try_from(raw_data[0x17]).map_err(|_| raw_data)?,
         })
     }
 }
 
-impl<'a> From<&'a Inventory> for [u8; 0x18] {
+impl From<&Inventory> for [u8; 0x18] {
     fn from(inv: &Inventory) -> [u8; 0x18] {
         macro_rules! bool_item {
             ($name:ident, $value:expr) => {{
-                if inv.$name { $value } else { item_ids::NONE }
+                if inv.$name {
+                    $value
+                } else {
+                    item_ids::NONE
+                }
             }};
         }
 
         [
-            item_ids::NONE, item_ids::NONE, item_ids::NONE, bool_item!(bow, item_ids::BOW), bool_item!(fire_arrows, item_ids::FIRE_ARROWS), bool_item!(dins_fire, item_ids::DINS_FIRE),
-            bool_item!(slingshot, item_ids::SLINGSHOT), inv.ocarina.into(), bool_item!(bombchus, item_ids::BOMBCHU_10), inv.hookshot.into(), bool_item!(ice_arrows, item_ids::ICE_ARROWS), bool_item!(farores_wind, item_ids::FARORES_WIND),
-            bool_item!(boomerang, item_ids::BOOMERANG), bool_item!(lens, item_ids::LENS_OF_TRUTH), bool_item!(beans, item_ids::MAGIC_BEAN), bool_item!(hammer, item_ids::MEGATON_HAMMER), bool_item!(light_arrows, item_ids::LIGHT_ARROWS), bool_item!(nayrus_love, item_ids::NAYRUS_LOVE),
-            inv.bottles[0].into(), inv.bottles[1].into(), inv.bottles[2].into(), inv.bottles[3].into(), inv.adult_trade_item.into(), inv.child_trade_item.into(),
+            item_ids::NONE,
+            item_ids::NONE,
+            item_ids::NONE,
+            bool_item!(bow, item_ids::BOW),
+            bool_item!(fire_arrows, item_ids::FIRE_ARROWS),
+            bool_item!(dins_fire, item_ids::DINS_FIRE),
+            bool_item!(slingshot, item_ids::SLINGSHOT),
+            inv.ocarina.into(),
+            bool_item!(bombchus, item_ids::BOMBCHU_10),
+            inv.hookshot.into(),
+            bool_item!(ice_arrows, item_ids::ICE_ARROWS),
+            bool_item!(farores_wind, item_ids::FARORES_WIND),
+            bool_item!(boomerang, item_ids::BOOMERANG),
+            bool_item!(lens, item_ids::LENS_OF_TRUTH),
+            bool_item!(beans, item_ids::MAGIC_BEAN),
+            bool_item!(hammer, item_ids::MEGATON_HAMMER),
+            bool_item!(light_arrows, item_ids::LIGHT_ARROWS),
+            bool_item!(nayrus_love, item_ids::NAYRUS_LOVE),
+            inv.bottles[0].into(),
+            inv.bottles[1].into(),
+            inv.bottles[2].into(),
+            inv.bottles[3].into(),
+            inv.adult_trade_item.into(),
+            inv.child_trade_item.into(),
         ]
     }
 }
 
-impl<'a> From<&'a Inventory> for Vec<u8> {
+impl From<&Inventory> for Vec<u8> {
     fn from(inv: &Inventory) -> Vec<u8> {
         <[u8; 0x18]>::from(inv).into()
     }
@@ -541,9 +552,11 @@ impl TryFrom<Vec<u8>> for InvAmounts {
     type Error = Vec<u8>;
 
     fn try_from(raw_data: Vec<u8>) -> Result<InvAmounts, Vec<u8>> {
-        if raw_data.len() != 0xf { return Err(raw_data) }
+        if raw_data.len() != 0xf {
+            return Err(raw_data);
+        }
         Ok(InvAmounts {
-            deku_sticks: *raw_data.get(0x00).ok_or_else(|| raw_data.clone())?,
+            deku_sticks: *raw_data.first().ok_or_else(|| raw_data.clone())?,
             deku_nuts: *raw_data.get(0x01).ok_or_else(|| raw_data.clone())?,
             num_received_mw_items: match raw_data.get(0x04..0x06) {
                 Some(&[hi, lo]) => u16::from_be_bytes([hi, lo]),
@@ -554,18 +567,30 @@ impl TryFrom<Vec<u8>> for InvAmounts {
     }
 }
 
-impl<'a> From<&'a InvAmounts> for [u8; 0xf] {
+impl From<&InvAmounts> for [u8; 0xf] {
     fn from(inv_amounts: &InvAmounts) -> [u8; 0xf] {
         let [hi, lo] = inv_amounts.num_received_mw_items.to_be_bytes();
         [
-            inv_amounts.deku_sticks, inv_amounts.deku_nuts, 0, 0, hi, lo,
-            0, 0, inv_amounts.bombchus, 0, 0, 0,
-            0, 0, 0,
+            inv_amounts.deku_sticks,
+            inv_amounts.deku_nuts,
+            0,
+            0,
+            hi,
+            lo,
+            0,
+            0,
+            inv_amounts.bombchus,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
         ]
     }
 }
 
-impl<'a> From<&'a InvAmounts> for Vec<u8> {
+impl From<&InvAmounts> for Vec<u8> {
     fn from(inv_amounts: &InvAmounts) -> Vec<u8> {
         <[u8; 0xf]>::from(inv_amounts).into()
     }
@@ -592,18 +617,22 @@ impl TryFrom<Vec<u8>> for Equipment {
     type Error = Vec<u8>;
 
     fn try_from(raw_data: Vec<u8>) -> Result<Equipment, Vec<u8>> {
-        if raw_data.len() != 2 { return Err(raw_data) }
-        Ok(Equipment::from_bits_truncate(BigEndian::read_u16(&raw_data)))
+        if raw_data.len() != 2 {
+            return Err(raw_data);
+        }
+        Ok(Equipment::from_bits_truncate(BigEndian::read_u16(
+            &raw_data,
+        )))
     }
 }
 
-impl<'a> From<&'a Equipment> for [u8; 2] {
+impl From<&Equipment> for [u8; 2] {
     fn from(equipment: &Equipment) -> [u8; 2] {
-        (equipment.bits() as u16).to_be_bytes()
+        equipment.bits().to_be_bytes()
     }
 }
 
-impl<'a> From<&'a Equipment> for Vec<u8> {
+impl From<&Equipment> for Vec<u8> {
     fn from(equipment: &Equipment) -> Vec<u8> {
         <[u8; 2]>::from(equipment).into()
     }
@@ -648,56 +677,72 @@ bitflags! {
 }
 
 impl Upgrades {
-    pub fn nut_capacity(&self) -> Upgrades { *self & Upgrades::DEKU_NUT_CAPACITY_MASK }
+    pub fn nut_capacity(&self) -> Upgrades {
+        *self & Upgrades::DEKU_NUT_CAPACITY_MASK
+    }
 
     pub fn set_nut_capacity(&mut self, nut_capacity: Upgrades) {
         self.remove(Upgrades::DEKU_NUT_CAPACITY_MASK);
         self.insert(nut_capacity & Upgrades::DEKU_NUT_CAPACITY_MASK);
     }
 
-    pub fn stick_capacity(&self) -> Upgrades { *self & Upgrades::DEKU_STICK_CAPACITY_MASK }
+    pub fn stick_capacity(&self) -> Upgrades {
+        *self & Upgrades::DEKU_STICK_CAPACITY_MASK
+    }
 
     pub fn set_stick_capacity(&mut self, stick_capacity: Upgrades) {
         self.remove(Upgrades::DEKU_STICK_CAPACITY_MASK);
         self.insert(stick_capacity & Upgrades::DEKU_STICK_CAPACITY_MASK);
     }
 
-    pub fn bullet_bag(&self) -> Upgrades { *self & Upgrades::BULLET_BAG_MASK }
+    pub fn bullet_bag(&self) -> Upgrades {
+        *self & Upgrades::BULLET_BAG_MASK
+    }
 
     pub fn set_bullet_bag(&mut self, bullet_bag: Upgrades) {
         self.remove(Upgrades::BULLET_BAG_MASK);
         self.insert(bullet_bag & Upgrades::BULLET_BAG_MASK);
     }
 
-    pub fn wallet(&self) -> Upgrades { *self & Upgrades::WALLET_MASK }
+    pub fn wallet(&self) -> Upgrades {
+        *self & Upgrades::WALLET_MASK
+    }
 
     pub fn set_wallet(&mut self, wallet: Upgrades) {
         self.remove(Upgrades::WALLET_MASK);
         self.insert(wallet & Upgrades::WALLET_MASK);
     }
 
-    pub fn scale(&self) -> Upgrades { *self & Upgrades::SCALE_MASK }
+    pub fn scale(&self) -> Upgrades {
+        *self & Upgrades::SCALE_MASK
+    }
 
     pub fn set_scale(&mut self, scale: Upgrades) {
         self.remove(Upgrades::SCALE_MASK);
         self.insert(scale & Upgrades::SCALE_MASK);
     }
 
-    pub fn strength(&self) -> Upgrades { *self & Upgrades::STRENGTH_MASK }
+    pub fn strength(&self) -> Upgrades {
+        *self & Upgrades::STRENGTH_MASK
+    }
 
     pub fn set_strength(&mut self, strength: Upgrades) {
         self.remove(Upgrades::STRENGTH_MASK);
         self.insert(strength & Upgrades::STRENGTH_MASK);
     }
 
-    pub fn bomb_bag(&self) -> Upgrades { *self & Upgrades::BOMB_BAG_MASK }
+    pub fn bomb_bag(&self) -> Upgrades {
+        *self & Upgrades::BOMB_BAG_MASK
+    }
 
     pub fn set_bomb_bag(&mut self, bomb_bag: Upgrades) {
         self.remove(Upgrades::BOMB_BAG_MASK);
         self.insert(bomb_bag & Upgrades::BOMB_BAG_MASK);
     }
 
-    pub fn quiver(&self) -> Upgrades { *self & Upgrades::QUIVER_MASK }
+    pub fn quiver(&self) -> Upgrades {
+        *self & Upgrades::QUIVER_MASK
+    }
 
     pub fn set_quiver(&mut self, quiver: Upgrades) {
         self.remove(Upgrades::QUIVER_MASK);
@@ -709,18 +754,20 @@ impl TryFrom<Vec<u8>> for Upgrades {
     type Error = Vec<u8>;
 
     fn try_from(raw_data: Vec<u8>) -> Result<Upgrades, Vec<u8>> {
-        if raw_data.len() != 4 { return Err(raw_data) }
+        if raw_data.len() != 4 {
+            return Err(raw_data);
+        }
         Ok(Upgrades::from_bits_truncate(BigEndian::read_u32(&raw_data)))
     }
 }
 
-impl<'a> From<&'a Upgrades> for [u8; 4] {
+impl From<&Upgrades> for [u8; 4] {
     fn from(upgrades: &Upgrades) -> [u8; 4] {
         upgrades.bits().to_be_bytes()
     }
 }
 
-impl<'a> From<&'a Upgrades> for Vec<u8> {
+impl From<&Upgrades> for Vec<u8> {
     fn from(upgrades: &Upgrades) -> Vec<u8> {
         <[u8; 4]>::from(upgrades).into()
     }
@@ -761,9 +808,19 @@ impl QuestItems {
     }
 
     pub fn num_stones(&self) -> u8 {
-        (if self.contains(QuestItems::KOKIRI_EMERALD) { 1 } else { 0 })
-        + if self.contains(QuestItems::GORON_RUBY) { 1 } else { 0 }
-        + if self.contains(QuestItems::ZORA_SAPPHIRE) { 1 } else { 0 }
+        (if self.contains(QuestItems::KOKIRI_EMERALD) {
+            1
+        } else {
+            0
+        }) + if self.contains(QuestItems::GORON_RUBY) {
+            1
+        } else {
+            0
+        } + if self.contains(QuestItems::ZORA_SAPPHIRE) {
+            1
+        } else {
+            0
+        }
     }
 }
 
@@ -799,26 +856,32 @@ impl From<DungeonReward> for QuestItems {
     }
 }
 
-impl<'a, T: Into<QuestItems> + Clone> From<&'a T> for QuestItems {
-    fn from(x: &T) -> QuestItems { x.clone().into() }
+impl<T: Into<QuestItems> + Clone> From<&T> for QuestItems {
+    fn from(x: &T) -> QuestItems {
+        x.clone().into()
+    }
 }
 
 impl TryFrom<Vec<u8>> for QuestItems {
     type Error = Vec<u8>;
 
     fn try_from(raw_data: Vec<u8>) -> Result<QuestItems, Vec<u8>> {
-        if raw_data.len() != 4 { return Err(raw_data) }
-        Ok(QuestItems::from_bits_truncate(BigEndian::read_u32(&raw_data)))
+        if raw_data.len() != 4 {
+            return Err(raw_data);
+        }
+        Ok(QuestItems::from_bits_truncate(BigEndian::read_u32(
+            &raw_data,
+        )))
     }
 }
 
-impl<'a> From<&'a QuestItems> for [u8; 4] {
+impl From<&QuestItems> for [u8; 4] {
     fn from(quest_items: &QuestItems) -> [u8; 4] {
         quest_items.bits().to_be_bytes()
     }
 }
 
-impl<'a> From<&'a QuestItems> for Vec<u8> {
+impl From<&QuestItems> for Vec<u8> {
     fn from(quest_items: &QuestItems) -> Vec<u8> {
         <[u8; 4]>::from(quest_items).into()
     }
@@ -877,7 +940,9 @@ impl TryFrom<Vec<u8>> for AllDungeonItems {
             }};
         }
 
-        if raw_data.len() != 0x14 { return Err(raw_data) }
+        if raw_data.len() != 0x14 {
+            return Err(raw_data);
+        }
         Ok(Self {
             deku_tree: get!(0x00),
             dodongos_cavern: get!(0x01),
@@ -894,19 +959,34 @@ impl TryFrom<Vec<u8>> for AllDungeonItems {
     }
 }
 
-impl<'a> From<&'a AllDungeonItems> for [u8; 0x14] {
+impl From<&AllDungeonItems> for [u8; 0x14] {
     fn from(items: &AllDungeonItems) -> [u8; 0x14] {
         [
-            items.deku_tree.bits(), items.dodongos_cavern.bits(), items.jabu_jabu.bits(), items.forest_temple.bits(),
-            items.fire_temple.bits(), items.water_temple.bits(), items.spirit_temple.bits(), items.shadow_temple.bits(),
-            items.bottom_of_the_well.bits(), items.ice_cavern.bits(), items.ganons_castle.bits(), 0,
-            0, 0, 0, 0,
-            0, 0, 0, 0,
+            items.deku_tree.bits(),
+            items.dodongos_cavern.bits(),
+            items.jabu_jabu.bits(),
+            items.forest_temple.bits(),
+            items.fire_temple.bits(),
+            items.water_temple.bits(),
+            items.spirit_temple.bits(),
+            items.shadow_temple.bits(),
+            items.bottom_of_the_well.bits(),
+            items.ice_cavern.bits(),
+            items.ganons_castle.bits(),
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
         ]
     }
 }
 
-impl<'a> From<&'a AllDungeonItems> for Vec<u8> {
+impl From<&AllDungeonItems> for Vec<u8> {
     fn from(items: &AllDungeonItems) -> Vec<u8> {
         <[u8; 0x14]>::from(items).into()
     }
@@ -931,11 +1011,17 @@ impl TryFrom<Vec<u8>> for SmallKeys {
     fn try_from(raw_data: Vec<u8>) -> Result<SmallKeys, Vec<u8>> {
         macro_rules! get {
             ($idx:expr) => {{
-                if raw_data[$idx] == 0xff { 0 } else { raw_data[$idx] }
+                if raw_data[$idx] == 0xff {
+                    0
+                } else {
+                    raw_data[$idx]
+                }
             }};
         }
 
-        if raw_data.len() != 0x13 { return Err(raw_data) }
+        if raw_data.len() != 0x13 {
+            return Err(raw_data);
+        }
         Ok(SmallKeys {
             forest_temple: get!(0x03),
             fire_temple: get!(0x04),
@@ -950,19 +1036,33 @@ impl TryFrom<Vec<u8>> for SmallKeys {
     }
 }
 
-impl<'a> From<&'a SmallKeys> for [u8; 0x13] {
+impl From<&SmallKeys> for [u8; 0x13] {
     fn from(small_keys: &SmallKeys) -> [u8; 0x13] {
         [
-            0, 0, 0, small_keys.forest_temple,
-            small_keys.fire_temple, small_keys.water_temple, small_keys.spirit_temple, small_keys.shadow_temple,
-            small_keys.bottom_of_the_well, 0, 0, small_keys.gerudo_training_ground,
-            small_keys.thieves_hideout, small_keys.ganons_castle, 0, 0,
-            0, 0, 0,
+            0,
+            0,
+            0,
+            small_keys.forest_temple,
+            small_keys.fire_temple,
+            small_keys.water_temple,
+            small_keys.spirit_temple,
+            small_keys.shadow_temple,
+            small_keys.bottom_of_the_well,
+            0,
+            0,
+            small_keys.gerudo_training_ground,
+            small_keys.thieves_hideout,
+            small_keys.ganons_castle,
+            0,
+            0,
+            0,
+            0,
+            0,
         ]
     }
 }
 
-impl<'a> From<&'a SmallKeys> for Vec<u8> {
+impl From<&SmallKeys> for Vec<u8> {
     fn from(small_keys: &SmallKeys) -> Vec<u8> {
         <[u8; 0x13]>::from(small_keys).into()
     }
@@ -980,18 +1080,22 @@ impl TryFrom<Vec<u8>> for FishingContext {
     type Error = Vec<u8>;
 
     fn try_from(raw_data: Vec<u8>) -> Result<FishingContext, Vec<u8>> {
-        if raw_data.len() != 4 { return Err(raw_data) }
-        Ok(FishingContext::from_bits_truncate(BigEndian::read_u32(&raw_data)))
+        if raw_data.len() != 4 {
+            return Err(raw_data);
+        }
+        Ok(FishingContext::from_bits_truncate(BigEndian::read_u32(
+            &raw_data,
+        )))
     }
 }
 
-impl<'a> From<&'a FishingContext> for [u8; 4] {
+impl From<&FishingContext> for [u8; 4] {
     fn from(fishing_context: &FishingContext) -> [u8; 4] {
         fishing_context.bits().to_be_bytes()
     }
 }
 
-impl<'a> From<&'a FishingContext> for Vec<u8> {
+impl From<&FishingContext> for Vec<u8> {
     fn from(fishing_context: &FishingContext) -> Vec<u8> {
         <[u8; 4]>::from(fishing_context).into()
     }
@@ -1019,7 +1123,7 @@ impl TryFrom<Vec<u8>> for GameMode {
     }
 }
 
-impl<'a> From<&'a GameMode> for [u8; 4] {
+impl From<&GameMode> for [u8; 4] {
     fn from(game_mode: &GameMode) -> [u8; 4] {
         match game_mode {
             GameMode::Gameplay => [0, 0, 0, 0],
@@ -1029,7 +1133,7 @@ impl<'a> From<&'a GameMode> for [u8; 4] {
     }
 }
 
-impl<'a> From<&'a GameMode> for Vec<u8> {
+impl From<&GameMode> for Vec<u8> {
     fn from(game_mode: &GameMode) -> Vec<u8> {
         <[u8; 4]>::from(game_mode).into()
     }
@@ -1108,14 +1212,31 @@ impl Save {
                 *save_data.get($offset).ok_or(DecodeError::Index($offset))?
             }};
             ($name:expr, $offset:expr, $len:expr) => {{
-                save_data.get($offset..$offset + $len).ok_or(DecodeError::IndexRange { start: $offset, end: $offset + $len })?
+                save_data
+                    .get($offset..$offset + $len)
+                    .ok_or(DecodeError::IndexRange {
+                        start: $offset,
+                        end: $offset + $len,
+                    })?
             }};
         }
 
         macro_rules! try_get_offset {
             ($name:expr, $offset:expr, $len:expr) => {{
-                let raw = save_data.get($offset..$offset + $len).ok_or(DecodeError::IndexRange { start: $offset, end: $offset + $len })?.to_vec();
-                raw.try_into().map_err(|value| DecodeError::UnexpectedValueRange { value, start: $offset, end: $offset + $len, field: $name })?
+                let raw = save_data
+                    .get($offset..$offset + $len)
+                    .ok_or(DecodeError::IndexRange {
+                        start: $offset,
+                        end: $offset + $len,
+                    })?
+                    .to_vec();
+                raw.try_into()
+                    .map_err(|value| DecodeError::UnexpectedValueRange {
+                        value,
+                        start: $offset,
+                        end: $offset + $len,
+                        field: $name,
+                    })?
             }};
         }
 
@@ -1123,38 +1244,67 @@ impl Save {
             ($offset:literal, $val:expr) => {{
                 let expected = $val;
                 let found = *save_data.get($offset).ok_or(DecodeError::Index($offset))?;
-                if expected != found { return Err(DecodeError::AssertEq { expected, found, offset: $offset }) }
+                if expected != found {
+                    return Err(DecodeError::AssertEq {
+                        expected,
+                        found,
+                        offset: $offset,
+                    });
+                }
             }};
             ($start:literal..$end:literal, $val:expr) => {{
                 let expected = $val;
-                let found = save_data.get($start..$end).ok_or(DecodeError::IndexRange { start: $start, end: $end })?;
-                if expected != found { return Err(DecodeError::AssertEqRange { start: $start, end: $end, expected: expected.to_vec(), found: found.to_vec() }) }
+                let found = save_data.get($start..$end).ok_or(DecodeError::IndexRange {
+                    start: $start,
+                    end: $end,
+                })?;
+                if expected != found {
+                    return Err(DecodeError::AssertEqRange {
+                        start: $start,
+                        end: $end,
+                        expected: expected.to_vec(),
+                        found: found.to_vec(),
+                    });
+                }
             }};
         }
 
-        if save_data.len() != SIZE { return Err(DecodeError::Size(save_data.len())) }
+        if save_data.len() != SIZE {
+            return Err(DecodeError::Size(save_data.len()));
+        }
         try_eq!(0x001c..0x0022, b"ZELDAZ");
         Ok(Save {
             is_adult: match BigEndian::read_i32(get_offset!("is_adult", 0x0004, 0x4)) {
                 0 => true,
                 1 => false,
-                n => return Err(DecodeError::UnexpectedValueRange { start: 0x0004, end: 0x0008, field: "is_adult", value: n.to_be_bytes().into() }),
+                n => {
+                    return Err(DecodeError::UnexpectedValueRange {
+                        start: 0x0004,
+                        end: 0x0008,
+                        field: "is_adult",
+                        value: n.to_be_bytes().into(),
+                    })
+                }
             },
             time_of_day: try_get_offset!("time_of_day", 0x000c, 0x2),
             magic: if get_offset!("has single magic", 0x003a) == 0 {
                 try_eq!(0x003c, 0);
                 MagicCapacity::None
+            } else if get_offset!("has double magic", 0x003c) == 0 {
+                MagicCapacity::Small
             } else {
-                if get_offset!("has double magic", 0x003c) == 0 {
-                    MagicCapacity::Small
-                } else {
-                    MagicCapacity::Large
-                }
+                MagicCapacity::Large
             },
             biggoron_sword: match get_offset!("biggoron_sword", 0x003e) {
                 0 => false,
                 1 => true,
-                value => return Err(DecodeError::UnexpectedValue { value, offset: 0x003e, field: "biggoron_sword" }),
+                value => {
+                    return Err(DecodeError::UnexpectedValue {
+                        value,
+                        offset: 0x003e,
+                        field: "biggoron_sword",
+                    })
+                }
             },
             dmt_biggoron_checked: {
                 bitflags! {
@@ -1167,12 +1317,17 @@ impl Save {
                     type Error = Vec<u8>;
 
                     fn try_from(raw_data: Vec<u8>) -> Result<DmtBiggoronCheckedFlags, Vec<u8>> {
-                        if raw_data.len() != 2 { return Err(raw_data) }
-                        Ok(DmtBiggoronCheckedFlags::from_bits_truncate(BigEndian::read_u16(&raw_data)))
+                        if raw_data.len() != 2 {
+                            return Err(raw_data);
+                        }
+                        Ok(DmtBiggoronCheckedFlags::from_bits_truncate(
+                            BigEndian::read_u16(&raw_data),
+                        ))
                     }
                 }
 
-                let flags: DmtBiggoronCheckedFlags = try_get_offset!("dmt_biggoron_checked", 0x0072, 0x2);
+                let flags: DmtBiggoronCheckedFlags =
+                    try_get_offset!("dmt_biggoron_checked", 0x0072, 0x2);
                 flags.contains(DmtBiggoronCheckedFlags::DMT_BIGGORON_CHECKED)
             },
             inv: try_get_offset!("inv", 0x0074, 0x18),
@@ -1182,10 +1337,12 @@ impl Save {
             quest_items: try_get_offset!("quest_items", 0x00a4, 0x4),
             dungeon_items: try_get_offset!("dungeon_items", 0x00a8, 0x14),
             small_keys: try_get_offset!("small_keys", 0x00bc, 0x13),
-            skull_tokens: BigEndian::read_i16(get_offset!("skull_tokens", 0x00d0, 0x2)).try_into()?,
+            skull_tokens: BigEndian::read_i16(get_offset!("skull_tokens", 0x00d0, 0x2))
+                .try_into()?,
             scene_flags: try_get_offset!("scene_flags", 0x00d4, 101 * 0x1c),
             gold_skulltulas: try_get_offset!("gold_skulltulas", 0x0e9c, 0x18),
-            big_poes: (BigEndian::read_u32(get_offset!("big_poes", 0x0ebc, 0x4)) / 100).try_into()?,
+            big_poes: (BigEndian::read_u32(get_offset!("big_poes", 0x0ebc, 0x4)) / 100)
+                .try_into()?,
             fishing_context: try_get_offset!("fishing_context", 0x0ec0, 0x4),
             event_chk_inf: try_get_offset!("event_chk_inf", 0x0ed4, 0x1c),
             item_get_inf: try_get_offset!("item_get_inf", 0x0ef0, 0x8),
@@ -1193,7 +1350,13 @@ impl Save {
             scarecrow_song_child: match get_offset!("scarecrow_song_child", 0x12c5) {
                 0 => false,
                 1 => true,
-                value => return Err(DecodeError::UnexpectedValue { value, offset: 0x12c5, field: "scarecrow_song_child" }),
+                value => {
+                    return Err(DecodeError::UnexpectedValue {
+                        value,
+                        offset: 0x12c5,
+                        field: "scarecrow_song_child",
+                    })
+                }
             },
             game_mode: try_get_offset!("game_mode", 0x135c, 0x4),
         })
@@ -1202,14 +1365,35 @@ impl Save {
     pub(crate) fn to_save_data(&self) -> Vec<u8> {
         let mut buf = vec![0; SIZE];
         let Save {
-            is_adult, time_of_day, magic, biggoron_sword, dmt_biggoron_checked, inv, inv_amounts,
-            equipment, upgrades, quest_items, dungeon_items, small_keys, skull_tokens, scene_flags,
-            gold_skulltulas, big_poes, fishing_context, event_chk_inf, item_get_inf, inf_table,
-            scarecrow_song_child, game_mode,
+            is_adult,
+            time_of_day,
+            magic,
+            biggoron_sword,
+            dmt_biggoron_checked,
+            inv,
+            inv_amounts,
+            equipment,
+            upgrades,
+            quest_items,
+            dungeon_items,
+            small_keys,
+            skull_tokens,
+            scene_flags,
+            gold_skulltulas,
+            big_poes,
+            fishing_context,
+            event_chk_inf,
+            item_get_inf,
+            inf_table,
+            scarecrow_song_child,
+            game_mode,
         } = self;
-        buf.splice(0x0004..0x0008, if *is_adult { 0i32 } else { 1 }.to_be_bytes().into_iter());
+        buf.splice(
+            0x0004..0x0008,
+            if *is_adult { 0i32 } else { 1 }.to_be_bytes(),
+        );
         buf.splice(0x000c..0x000e, Vec::from(time_of_day));
-        buf.splice(0x001c..0x0022, b"ZELDAZ".into_iter().copied());
+        buf.splice(0x001c..0x0022, b"ZELDAZ".iter().copied());
         buf[0x0032] = magic.into();
         buf[0x003a] = match magic {
             MagicCapacity::None => 0,
@@ -1228,10 +1412,10 @@ impl Save {
         buf.splice(0x00a4..0x00a8, Vec::from(quest_items));
         buf.splice(0x00a8..0x00bc, Vec::from(dungeon_items));
         buf.splice(0x00bc..0x00cf, Vec::from(small_keys));
-        buf.splice(0x00d0..0x00d2, i16::from(*skull_tokens).to_be_bytes().into_iter());
+        buf.splice(0x00d0..0x00d2, i16::from(*skull_tokens).to_be_bytes());
         buf.splice(0x00d4..0x00d4 + 101 * 0x1c, Vec::from(scene_flags));
         buf.splice(0x0e9c..0x0eb4, Vec::from(gold_skulltulas));
-        buf.splice(0x0ebc..0x0ec0, u32::from(100 * big_poes).to_be_bytes().into_iter());
+        buf.splice(0x0ebc..0x0ec0, u32::from(100 * big_poes).to_be_bytes());
         buf.splice(0x0ec0..0x0ec4, Vec::from(fishing_context));
         buf.splice(0x0ed4..0x0ef0, Vec::from(event_chk_inf));
         buf.splice(0x0ef0..0x0ef8, Vec::from(item_get_inf));
@@ -1241,12 +1425,19 @@ impl Save {
         buf
     }
 
-    pub fn triforce_pieces(&self) -> u8 { //TODO move to Ram depending on how finding a triforce piece in the scene works
-        self.scene_flags.windmill_and_dampes_grave.unused.bits().try_into().expect("too many triforce pieces")
+    pub fn triforce_pieces(&self) -> u8 {
+        //TODO move to Ram depending on how finding a triforce piece in the scene works
+        self.scene_flags
+            .windmill_and_dampes_grave
+            .unused
+            .bits()
+            .try_into()
+            .expect("too many triforce pieces")
     }
 
     pub fn set_triforce_pieces(&mut self, triforce_pieces: u8) {
-        self.scene_flags.windmill_and_dampes_grave.unused = crate::scene::WindmillAndDampesGraveUnused::from_bits_truncate(triforce_pieces.into());
+        self.scene_flags.windmill_and_dampes_grave.unused =
+            crate::scene::WindmillAndDampesGraveUnused::from_bits_truncate(triforce_pieces.into());
     }
 
     pub fn recv_mw_item(&mut self, item: u16) -> Result<(), ()> {
@@ -1254,19 +1445,26 @@ impl Save {
         match item {
             0x0001 => {} // Bombs (5)
             0x0002 => {} // Deku Nuts (5)
-            0x0003 => { // Bombchus (10)
+            0x0003 => {
+                // Bombchus (10)
                 self.inv.bombchus = true;
                 self.inv_amounts.bombchus = 50.min(self.inv_amounts.bombchus + 10);
             }
             0x0006 => self.inv.boomerang = true, // Boomerang
-            0x0007 => {} // Deku Stick (1)
-            0x000A => self.inv.lens = true, // Lens of Truth
-            0x000D => self.inv.hammer = true, // Megaton Hammer
+            0x0007 => {}                         // Deku Stick (1)
+            0x000A => self.inv.lens = true,      // Lens of Truth
+            0x000D => self.inv.hammer = true,    // Megaton Hammer
             0x000E => self.inv.adult_trade_item = AdultTradeItem::Cojiro, // Cojiro
-            0x000F => { self.inv.add_bottle(Bottle::Empty); } // Bottle
-            0x0014 => { self.inv.add_bottle(Bottle::MilkFull); } // Bottle with Milk
-            0x0015 => { self.inv.add_bottle(Bottle::RutosLetter); } // Rutos Letter
-            0x0016 => self.inv.beans = true, // Magic Bean
+            0x000F => {
+                self.inv.add_bottle(Bottle::Empty);
+            } // Bottle
+            0x0014 => {
+                self.inv.add_bottle(Bottle::MilkFull);
+            } // Bottle with Milk
+            0x0015 => {
+                self.inv.add_bottle(Bottle::RutosLetter);
+            } // Rutos Letter
+            0x0016 => self.inv.beans = true,     // Magic Bean
             0x0017 => self.inv.child_trade_item = ChildTradeItem::SkullMask, // Skull Mask
             0x0018 => self.inv.child_trade_item = ChildTradeItem::SpookyMask, // Spooky Mask
             0x001A => self.inv.child_trade_item = ChildTradeItem::KeatonMask, // Keaton Mask
@@ -1293,67 +1491,76 @@ impl Save {
             0x002F => self.equipment.insert(Equipment::HOVER_BOOTS), // Hover Boots
             0x0039 => self.quest_items.insert(QuestItems::STONE_OF_AGONY), // Stone of Agony
             0x003A => self.quest_items.insert(QuestItems::GERUDO_CARD), // Gerudo Membership Card
-            0x003D => {} // Heart Container
-            0x003E => {} // Piece of Heart
-            0x003F => {} // Boss Key
-            0x0040 => {} // Compass
-            0x0041 => {} // Map
-            0x0042 => {} // Small Key
+            0x003D => {}                         // Heart Container
+            0x003E => {}                         // Piece of Heart
+            0x003F => {}                         // Boss Key
+            0x0040 => {}                         // Compass
+            0x0041 => {}                         // Map
+            0x0042 => {}                         // Small Key
             0x0047 => self.inv.child_trade_item = ChildTradeItem::WeirdEgg, // Weird Egg
-            0x0048 => {} // Recovery Heart
-            0x0049 => {} // Arrows (5)
-            0x004A => {} // Arrows (10)
-            0x004B => {} // Arrows (30)
-            0x004C => {} // Rupee (1)
-            0x004D => {} // Rupees (5)
-            0x004E => {} // Rupees (20)
-            0x0050 => {} // Milk
+            0x0048 => {}                         // Recovery Heart
+            0x0049 => {}                         // Arrows (5)
+            0x004A => {}                         // Arrows (10)
+            0x004B => {}                         // Arrows (30)
+            0x004C => {}                         // Rupee (1)
+            0x004D => {}                         // Rupees (5)
+            0x004E => {}                         // Rupees (20)
+            0x0050 => {}                         // Milk
             0x0051 => self.inv.child_trade_item = ChildTradeItem::GoronMask, // Goron Mask
             0x0052 => self.inv.child_trade_item = ChildTradeItem::ZoraMask, // Zora Mask
             0x0053 => self.inv.child_trade_item = ChildTradeItem::GerudoMask, // Gerudo Mask
-            0x0055 => {} // Rupees (50)
-            0x0056 => {} // Rupees (200)
-            0x0057 => { // Biggoron Sword
+            0x0055 => {}                         // Rupees (50)
+            0x0056 => {}                         // Rupees (200)
+            0x0057 => {
+                // Biggoron Sword
                 self.equipment.insert(Equipment::GIANTS_KNIFE);
                 self.biggoron_sword = true;
             }
             0x0058 => self.inv.fire_arrows = true, // Fire Arrows
-            0x0059 => self.inv.ice_arrows = true, // Ice Arrows
+            0x0059 => self.inv.ice_arrows = true,  // Ice Arrows
             0x005A => self.inv.light_arrows = true, // Light Arrows
-            0x005B => self.skull_tokens += 1, // Gold Skulltula Token
-            0x005C => self.inv.dins_fire = true, // Dins Fire
+            0x005B => self.skull_tokens += 1,      // Gold Skulltula Token
+            0x005C => self.inv.dins_fire = true,   // Dins Fire
             0x005E => self.inv.nayrus_love = true, // Nayrus Love
             0x005D => self.inv.farores_wind = true, // Farores Wind
-            0x0064 => {} // Deku Nuts (10)
-            0x0066 => {} // Bombs (10)
-            0x0067 => {} // Bombs (20)
-            0x0069 => {} // Deku Seeds (30)
-            0x006A => { // Bombchus (5)
+            0x0064 => {}                           // Deku Nuts (10)
+            0x0066 => {}                           // Bombs (10)
+            0x0067 => {}                           // Bombs (20)
+            0x0069 => {}                           // Deku Seeds (30)
+            0x006A => {
+                // Bombchus (5)
                 self.inv.bombchus = true;
                 self.inv_amounts.bombchus = 50.min(self.inv_amounts.bombchus + 5);
             }
-            0x006B => { // Bombchus (20)
+            0x006B => {
+                // Bombchus (20)
                 self.inv.bombchus = true;
                 self.inv_amounts.bombchus = 50.min(self.inv_amounts.bombchus + 20);
             }
             0x0072 => {} // Rupee (Treasure Chest Game)
             0x0076 => {} // Piece of Heart (Treasure Chest Game)
             0x007C => {} // Ice Trap
-            0x0080 => self.inv.hookshot = match self.inv.hookshot { // Progressive Hookshot
-                Hookshot::None => Hookshot::Hookshot,
-                Hookshot::Hookshot | Hookshot::Longshot => Hookshot::Longshot,
-            },
-            0x0081 => self.upgrades.set_strength(match self.upgrades.strength() { // Progressive Strength Upgrade
+            0x0080 => {
+                self.inv.hookshot = match self.inv.hookshot {
+                    // Progressive Hookshot
+                    Hookshot::None => Hookshot::Hookshot,
+                    Hookshot::Hookshot | Hookshot::Longshot => Hookshot::Longshot,
+                }
+            }
+            0x0081 => self.upgrades.set_strength(match self.upgrades.strength() {
+                // Progressive Strength Upgrade
                 Upgrades::GORON_BRACELET => Upgrades::SILVER_GAUNTLETS,
                 Upgrades::SILVER_GAUNTLETS | Upgrades::GOLD_GAUNTLETS => Upgrades::GOLD_GAUNTLETS,
                 _ => Upgrades::GORON_BRACELET,
             }),
-            0x0082 => self.upgrades.set_bomb_bag(match self.upgrades.bomb_bag() { // Bomb Bag
+            0x0082 => self.upgrades.set_bomb_bag(match self.upgrades.bomb_bag() {
+                // Bomb Bag
                 Upgrades::BOMB_BAG_20 => Upgrades::BOMB_BAG_30,
                 Upgrades::BOMB_BAG_30 | Upgrades::BOMB_BAG_40 => Upgrades::BOMB_BAG_40,
                 _ => Upgrades::BOMB_BAG_20,
             }),
-            0x0083 => { // Bow
+            0x0083 => {
+                // Bow
                 self.inv.bow = true;
                 self.upgrades.set_quiver(match self.upgrades.quiver() {
                     Upgrades::QUIVER_30 => Upgrades::QUIVER_40,
@@ -1361,66 +1568,142 @@ impl Save {
                     _ => Upgrades::QUIVER_30,
                 });
             }
-            0x0084 => { // Slingshot
+            0x0084 => {
+                // Slingshot
                 self.inv.slingshot = true;
-                self.upgrades.set_bullet_bag(match self.upgrades.bullet_bag() {
-                    Upgrades::BULLET_BAG_30 => Upgrades::BULLET_BAG_40,
-                    Upgrades::BULLET_BAG_40 | Upgrades::BULLET_BAG_50 => Upgrades::BULLET_BAG_50,
-                    _ => Upgrades::BULLET_BAG_30,
-                });
+                self.upgrades
+                    .set_bullet_bag(match self.upgrades.bullet_bag() {
+                        Upgrades::BULLET_BAG_30 => Upgrades::BULLET_BAG_40,
+                        Upgrades::BULLET_BAG_40 | Upgrades::BULLET_BAG_50 => {
+                            Upgrades::BULLET_BAG_50
+                        }
+                        _ => Upgrades::BULLET_BAG_30,
+                    });
             }
-            0x0085 => self.upgrades.set_wallet(match self.upgrades.wallet() { // Progressive Wallet
+            0x0085 => self.upgrades.set_wallet(match self.upgrades.wallet() {
+                // Progressive Wallet
                 Upgrades::ADULTS_WALLET => Upgrades::GIANTS_WALLET,
                 Upgrades::GIANTS_WALLET | Upgrades::TYCOONS_WALLET => Upgrades::TYCOONS_WALLET,
                 _ => Upgrades::ADULTS_WALLET,
             }),
-            0x0086 => self.upgrades.set_scale(match self.upgrades.scale() { // Progressive Scale
+            0x0086 => self.upgrades.set_scale(match self.upgrades.scale() {
+                // Progressive Scale
                 Upgrades::SILVER_SCALE | Upgrades::GOLD_SCALE => Upgrades::GOLD_SCALE,
                 _ => Upgrades::SILVER_SCALE,
             }),
-            0x0087 => self.upgrades.set_nut_capacity(match self.upgrades.nut_capacity() { // Deku Nut Capacity
-                Upgrades::DEKU_NUT_CAPACITY_20 => Upgrades::DEKU_NUT_CAPACITY_30,
-                Upgrades::DEKU_NUT_CAPACITY_30 | Upgrades::DEKU_NUT_CAPACITY_40 => Upgrades::DEKU_NUT_CAPACITY_40,
-                _ => Upgrades::DEKU_NUT_CAPACITY_20,
-            }),
-            0x0088 => self.upgrades.set_stick_capacity(match self.upgrades.stick_capacity() { // Deku Stick Capacity
-                Upgrades::DEKU_STICK_CAPACITY_10 => Upgrades::DEKU_STICK_CAPACITY_20,
-                Upgrades::DEKU_STICK_CAPACITY_20 | Upgrades::DEKU_STICK_CAPACITY_30 => Upgrades::DEKU_STICK_CAPACITY_30,
-                _ => Upgrades::DEKU_STICK_CAPACITY_10,
-            }),
+            0x0087 => self
+                .upgrades
+                .set_nut_capacity(match self.upgrades.nut_capacity() {
+                    // Deku Nut Capacity
+                    Upgrades::DEKU_NUT_CAPACITY_20 => Upgrades::DEKU_NUT_CAPACITY_30,
+                    Upgrades::DEKU_NUT_CAPACITY_30 | Upgrades::DEKU_NUT_CAPACITY_40 => {
+                        Upgrades::DEKU_NUT_CAPACITY_40
+                    }
+                    _ => Upgrades::DEKU_NUT_CAPACITY_20,
+                }),
+            0x0088 => self
+                .upgrades
+                .set_stick_capacity(match self.upgrades.stick_capacity() {
+                    // Deku Stick Capacity
+                    Upgrades::DEKU_STICK_CAPACITY_10 => Upgrades::DEKU_STICK_CAPACITY_20,
+                    Upgrades::DEKU_STICK_CAPACITY_20 | Upgrades::DEKU_STICK_CAPACITY_30 => {
+                        Upgrades::DEKU_STICK_CAPACITY_30
+                    }
+                    _ => Upgrades::DEKU_STICK_CAPACITY_10,
+                }),
             0x0089 => self.inv.bombchus = true, // Bombchus
-            0x008A => self.magic = match self.magic { // Magic Meter
-                MagicCapacity::None => MagicCapacity::Small,
-                MagicCapacity::Small | MagicCapacity::Large => MagicCapacity::Large,
-            },
-            0x008B => self.inv.ocarina = match self.inv.ocarina { // Ocarina
-                Ocarina::None => Ocarina::FairyOcarina,
-                Ocarina::FairyOcarina | Ocarina::OcarinaOfTime => Ocarina::OcarinaOfTime,
-            },
-            0x008C => { self.inv.add_bottle(Bottle::RedPotion); } // Bottle with Red Potion
-            0x008D => { self.inv.add_bottle(Bottle::GreenPotion); } // Bottle with Green Potion
-            0x008E => { self.inv.add_bottle(Bottle::BluePotion); } // Bottle with Blue Potion
-            0x008F => { self.inv.add_bottle(Bottle::Fairy); } // Bottle with Fairy
-            0x0090 => { self.inv.add_bottle(Bottle::Fish); } // Bottle with Fish
-            0x0091 => { self.inv.add_bottle(Bottle::BlueFire); } // Bottle with Blue Fire
-            0x0092 => { self.inv.add_bottle(Bottle::Bug); } // Bottle with Bugs
-            0x0093 => { self.inv.add_bottle(Bottle::BigPoe); } // Bottle with Big Poe
-            0x0094 => { self.inv.add_bottle(Bottle::Poe); } // Bottle with Poe
-            0x0095 => self.dungeon_items.forest_temple.insert(DungeonItems::BOSS_KEY), // Boss Key (Forest Temple)
-            0x0096 => self.dungeon_items.fire_temple.insert(DungeonItems::BOSS_KEY), // Boss Key (Fire Temple)
-            0x0097 => self.dungeon_items.water_temple.insert(DungeonItems::BOSS_KEY), // Boss Key (Water Temple)
-            0x0098 => self.dungeon_items.spirit_temple.insert(DungeonItems::BOSS_KEY), // Boss Key (Spirit Temple)
-            0x0099 => self.dungeon_items.shadow_temple.insert(DungeonItems::BOSS_KEY), // Boss Key (Shadow Temple)
-            0x009A => self.dungeon_items.ganons_castle.insert(DungeonItems::BOSS_KEY), // Boss Key (Ganons Castle)
+            0x008A => {
+                self.magic = match self.magic {
+                    // Magic Meter
+                    MagicCapacity::None => MagicCapacity::Small,
+                    MagicCapacity::Small | MagicCapacity::Large => MagicCapacity::Large,
+                }
+            }
+            0x008B => {
+                self.inv.ocarina = match self.inv.ocarina {
+                    // Ocarina
+                    Ocarina::None => Ocarina::FairyOcarina,
+                    Ocarina::FairyOcarina | Ocarina::OcarinaOfTime => Ocarina::OcarinaOfTime,
+                }
+            }
+            0x008C => {
+                self.inv.add_bottle(Bottle::RedPotion);
+            } // Bottle with Red Potion
+            0x008D => {
+                self.inv.add_bottle(Bottle::GreenPotion);
+            } // Bottle with Green Potion
+            0x008E => {
+                self.inv.add_bottle(Bottle::BluePotion);
+            } // Bottle with Blue Potion
+            0x008F => {
+                self.inv.add_bottle(Bottle::Fairy);
+            } // Bottle with Fairy
+            0x0090 => {
+                self.inv.add_bottle(Bottle::Fish);
+            } // Bottle with Fish
+            0x0091 => {
+                self.inv.add_bottle(Bottle::BlueFire);
+            } // Bottle with Blue Fire
+            0x0092 => {
+                self.inv.add_bottle(Bottle::Bug);
+            } // Bottle with Bugs
+            0x0093 => {
+                self.inv.add_bottle(Bottle::BigPoe);
+            } // Bottle with Big Poe
+            0x0094 => {
+                self.inv.add_bottle(Bottle::Poe);
+            } // Bottle with Poe
+            0x0095 => self
+                .dungeon_items
+                .forest_temple
+                .insert(DungeonItems::BOSS_KEY), // Boss Key (Forest Temple)
+            0x0096 => self
+                .dungeon_items
+                .fire_temple
+                .insert(DungeonItems::BOSS_KEY), // Boss Key (Fire Temple)
+            0x0097 => self
+                .dungeon_items
+                .water_temple
+                .insert(DungeonItems::BOSS_KEY), // Boss Key (Water Temple)
+            0x0098 => self
+                .dungeon_items
+                .spirit_temple
+                .insert(DungeonItems::BOSS_KEY), // Boss Key (Spirit Temple)
+            0x0099 => self
+                .dungeon_items
+                .shadow_temple
+                .insert(DungeonItems::BOSS_KEY), // Boss Key (Shadow Temple)
+            0x009A => self
+                .dungeon_items
+                .ganons_castle
+                .insert(DungeonItems::BOSS_KEY), // Boss Key (Ganons Castle)
             0x009B => self.dungeon_items.deku_tree.insert(DungeonItems::COMPASS), // Compass (Deku Tree)
-            0x009C => self.dungeon_items.dodongos_cavern.insert(DungeonItems::COMPASS), // Compass (Dodongos Cavern)
+            0x009C => self
+                .dungeon_items
+                .dodongos_cavern
+                .insert(DungeonItems::COMPASS), // Compass (Dodongos Cavern)
             0x009D => self.dungeon_items.jabu_jabu.insert(DungeonItems::COMPASS), // Compass (Jabu Jabus Belly)
-            0x009E => self.dungeon_items.forest_temple.insert(DungeonItems::COMPASS), // Compass (Forest Temple)
+            0x009E => self
+                .dungeon_items
+                .forest_temple
+                .insert(DungeonItems::COMPASS), // Compass (Forest Temple)
             0x009F => self.dungeon_items.fire_temple.insert(DungeonItems::COMPASS), // Compass (Fire Temple)
-            0x00A0 => self.dungeon_items.water_temple.insert(DungeonItems::COMPASS), // Compass (Water Temple)
-            0x00A1 => self.dungeon_items.spirit_temple.insert(DungeonItems::COMPASS), // Compass (Spirit Temple)
-            0x00A2 => self.dungeon_items.shadow_temple.insert(DungeonItems::COMPASS), // Compass (Shadow Temple)
-            0x00A3 => self.dungeon_items.bottom_of_the_well.insert(DungeonItems::COMPASS), // Compass (Bottom of the Well)
+            0x00A0 => self
+                .dungeon_items
+                .water_temple
+                .insert(DungeonItems::COMPASS), // Compass (Water Temple)
+            0x00A1 => self
+                .dungeon_items
+                .spirit_temple
+                .insert(DungeonItems::COMPASS), // Compass (Spirit Temple)
+            0x00A2 => self
+                .dungeon_items
+                .shadow_temple
+                .insert(DungeonItems::COMPASS), // Compass (Shadow Temple)
+            0x00A3 => self
+                .dungeon_items
+                .bottom_of_the_well
+                .insert(DungeonItems::COMPASS), // Compass (Bottom of the Well)
             0x00A4 => self.dungeon_items.ice_cavern.insert(DungeonItems::COMPASS), // Compass (Ice Cavern)
             0x00A5 => self.dungeon_items.deku_tree.insert(DungeonItems::MAP), // Map (Deku Tree)
             0x00A6 => self.dungeon_items.dodongos_cavern.insert(DungeonItems::MAP), // Map (Dodongos Cavern)
@@ -1430,30 +1713,33 @@ impl Save {
             0x00AA => self.dungeon_items.water_temple.insert(DungeonItems::MAP), // Map (Water Temple)
             0x00AB => self.dungeon_items.spirit_temple.insert(DungeonItems::MAP), // Map (Spirit Temple)
             0x00AC => self.dungeon_items.shadow_temple.insert(DungeonItems::MAP), // Map (Shadow Temple)
-            0x00AD => self.dungeon_items.bottom_of_the_well.insert(DungeonItems::MAP), // Map (Bottom of the Well)
+            0x00AD => self
+                .dungeon_items
+                .bottom_of_the_well
+                .insert(DungeonItems::MAP), // Map (Bottom of the Well)
             0x00AE => self.dungeon_items.ice_cavern.insert(DungeonItems::MAP), // Map (Ice Cavern)
             0x00AF => self.small_keys.forest_temple += 1, // Small Key (Forest Temple)
-            0x00B0 => self.small_keys.fire_temple += 1, // Small Key (Fire Temple)
-            0x00B1 => self.small_keys.water_temple += 1, // Small Key (Water Temple)
+            0x00B0 => self.small_keys.fire_temple += 1,   // Small Key (Fire Temple)
+            0x00B1 => self.small_keys.water_temple += 1,  // Small Key (Water Temple)
             0x00B2 => self.small_keys.spirit_temple += 1, // Small Key (Spirit Temple)
             0x00B3 => self.small_keys.shadow_temple += 1, // Small Key (Shadow Temple)
             0x00B4 => self.small_keys.bottom_of_the_well += 1, // Small Key (Bottom of the Well)
             0x00B5 => self.small_keys.gerudo_training_ground += 1, // Small Key (Gerudo Training Ground)
-            0x00B6 => self.small_keys.thieves_hideout += 1, // Small Key (Thieves Hideout)
-            0x00B7 => self.small_keys.ganons_castle += 1, // Small Key (Ganons Castle)
-            0x00B8 => {} // Double Defense
-            0x00C9 => self.inv.beans = true, // Magic Bean Pack
+            0x00B6 => self.small_keys.thieves_hideout += 1,        // Small Key (Thieves Hideout)
+            0x00B7 => self.small_keys.ganons_castle += 1,          // Small Key (Ganons Castle)
+            0x00B8 => {}                                           // Double Defense
+            0x00C9 => self.inv.beans = true,                       // Magic Bean Pack
             0x00CA => self.set_triforce_pieces(self.triforce_pieces() + 1), // Triforce Piece
             0x000B => self.inv.child_trade_item = ChildTradeItem::ZeldasLetter, // Zeldas Letter
-            0x00CB => self.small_keys.forest_temple = 10, // Small Key Ring (Forest Temple)
-            0x00CC => self.small_keys.fire_temple = 10, // Small Key Ring (Fire Temple)
-            0x00CD => self.small_keys.water_temple = 10, // Small Key Ring (Water Temple)
-            0x00CE => self.small_keys.spirit_temple = 10, // Small Key Ring (Spirit Temple)
-            0x00CF => self.small_keys.shadow_temple = 10, // Small Key Ring (Shadow Temple)
+            0x00CB => self.small_keys.forest_temple = 10,          // Small Key Ring (Forest Temple)
+            0x00CC => self.small_keys.fire_temple = 10,            // Small Key Ring (Fire Temple)
+            0x00CD => self.small_keys.water_temple = 10,           // Small Key Ring (Water Temple)
+            0x00CE => self.small_keys.spirit_temple = 10,          // Small Key Ring (Spirit Temple)
+            0x00CF => self.small_keys.shadow_temple = 10,          // Small Key Ring (Shadow Temple)
             0x00D0 => self.small_keys.bottom_of_the_well = 10, // Small Key Ring (Bottom of the Well)
             0x00D1 => self.small_keys.gerudo_training_ground = 10, // Small Key Ring (Gerudo Training Ground)
             0x00D2 => self.small_keys.thieves_hideout = 10, // Small Key Ring (Thieves Hideout)
-            0x00D3 => self.small_keys.ganons_castle = 10, // Small Key Ring (Ganons Castle)
+            0x00D3 => self.small_keys.ganons_castle = 10,   // Small Key Ring (Ganons Castle)
             0x00D4 => self.set_triforce_pieces(self.triforce_pieces() + 1), // Easter Egg (Pink)
             0x00D5 => self.set_triforce_pieces(self.triforce_pieces() + 1), // Easter Egg (Orange)
             0x00D6 => self.set_triforce_pieces(self.triforce_pieces() + 1), // Easter Egg (Green)
@@ -1477,15 +1763,21 @@ impl Save {
 }
 
 impl Protocol for Save {
-    fn read<'a, R: AsyncRead + Unpin + Send + 'a>(stream: &'a mut R) -> Pin<Box<dyn Future<Output = Result<Save, ReadError>> + Send + 'a>> {
+    fn read<'a, R: AsyncRead + Unpin + Send + 'a>(
+        stream: &'a mut R,
+    ) -> Pin<Box<dyn Future<Output = Result<Save, ReadError>> + Send + 'a>> {
         Box::pin(async move {
             let mut buf = vec![0; SIZE];
             stream.read_exact(&mut buf).await?;
-            Ok(Save::from_save_data(&buf).map_err(|e| ReadError::Custom(format!("failed to decode save data: {e:?}")))?)
+            Save::from_save_data(&buf)
+                .map_err(|e| ReadError::Custom(format!("failed to decode save data: {e:?}")))
         })
     }
 
-    fn write<'a, W: AsyncWrite + Unpin + Send + 'a>(&'a self, sink: &'a mut W) -> Pin<Box<dyn Future<Output = Result<(), WriteError>> + Send + 'a>> {
+    fn write<'a, W: AsyncWrite + Unpin + Send + 'a>(
+        &'a self,
+        sink: &'a mut W,
+    ) -> Pin<Box<dyn Future<Output = Result<(), WriteError>> + Send + 'a>> {
         Box::pin(async move {
             let buf = self.to_save_data();
             assert_eq!(buf.len(), SIZE);
@@ -1497,7 +1789,8 @@ impl Protocol for Save {
     fn read_sync(stream: &mut impl Read) -> Result<Self, ReadError> {
         let mut buf = vec![0; SIZE];
         stream.read_exact(&mut buf)?;
-        Ok(Save::from_save_data(&buf).map_err(|e| ReadError::Custom(format!("failed to decode save data: {e:?}")))?)
+        Save::from_save_data(&buf)
+            .map_err(|e| ReadError::Custom(format!("failed to decode save data: {e:?}")))
     }
 
     fn write_sync(&self, sink: &mut impl Write) -> Result<(), WriteError> {
@@ -1508,7 +1801,7 @@ impl Protocol for Save {
     }
 }
 
-impl<'a, 'b> Add<&'b Delta> for &'a Save {
+impl Add<&Delta> for &Save {
     type Output = Save;
 
     fn add(self, rhs: &Delta) -> Save {
@@ -1520,7 +1813,7 @@ impl<'a, 'b> Add<&'b Delta> for &'a Save {
     }
 }
 
-impl<'a, 'b> Sub<&'b Save> for &'a Save {
+impl Sub<&Save> for &Save {
     type Output = Delta;
 
     fn sub(self, rhs: &Save) -> Delta {
@@ -1533,7 +1826,7 @@ impl<'a, 'b> Sub<&'b Save> for &'a Save {
                 .enumerate()
                 .filter(|&(_, (old, new))| old != new)
                 .map(|(offset, (_, new))| (offset as u16, new))
-                .collect()
+                .collect(),
         )
     }
 }

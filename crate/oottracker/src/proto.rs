@@ -1,27 +1,12 @@
 use {
-    std::{
-        cmp::Ordering::*,
-        fmt,
-        pin::Pin,
-        sync::Arc,
-    },
+    crate::{knowledge, ram::Ram, save, ui::TrackerCellId, ModelDelta, ModelState},
     async_proto::Protocol,
     async_stream::try_stream,
-    futures::{
-        pin_mut,
-        prelude::*,
-    },
+    futures::{pin_mut, prelude::*},
     serde_json::Value as Json,
+    std::{cmp::Ordering::*, fmt, pin::Pin, sync::Arc},
     tokio::net::TcpStream,
     wheel::FromArc,
-    crate::{
-        ModelDelta,
-        ModelState,
-        knowledge,
-        ram::Ram,
-        save,
-        ui::TrackerCellId,
-    },
 };
 
 pub const TCP_PORT: u16 = 24801;
@@ -63,7 +48,9 @@ impl fmt::Display for ReadError {
 }
 
 /// Reads packets from the given stream.
-pub fn read(mut tcp_stream: TcpStream) -> Pin<Box<dyn Stream<Item = Result<Packet, ReadError>> + Send>> {
+pub fn read(
+    mut tcp_stream: TcpStream,
+) -> Pin<Box<dyn Stream<Item = Result<Packet, ReadError>> + Send>> {
     Box::pin(try_stream! {
         let version = u8::read(&mut tcp_stream).await?;
         if version != VERSION { Err(ReadError::VersionMismatch { server: VERSION, client: version })? }
@@ -78,7 +65,10 @@ pub fn read(mut tcp_stream: TcpStream) -> Pin<Box<dyn Stream<Item = Result<Packe
 /// Writes the given packets to the given stream.
 ///
 /// The handshake at the start and the `Goodbye` packet at the end are inserted automatically.
-pub async fn write(mut tcp_stream: TcpStream, packets: impl Stream<Item = Packet>) -> Result<(), async_proto::WriteError> {
+pub async fn write(
+    mut tcp_stream: TcpStream,
+    packets: impl Stream<Item = Packet>,
+) -> Result<(), async_proto::WriteError> {
     VERSION.write(&mut tcp_stream).await?;
     pin_mut!(packets);
     while let Some(packet) = packets.next().await {

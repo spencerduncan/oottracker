@@ -1,20 +1,9 @@
 use {
-    std::{
-        fmt,
-        io,
-        sync::Arc,
-    },
+    crate::{region::RegionLookupError, Check, ModelState},
     derivative::Derivative,
     derive_more::From,
-    ootr::{
-        Rando,
-        region::Mq,
-    },
-    crate::{
-        Check,
-        ModelState,
-        region::RegionLookupError,
-    },
+    ootr::{region::Mq, Rando},
+    std::{fmt, io, sync::Arc},
 };
 
 pub trait CheckExt {
@@ -24,11 +13,21 @@ pub trait CheckExt {
 impl<R: Rando> CheckExt for Check<R> {
     fn checked(&self, model: &ModelState) -> Option<bool> {
         // event and location lists from Dev-R as of commit b670183e9aff520c20ac2ee65aa55e3740c5f4b4
-        if let Some(checked) = model.ram.save.gold_skulltulas.checked(self) { return Some(checked) }
-        if let Some(checked) = model.ram.scene_flags().checked(self) { return Some(checked) }
-        if let Some(checked) = model.ram.save.event_chk_inf.checked(self) { return Some(checked) }
-        if let Some(checked) = model.ram.save.item_get_inf.checked(self) { return Some(checked) }
-        if let Some(checked) = model.ram.save.inf_table.checked(self) { return Some(checked) }
+        if let Some(checked) = model.ram.save.gold_skulltulas.checked(self) {
+            return Some(checked);
+        }
+        if let Some(checked) = model.ram.scene_flags().checked(self) {
+            return Some(checked);
+        }
+        if let Some(checked) = model.ram.save.event_chk_inf.checked(self) {
+            return Some(checked);
+        }
+        if let Some(checked) = model.ram.save.item_get_inf.checked(self) {
+            return Some(checked);
+        }
+        if let Some(checked) = model.ram.save.inf_table.checked(self) {
+            return Some(checked);
+        }
         match self {
             Check::AnonymousEvent(at_check, id) => match (&**at_check, id) {
                 (Check::Event(event), 0) if *event == "Deku Tree Clear" /*vanilla*/ => Some(
@@ -741,7 +740,8 @@ pub enum CheckStatusError<R: Rando> {
     RegionLookup(RegionLookupError<R>),
 }
 
-impl<R: Rando> From<io::Error> for CheckStatusError<R> { //TODO add support for generics to FromArc derive macro
+impl<R: Rando> From<io::Error> for CheckStatusError<R> {
+    //TODO add support for generics to FromArc derive macro
     fn from(e: io::Error) -> CheckStatusError<R> {
         CheckStatusError::Io(Arc::new(e))
     }
