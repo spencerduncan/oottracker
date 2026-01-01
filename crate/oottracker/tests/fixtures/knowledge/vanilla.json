@@ -1,0 +1,52 @@
+{
+  "settings": {
+    "open_door_of_time": false,
+    "triforce_hunt": false,
+    "all_reachable": true,
+    "bombchus_in_logic": false,
+    "one_item_per_dungeon": false,
+    "trials_random": false,
+    "skip_child_zelda": false,
+    "open_forest": ["closed"],
+    "open_kakariko": ["closed"],
+    "zora_fountain": ["closed"],
+    "gerudo_fortress": ["normal"],
+    "bridge": ["vanilla"],
+    "logic_rules": ["glitchless"]
+  },
+  "dungeons": {
+    "Deku Tree": "vanilla",
+    "Dodongos Cavern": "vanilla",
+    "Jabu Jabus Belly": "vanilla",
+    "Forest Temple": "vanilla",
+    "Fire Temple": "vanilla",
+    "Water Temple": "vanilla",
+    "Shadow Temple": "vanilla",
+    "Spirit Temple": "vanilla",
+    "Ice Cavern": "vanilla",
+    "Bottom of the Well": "vanilla",
+    "Gerudo Training Ground": "vanilla",
+    "Ganons Castle": "vanilla"
+  },
+  "trials": {
+    "light": "active",
+    "forest": "active",
+    "fire": "active",
+    "water": "active",
+    "shadow": "active",
+    "spirit": "active"
+  },
+  "entrances": {},
+  "locations": {
+    "Queen Gohma": ["Kokiri Emerald"],
+    "King Dodongo": ["Goron Ruby"],
+    "Barinade": ["Zora Sapphire"],
+    "Phantom Ganon": ["Forest Medallion"],
+    "Volvagia": ["Fire Medallion"],
+    "Morpha": ["Water Medallion"],
+    "Bongo Bongo": ["Shadow Medallion"],
+    "Twinrova": ["Spirit Medallion"],
+    "Links Pocket": ["Light Medallion"]
+  },
+  "progression_mode": "go"
+}
