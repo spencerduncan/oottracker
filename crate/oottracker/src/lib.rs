@@ -11,7 +11,6 @@
     clippy::result_large_err,
     clippy::result_unit_err,
     clippy::too_many_arguments,
-    clippy::type_complexity,
     clippy::wrong_self_convention,
     clippy::modulo_one
 )]

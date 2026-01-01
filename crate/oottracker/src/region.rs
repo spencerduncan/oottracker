@@ -8,6 +8,9 @@ use {
     std::{fmt, io, sync::Arc},
 };
 
+/// Type alias for the result of looking up all regions
+pub type AllRegionsResult<R> = Result<Arc<Vec<Arc<Region<R>>>>, RegionLookupError<R>>;
+
 #[derive(Derivative)]
 #[derivative(Debug(bound = ""), Clone(bound = ""))]
 pub enum RegionLookupError<R: Rando> {
@@ -109,7 +112,7 @@ pub trait RegionExt {
     where
         <Self::R as Rando>::RegionName: PartialEq<N>;
     /// A thin wrapper around [`Rando::regions`] with this module's error type.
-    fn all(rando: &Self::R) -> Result<Arc<Vec<Arc<Region<Self::R>>>>, RegionLookupError<Self::R>>;
+    fn all(rando: &Self::R) -> AllRegionsResult<Self::R>;
     fn root(rando: &Self::R) -> Result<Arc<Region<Self::R>>, RegionLookupError<Self::R>>; //TODO glitched param
 }
 
@@ -123,7 +126,7 @@ impl<R: Rando> RegionExt for Region<R> {
         RegionLookup::by_name(rando, name)
     }
 
-    fn all(rando: &R) -> Result<Arc<Vec<Arc<Region<R>>>>, RegionLookupError<R>> {
+    fn all(rando: &R) -> AllRegionsResult<R> {
         rando.regions().map_err(RegionLookupError::Rando)
     }
 

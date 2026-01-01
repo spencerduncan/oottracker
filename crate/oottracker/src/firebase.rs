@@ -158,17 +158,17 @@ pub trait App: fmt::Debug + Send + Sync + 'static {
             }
             FortressMq => {
                 if value.as_bool().ok_or_else(|| value.clone())? {
-                    state
-                        .knowledge
-                        .string_settings
-                        .insert(format!("gerudo_fortress"), collect![format!("normal")]);
+                    state.knowledge.string_settings.insert(
+                        "gerudo_fortress".to_string(),
+                        collect!["normal".to_string()],
+                    );
                 } else {
                     // don't override local state that's consistent with the value received
                     if state
                         .knowledge
                         .string_settings
                         .get("gerudo_fortress")
-                        .map_or(false, |fort| fort.iter().eq(iter::once("normal")))
+                        .is_some_and(|fort| fort.iter().eq(iter::once("normal")))
                     {
                         state.knowledge.string_settings.remove("gerudo_fortress");
                     }
@@ -235,7 +235,7 @@ pub trait App: fmt::Debug + Send + Sync + 'static {
                         .knowledge
                         .mq
                         .get(&dungeon)
-                        .map_or(false, |&mq| mq == Mq::Mq)
+                        .is_some_and(|&mq| mq == Mq::Mq)
                     {
                         state.knowledge.mq.remove(&dungeon);
                     }
@@ -950,7 +950,7 @@ fn render_cell(cell_kind: TrackerCellKind, state: &ModelState) -> Json {
             .knowledge
             .string_settings
             .get("gerudo_fortress")
-            .map_or(false, |values| values.iter().eq(iter::once("normal")))),
+            .is_some_and(|values| values.iter().eq(iter::once("normal")))),
         Medallion(med) => json!(state.ram.save.quest_items.has(med)),
         MedallionLocation(med) => json!(match state
             .knowledge
