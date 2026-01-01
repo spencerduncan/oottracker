@@ -35,6 +35,18 @@ use {
     rocket_util::{html, ToHtml},
 };
 
+/// Type alias for functions that check two boolean states from ModelState
+type StatePairChecker = Box<dyn Fn(&ModelState) -> (bool, bool)>;
+
+/// Type alias for functions that set a u8 value on ModelState
+type StateU8Setter = Box<dyn Fn(&mut ModelState, u8)>;
+
+/// Type alias for functions that return an image with active state from ModelState
+type StateImageGetter = Box<dyn Fn(&ModelState) -> (bool, ImageInfo)>;
+
+/// Type alias for functions that set small keys count
+type SmallKeysSetter = Box<dyn Fn(&mut crate::save::SmallKeys, u8)>;
+
 const VERSION: u8 = 0;
 
 #[derive(Debug, FromArc, Clone)]
@@ -239,7 +251,7 @@ pub enum TrackerCellKind {
         left_img: ImageInfo,
         right_img: ImageInfo,
         both_img: ImageInfo,
-        active: Box<dyn Fn(&ModelState) -> (bool, bool)>,
+        active: StatePairChecker,
         toggle_left: Box<dyn Fn(&mut ModelState)>,
         toggle_right: Box<dyn Fn(&mut ModelState)>,
     },
@@ -251,7 +263,7 @@ pub enum TrackerCellKind {
         dimmed_img: ImageInfo,
         img: ImageInfo,
         get: Box<dyn Fn(&ModelState) -> u8>,
-        set: Box<dyn Fn(&mut ModelState, u8)>,
+        set: StateU8Setter,
         max: u8,
         step: u8,
     },
@@ -266,20 +278,20 @@ pub enum TrackerCellKind {
     OptionalOverlay {
         main_img: ImageInfo,
         overlay_img: ImageInfo,
-        active: Box<dyn Fn(&ModelState) -> (bool, bool)>,
+        active: StatePairChecker,
         toggle_main: Box<dyn Fn(&mut ModelState)>,
         toggle_overlay: Box<dyn Fn(&mut ModelState)>,
     },
     Overlay {
         main_img: ImageInfo,
         overlay_img: ImageInfo,
-        active: Box<dyn Fn(&ModelState) -> (bool, bool)>,
+        active: StatePairChecker,
         toggle_main: Box<dyn Fn(&mut ModelState)>,
         toggle_overlay: Box<dyn Fn(&mut ModelState)>,
     },
     Sequence {
         idx: Box<dyn Fn(&ModelState) -> u8>,
-        img: Box<dyn Fn(&ModelState) -> (bool, ImageInfo)>,
+        img: StateImageGetter,
         increment: Box<dyn Fn(&mut ModelState)>,
         decrement: Box<dyn Fn(&mut ModelState)>,
     },
@@ -290,7 +302,7 @@ pub enum TrackerCellKind {
     },
     SmallKeys {
         get: Box<dyn Fn(&crate::save::SmallKeys) -> u8>,
-        set: Box<dyn Fn(&mut crate::save::SmallKeys, u8)>,
+        set: SmallKeysSetter,
         max_vanilla: u8,
         max_mq: u8,
     },
