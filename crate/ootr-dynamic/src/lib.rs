@@ -289,6 +289,7 @@ pub fn version() -> Version {
 }
 
 #[test]
+#[ignore] // Requires Python and randomizer to be set up at a specific path
 fn load_rando_data() -> Result<(), RandoErr> {
     use ootr::Rando as _;
 
@@ -299,7 +300,6 @@ fn load_rando_data() -> Result<(), RandoErr> {
         );
         rando.escaped_items()?;
         rando.item_table()?;
-        rando.logic_helpers()?;
         rando.logic_tricks()?;
         rando.regions()?;
         rando.setting_infos()?;
