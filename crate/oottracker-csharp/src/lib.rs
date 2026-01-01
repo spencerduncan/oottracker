@@ -145,10 +145,17 @@ pub fn version() -> Version {
 }
 
 #[no_mangle] pub extern "C" fn running_bizhawk_version_string() -> StringHandle {
-    StringHandle::from_string(match winver::get_file_version_info("EmuHawk.exe") {
-        Ok([major, minor, patch, _]) => format!("{}.{}.{}", major, minor, patch),
-        Err(e) => format!("(error: {})", e),
-    })
+    #[cfg(windows)]
+    {
+        StringHandle::from_string(match winver::get_file_version_info("EmuHawk.exe") {
+            Ok([major, minor, patch, _]) => format!("{}.{}.{}", major, minor, patch),
+            Err(e) => format!("(error: {})", e),
+        })
+    }
+    #[cfg(not(windows))]
+    {
+        StringHandle::from_string("(not available on this platform)")
+    }
 }
 
 #[no_mangle] pub extern "C" fn version_string() -> StringHandle {
@@ -199,7 +206,8 @@ pub fn version() -> Version {
 }
 
 #[no_mangle] pub extern "C" fn run_updater() -> HandleOwned<DebugResult<()>> {
-    #[cfg(target_os = "windows")] fn inner() -> DebugResult<()> {
+    #[cfg(target_os = "windows")]
+    fn inner() -> DebugResult<()> {
         let [major, minor, patch, _] = winver::get_file_version_info("EmuHawk.exe")?;
         let project_dirs = dirs()?;
         let cache_dir = project_dirs.cache_dir();
@@ -213,6 +221,11 @@ pub fn version() -> Version {
             .arg(format!("{}.{}.{}", major, minor, patch))
             .spawn()?;
         Ok(())
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    fn inner() -> DebugResult<()> {
+        Err(DebugError(format!("updater only available on Windows")))
     }
 
     HandleOwned::new(inner())

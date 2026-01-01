@@ -44,6 +44,7 @@ pub fn version(_: TokenStream) -> TokenStream {
     })
 }
 
+#[allow(dead_code)] // Used by graphql_client derive macro
 #[derive(GraphQLQuery)]
 #[graphql(
     schema_path = "../../assets/graphql/github-schema.graphql",
@@ -52,6 +53,7 @@ pub fn version(_: TokenStream) -> TokenStream {
 )]
 struct DevRVersionQuery;
 
+#[allow(dead_code)] // Error variants are constructed via From impls but not matched on
 #[derive(Debug, From)]
 enum Error {
     Io(io::Error),
@@ -62,6 +64,7 @@ enum Error {
 }
 
 /// A wrapper type around `Check<ootr_dynamic::Rando>` that's quoted as if it were a `Check<ootr_static::Rando>`
+#[allow(dead_code)] // Used by QuoteValue impl
 struct CheckWrapper<'a>(&'a ootr::check::Check<ootr_dynamic::Rando<'a>>);
 
 impl<'a> QuoteValue for CheckWrapper<'a> {

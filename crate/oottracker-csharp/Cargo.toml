@@ -8,7 +8,7 @@ edition = "2021"
 name = "oottracker"
 crate-type = ["cdylib"]
 
-[build-dependencies.winver]
+[target.'cfg(windows)'.build-dependencies.winver]
 git = "https://github.com/fenhl/winver"
 branch = "main"
 
@@ -27,6 +27,6 @@ default-features = false
 features = ["blocking", "rustls-tls"]
 
 
-[dependencies.winver]
+[target.'cfg(windows)'.dependencies.winver]
 git = "https://github.com/fenhl/winver"
 branch = "main"

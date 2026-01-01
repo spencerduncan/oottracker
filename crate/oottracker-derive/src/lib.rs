@@ -494,6 +494,7 @@ impl quote::ToTokens for SceneFieldsKind {
     }
 }
 
+#[allow(dead_code)] // Fields used by Parse impl
 enum RegionName {
     One(LitStr),
     Multiple(Expr),
@@ -509,6 +510,7 @@ impl Parse for RegionName {
     }
 }
 
+#[allow(dead_code)] // Variants used by Parse impl
 enum SceneData {
     RegionName(RegionName),
     Fields {

@@ -16,7 +16,7 @@ proc-macro2 = "1"
 quote = "1"
 serde = "1"
 syn = "1"
-zip = "0.6"
+zip = "2"
 
 [dependencies.derive_more]
 version = "0.99"

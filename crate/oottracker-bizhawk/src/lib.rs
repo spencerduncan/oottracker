@@ -5,8 +5,15 @@
 
 use semver::Version;
 
+#[cfg(windows)]
 pub fn bizhawk_version() -> [u16; 4] {
     winver::get_file_version_info("crate/oottracker-bizhawk/OotAutoTracker/BizHawk/EmuHawk.exe").expect("failed to parse BizHawk version")
+}
+
+#[cfg(not(windows))]
+pub fn bizhawk_version() -> [u16; 4] {
+    // Stub for non-Windows builds - actual version detection only works on Windows
+    [0, 0, 0, 0]
 }
 
 pub fn version() -> Version {
