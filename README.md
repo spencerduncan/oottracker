@@ -1,3 +1,6 @@
+[![CI](https://github.com/spencerduncan/oottracker/actions/workflows/ci.yml/badge.svg)](https://github.com/spencerduncan/oottracker/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/spencerduncan/oottracker/branch/main/graph/badge.svg)](https://codecov.io/gh/spencerduncan/oottracker)
+
 **Warning:** As of 2021-11-15, [the racing rules](https://wiki.ootrandomizer.com/index.php?title=Rules#Universal_Rules) prohibit all usage of trackers capable of auto-tracking even in manual mode. How exactly this applies to my tracker is unclear pending a decision from the RaceMods.
 
 This is [Fenhl](https://github.com/fenhl)'s tracker for [the *Ocarina of Time* Item Randomizer](https://ootrandomizer.com/). Current features include:
