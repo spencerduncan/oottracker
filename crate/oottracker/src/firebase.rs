@@ -45,10 +45,10 @@ macro_rules! cells {
             }
         }
 
-        fn serialize_state(&self, state: &ModelState) -> serde_json::Result<BTreeMap<&'static str, Json>> {
+        fn serialize_state(&self, state: &ModelState) -> Result<BTreeMap<&'static str, Json>, Error> {
             let mut map = BTreeMap::default();
             $(
-                map.insert($cell_name, serde_json::to_value(render_cell(TrackerCellId::$id.kind(), state))?);
+                map.insert($cell_name, serde_json::to_value(render_cell(TrackerCellId::$id.kind(), state)?)?);
             )*
             Ok(map)
         }
@@ -60,8 +60,10 @@ pub enum Error {
     Cancelled,
     CellId,
     EventSource(String),
+    InvalidCellValue(Json),
     #[from_arc]
     Json(Arc<serde_json::Error>),
+    NotImplemented(&'static str),
     PathPrefix,
     #[from_arc]
     Reqwest(Arc<reqwest::Error>),
@@ -82,7 +84,9 @@ impl fmt::Display for Error {
             Error::Cancelled => write!(f, "event source was cancelled"),
             Error::CellId => write!(f, "received data for unknown cell"),
             Error::EventSource(debug) => write!(f, "error in event source: {}", debug),
+            Error::InvalidCellValue(value) => write!(f, "invalid cell value: {}", value),
             Error::Json(e) => write!(f, "JSON error: {}", e),
+            Error::NotImplemented(feature) => write!(f, "not implemented: {}", feature),
             Error::PathPrefix => write!(f, "event source sent an incorrect path"),
             Error::Reqwest(e) => {
                 if let Some(url) = e.url() {
@@ -101,21 +105,20 @@ pub trait App: fmt::Debug + Send + Sync + 'static {
     fn base_url(&self) -> &'static str;
     fn api_key(&self) -> &'static str;
     fn cell_id(&self, cell_id: &str) -> Option<TrackerCellId>;
-    fn serialize_state(
-        &self,
-        state: &ModelState,
-    ) -> serde_json::Result<BTreeMap<&'static str, Json>>;
+    fn serialize_state(&self, state: &ModelState) -> Result<BTreeMap<&'static str, Json>, Error>;
 
     fn set_cell(
         &self,
         state: &mut ModelState,
         cell_id: TrackerCellId,
         value: Json,
-    ) -> Result<(), Json> {
+    ) -> Result<(), Error> {
         match cell_id.kind() {
             BossKey { active, toggle } => {
                 if active(&state.ram.save.dungeon_items)
-                    != value.as_bool().ok_or_else(|| value.clone())?
+                    != value
+                        .as_bool()
+                        .ok_or_else(|| Error::InvalidCellValue(value.clone()))?
                 {
                     toggle(&mut state.ram.save.dungeon_items);
                 }
@@ -127,12 +130,15 @@ pub trait App: fmt::Debug + Send + Sync + 'static {
                 ..
             } => {
                 let (active_left, active_right) = active(state);
-                let (value_left, value_right) = match value.as_u64().ok_or_else(|| value.clone())? {
+                let (value_left, value_right) = match value
+                    .as_u64()
+                    .ok_or_else(|| Error::InvalidCellValue(value.clone()))?
+                {
                     0 => (false, false),
                     1 => (true, false),
                     2 => (false, true),
                     3 => (true, true),
-                    _ => return Err(value),
+                    _ => return Err(Error::InvalidCellValue(value)),
                 };
                 if active_left != value_left {
                     toggle_left(state)
@@ -148,8 +154,12 @@ pub trait App: fmt::Debug + Send + Sync + 'static {
                 step,
                 ..
             } => {
-                let value = u8::try_from(value.as_u64().ok_or_else(|| value.clone())?)
-                    .map_err(|_| value)?;
+                let value = u8::try_from(
+                    value
+                        .as_u64()
+                        .ok_or_else(|| Error::InvalidCellValue(value.clone()))?,
+                )
+                .map_err(|_| Error::InvalidCellValue(value))?;
                 // only update if the local value doesn't fit into the window received
                 // so that e.g. decrementing skulls from 40 to 39 doesn't immediately set them to 30
                 if get(state).min(max) / step != value {
@@ -157,7 +167,10 @@ pub trait App: fmt::Debug + Send + Sync + 'static {
                 }
             }
             FortressMq => {
-                if value.as_bool().ok_or_else(|| value.clone())? {
+                if value
+                    .as_bool()
+                    .ok_or_else(|| Error::InvalidCellValue(value.clone()))?
+                {
                     state.knowledge.string_settings.insert(
                         "gerudo_fortress".to_string(),
                         collect!["normal".to_string()],
@@ -175,14 +188,20 @@ pub trait App: fmt::Debug + Send + Sync + 'static {
                 }
             }
             Medallion(med) => {
-                if value.as_bool().ok_or_else(|| value.clone())? {
+                if value
+                    .as_bool()
+                    .ok_or_else(|| Error::InvalidCellValue(value.clone()))?
+                {
                     state.ram.save.quest_items.insert(med.into());
                 } else {
                     state.ram.save.quest_items.remove(med.into());
                 }
             }
             MedallionLocation(med) => {
-                match value.as_u64().ok_or_else(|| value.clone())? {
+                match value
+                    .as_u64()
+                    .ok_or_else(|| Error::InvalidCellValue(value.clone()))?
+                {
                     0 => state
                         .knowledge
                         .dungeon_reward_locations
@@ -223,11 +242,14 @@ pub trait App: fmt::Debug + Send + Sync + 'static {
                         DungeonReward::Medallion(med),
                         DungeonRewardLocation::LinksPocket,
                     ),
-                    _ => return Err(value),
+                    _ => return Err(Error::InvalidCellValue(value)),
                 };
             }
             Mq(dungeon) => {
-                if value.as_bool().ok_or_else(|| value.clone())? {
+                if value
+                    .as_bool()
+                    .ok_or_else(|| Error::InvalidCellValue(value.clone()))?
+                {
                     state.knowledge.mq.insert(dungeon, Mq::Mq);
                 } else {
                     // don't override local state that's consistent with the value received
@@ -251,7 +273,11 @@ pub trait App: fmt::Debug + Send + Sync + 'static {
                 toggle_main,
                 ..
             } => {
-                if active(state).0 != value.as_bool().ok_or_else(|| value.clone())? {
+                if active(state).0
+                    != value
+                        .as_bool()
+                        .ok_or_else(|| Error::InvalidCellValue(value.clone()))?
+                {
                     toggle_main(state);
                 }
             }
@@ -262,8 +288,12 @@ pub trait App: fmt::Debug + Send + Sync + 'static {
                 ..
             } => {
                 let mut old_idx = idx(state);
-                let new_idx = u8::try_from(value.as_u64().ok_or_else(|| value.clone())?)
-                    .map_err(|_| value.clone())?;
+                let new_idx = u8::try_from(
+                    value
+                        .as_u64()
+                        .ok_or_else(|| Error::InvalidCellValue(value.clone()))?,
+                )
+                .map_err(|_| Error::InvalidCellValue(value.clone()))?;
                 while old_idx < new_idx {
                     increment(state);
                     old_idx += 1
@@ -274,7 +304,11 @@ pub trait App: fmt::Debug + Send + Sync + 'static {
                 }
             }
             Simple { active, toggle, .. } => {
-                if active(state) != value.as_bool().ok_or_else(|| value.clone())? {
+                if active(state)
+                    != value
+                        .as_bool()
+                        .ok_or_else(|| Error::InvalidCellValue(value.clone()))?
+                {
                     toggle(state);
                 }
             }
@@ -282,12 +316,12 @@ pub trait App: fmt::Debug + Send + Sync + 'static {
                 &mut state.ram.save.small_keys,
                 value
                     .as_u64()
-                    .ok_or_else(|| value.clone())?
+                    .ok_or_else(|| Error::InvalidCellValue(value.clone()))?
                     .try_into()
-                    .map_err(|_| value.clone())?,
+                    .map_err(|_| Error::InvalidCellValue(value.clone()))?,
             ),
             Song { song, .. } => {
-                if value.as_bool().ok_or(value)? {
+                if value.as_bool().ok_or(Error::InvalidCellValue(value))? {
                     state.ram.save.quest_items.insert(song);
                 } else {
                     state.ram.save.quest_items.remove(song);
@@ -301,33 +335,43 @@ pub trait App: fmt::Debug + Send + Sync + 'static {
                     .checked(state)
                     .unwrap_or(None)
                     .unwrap_or(false)
-                    != value.as_bool().ok_or_else(|| value.clone())?
+                    != value
+                        .as_bool()
+                        .ok_or_else(|| Error::InvalidCellValue(value.clone()))?
                 {
                     //TODO allow ootr_dynamic::Rando
                     toggle_overlay(&mut state.ram.save.event_chk_inf);
                 }
             }
             Spells => {
-                let (value_dins, value_farores) =
-                    match value.as_u64().ok_or_else(|| value.clone())? {
-                        0 => (false, false),
-                        1 => (true, false),
-                        2 => (false, true),
-                        3 => (true, true),
-                        _ => return Err(value),
-                    };
+                let (value_dins, value_farores) = match value
+                    .as_u64()
+                    .ok_or_else(|| Error::InvalidCellValue(value.clone()))?
+                {
+                    0 => (false, false),
+                    1 => (true, false),
+                    2 => (false, true),
+                    3 => (true, true),
+                    _ => return Err(Error::InvalidCellValue(value)),
+                };
                 state.ram.save.inv.dins_fire = value_dins;
                 state.ram.save.inv.farores_wind = value_farores;
             }
             Stone(stone) => {
-                if value.as_bool().ok_or_else(|| value.clone())? {
+                if value
+                    .as_bool()
+                    .ok_or_else(|| Error::InvalidCellValue(value.clone()))?
+                {
                     state.ram.save.quest_items.insert(stone.into());
                 } else {
                     state.ram.save.quest_items.remove(stone.into());
                 }
             }
             StoneLocation(stone) => {
-                match value.as_u64().ok_or_else(|| value.clone())? {
+                match value
+                    .as_u64()
+                    .ok_or_else(|| Error::InvalidCellValue(value.clone()))?
+                {
                     0 => state
                         .knowledge
                         .dungeon_reward_locations
@@ -368,7 +412,7 @@ pub trait App: fmt::Debug + Send + Sync + 'static {
                         DungeonReward::Stone(stone),
                         DungeonRewardLocation::LinksPocket,
                     ),
-                    _ => return Err(value),
+                    _ => return Err(Error::InvalidCellValue(value)),
                 };
             }
             BigPoeTriforce
@@ -377,7 +421,11 @@ pub trait App: fmt::Debug + Send + Sync + 'static {
             | FreeReward
             | MagicLens
             | MedallionWithLocation(_)
-            | StoneWithLocation(_) => unimplemented!(),
+            | StoneWithLocation(_) => {
+                return Err(Error::NotImplemented(
+                    "cell type not supported for set_cell",
+                ))
+            }
         }
         Ok(())
     }
@@ -393,10 +441,7 @@ impl App for Box<dyn App> {
     fn cell_id(&self, cell_id: &str) -> Option<TrackerCellId> {
         (**self).cell_id(cell_id)
     }
-    fn serialize_state(
-        &self,
-        state: &ModelState,
-    ) -> serde_json::Result<BTreeMap<&'static str, Json>> {
+    fn serialize_state(&self, state: &ModelState) -> Result<BTreeMap<&'static str, Json>, Error> {
         (**self).serialize_state(state)
     }
 }
@@ -899,7 +944,7 @@ impl DynRoom {
                             }
                             "patch" => {
                                 let PatchData { path, data } = serde_json::from_str(&event.data)?;
-                                if path != "/" { unimplemented!("patch for path {}", path) }
+                                if path != "/" { Err(Error::NotImplemented("patch for non-root path"))? }
                                 let session = session.lock().await;
                                 for (item, value) in data {
                                     let cell_id = session.app.cell_id(&item).ok_or(Error::CellId)?;
@@ -937,8 +982,8 @@ impl Hash for DynRoom {
     }
 }
 
-fn render_cell(cell_kind: TrackerCellKind, state: &ModelState) -> Json {
-    match cell_kind {
+fn render_cell(cell_kind: TrackerCellKind, state: &ModelState) -> Result<Json, Error> {
+    Ok(match cell_kind {
         BossKey { active, .. } => json!(active(&state.ram.save.dungeon_items)),
         Composite { active, .. } => json!(match active(state) {
             (false, false) => 0,
@@ -1011,6 +1056,10 @@ fn render_cell(cell_kind: TrackerCellKind, state: &ModelState) -> Json {
         | GoBk
         | MagicLens
         | MedallionWithLocation(_)
-        | StoneWithLocation(_) => unimplemented!(),
-    }
+        | StoneWithLocation(_) => {
+            return Err(Error::NotImplemented(
+                "cell type not supported for render_cell",
+            ))
+        }
+    })
 }
