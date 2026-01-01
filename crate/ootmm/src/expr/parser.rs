@@ -280,7 +280,10 @@ mod tests {
     #[test]
     fn test_parse_function_one_arg() {
         let expr = parse("has(Hookshot)").unwrap();
-        assert_eq!(expr, Expr::call("has", vec![Expr::Ident("Hookshot".into())]));
+        assert_eq!(
+            expr,
+            Expr::call("has", vec![Expr::Ident("Hookshot".into())])
+        );
     }
 
     #[test]
@@ -354,10 +357,7 @@ mod tests {
         let expr = parse("!a && b").unwrap();
         assert_eq!(
             expr,
-            Expr::and(
-                Expr::not(Expr::Ident("a".into())),
-                Expr::Ident("b".into())
-            )
+            Expr::and(Expr::not(Expr::Ident("a".into())), Expr::Ident("b".into()))
         );
     }
 
@@ -367,10 +367,7 @@ mod tests {
         let expr = parse("!a || b").unwrap();
         assert_eq!(
             expr,
-            Expr::or(
-                Expr::not(Expr::Ident("a".into())),
-                Expr::Ident("b".into())
-            )
+            Expr::or(Expr::not(Expr::Ident("a".into())), Expr::Ident("b".into()))
         );
     }
 
@@ -382,10 +379,7 @@ mod tests {
             expr,
             Expr::or(
                 Expr::Ident("a".into()),
-                Expr::and(
-                    Expr::Ident("b".into()),
-                    Expr::not(Expr::Ident("c".into()))
-                )
+                Expr::and(Expr::Ident("b".into()), Expr::not(Expr::Ident("c".into())))
             )
         );
     }
