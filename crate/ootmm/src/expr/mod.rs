@@ -6,6 +6,7 @@
 //! - `between(DAY1_AM_6_00, DAY1_PM_6_00)`
 
 mod ast;
+mod context;
 mod eval;
 mod lexer;
 mod parser;
@@ -14,6 +15,7 @@ mod token;
 pub mod builtins;
 
 pub use ast::Expr;
+pub use context::{Age, GameContext, GameContextBuilder};
 pub use eval::{eval, eval_str, EvalContext, EvalError, Evaluator};
 pub use lexer::{LexError, Lexer};
 pub use parser::{parse, ParseError, Parser};
