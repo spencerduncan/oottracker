@@ -15,7 +15,7 @@
 )]
 #![forbid(unsafe_code)]
 
-pub use crate::{ctx::TrackerCtx, knowledge::Knowledge, ram::Ram, save::Save};
+pub use crate::{ctx::TrackerCtx, knowledge::Knowledge, ram::Ram, ram::GameType, save::Save};
 use {
     crate::{
         info_tables::InfTable55,

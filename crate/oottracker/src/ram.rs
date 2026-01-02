@@ -1,5 +1,6 @@
 use {
     crate::{
+        mm_save::{MM_ADDR, MM_SIZE},
         save::{self, Save},
         scene::{Scene, SceneFlags},
     },
@@ -25,6 +26,8 @@ pub const SIZE: usize = 0x80_0000;
 pub const NUM_RANGES: usize = 8;
 pub const TEXT_LEN: usize = 0xc0;
 pub const PAUSE_CTX_LEN: usize = 0x16;
+
+// OoT memory ranges (RDRAM addresses)
 pub static RANGES: [u32; NUM_RANGES * 2] = [
     save::ADDR,
     save::SIZE as u32,
@@ -43,6 +46,44 @@ pub static RANGES: [u32; NUM_RANGES * 2] = [
     0x1d8dd4,
     PAUSE_CTX_LEN as u32, // relevant parts of z64_game.pause_ctxt
 ];
+
+// MM memory ranges (RDRAM addresses)
+// MM SaveContext: 0x801ef670 converted to RDRAM = 0x1ef670
+pub const MM_SAVE_RDRAM_ADDR: u32 = MM_ADDR & 0x00FF_FFFF; // 0x1ef670
+pub const MM_NUM_RANGES: usize = 1;
+pub static MM_RANGES: [u32; MM_NUM_RANGES * 2] = [
+    MM_SAVE_RDRAM_ADDR,
+    MM_SIZE as u32, // 0x48d0 = 18640 bytes
+];
+
+// Combo randomizer context addresses (System Bus addresses)
+pub const COMBO_OOT_CONTEXT_ADDR: u32 = 0x8000_6584;
+pub const COMBO_MM_CONTEXT_ADDR: u32 = 0x8009_8280;
+
+/// Detected game type for auto-tracking
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum GameType {
+    #[default]
+    Unknown,
+    /// Ocarina of Time (standalone or OoTR)
+    OcarinaOfTime,
+    /// Majora's Mask (standalone or MMR)
+    MajorasMask,
+    /// OoTMM combo randomizer
+    Combo,
+}
+
+impl GameType {
+    /// Check if the game is OoT or combo mode (supports OoT tracking)
+    pub fn supports_oot(&self) -> bool {
+        matches!(self, GameType::OcarinaOfTime | GameType::Combo)
+    }
+
+    /// Check if the game is MM or combo mode (supports MM tracking)
+    pub fn supports_mm(&self) -> bool {
+        matches!(self, GameType::MajorasMask | GameType::Combo)
+    }
+}
 
 #[derive(Debug, From, Clone)]
 pub enum DecodeError {
