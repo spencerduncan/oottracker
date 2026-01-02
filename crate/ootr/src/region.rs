@@ -53,3 +53,186 @@ impl<R: Rando> Hash for Region<R> {
         self.dungeon.hash(state);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::hash_map::DefaultHasher;
+
+    // Helper to compute hash for any hashable value
+    fn compute_hash<T: Hash>(value: &T) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        value.hash(&mut hasher);
+        hasher.finish()
+    }
+
+    #[test]
+    fn test_mq_display() {
+        assert_eq!(format!("{}", Mq::Vanilla), "vanilla");
+        assert_eq!(format!("{}", Mq::Mq), "MQ");
+    }
+
+    #[test]
+    fn test_mq_equality() {
+        assert_eq!(Mq::Vanilla, Mq::Vanilla);
+        assert_eq!(Mq::Mq, Mq::Mq);
+        assert_ne!(Mq::Vanilla, Mq::Mq);
+    }
+
+    #[test]
+    fn test_mq_hash_consistency() {
+        // Same values should produce the same hash
+        let hash1 = compute_hash(&Mq::Vanilla);
+        let hash2 = compute_hash(&Mq::Vanilla);
+        assert_eq!(hash1, hash2);
+
+        // Different values should produce different hashes
+        let hash_vanilla = compute_hash(&Mq::Vanilla);
+        let hash_mq = compute_hash(&Mq::Mq);
+        assert_ne!(hash_vanilla, hash_mq);
+    }
+
+    // Mock Rando implementation for testing Region
+    mod mock {
+        use crate::{item::Item, Rando, RandoErr, Regions};
+        use std::{
+            collections::{HashMap, HashSet},
+            fmt,
+            sync::Arc,
+        };
+
+        #[derive(Debug, Clone)]
+        pub struct MockErr;
+
+        impl fmt::Display for MockErr {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "mock error")
+            }
+        }
+
+        impl RandoErr for MockErr {
+            const ITEM_NOT_FOUND: Self = MockErr;
+        }
+
+        #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+        pub struct MockRegionName(pub String);
+
+        impl From<&'static str> for MockRegionName {
+            fn from(s: &'static str) -> Self {
+                MockRegionName(s.to_string())
+            }
+        }
+
+        impl AsRef<str> for MockRegionName {
+            fn as_ref(&self) -> &str {
+                &self.0
+            }
+        }
+
+        impl PartialEq<&str> for MockRegionName {
+            fn eq(&self, other: &&str) -> bool {
+                self.0.as_str() == *other
+            }
+        }
+
+        impl fmt::Display for MockRegionName {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "{}", self.0)
+            }
+        }
+
+        #[derive(Debug)]
+        pub struct MockRando;
+
+        impl Rando for MockRando {
+            type Err = MockErr;
+            type RegionName = MockRegionName;
+
+            fn escaped_items(&self) -> Result<Arc<HashMap<String, Item>>, Self::Err> {
+                Ok(Arc::new(HashMap::new()))
+            }
+
+            fn item_table(&self) -> Result<Arc<HashMap<String, Item>>, Self::Err> {
+                Ok(Arc::new(HashMap::new()))
+            }
+
+            fn logic_tricks(&self) -> Result<Arc<HashSet<String>>, Self::Err> {
+                Ok(Arc::new(HashSet::new()))
+            }
+
+            fn regions(&self) -> Result<Regions<Self>, Self::Err> {
+                Ok(Arc::new(Vec::new()))
+            }
+
+            fn root() -> Self::RegionName {
+                MockRegionName("Root".to_string())
+            }
+
+            fn setting_infos(&self) -> Result<Arc<HashSet<String>>, Self::Err> {
+                Ok(Arc::new(HashSet::new()))
+            }
+        }
+    }
+
+    #[test]
+    fn test_region_equality_ignores_non_key_fields() {
+        use mock::{MockRando, MockRegionName};
+
+        // Two regions with same name and dungeon but different other fields
+        let region1: Region<MockRando> = Region {
+            name: MockRegionName::from("Kokiri Forest"),
+            dungeon: None,
+            scene: Some("kokiri".to_string()),
+            hint: Some("hint1".to_string()),
+            time_passes: true,
+            events: HashSet::from(["event1".to_string()]),
+            locations: HashSet::from(["loc1".to_string()]),
+            exits: HashSet::from([MockRegionName::from("Lost Woods")]),
+        };
+
+        let region2: Region<MockRando> = Region {
+            name: MockRegionName::from("Kokiri Forest"),
+            dungeon: None,
+            scene: Some("different_scene".to_string()),
+            hint: Some("hint2".to_string()),
+            time_passes: false,
+            events: HashSet::from(["event2".to_string()]),
+            locations: HashSet::from(["loc2".to_string()]),
+            exits: HashSet::new(),
+        };
+
+        // Should be equal since name and dungeon match
+        assert_eq!(region1, region2);
+    }
+
+    #[test]
+    fn test_region_inequality_on_dungeon_difference() {
+        use crate::model::MainDungeon;
+        use mock::{MockRando, MockRegionName};
+
+        let region1: Region<MockRando> = Region {
+            name: MockRegionName::from("Temple"),
+            dungeon: Some((Dungeon::Main(MainDungeon::ForestTemple), Mq::Vanilla)),
+            scene: None,
+            hint: None,
+            time_passes: false,
+            events: HashSet::new(),
+            locations: HashSet::new(),
+            exits: HashSet::new(),
+        };
+
+        let region2: Region<MockRando> = Region {
+            name: MockRegionName::from("Temple"),
+            dungeon: Some((Dungeon::Main(MainDungeon::ForestTemple), Mq::Mq)),
+            scene: None,
+            hint: None,
+            time_passes: false,
+            events: HashSet::new(),
+            locations: HashSet::new(),
+            exits: HashSet::new(),
+        };
+
+        // Should not be equal since dungeon MQ status differs
+        assert_ne!(region1, region2);
+    }
+}
