@@ -33,6 +33,8 @@ pub struct MockEvalContext {
     is_adult: bool,
     /// Whether the player is a child.
     is_child: bool,
+    /// Current MM time (minutes since Day 1 at 6:00 AM).
+    mm_time: u32,
 }
 
 impl MockEvalContext {
@@ -139,6 +141,18 @@ impl MockEvalContext {
         }
         self
     }
+
+    /// Sets the current MM time.
+    pub fn set_mm_time(&mut self, time: u32) -> &mut Self {
+        self.mm_time = time;
+        self
+    }
+
+    /// Sets the current MM time (builder pattern).
+    pub fn with_mm_time(mut self, time: u32) -> Self {
+        self.set_mm_time(time);
+        self
+    }
 }
 
 impl EvalContext for MockEvalContext {
@@ -164,6 +178,10 @@ impl EvalContext for MockEvalContext {
 
     fn is_child(&self) -> bool {
         self.is_child
+    }
+
+    fn mm_time(&self) -> u32 {
+        self.mm_time
     }
 }
 
