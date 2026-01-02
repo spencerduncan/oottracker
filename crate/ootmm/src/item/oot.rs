@@ -1,5 +1,7 @@
 //! Ocarina of Time items.
 
+use crate::item::ItemCategory;
+
 /// OoT item enum - all trackable items from Ocarina of Time.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[allow(missing_docs)]
@@ -422,6 +424,261 @@ impl OotItem {
                 | Self::PreludeOfLight
                 | Self::ScarecrowSong
         )
+    }
+
+    /// Returns the category of this item.
+    #[must_use]
+    pub const fn category(&self) -> ItemCategory {
+        match self {
+            // Swords
+            Self::KokiriSword | Self::MasterSword | Self::BiggoronSword | Self::GiantKnife => {
+                ItemCategory::Sword
+            }
+
+            // Shields
+            Self::DekuShield | Self::HylianShield | Self::MirrorShield => ItemCategory::Shield,
+
+            // Tunics
+            Self::KokiriTunic | Self::GoronTunic | Self::ZoraTunic => ItemCategory::Tunic,
+
+            // Boots
+            Self::KokiriBoots | Self::IronBoots | Self::HoverBoots => ItemCategory::Boots,
+
+            // Equipment
+            Self::DekuStick
+            | Self::DekuNut
+            | Self::Bomb
+            | Self::Bow
+            | Self::Slingshot
+            | Self::Boomerang
+            | Self::Hookshot
+            | Self::Longshot
+            | Self::LensOfTruth
+            | Self::MegatonHammer => ItemCategory::Equipment,
+
+            // Arrows (Equipment)
+            Self::FireArrow | Self::IceArrow | Self::LightArrow => ItemCategory::Equipment,
+
+            // Magic spells
+            Self::DinsFire | Self::FaroresWind | Self::NayrusLove => ItemCategory::Magic,
+
+            // Ocarina
+            Self::OcarinaOfTime => ItemCategory::Ocarina,
+
+            // Bottles and contents
+            Self::Bottle
+            | Self::BottleRedPotion
+            | Self::BottleGreenPotion
+            | Self::BottleBluePotion
+            | Self::BottleFairy
+            | Self::BottleFish
+            | Self::BottleBlueFire
+            | Self::BottleBugs
+            | Self::BottlePoe
+            | Self::BottleBigPoe
+            | Self::BottleMilk
+            | Self::BottleHalfMilk
+            | Self::BottleRutosLetter => ItemCategory::Bottle,
+
+            // Adult Trade Sequence
+            Self::PocketEgg
+            | Self::PocketCucco
+            | Self::Cojiro
+            | Self::OddMushroom
+            | Self::OddPotion
+            | Self::PoachersSaw
+            | Self::BrokenSword
+            | Self::Prescription
+            | Self::EyeballFrog
+            | Self::Eyedrops
+            | Self::ClaimCheck => ItemCategory::Trade,
+
+            // Child Trade Sequence
+            Self::WeirdEgg | Self::Chicken | Self::ZeldasLetter => ItemCategory::Trade,
+
+            // Child Masks (trade-related in OoT)
+            Self::SkullMask
+            | Self::SpookyMask
+            | Self::KeatonMask
+            | Self::BunnyHood
+            | Self::GoronMask
+            | Self::ZoraMask
+            | Self::GerudoMask
+            | Self::MaskOfTruth => ItemCategory::Mask,
+
+            // Songs
+            Self::ZeldasLullaby
+            | Self::EponasSong
+            | Self::SariasSong
+            | Self::SunsSong
+            | Self::SongOfTime
+            | Self::SongOfStorms
+            | Self::MinuetOfForest
+            | Self::BoleroOfFire
+            | Self::SerenadeOfWater
+            | Self::NocturneOfShadow
+            | Self::RequiemOfSpirit
+            | Self::PreludeOfLight
+            | Self::ScarecrowSong => ItemCategory::Song,
+
+            // Upgrades
+            Self::GoronBracelet
+            | Self::SilverGauntlets
+            | Self::GoldenGauntlets
+            | Self::SilverScale
+            | Self::GoldenScale
+            | Self::ChildWallet
+            | Self::AdultWallet
+            | Self::GiantWallet
+            | Self::DekuStickCapacity20
+            | Self::DekuStickCapacity30
+            | Self::DekuNutCapacity30
+            | Self::DekuNutCapacity40
+            | Self::BulletBag30
+            | Self::BulletBag40
+            | Self::BulletBag50
+            | Self::Quiver30
+            | Self::Quiver40
+            | Self::Quiver50
+            | Self::BombBag20
+            | Self::BombBag30
+            | Self::BombBag40
+            | Self::MagicMeter
+            | Self::DoubleMagic
+            | Self::DoubleDefense => ItemCategory::Upgrade,
+
+            // Quest Items (Spiritual Stones and Medallions)
+            Self::KokiriEmerald
+            | Self::GoronRuby
+            | Self::ZoraSapphire
+            | Self::ForestMedallion
+            | Self::FireMedallion
+            | Self::WaterMedallion
+            | Self::ShadowMedallion
+            | Self::SpiritMedallion
+            | Self::LightMedallion
+            | Self::StoneOfAgony
+            | Self::GerudoCard => ItemCategory::QuestItem,
+
+            // Generic Dungeon Items
+            Self::Map | Self::Compass => ItemCategory::DungeonItem,
+
+            // Small Keys
+            Self::SmallKey
+            | Self::SmallKeyForestTemple
+            | Self::SmallKeyFireTemple
+            | Self::SmallKeyWaterTemple
+            | Self::SmallKeyShadowTemple
+            | Self::SmallKeySpiritTemple
+            | Self::SmallKeyBottomOfTheWell
+            | Self::SmallKeyGerudoFortress
+            | Self::SmallKeyGerudoTrainingGround
+            | Self::SmallKeyGanonsCastle => ItemCategory::SmallKey,
+
+            // Boss Keys
+            Self::BossKey
+            | Self::BossKeyForestTemple
+            | Self::BossKeyFireTemple
+            | Self::BossKeyWaterTemple
+            | Self::BossKeyShadowTemple
+            | Self::BossKeySpiritTemple
+            | Self::BossKeyGanonsCastle
+            | Self::GanonBossKey => ItemCategory::BossKey,
+
+            // Collectibles/Consumables
+            Self::HeartContainer
+            | Self::PieceOfHeart
+            | Self::SmallMagicJar
+            | Self::LargeMagicJar
+            | Self::RecoveryHeart
+            | Self::GreenRupee
+            | Self::BlueRupee
+            | Self::RedRupee
+            | Self::PurpleRupee
+            | Self::GoldRupee => ItemCategory::Consumable,
+
+            // Tokens
+            Self::GoldSkulltula => ItemCategory::Token,
+
+            // Special
+            Self::Triforce | Self::TriforceOfCourage => ItemCategory::Special,
+        }
+    }
+
+    /// Returns true if this item can stack (be collected multiple times).
+    #[must_use]
+    pub const fn is_stackable(&self) -> bool {
+        matches!(
+            self,
+            Self::Bomb
+                | Self::DekuStick
+                | Self::DekuNut
+                | Self::Bottle
+                | Self::SmallKey
+                | Self::SmallKeyForestTemple
+                | Self::SmallKeyFireTemple
+                | Self::SmallKeyWaterTemple
+                | Self::SmallKeyShadowTemple
+                | Self::SmallKeySpiritTemple
+                | Self::SmallKeyBottomOfTheWell
+                | Self::SmallKeyGerudoFortress
+                | Self::SmallKeyGerudoTrainingGround
+                | Self::SmallKeyGanonsCastle
+                | Self::HeartContainer
+                | Self::PieceOfHeart
+                | Self::GoldSkulltula
+                | Self::GreenRupee
+                | Self::BlueRupee
+                | Self::RedRupee
+                | Self::PurpleRupee
+                | Self::GoldRupee
+                | Self::SmallMagicJar
+                | Self::LargeMagicJar
+                | Self::RecoveryHeart
+        )
+    }
+
+    /// Returns the maximum count for this item.
+    /// Returns 1 for non-stackable items.
+    #[must_use]
+    pub const fn max_count(&self) -> u32 {
+        match self {
+            // Bombs max at 40 with biggest bomb bag
+            Self::Bomb => 40,
+            // Deku Sticks max at 30 with upgrade
+            Self::DekuStick => 30,
+            // Deku Nuts max at 40 with upgrade
+            Self::DekuNut => 40,
+            // 4 bottles total
+            Self::Bottle => 4,
+            // Dungeon-specific small key counts
+            Self::SmallKeyForestTemple => 5,
+            Self::SmallKeyFireTemple => 8,
+            Self::SmallKeyWaterTemple => 6,
+            Self::SmallKeyShadowTemple => 5,
+            Self::SmallKeySpiritTemple => 5,
+            Self::SmallKeyBottomOfTheWell => 3,
+            Self::SmallKeyGerudoFortress => 4,
+            Self::SmallKeyGerudoTrainingGround => 9,
+            Self::SmallKeyGanonsCastle => 2,
+            Self::SmallKey => 99, // Generic key, no specific limit
+            // Heart pieces
+            Self::PieceOfHeart => 36, // OoT has 36 pieces
+            // Heart containers
+            Self::HeartContainer => 8, // 8 from dungeons
+            // Gold Skulltulas
+            Self::GoldSkulltula => 100,
+            // Rupees (effectively unlimited in inventory, but track collected)
+            Self::GreenRupee
+            | Self::BlueRupee
+            | Self::RedRupee
+            | Self::PurpleRupee
+            | Self::GoldRupee => 999,
+            // Magic/Recovery (consumables, high limit)
+            Self::SmallMagicJar | Self::LargeMagicJar | Self::RecoveryHeart => 999,
+            // All other items are single-obtain
+            _ => 1,
+        }
     }
 }
 
