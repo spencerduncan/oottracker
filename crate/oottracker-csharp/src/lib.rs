@@ -749,6 +749,7 @@ pub unsafe extern "C" fn model_free(model: HandleOwned<ModelState>) {
     let _ = model.into_box();
 }
 
+// OoT RAM range functions
 #[no_mangle]
 pub extern "C" fn ram_num_ranges() -> u8 {
     ram::NUM_RANGES as u8
@@ -756,6 +757,26 @@ pub extern "C" fn ram_num_ranges() -> u8 {
 #[no_mangle]
 pub extern "C" fn ram_ranges() -> *const u32 {
     &ram::RANGES[0]
+}
+
+// MM RAM range functions
+#[no_mangle]
+pub extern "C" fn mm_ram_num_ranges() -> u8 {
+    ram::MM_NUM_RANGES as u8
+}
+#[no_mangle]
+pub extern "C" fn mm_ram_ranges() -> *const u32 {
+    &ram::MM_RANGES[0]
+}
+
+// Combo context addresses (for OoTMM game detection)
+#[no_mangle]
+pub extern "C" fn oot_combo_context_addr() -> u32 {
+    ram::OOT_COMBO_CONTEXT_ADDR
+}
+#[no_mangle]
+pub extern "C" fn mm_combo_context_addr() -> u32 {
+    ram::MM_COMBO_CONTEXT_ADDR
 }
 
 /// # Safety
