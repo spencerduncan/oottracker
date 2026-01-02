@@ -1,0 +1,5 @@
+error: expected `->` or `=`
+  --> tests/ui/scene_flags_missing_flag_value.rs:29:24
+   |
+29 |                 "Chest",
+   |                        ^
