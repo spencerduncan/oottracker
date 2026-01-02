@@ -221,6 +221,10 @@ mod tests {
         fn is_child(&self) -> bool {
             !self.is_adult
         }
+
+        fn mm_time(&self) -> u32 {
+            0 // Default to dawn for item tests
+        }
     }
 
     // --- has() tests ---

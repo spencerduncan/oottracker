@@ -52,6 +52,25 @@ pub trait EvalContext {
 
     /// Check if the player is currently Child Link.
     fn is_child(&self) -> bool;
+
+    // MM time-related methods
+
+    /// Get the current MM time as a numeric value.
+    /// Time is represented as minutes since the start of Day 1 at 6:00 AM.
+    /// Each in-game day is 24 hours (1440 minutes), with the full 3-day cycle
+    /// spanning 0 to 4319 (72 hours = 4320 minutes).
+    fn mm_time(&self) -> u32;
+
+    /// Check if it's currently daytime (6:00 AM to 6:00 PM).
+    fn is_day(&self) -> bool {
+        let time_in_day = self.mm_time() % 1440; // Minutes within current day
+        time_in_day < 720 // 0-719 is day (6 AM to 6 PM)
+    }
+
+    /// Check if it's currently nighttime (6:00 PM to 6:00 AM).
+    fn is_night(&self) -> bool {
+        !self.is_day()
+    }
 }
 
 /// Expression evaluator that ties together lexer, parser, and built-in functions.
