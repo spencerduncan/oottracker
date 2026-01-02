@@ -685,6 +685,7 @@ impl OotItem {
 #[cfg(test)]
 mod tests {
     use super::OotItem;
+    use std::collections::HashSet;
 
     #[test]
     fn test_progressive_items() {
@@ -741,5 +742,360 @@ mod tests {
         assert_eq!(OotItem::by_name("NotAnItem"), None);
         assert_eq!(OotItem::by_name(""), None);
         assert_eq!(OotItem::by_name("invalid_item"), None);
+    }
+
+    // Additional comprehensive tests
+
+    #[test]
+    fn test_by_name_all_swords() {
+        assert_eq!(OotItem::by_name("KokiriSword"), Some(OotItem::KokiriSword));
+        assert_eq!(OotItem::by_name("kokiri_sword"), Some(OotItem::KokiriSword));
+        assert_eq!(OotItem::by_name("MasterSword"), Some(OotItem::MasterSword));
+        assert_eq!(
+            OotItem::by_name("BiggoronSword"),
+            Some(OotItem::BiggoronSword)
+        );
+        assert_eq!(OotItem::by_name("GiantKnife"), Some(OotItem::GiantKnife));
+    }
+
+    #[test]
+    fn test_by_name_all_shields() {
+        assert_eq!(OotItem::by_name("DekuShield"), Some(OotItem::DekuShield));
+        assert_eq!(OotItem::by_name("deku_shield"), Some(OotItem::DekuShield));
+        assert_eq!(
+            OotItem::by_name("HylianShield"),
+            Some(OotItem::HylianShield)
+        );
+        assert_eq!(
+            OotItem::by_name("MirrorShield"),
+            Some(OotItem::MirrorShield)
+        );
+    }
+
+    #[test]
+    fn test_by_name_all_tunics() {
+        assert_eq!(OotItem::by_name("KokiriTunic"), Some(OotItem::KokiriTunic));
+        assert_eq!(OotItem::by_name("GoronTunic"), Some(OotItem::GoronTunic));
+        assert_eq!(OotItem::by_name("ZoraTunic"), Some(OotItem::ZoraTunic));
+        assert_eq!(OotItem::by_name("zora_tunic"), Some(OotItem::ZoraTunic));
+    }
+
+    #[test]
+    fn test_by_name_all_boots() {
+        assert_eq!(OotItem::by_name("KokiriBoots"), Some(OotItem::KokiriBoots));
+        assert_eq!(OotItem::by_name("IronBoots"), Some(OotItem::IronBoots));
+        assert_eq!(OotItem::by_name("HoverBoots"), Some(OotItem::HoverBoots));
+        assert_eq!(OotItem::by_name("iron_boots"), Some(OotItem::IronBoots));
+    }
+
+    #[test]
+    fn test_by_name_all_arrows() {
+        assert_eq!(OotItem::by_name("FireArrow"), Some(OotItem::FireArrow));
+        assert_eq!(OotItem::by_name("IceArrow"), Some(OotItem::IceArrow));
+        assert_eq!(OotItem::by_name("LightArrow"), Some(OotItem::LightArrow));
+        assert_eq!(OotItem::by_name("light_arrow"), Some(OotItem::LightArrow));
+    }
+
+    #[test]
+    fn test_by_name_all_spells() {
+        assert_eq!(OotItem::by_name("DinsFire"), Some(OotItem::DinsFire));
+        assert_eq!(OotItem::by_name("dins_fire"), Some(OotItem::DinsFire));
+        assert_eq!(OotItem::by_name("FaroresWind"), Some(OotItem::FaroresWind));
+        assert_eq!(OotItem::by_name("NayrusLove"), Some(OotItem::NayrusLove));
+    }
+
+    #[test]
+    fn test_by_name_all_bottles() {
+        assert_eq!(OotItem::by_name("Bottle"), Some(OotItem::Bottle));
+        assert_eq!(
+            OotItem::by_name("BottleRedPotion"),
+            Some(OotItem::BottleRedPotion)
+        );
+        assert_eq!(
+            OotItem::by_name("BottleGreenPotion"),
+            Some(OotItem::BottleGreenPotion)
+        );
+        assert_eq!(
+            OotItem::by_name("BottleBluePotion"),
+            Some(OotItem::BottleBluePotion)
+        );
+        assert_eq!(OotItem::by_name("BottleFairy"), Some(OotItem::BottleFairy));
+        assert_eq!(
+            OotItem::by_name("bottle_blue_fire"),
+            Some(OotItem::BottleBlueFire)
+        );
+    }
+
+    #[test]
+    fn test_by_name_adult_trade_sequence() {
+        assert_eq!(OotItem::by_name("PocketEgg"), Some(OotItem::PocketEgg));
+        assert_eq!(OotItem::by_name("pocket_cucco"), Some(OotItem::PocketCucco));
+        assert_eq!(OotItem::by_name("Cojiro"), Some(OotItem::Cojiro));
+        assert_eq!(OotItem::by_name("OddMushroom"), Some(OotItem::OddMushroom));
+        assert_eq!(OotItem::by_name("ClaimCheck"), Some(OotItem::ClaimCheck));
+    }
+
+    #[test]
+    fn test_by_name_child_trade_sequence() {
+        assert_eq!(OotItem::by_name("WeirdEgg"), Some(OotItem::WeirdEgg));
+        assert_eq!(OotItem::by_name("Chicken"), Some(OotItem::Chicken));
+        assert_eq!(
+            OotItem::by_name("ZeldasLetter"),
+            Some(OotItem::ZeldasLetter)
+        );
+        assert_eq!(OotItem::by_name("SkullMask"), Some(OotItem::SkullMask));
+        assert_eq!(OotItem::by_name("MaskOfTruth"), Some(OotItem::MaskOfTruth));
+    }
+
+    #[test]
+    fn test_by_name_all_ocarina_songs() {
+        assert_eq!(
+            OotItem::by_name("ZeldasLullaby"),
+            Some(OotItem::ZeldasLullaby)
+        );
+        assert_eq!(OotItem::by_name("EponasSong"), Some(OotItem::EponasSong));
+        assert_eq!(OotItem::by_name("SariasSong"), Some(OotItem::SariasSong));
+        assert_eq!(OotItem::by_name("SunsSong"), Some(OotItem::SunsSong));
+        assert_eq!(OotItem::by_name("SongOfTime"), Some(OotItem::SongOfTime));
+        assert_eq!(
+            OotItem::by_name("SongOfStorms"),
+            Some(OotItem::SongOfStorms)
+        );
+    }
+
+    #[test]
+    fn test_by_name_all_warp_songs() {
+        assert_eq!(
+            OotItem::by_name("MinuetOfForest"),
+            Some(OotItem::MinuetOfForest)
+        );
+        assert_eq!(
+            OotItem::by_name("BoleroOfFire"),
+            Some(OotItem::BoleroOfFire)
+        );
+        assert_eq!(
+            OotItem::by_name("SerenadeOfWater"),
+            Some(OotItem::SerenadeOfWater)
+        );
+        assert_eq!(
+            OotItem::by_name("NocturneOfShadow"),
+            Some(OotItem::NocturneOfShadow)
+        );
+        assert_eq!(
+            OotItem::by_name("RequiemOfSpirit"),
+            Some(OotItem::RequiemOfSpirit)
+        );
+        assert_eq!(
+            OotItem::by_name("PreludeOfLight"),
+            Some(OotItem::PreludeOfLight)
+        );
+    }
+
+    #[test]
+    fn test_by_name_spiritual_stones_and_medallions() {
+        assert_eq!(
+            OotItem::by_name("KokiriEmerald"),
+            Some(OotItem::KokiriEmerald)
+        );
+        assert_eq!(OotItem::by_name("GoronRuby"), Some(OotItem::GoronRuby));
+        assert_eq!(
+            OotItem::by_name("ZoraSapphire"),
+            Some(OotItem::ZoraSapphire)
+        );
+        assert_eq!(
+            OotItem::by_name("ForestMedallion"),
+            Some(OotItem::ForestMedallion)
+        );
+        assert_eq!(
+            OotItem::by_name("LightMedallion"),
+            Some(OotItem::LightMedallion)
+        );
+    }
+
+    #[test]
+    fn test_by_name_edge_cases() {
+        // Whitespace should not match
+        assert_eq!(OotItem::by_name(" MasterSword"), None);
+        assert_eq!(OotItem::by_name("MasterSword "), None);
+        // Mixed case should not match
+        assert_eq!(OotItem::by_name("mastersword"), None);
+        assert_eq!(OotItem::by_name("MASTERSWORD"), None);
+        // Similar but incorrect names
+        assert_eq!(OotItem::by_name("Master_Sword"), None);
+        assert_eq!(OotItem::by_name("master-sword"), None);
+    }
+
+    #[test]
+    fn test_progressive_items_complete() {
+        // All progressive items
+        assert!(OotItem::Bomb.is_progressive());
+        assert!(OotItem::DekuStick.is_progressive());
+        assert!(OotItem::DekuNut.is_progressive());
+        assert!(OotItem::Bottle.is_progressive());
+        assert!(OotItem::SmallKey.is_progressive());
+        assert!(OotItem::HeartContainer.is_progressive());
+        assert!(OotItem::PieceOfHeart.is_progressive());
+        assert!(OotItem::GoldSkulltula.is_progressive());
+
+        // Non-progressive items that might seem progressive
+        assert!(!OotItem::BottleRedPotion.is_progressive());
+        assert!(!OotItem::SmallKeyFireTemple.is_progressive());
+    }
+
+    #[test]
+    fn test_dungeon_items_complete() {
+        // Generic dungeon items
+        assert!(OotItem::SmallKey.is_dungeon_item());
+        assert!(OotItem::BossKey.is_dungeon_item());
+        assert!(OotItem::Map.is_dungeon_item());
+        assert!(OotItem::Compass.is_dungeon_item());
+
+        // All dungeon-specific small keys
+        assert!(OotItem::SmallKeyForestTemple.is_dungeon_item());
+        assert!(OotItem::SmallKeyFireTemple.is_dungeon_item());
+        assert!(OotItem::SmallKeyWaterTemple.is_dungeon_item());
+        assert!(OotItem::SmallKeyShadowTemple.is_dungeon_item());
+        assert!(OotItem::SmallKeySpiritTemple.is_dungeon_item());
+        assert!(OotItem::SmallKeyBottomOfTheWell.is_dungeon_item());
+        assert!(OotItem::SmallKeyGerudoFortress.is_dungeon_item());
+        assert!(OotItem::SmallKeyGerudoTrainingGround.is_dungeon_item());
+        assert!(OotItem::SmallKeyGanonsCastle.is_dungeon_item());
+
+        // All dungeon-specific boss keys
+        assert!(OotItem::BossKeyForestTemple.is_dungeon_item());
+        assert!(OotItem::BossKeyFireTemple.is_dungeon_item());
+        assert!(OotItem::BossKeyWaterTemple.is_dungeon_item());
+        assert!(OotItem::BossKeyShadowTemple.is_dungeon_item());
+        assert!(OotItem::BossKeySpiritTemple.is_dungeon_item());
+        assert!(OotItem::BossKeyGanonsCastle.is_dungeon_item());
+
+        // Non-dungeon items
+        assert!(!OotItem::ForestMedallion.is_dungeon_item());
+        assert!(!OotItem::GanonBossKey.is_dungeon_item());
+    }
+
+    #[test]
+    fn test_songs_complete() {
+        // All songs should return true
+        assert!(OotItem::ZeldasLullaby.is_song());
+        assert!(OotItem::EponasSong.is_song());
+        assert!(OotItem::SariasSong.is_song());
+        assert!(OotItem::SunsSong.is_song());
+        assert!(OotItem::SongOfTime.is_song());
+        assert!(OotItem::SongOfStorms.is_song());
+        assert!(OotItem::MinuetOfForest.is_song());
+        assert!(OotItem::BoleroOfFire.is_song());
+        assert!(OotItem::SerenadeOfWater.is_song());
+        assert!(OotItem::NocturneOfShadow.is_song());
+        assert!(OotItem::RequiemOfSpirit.is_song());
+        assert!(OotItem::PreludeOfLight.is_song());
+        assert!(OotItem::ScarecrowSong.is_song());
+
+        // Non-songs
+        assert!(!OotItem::OcarinaOfTime.is_song());
+        assert!(!OotItem::Hookshot.is_song());
+    }
+
+    #[test]
+    fn test_clone_trait() {
+        let item = OotItem::MasterSword;
+        #[allow(clippy::clone_on_copy)]
+        let cloned = item.clone();
+        assert_eq!(item, cloned);
+    }
+
+    #[test]
+    fn test_copy_trait() {
+        let item = OotItem::Hookshot;
+        let copied = item;
+        // Original still usable (Copy semantics)
+        assert_eq!(item, copied);
+    }
+
+    #[test]
+    fn test_debug_trait() {
+        let item = OotItem::Boomerang;
+        let debug_str = format!("{:?}", item);
+        assert_eq!(debug_str, "Boomerang");
+    }
+
+    #[test]
+    fn test_hash_trait() {
+        let mut set = HashSet::new();
+        set.insert(OotItem::MasterSword);
+        set.insert(OotItem::Hookshot);
+        set.insert(OotItem::MasterSword); // Duplicate
+
+        assert_eq!(set.len(), 2);
+        assert!(set.contains(&OotItem::MasterSword));
+        assert!(set.contains(&OotItem::Hookshot));
+    }
+
+    #[test]
+    fn test_eq_trait() {
+        assert_eq!(OotItem::Bow, OotItem::Bow);
+        assert_ne!(OotItem::Bow, OotItem::Bomb);
+    }
+
+    #[test]
+    fn test_by_name_upgrades() {
+        assert_eq!(
+            OotItem::by_name("GoronBracelet"),
+            Some(OotItem::GoronBracelet)
+        );
+        assert_eq!(
+            OotItem::by_name("SilverGauntlets"),
+            Some(OotItem::SilverGauntlets)
+        );
+        assert_eq!(
+            OotItem::by_name("GoldenGauntlets"),
+            Some(OotItem::GoldenGauntlets)
+        );
+        assert_eq!(OotItem::by_name("SilverScale"), Some(OotItem::SilverScale));
+        assert_eq!(OotItem::by_name("GoldenScale"), Some(OotItem::GoldenScale));
+        assert_eq!(OotItem::by_name("MagicMeter"), Some(OotItem::MagicMeter));
+        assert_eq!(OotItem::by_name("DoubleMagic"), Some(OotItem::DoubleMagic));
+    }
+
+    #[test]
+    fn test_by_name_capacity_upgrades() {
+        assert_eq!(
+            OotItem::by_name("DekuStickCapacity20"),
+            Some(OotItem::DekuStickCapacity20)
+        );
+        assert_eq!(
+            OotItem::by_name("deku_stick_capacity_30"),
+            Some(OotItem::DekuStickCapacity30)
+        );
+        assert_eq!(OotItem::by_name("BulletBag30"), Some(OotItem::BulletBag30));
+        assert_eq!(OotItem::by_name("Quiver40"), Some(OotItem::Quiver40));
+        assert_eq!(OotItem::by_name("BombBag40"), Some(OotItem::BombBag40));
+    }
+
+    #[test]
+    fn test_by_name_rupees() {
+        assert_eq!(OotItem::by_name("GreenRupee"), Some(OotItem::GreenRupee));
+        assert_eq!(OotItem::by_name("BlueRupee"), Some(OotItem::BlueRupee));
+        assert_eq!(OotItem::by_name("RedRupee"), Some(OotItem::RedRupee));
+        assert_eq!(OotItem::by_name("PurpleRupee"), Some(OotItem::PurpleRupee));
+        assert_eq!(OotItem::by_name("GoldRupee"), Some(OotItem::GoldRupee));
+    }
+
+    #[test]
+    fn test_by_name_special_items() {
+        assert_eq!(OotItem::by_name("Triforce"), Some(OotItem::Triforce));
+        assert_eq!(
+            OotItem::by_name("TriforceOfCourage"),
+            Some(OotItem::TriforceOfCourage)
+        );
+        assert_eq!(
+            OotItem::by_name("GanonBossKey"),
+            Some(OotItem::GanonBossKey)
+        );
+        assert_eq!(
+            OotItem::by_name("StoneOfAgony"),
+            Some(OotItem::StoneOfAgony)
+        );
+        assert_eq!(OotItem::by_name("GerudoCard"), Some(OotItem::GerudoCard));
     }
 }
