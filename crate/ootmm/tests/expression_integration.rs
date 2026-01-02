@@ -74,7 +74,11 @@ fn test_all_location_logic_expressions_parse() {
     }
 
     if !failures.is_empty() {
-        let failure_report: String = failures.iter().map(|f| f.to_string()).collect::<Vec<_>>().join("\n");
+        let failure_report: String = failures
+            .iter()
+            .map(|f| f.to_string())
+            .collect::<Vec<_>>()
+            .join("\n");
         panic!(
             "Failed to parse {} out of {} location logic expressions:\n{}",
             failures.len(),
@@ -83,7 +87,10 @@ fn test_all_location_logic_expressions_parse() {
         );
     }
 
-    assert!(total > 0, "Expected at least one location with logic expression");
+    assert!(
+        total > 0,
+        "Expected at least one location with logic expression"
+    );
     println!("Successfully parsed {} location logic expressions", total);
 }
 
@@ -110,7 +117,11 @@ fn test_all_exit_logic_expressions_parse() {
     }
 
     if !failures.is_empty() {
-        let failure_report: String = failures.iter().map(|f| f.to_string()).collect::<Vec<_>>().join("\n");
+        let failure_report: String = failures
+            .iter()
+            .map(|f| f.to_string())
+            .collect::<Vec<_>>()
+            .join("\n");
         panic!(
             "Failed to parse {} out of {} exit logic expressions:\n{}",
             failures.len(),
@@ -119,7 +130,10 @@ fn test_all_exit_logic_expressions_parse() {
         );
     }
 
-    assert!(total > 0, "Expected at least one exit with logic expression");
+    assert!(
+        total > 0,
+        "Expected at least one exit with logic expression"
+    );
     println!("Successfully parsed {} exit logic expressions", total);
 }
 
@@ -146,7 +160,11 @@ fn test_all_event_logic_expressions_parse() {
     }
 
     if !failures.is_empty() {
-        let failure_report: String = failures.iter().map(|f| f.to_string()).collect::<Vec<_>>().join("\n");
+        let failure_report: String = failures
+            .iter()
+            .map(|f| f.to_string())
+            .collect::<Vec<_>>()
+            .join("\n");
         panic!(
             "Failed to parse {} out of {} event logic expressions:\n{}",
             failures.len(),
@@ -155,7 +173,10 @@ fn test_all_event_logic_expressions_parse() {
         );
     }
 
-    assert!(total > 0, "Expected at least one event with logic expression");
+    assert!(
+        total > 0,
+        "Expected at least one event with logic expression"
+    );
     println!("Successfully parsed {} event logic expressions", total);
 }
 
@@ -226,20 +247,24 @@ fn test_all_logic_expressions_parse() {
     };
 
     if !failures.is_empty() {
-        let failure_report: String = failures.iter().map(|f| f.to_string()).collect::<Vec<_>>().join("\n");
+        let failure_report: String = failures
+            .iter()
+            .map(|f| f.to_string())
+            .collect::<Vec<_>>()
+            .join("\n");
         panic!(
             "Expression parser integration test failed!\n\
              Pass rate: {:.1}% ({}/{} expressions)\n\
              \n\
              Failed expressions:\n{}",
-            pass_rate,
-            passed,
-            total,
-            failure_report
+            pass_rate, passed, total, failure_report
         );
     }
 
-    assert!(total > 0, "Expected at least one logic expression in the world database");
+    assert!(
+        total > 0,
+        "Expected at least one logic expression in the world database"
+    );
     println!(
         "All {} logic expressions parsed successfully (100% pass rate)",
         total
@@ -252,8 +277,14 @@ fn test_world_database_loads() {
     let db = load_world_database();
 
     // Verify we have data
-    assert!(db.region_count() > 0, "Should have loaded at least one region");
-    assert!(db.location_count() > 0, "Should have loaded at least one location");
+    assert!(
+        db.region_count() > 0,
+        "Should have loaded at least one region"
+    );
+    assert!(
+        db.location_count() > 0,
+        "Should have loaded at least one location"
+    );
 
     println!(
         "Loaded world database: {} regions, {} locations, {} exits, {} events",
