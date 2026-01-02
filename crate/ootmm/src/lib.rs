@@ -20,5 +20,5 @@ pub mod region;
 pub mod world_database;
 
 // Re-export item types for convenience
-pub use item::{Game, Item, ItemCategory, MmItem, OotItem};
+pub use item::{Game, Item, ItemCategory, ItemName, MmItem, OotItem};
 pub use world_database::WorldDatabase;

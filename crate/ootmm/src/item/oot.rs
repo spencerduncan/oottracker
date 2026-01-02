@@ -682,9 +682,346 @@ impl OotItem {
     }
 }
 
+impl super::ItemName for OotItem {
+    fn to_str(&self) -> &'static str {
+        match self {
+            // Swords
+            Self::KokiriSword => "KOKIRI_SWORD",
+            Self::MasterSword => "MASTER_SWORD",
+            Self::BiggoronSword => "BIGGORON_SWORD",
+            Self::GiantKnife => "GIANT_KNIFE",
+            // Shields
+            Self::DekuShield => "DEKU_SHIELD",
+            Self::HylianShield => "HYLIAN_SHIELD",
+            Self::MirrorShield => "MIRROR_SHIELD",
+            // Tunics
+            Self::KokiriTunic => "KOKIRI_TUNIC",
+            Self::GoronTunic => "GORON_TUNIC",
+            Self::ZoraTunic => "ZORA_TUNIC",
+            // Boots
+            Self::KokiriBoots => "KOKIRI_BOOTS",
+            Self::IronBoots => "IRON_BOOTS",
+            Self::HoverBoots => "HOVER_BOOTS",
+            // Equipment Items
+            Self::DekuStick => "DEKU_STICK",
+            Self::DekuNut => "DEKU_NUT",
+            Self::Bomb => "BOMB",
+            Self::Bow => "BOW",
+            Self::FireArrow => "FIRE_ARROW",
+            Self::IceArrow => "ICE_ARROW",
+            Self::LightArrow => "LIGHT_ARROW",
+            Self::DinsFire => "DINS_FIRE",
+            Self::FaroresWind => "FARORES_WIND",
+            Self::NayrusLove => "NAYRUS_LOVE",
+            Self::Slingshot => "SLINGSHOT",
+            Self::Boomerang => "BOOMERANG",
+            Self::Hookshot => "HOOKSHOT",
+            Self::Longshot => "LONGSHOT",
+            Self::LensOfTruth => "LENS_OF_TRUTH",
+            Self::MegatonHammer => "MEGATON_HAMMER",
+            Self::OcarinaOfTime => "OCARINA_OF_TIME",
+            // C-Button Items
+            Self::Bottle => "BOTTLE",
+            Self::BottleRedPotion => "BOTTLE_RED_POTION",
+            Self::BottleGreenPotion => "BOTTLE_GREEN_POTION",
+            Self::BottleBluePotion => "BOTTLE_BLUE_POTION",
+            Self::BottleFairy => "BOTTLE_FAIRY",
+            Self::BottleFish => "BOTTLE_FISH",
+            Self::BottleBlueFire => "BOTTLE_BLUE_FIRE",
+            Self::BottleBugs => "BOTTLE_BUGS",
+            Self::BottlePoe => "BOTTLE_POE",
+            Self::BottleBigPoe => "BOTTLE_BIG_POE",
+            Self::BottleMilk => "BOTTLE_MILK",
+            Self::BottleHalfMilk => "BOTTLE_HALF_MILK",
+            Self::BottleRutosLetter => "BOTTLE_RUTOS_LETTER",
+            // Adult Trade Sequence
+            Self::PocketEgg => "POCKET_EGG",
+            Self::PocketCucco => "POCKET_CUCCO",
+            Self::Cojiro => "COJIRO",
+            Self::OddMushroom => "ODD_MUSHROOM",
+            Self::OddPotion => "ODD_POTION",
+            Self::PoachersSaw => "POACHERS_SAW",
+            Self::BrokenSword => "BROKEN_SWORD",
+            Self::Prescription => "PRESCRIPTION",
+            Self::EyeballFrog => "EYEBALL_FROG",
+            Self::Eyedrops => "EYEDROPS",
+            Self::ClaimCheck => "CLAIM_CHECK",
+            // Child Trade Sequence
+            Self::WeirdEgg => "WEIRD_EGG",
+            Self::Chicken => "CHICKEN",
+            Self::ZeldasLetter => "ZELDAS_LETTER",
+            Self::SkullMask => "SKULL_MASK",
+            Self::SpookyMask => "SPOOKY_MASK",
+            Self::KeatonMask => "KEATON_MASK",
+            Self::BunnyHood => "BUNNY_HOOD",
+            Self::GoronMask => "GORON_MASK",
+            Self::ZoraMask => "ZORA_MASK",
+            Self::GerudoMask => "GERUDO_MASK",
+            Self::MaskOfTruth => "MASK_OF_TRUTH",
+            // Songs
+            Self::ZeldasLullaby => "ZELDAS_LULLABY",
+            Self::EponasSong => "EPONAS_SONG",
+            Self::SariasSong => "SARIAS_SONG",
+            Self::SunsSong => "SUNS_SONG",
+            Self::SongOfTime => "SONG_OF_TIME",
+            Self::SongOfStorms => "SONG_OF_STORMS",
+            Self::MinuetOfForest => "MINUET_OF_FOREST",
+            Self::BoleroOfFire => "BOLERO_OF_FIRE",
+            Self::SerenadeOfWater => "SERENADE_OF_WATER",
+            Self::NocturneOfShadow => "NOCTURNE_OF_SHADOW",
+            Self::RequiemOfSpirit => "REQUIEM_OF_SPIRIT",
+            Self::PreludeOfLight => "PRELUDE_OF_LIGHT",
+            Self::ScarecrowSong => "SCARECROW_SONG",
+            // Upgrades
+            Self::GoronBracelet => "GORON_BRACELET",
+            Self::SilverGauntlets => "SILVER_GAUNTLETS",
+            Self::GoldenGauntlets => "GOLDEN_GAUNTLETS",
+            Self::SilverScale => "SILVER_SCALE",
+            Self::GoldenScale => "GOLDEN_SCALE",
+            Self::ChildWallet => "CHILD_WALLET",
+            Self::AdultWallet => "ADULT_WALLET",
+            Self::GiantWallet => "GIANT_WALLET",
+            Self::DekuStickCapacity20 => "DEKU_STICK_CAPACITY_20",
+            Self::DekuStickCapacity30 => "DEKU_STICK_CAPACITY_30",
+            Self::DekuNutCapacity30 => "DEKU_NUT_CAPACITY_30",
+            Self::DekuNutCapacity40 => "DEKU_NUT_CAPACITY_40",
+            Self::BulletBag30 => "BULLET_BAG_30",
+            Self::BulletBag40 => "BULLET_BAG_40",
+            Self::BulletBag50 => "BULLET_BAG_50",
+            Self::Quiver30 => "QUIVER_30",
+            Self::Quiver40 => "QUIVER_40",
+            Self::Quiver50 => "QUIVER_50",
+            Self::BombBag20 => "BOMB_BAG_20",
+            Self::BombBag30 => "BOMB_BAG_30",
+            Self::BombBag40 => "BOMB_BAG_40",
+            Self::MagicMeter => "MAGIC_METER",
+            Self::DoubleMagic => "DOUBLE_MAGIC",
+            Self::DoubleDefense => "DOUBLE_DEFENSE",
+            // Quest Items
+            Self::KokiriEmerald => "KOKIRI_EMERALD",
+            Self::GoronRuby => "GORON_RUBY",
+            Self::ZoraSapphire => "ZORA_SAPPHIRE",
+            Self::ForestMedallion => "FOREST_MEDALLION",
+            Self::FireMedallion => "FIRE_MEDALLION",
+            Self::WaterMedallion => "WATER_MEDALLION",
+            Self::ShadowMedallion => "SHADOW_MEDALLION",
+            Self::SpiritMedallion => "SPIRIT_MEDALLION",
+            Self::LightMedallion => "LIGHT_MEDALLION",
+            Self::StoneOfAgony => "STONE_OF_AGONY",
+            Self::GerudoCard => "GERUDO_CARD",
+            // Dungeon Items
+            Self::SmallKey => "SMALL_KEY",
+            Self::BossKey => "BOSS_KEY",
+            Self::Map => "MAP",
+            Self::Compass => "COMPASS",
+            // Dungeon-Specific Keys
+            Self::SmallKeyForestTemple => "SMALL_KEY_FOREST_TEMPLE",
+            Self::SmallKeyFireTemple => "SMALL_KEY_FIRE_TEMPLE",
+            Self::SmallKeyWaterTemple => "SMALL_KEY_WATER_TEMPLE",
+            Self::SmallKeyShadowTemple => "SMALL_KEY_SHADOW_TEMPLE",
+            Self::SmallKeySpiritTemple => "SMALL_KEY_SPIRIT_TEMPLE",
+            Self::SmallKeyBottomOfTheWell => "SMALL_KEY_BOTTOM_OF_THE_WELL",
+            Self::SmallKeyGerudoFortress => "SMALL_KEY_GERUDO_FORTRESS",
+            Self::SmallKeyGerudoTrainingGround => "SMALL_KEY_GERUDO_TRAINING_GROUND",
+            Self::SmallKeyGanonsCastle => "SMALL_KEY_GANONS_CASTLE",
+            Self::BossKeyForestTemple => "BOSS_KEY_FOREST_TEMPLE",
+            Self::BossKeyFireTemple => "BOSS_KEY_FIRE_TEMPLE",
+            Self::BossKeyWaterTemple => "BOSS_KEY_WATER_TEMPLE",
+            Self::BossKeyShadowTemple => "BOSS_KEY_SHADOW_TEMPLE",
+            Self::BossKeySpiritTemple => "BOSS_KEY_SPIRIT_TEMPLE",
+            Self::BossKeyGanonsCastle => "BOSS_KEY_GANONS_CASTLE",
+            // Collectibles
+            Self::HeartContainer => "HEART_CONTAINER",
+            Self::PieceOfHeart => "PIECE_OF_HEART",
+            Self::GoldSkulltula => "GOLD_SKULLTULA",
+            Self::SmallMagicJar => "SMALL_MAGIC_JAR",
+            Self::LargeMagicJar => "LARGE_MAGIC_JAR",
+            Self::RecoveryHeart => "RECOVERY_HEART",
+            Self::GreenRupee => "GREEN_RUPEE",
+            Self::BlueRupee => "BLUE_RUPEE",
+            Self::RedRupee => "RED_RUPEE",
+            Self::PurpleRupee => "PURPLE_RUPEE",
+            Self::GoldRupee => "GOLD_RUPEE",
+            // Special
+            Self::Triforce => "TRIFORCE",
+            Self::TriforceOfCourage => "TRIFORCE_OF_COURAGE",
+            Self::GanonBossKey => "GANON_BOSS_KEY",
+        }
+    }
+
+    fn from_str(s: &str) -> Option<Self> {
+        let item = match s {
+            // Swords
+            "KOKIRI_SWORD" => Self::KokiriSword,
+            "MASTER_SWORD" => Self::MasterSword,
+            "BIGGORON_SWORD" => Self::BiggoronSword,
+            "GIANT_KNIFE" => Self::GiantKnife,
+            // Shields
+            "DEKU_SHIELD" => Self::DekuShield,
+            "HYLIAN_SHIELD" => Self::HylianShield,
+            "MIRROR_SHIELD" => Self::MirrorShield,
+            // Tunics
+            "KOKIRI_TUNIC" => Self::KokiriTunic,
+            "GORON_TUNIC" => Self::GoronTunic,
+            "ZORA_TUNIC" => Self::ZoraTunic,
+            // Boots
+            "KOKIRI_BOOTS" => Self::KokiriBoots,
+            "IRON_BOOTS" => Self::IronBoots,
+            "HOVER_BOOTS" => Self::HoverBoots,
+            // Equipment Items
+            "DEKU_STICK" => Self::DekuStick,
+            "DEKU_NUT" => Self::DekuNut,
+            "BOMB" => Self::Bomb,
+            "BOW" => Self::Bow,
+            "FIRE_ARROW" => Self::FireArrow,
+            "ICE_ARROW" => Self::IceArrow,
+            "LIGHT_ARROW" => Self::LightArrow,
+            "DINS_FIRE" => Self::DinsFire,
+            "FARORES_WIND" => Self::FaroresWind,
+            "NAYRUS_LOVE" => Self::NayrusLove,
+            "SLINGSHOT" => Self::Slingshot,
+            "BOOMERANG" => Self::Boomerang,
+            "HOOKSHOT" => Self::Hookshot,
+            "LONGSHOT" => Self::Longshot,
+            "LENS_OF_TRUTH" => Self::LensOfTruth,
+            "MEGATON_HAMMER" => Self::MegatonHammer,
+            "OCARINA_OF_TIME" => Self::OcarinaOfTime,
+            // C-Button Items
+            "BOTTLE" => Self::Bottle,
+            "BOTTLE_RED_POTION" => Self::BottleRedPotion,
+            "BOTTLE_GREEN_POTION" => Self::BottleGreenPotion,
+            "BOTTLE_BLUE_POTION" => Self::BottleBluePotion,
+            "BOTTLE_FAIRY" => Self::BottleFairy,
+            "BOTTLE_FISH" => Self::BottleFish,
+            "BOTTLE_BLUE_FIRE" => Self::BottleBlueFire,
+            "BOTTLE_BUGS" => Self::BottleBugs,
+            "BOTTLE_POE" => Self::BottlePoe,
+            "BOTTLE_BIG_POE" => Self::BottleBigPoe,
+            "BOTTLE_MILK" => Self::BottleMilk,
+            "BOTTLE_HALF_MILK" => Self::BottleHalfMilk,
+            "BOTTLE_RUTOS_LETTER" => Self::BottleRutosLetter,
+            // Adult Trade Sequence
+            "POCKET_EGG" => Self::PocketEgg,
+            "POCKET_CUCCO" => Self::PocketCucco,
+            "COJIRO" => Self::Cojiro,
+            "ODD_MUSHROOM" => Self::OddMushroom,
+            "ODD_POTION" => Self::OddPotion,
+            "POACHERS_SAW" => Self::PoachersSaw,
+            "BROKEN_SWORD" => Self::BrokenSword,
+            "PRESCRIPTION" => Self::Prescription,
+            "EYEBALL_FROG" => Self::EyeballFrog,
+            "EYEDROPS" => Self::Eyedrops,
+            "CLAIM_CHECK" => Self::ClaimCheck,
+            // Child Trade Sequence
+            "WEIRD_EGG" => Self::WeirdEgg,
+            "CHICKEN" => Self::Chicken,
+            "ZELDAS_LETTER" => Self::ZeldasLetter,
+            "SKULL_MASK" => Self::SkullMask,
+            "SPOOKY_MASK" => Self::SpookyMask,
+            "KEATON_MASK" => Self::KeatonMask,
+            "BUNNY_HOOD" => Self::BunnyHood,
+            "GORON_MASK" => Self::GoronMask,
+            "ZORA_MASK" => Self::ZoraMask,
+            "GERUDO_MASK" => Self::GerudoMask,
+            "MASK_OF_TRUTH" => Self::MaskOfTruth,
+            // Songs
+            "ZELDAS_LULLABY" => Self::ZeldasLullaby,
+            "EPONAS_SONG" => Self::EponasSong,
+            "SARIAS_SONG" => Self::SariasSong,
+            "SUNS_SONG" => Self::SunsSong,
+            "SONG_OF_TIME" => Self::SongOfTime,
+            "SONG_OF_STORMS" => Self::SongOfStorms,
+            "MINUET_OF_FOREST" => Self::MinuetOfForest,
+            "BOLERO_OF_FIRE" => Self::BoleroOfFire,
+            "SERENADE_OF_WATER" => Self::SerenadeOfWater,
+            "NOCTURNE_OF_SHADOW" => Self::NocturneOfShadow,
+            "REQUIEM_OF_SPIRIT" => Self::RequiemOfSpirit,
+            "PRELUDE_OF_LIGHT" => Self::PreludeOfLight,
+            "SCARECROW_SONG" => Self::ScarecrowSong,
+            // Upgrades
+            "GORON_BRACELET" => Self::GoronBracelet,
+            "SILVER_GAUNTLETS" => Self::SilverGauntlets,
+            "GOLDEN_GAUNTLETS" => Self::GoldenGauntlets,
+            "SILVER_SCALE" => Self::SilverScale,
+            "GOLDEN_SCALE" => Self::GoldenScale,
+            "CHILD_WALLET" => Self::ChildWallet,
+            "ADULT_WALLET" => Self::AdultWallet,
+            "GIANT_WALLET" => Self::GiantWallet,
+            "DEKU_STICK_CAPACITY_20" => Self::DekuStickCapacity20,
+            "DEKU_STICK_CAPACITY_30" => Self::DekuStickCapacity30,
+            "DEKU_NUT_CAPACITY_30" => Self::DekuNutCapacity30,
+            "DEKU_NUT_CAPACITY_40" => Self::DekuNutCapacity40,
+            "BULLET_BAG_30" => Self::BulletBag30,
+            "BULLET_BAG_40" => Self::BulletBag40,
+            "BULLET_BAG_50" => Self::BulletBag50,
+            "QUIVER_30" => Self::Quiver30,
+            "QUIVER_40" => Self::Quiver40,
+            "QUIVER_50" => Self::Quiver50,
+            "BOMB_BAG_20" => Self::BombBag20,
+            "BOMB_BAG_30" => Self::BombBag30,
+            "BOMB_BAG_40" => Self::BombBag40,
+            "MAGIC_METER" => Self::MagicMeter,
+            "DOUBLE_MAGIC" => Self::DoubleMagic,
+            "DOUBLE_DEFENSE" => Self::DoubleDefense,
+            // Quest Items
+            "KOKIRI_EMERALD" => Self::KokiriEmerald,
+            "GORON_RUBY" => Self::GoronRuby,
+            "ZORA_SAPPHIRE" => Self::ZoraSapphire,
+            "FOREST_MEDALLION" => Self::ForestMedallion,
+            "FIRE_MEDALLION" => Self::FireMedallion,
+            "WATER_MEDALLION" => Self::WaterMedallion,
+            "SHADOW_MEDALLION" => Self::ShadowMedallion,
+            "SPIRIT_MEDALLION" => Self::SpiritMedallion,
+            "LIGHT_MEDALLION" => Self::LightMedallion,
+            "STONE_OF_AGONY" => Self::StoneOfAgony,
+            "GERUDO_CARD" => Self::GerudoCard,
+            // Dungeon Items
+            "SMALL_KEY" => Self::SmallKey,
+            "BOSS_KEY" => Self::BossKey,
+            "MAP" => Self::Map,
+            "COMPASS" => Self::Compass,
+            // Dungeon-Specific Keys
+            "SMALL_KEY_FOREST_TEMPLE" => Self::SmallKeyForestTemple,
+            "SMALL_KEY_FIRE_TEMPLE" => Self::SmallKeyFireTemple,
+            "SMALL_KEY_WATER_TEMPLE" => Self::SmallKeyWaterTemple,
+            "SMALL_KEY_SHADOW_TEMPLE" => Self::SmallKeyShadowTemple,
+            "SMALL_KEY_SPIRIT_TEMPLE" => Self::SmallKeySpiritTemple,
+            "SMALL_KEY_BOTTOM_OF_THE_WELL" => Self::SmallKeyBottomOfTheWell,
+            "SMALL_KEY_GERUDO_FORTRESS" => Self::SmallKeyGerudoFortress,
+            "SMALL_KEY_GERUDO_TRAINING_GROUND" => Self::SmallKeyGerudoTrainingGround,
+            "SMALL_KEY_GANONS_CASTLE" => Self::SmallKeyGanonsCastle,
+            "BOSS_KEY_FOREST_TEMPLE" => Self::BossKeyForestTemple,
+            "BOSS_KEY_FIRE_TEMPLE" => Self::BossKeyFireTemple,
+            "BOSS_KEY_WATER_TEMPLE" => Self::BossKeyWaterTemple,
+            "BOSS_KEY_SHADOW_TEMPLE" => Self::BossKeyShadowTemple,
+            "BOSS_KEY_SPIRIT_TEMPLE" => Self::BossKeySpiritTemple,
+            "BOSS_KEY_GANONS_CASTLE" => Self::BossKeyGanonsCastle,
+            // Collectibles
+            "HEART_CONTAINER" => Self::HeartContainer,
+            "PIECE_OF_HEART" => Self::PieceOfHeart,
+            "GOLD_SKULLTULA" => Self::GoldSkulltula,
+            "SMALL_MAGIC_JAR" => Self::SmallMagicJar,
+            "LARGE_MAGIC_JAR" => Self::LargeMagicJar,
+            "RECOVERY_HEART" => Self::RecoveryHeart,
+            "GREEN_RUPEE" => Self::GreenRupee,
+            "BLUE_RUPEE" => Self::BlueRupee,
+            "RED_RUPEE" => Self::RedRupee,
+            "PURPLE_RUPEE" => Self::PurpleRupee,
+            "GOLD_RUPEE" => Self::GoldRupee,
+            // Special
+            "TRIFORCE" => Self::Triforce,
+            "TRIFORCE_OF_COURAGE" => Self::TriforceOfCourage,
+            "GANON_BOSS_KEY" => Self::GanonBossKey,
+            _ => return None,
+        };
+        Some(item)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::OotItem;
+    use crate::item::ItemName;
     use std::collections::HashSet;
 
     #[test]
@@ -1097,5 +1434,66 @@ mod tests {
             Some(OotItem::StoneOfAgony)
         );
         assert_eq!(OotItem::by_name("GerudoCard"), Some(OotItem::GerudoCard));
+    }
+
+    // ItemName trait tests
+
+    #[test]
+    fn test_item_name_to_str() {
+        assert_eq!(OotItem::MasterSword.to_str(), "MASTER_SWORD");
+        assert_eq!(OotItem::Hookshot.to_str(), "HOOKSHOT");
+        assert_eq!(OotItem::ZeldasLullaby.to_str(), "ZELDAS_LULLABY");
+        assert_eq!(
+            OotItem::SmallKeyFireTemple.to_str(),
+            "SMALL_KEY_FIRE_TEMPLE"
+        );
+        assert_eq!(
+            OotItem::BossKeyForestTemple.to_str(),
+            "BOSS_KEY_FOREST_TEMPLE"
+        );
+    }
+
+    #[test]
+    fn test_item_name_from_str() {
+        assert_eq!(
+            OotItem::from_str("MASTER_SWORD"),
+            Some(OotItem::MasterSword)
+        );
+        assert_eq!(OotItem::from_str("HOOKSHOT"), Some(OotItem::Hookshot));
+        assert_eq!(
+            OotItem::from_str("ZELDAS_LULLABY"),
+            Some(OotItem::ZeldasLullaby)
+        );
+        assert_eq!(
+            OotItem::from_str("SMALL_KEY_FIRE_TEMPLE"),
+            Some(OotItem::SmallKeyFireTemple)
+        );
+    }
+
+    #[test]
+    fn test_item_name_from_str_invalid() {
+        assert_eq!(OotItem::from_str("INVALID_ITEM"), None);
+        assert_eq!(OotItem::from_str(""), None);
+        assert_eq!(OotItem::from_str("master_sword"), None); // Wrong case
+    }
+
+    #[test]
+    fn test_item_name_roundtrip() {
+        // Test that to_str and from_str are inverses for all items
+        let items = [
+            OotItem::MasterSword,
+            OotItem::Hookshot,
+            OotItem::ZeldasLullaby,
+            OotItem::SmallKeyFireTemple,
+            OotItem::BossKeyForestTemple,
+            OotItem::GoldSkulltula,
+            OotItem::Triforce,
+        ];
+
+        for item in items {
+            let s = item.to_str();
+            let parsed = OotItem::from_str(s);
+            assert_eq!(parsed, Some(item), "Roundtrip failed for {:?}", item);
+        }
     }
 }
