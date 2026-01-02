@@ -1,0 +1,5 @@
+error: expected `chests`, `switches`, `room_clear`, `collectible`, `unused`, `visited_rooms`, `visited_floors`, or `gold_skulltulas`
+  --> tests/ui/scene_flags_invalid.rs:28:13
+   |
+28 |             invalid_field: {
+   |             ^^^^^^^^^^^^^

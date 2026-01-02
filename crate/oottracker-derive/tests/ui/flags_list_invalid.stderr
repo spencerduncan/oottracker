@@ -1,0 +1,38 @@
+error: macros that expand to items must be delimited with braces or followed by a semicolon
+  --> tests/ui/flags_list_invalid.rs:11:1
+   |
+11 | / flags_list! {
+12 | |     pub struct InvalidFlags: [f32; 2] {
+13 | |         0: {
+14 | |             FLAG_A = 0x0001,
+...  |
+17 | | }
+   | |_^
+   |
+   = note: this error originates in the macro `flags_list` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: compile_error! takes 1 argument
+  --> tests/ui/flags_list_invalid.rs:11:1
+   |
+11 | / flags_list! {
+12 | |     pub struct InvalidFlags: [f32; 2] {
+13 | |         0: {
+14 | |             FLAG_A = 0x0001,
+...  |
+17 | | }
+   | |_^
+   |
+   = note: this error originates in the macro `flags_list` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: unsupported field type: {}
+  --> tests/ui/flags_list_invalid.rs:11:1
+   |
+11 | / flags_list! {
+12 | |     pub struct InvalidFlags: [f32; 2] {
+13 | |         0: {
+14 | |             FLAG_A = 0x0001,
+...  |
+17 | | }
+   | |_^
+   |
+   = note: this error originates in the macro `flags_list` (in Nightly builds, run with -Z macro-backtrace for more info)

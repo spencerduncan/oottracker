@@ -9,6 +9,10 @@
 )]
 #![forbid(unsafe_code)]
 
+// Dev dependencies used by trybuild tests in tests/ui/
+#[cfg(test)]
+use {bitflags as _, byteorder as _, ootr as _, trybuild as _};
+
 use {
     convert_case::{Case, Casing as _},
     itertools::Itertools as _,
