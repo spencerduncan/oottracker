@@ -33,7 +33,7 @@ jobs:
       # Check crates that don't require Python/randomizer
       - name: Clippy core crates
         run: |
-          cargo clippy -p ootr -p ootr-dynamic -p oottracker-derive -p ootmm -- -D warnings
+          cargo clippy -p ootr -p oottracker-derive -p ootmm -- -D warnings
 
   build-core:
     name: Build Core (${{ matrix.os }})
@@ -51,7 +51,7 @@ jobs:
       # Build crates that don't require Python
       - name: Build core crates
         run: |
-          cargo build -p ootr -p ootr-dynamic -p oottracker-derive -p ootmm
+          cargo build -p ootr -p oottracker-derive -p ootmm
 
   # Full build with Python/randomizer - runs on a single platform
   build-full:
@@ -89,6 +89,15 @@ jobs:
           mv OoT-Randomizer-Dev-R ootr-latest
           rm randomizer.zip
 
+      - name: Clippy ootr-dynamic (requires Python)
+        run: cargo clippy -p ootr-dynamic -- -D warnings
+
+      - name: Build ootr-dynamic
+        run: cargo build -p ootr-dynamic
+
+      - name: Test ootr-dynamic
+        run: cargo test -p ootr-dynamic
+
       - name: Build workspace
         run: cargo build --workspace
         continue-on-error: true  # Allow failure until randomizer API is fixed
@@ -102,7 +111,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       # Run tests for crates that don't need randomizer
       - name: Run tests
-        run: cargo test -p ootr -p ootr-dynamic -p oottracker-derive -p ootmm
+        run: cargo test -p ootr -p oottracker-derive -p ootmm
 
   coverage:
     name: Code Coverage
@@ -117,7 +126,7 @@ jobs:
       - name: Install cargo-tarpaulin
         run: cargo install cargo-tarpaulin
       - name: Generate coverage
-        run: cargo tarpaulin -p ootr -p ootr-dynamic -p oottracker-derive -p ootmm --out xml --output-dir coverage
+        run: cargo tarpaulin -p ootr -p oottracker-derive -p ootmm --out xml --output-dir coverage
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
@@ -136,4 +145,4 @@ jobs:
       - name: Build docs (core crates)
         env:
           RUSTDOCFLAGS: -D warnings
-        run: cargo doc -p ootr -p ootr-dynamic -p oottracker-derive -p ootmm --no-deps
+        run: cargo doc -p ootr -p oottracker-derive -p ootmm --no-deps
