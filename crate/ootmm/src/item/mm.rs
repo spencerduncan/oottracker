@@ -431,6 +431,7 @@ impl MmItem {
 #[cfg(test)]
 mod tests {
     use super::MmItem;
+    use std::collections::HashSet;
 
     #[test]
     fn test_transformation_masks() {
@@ -503,5 +504,422 @@ mod tests {
         assert_eq!(MmItem::by_name("NotAnItem"), None);
         assert_eq!(MmItem::by_name(""), None);
         assert_eq!(MmItem::by_name("invalid_item"), None);
+    }
+
+    // Additional comprehensive tests
+
+    #[test]
+    fn test_by_name_all_transformation_masks() {
+        assert_eq!(MmItem::by_name("DekuMask"), Some(MmItem::DekuMask));
+        assert_eq!(MmItem::by_name("deku_mask"), Some(MmItem::DekuMask));
+        assert_eq!(MmItem::by_name("GoronMask"), Some(MmItem::GoronMask));
+        assert_eq!(MmItem::by_name("ZoraMask"), Some(MmItem::ZoraMask));
+        assert_eq!(
+            MmItem::by_name("FierceDeityMask"),
+            Some(MmItem::FierceDeityMask)
+        );
+    }
+
+    #[test]
+    fn test_by_name_regular_masks() {
+        assert_eq!(MmItem::by_name("PostmanHat"), Some(MmItem::PostmanHat));
+        assert_eq!(MmItem::by_name("AllNightMask"), Some(MmItem::AllNightMask));
+        assert_eq!(MmItem::by_name("BlastMask"), Some(MmItem::BlastMask));
+        assert_eq!(MmItem::by_name("StoneMask"), Some(MmItem::StoneMask));
+        assert_eq!(
+            MmItem::by_name("GreatFairyMask"),
+            Some(MmItem::GreatFairyMask)
+        );
+        assert_eq!(MmItem::by_name("BremenMask"), Some(MmItem::BremenMask));
+        assert_eq!(MmItem::by_name("bunny_hood"), Some(MmItem::BunnyHood));
+        assert_eq!(MmItem::by_name("GiantMask"), Some(MmItem::GiantMask));
+    }
+
+    #[test]
+    fn test_by_name_all_swords() {
+        assert_eq!(MmItem::by_name("KokiriSword"), Some(MmItem::KokiriSword));
+        assert_eq!(MmItem::by_name("RazorSword"), Some(MmItem::RazorSword));
+        assert_eq!(MmItem::by_name("GildedSword"), Some(MmItem::GildedSword));
+        assert_eq!(
+            MmItem::by_name("GreatFairySword"),
+            Some(MmItem::GreatFairySword)
+        );
+        assert_eq!(
+            MmItem::by_name("great_fairy_sword"),
+            Some(MmItem::GreatFairySword)
+        );
+    }
+
+    #[test]
+    fn test_by_name_all_shields() {
+        assert_eq!(MmItem::by_name("HeroShield"), Some(MmItem::HeroShield));
+        assert_eq!(MmItem::by_name("hero_shield"), Some(MmItem::HeroShield));
+        assert_eq!(MmItem::by_name("MirrorShield"), Some(MmItem::MirrorShield));
+    }
+
+    #[test]
+    fn test_by_name_equipment_items() {
+        assert_eq!(MmItem::by_name("HerosBow"), Some(MmItem::HerosBow));
+        assert_eq!(MmItem::by_name("heros_bow"), Some(MmItem::HerosBow));
+        assert_eq!(MmItem::by_name("Bombchu"), Some(MmItem::Bombchu));
+        assert_eq!(MmItem::by_name("MagicBean"), Some(MmItem::MagicBean));
+        assert_eq!(MmItem::by_name("PowderKeg"), Some(MmItem::PowderKeg));
+        assert_eq!(
+            MmItem::by_name("PictographBox"),
+            Some(MmItem::PictographBox)
+        );
+    }
+
+    #[test]
+    fn test_by_name_all_arrows() {
+        assert_eq!(MmItem::by_name("FireArrow"), Some(MmItem::FireArrow));
+        assert_eq!(MmItem::by_name("IceArrow"), Some(MmItem::IceArrow));
+        assert_eq!(MmItem::by_name("LightArrow"), Some(MmItem::LightArrow));
+        assert_eq!(MmItem::by_name("ice_arrow"), Some(MmItem::IceArrow));
+    }
+
+    #[test]
+    fn test_by_name_all_bottles() {
+        assert_eq!(MmItem::by_name("Bottle"), Some(MmItem::Bottle));
+        assert_eq!(
+            MmItem::by_name("BottleRedPotion"),
+            Some(MmItem::BottleRedPotion)
+        );
+        assert_eq!(
+            MmItem::by_name("BottleDekuPrincess"),
+            Some(MmItem::BottleDekuPrincess)
+        );
+        assert_eq!(
+            MmItem::by_name("BottleHotSpringWater"),
+            Some(MmItem::BottleHotSpringWater)
+        );
+        assert_eq!(
+            MmItem::by_name("BottleZoraEgg"),
+            Some(MmItem::BottleZoraEgg)
+        );
+        assert_eq!(
+            MmItem::by_name("bottle_chateau"),
+            Some(MmItem::BottleChateau)
+        );
+        assert_eq!(
+            MmItem::by_name("BottleSeaHorse"),
+            Some(MmItem::BottleSeaHorse)
+        );
+    }
+
+    #[test]
+    fn test_by_name_all_songs() {
+        assert_eq!(MmItem::by_name("SongOfTime"), Some(MmItem::SongOfTime));
+        assert_eq!(
+            MmItem::by_name("SongOfHealing"),
+            Some(MmItem::SongOfHealing)
+        );
+        assert_eq!(MmItem::by_name("EponasSong"), Some(MmItem::EponasSong));
+        assert_eq!(
+            MmItem::by_name("SongOfSoaring"),
+            Some(MmItem::SongOfSoaring)
+        );
+        assert_eq!(MmItem::by_name("SongOfStorms"), Some(MmItem::SongOfStorms));
+        assert_eq!(
+            MmItem::by_name("SonataOfAwakening"),
+            Some(MmItem::SonataOfAwakening)
+        );
+        assert_eq!(MmItem::by_name("GoronLullaby"), Some(MmItem::GoronLullaby));
+        assert_eq!(
+            MmItem::by_name("NewWaveBossaNova"),
+            Some(MmItem::NewWaveBossaNova)
+        );
+        assert_eq!(
+            MmItem::by_name("ElegyOfEmptiness"),
+            Some(MmItem::ElegyOfEmptiness)
+        );
+        assert_eq!(MmItem::by_name("OathToOrder"), Some(MmItem::OathToOrder));
+    }
+
+    #[test]
+    fn test_by_name_quest_items() {
+        assert_eq!(MmItem::by_name("MoonsTear"), Some(MmItem::MoonsTear));
+        assert_eq!(
+            MmItem::by_name("LandTitleDeed"),
+            Some(MmItem::LandTitleDeed)
+        );
+        assert_eq!(
+            MmItem::by_name("SwampTitleDeed"),
+            Some(MmItem::SwampTitleDeed)
+        );
+        assert_eq!(MmItem::by_name("RoomKey"), Some(MmItem::RoomKey));
+        assert_eq!(
+            MmItem::by_name("LetterToKafei"),
+            Some(MmItem::LetterToKafei)
+        );
+        assert_eq!(
+            MmItem::by_name("PendantOfMemories"),
+            Some(MmItem::PendantOfMemories)
+        );
+    }
+
+    #[test]
+    fn test_by_name_all_boss_remains() {
+        assert_eq!(
+            MmItem::by_name("OdolwaRemains"),
+            Some(MmItem::OdolwaRemains)
+        );
+        assert_eq!(MmItem::by_name("GohtRemains"), Some(MmItem::GohtRemains));
+        assert_eq!(MmItem::by_name("GyorgRemains"), Some(MmItem::GyorgRemains));
+        assert_eq!(
+            MmItem::by_name("TwinmoldRemains"),
+            Some(MmItem::TwinmoldRemains)
+        );
+        assert_eq!(
+            MmItem::by_name("twinmold_remains"),
+            Some(MmItem::TwinmoldRemains)
+        );
+    }
+
+    #[test]
+    fn test_by_name_stray_fairies() {
+        assert_eq!(MmItem::by_name("StrayFairy"), Some(MmItem::StrayFairy));
+        assert_eq!(
+            MmItem::by_name("StrayFairyWoodfall"),
+            Some(MmItem::StrayFairyWoodfall)
+        );
+        assert_eq!(
+            MmItem::by_name("StrayFairySnowhead"),
+            Some(MmItem::StrayFairySnowhead)
+        );
+        assert_eq!(
+            MmItem::by_name("StrayFairyGreatBay"),
+            Some(MmItem::StrayFairyGreatBay)
+        );
+        assert_eq!(
+            MmItem::by_name("StrayFairyStoneTower"),
+            Some(MmItem::StrayFairyStoneTower)
+        );
+        assert_eq!(
+            MmItem::by_name("stray_fairy_clock_town"),
+            Some(MmItem::StrayFairyClockTown)
+        );
+    }
+
+    #[test]
+    fn test_by_name_edge_cases() {
+        // Whitespace should not match
+        assert_eq!(MmItem::by_name(" DekuMask"), None);
+        assert_eq!(MmItem::by_name("DekuMask "), None);
+        // Mixed case should not match
+        assert_eq!(MmItem::by_name("dekumask"), None);
+        assert_eq!(MmItem::by_name("DEKUMASK"), None);
+        // Similar but incorrect names
+        assert_eq!(MmItem::by_name("Deku_Mask"), None);
+        assert_eq!(MmItem::by_name("deku-mask"), None);
+    }
+
+    #[test]
+    fn test_transformation_masks_complete() {
+        // All transformation masks
+        assert!(MmItem::DekuMask.is_transformation_mask());
+        assert!(MmItem::GoronMask.is_transformation_mask());
+        assert!(MmItem::ZoraMask.is_transformation_mask());
+        assert!(MmItem::FierceDeityMask.is_transformation_mask());
+
+        // Non-transformation masks
+        assert!(!MmItem::KeatonMask.is_transformation_mask());
+        assert!(!MmItem::GiantMask.is_transformation_mask());
+    }
+
+    #[test]
+    fn test_is_mask_complete() {
+        // Transformation masks
+        assert!(MmItem::DekuMask.is_mask());
+        assert!(MmItem::GoronMask.is_mask());
+        assert!(MmItem::ZoraMask.is_mask());
+        assert!(MmItem::FierceDeityMask.is_mask());
+
+        // Regular masks
+        assert!(MmItem::PostmanHat.is_mask());
+        assert!(MmItem::AllNightMask.is_mask());
+        assert!(MmItem::BlastMask.is_mask());
+        assert!(MmItem::StoneMask.is_mask());
+        assert!(MmItem::GreatFairyMask.is_mask());
+        assert!(MmItem::KeatonMask.is_mask());
+        assert!(MmItem::BremenMask.is_mask());
+        assert!(MmItem::BunnyHood.is_mask());
+        assert!(MmItem::DonGeroMask.is_mask());
+        assert!(MmItem::MaskOfScents.is_mask());
+        assert!(MmItem::RomaniMask.is_mask());
+        assert!(MmItem::CircusLeaderMask.is_mask());
+        assert!(MmItem::KafeiMask.is_mask());
+        assert!(MmItem::CouplesMask.is_mask());
+        assert!(MmItem::MaskOfTruth.is_mask());
+        assert!(MmItem::KamaroMask.is_mask());
+        assert!(MmItem::GibdoMask.is_mask());
+        assert!(MmItem::GaroMask.is_mask());
+        assert!(MmItem::CaptainHat.is_mask());
+        assert!(MmItem::GiantMask.is_mask());
+
+        // Non-masks
+        assert!(!MmItem::Hookshot.is_mask());
+        assert!(!MmItem::HerosBow.is_mask());
+    }
+
+    #[test]
+    fn test_boss_remains_complete() {
+        // All boss remains
+        assert!(MmItem::OdolwaRemains.is_boss_remain());
+        assert!(MmItem::GohtRemains.is_boss_remain());
+        assert!(MmItem::GyorgRemains.is_boss_remain());
+        assert!(MmItem::TwinmoldRemains.is_boss_remain());
+
+        // Non-boss remains
+        assert!(!MmItem::Hookshot.is_boss_remain());
+        assert!(!MmItem::DekuMask.is_boss_remain());
+    }
+
+    #[test]
+    fn test_songs_complete() {
+        // All songs
+        assert!(MmItem::SongOfTime.is_song());
+        assert!(MmItem::SongOfHealing.is_song());
+        assert!(MmItem::EponasSong.is_song());
+        assert!(MmItem::SongOfSoaring.is_song());
+        assert!(MmItem::SongOfStorms.is_song());
+        assert!(MmItem::SonataOfAwakening.is_song());
+        assert!(MmItem::GoronLullaby.is_song());
+        assert!(MmItem::NewWaveBossaNova.is_song());
+        assert!(MmItem::ElegyOfEmptiness.is_song());
+        assert!(MmItem::OathToOrder.is_song());
+
+        // Non-songs
+        assert!(!MmItem::OcarinaOfTime.is_song());
+        assert!(!MmItem::Hookshot.is_song());
+    }
+
+    #[test]
+    fn test_progressive_items_complete() {
+        // All progressive items
+        assert!(MmItem::Bomb.is_progressive());
+        assert!(MmItem::DekuStick.is_progressive());
+        assert!(MmItem::DekuNut.is_progressive());
+        assert!(MmItem::Bottle.is_progressive());
+        assert!(MmItem::SmallKey.is_progressive());
+        assert!(MmItem::StrayFairy.is_progressive());
+        assert!(MmItem::HeartContainer.is_progressive());
+        assert!(MmItem::PieceOfHeart.is_progressive());
+
+        // Non-progressive items
+        assert!(!MmItem::BottleRedPotion.is_progressive());
+        assert!(!MmItem::SmallKeyWoodfallTemple.is_progressive());
+    }
+
+    #[test]
+    fn test_dungeon_items_complete() {
+        // Generic dungeon items
+        assert!(MmItem::SmallKey.is_dungeon_item());
+        assert!(MmItem::BossKey.is_dungeon_item());
+        assert!(MmItem::Map.is_dungeon_item());
+        assert!(MmItem::Compass.is_dungeon_item());
+        assert!(MmItem::StrayFairy.is_dungeon_item());
+
+        // All dungeon-specific small keys
+        assert!(MmItem::SmallKeyWoodfallTemple.is_dungeon_item());
+        assert!(MmItem::SmallKeySnowheadTemple.is_dungeon_item());
+        assert!(MmItem::SmallKeyGreatBayTemple.is_dungeon_item());
+        assert!(MmItem::SmallKeyStoneTowerTemple.is_dungeon_item());
+
+        // All dungeon-specific boss keys
+        assert!(MmItem::BossKeyWoodfallTemple.is_dungeon_item());
+        assert!(MmItem::BossKeySnowheadTemple.is_dungeon_item());
+        assert!(MmItem::BossKeyGreatBayTemple.is_dungeon_item());
+        assert!(MmItem::BossKeyStoneTowerTemple.is_dungeon_item());
+
+        // Non-dungeon items
+        assert!(!MmItem::OdolwaRemains.is_dungeon_item());
+        assert!(!MmItem::StrayFairyWoodfall.is_dungeon_item());
+    }
+
+    #[test]
+    fn test_clone_trait() {
+        let item = MmItem::DekuMask;
+        #[allow(clippy::clone_on_copy)]
+        let cloned = item.clone();
+        assert_eq!(item, cloned);
+    }
+
+    #[test]
+    fn test_copy_trait() {
+        let item = MmItem::Hookshot;
+        let copied = item;
+        // Original still usable (Copy semantics)
+        assert_eq!(item, copied);
+    }
+
+    #[test]
+    fn test_debug_trait() {
+        let item = MmItem::FierceDeityMask;
+        let debug_str = format!("{:?}", item);
+        assert_eq!(debug_str, "FierceDeityMask");
+    }
+
+    #[test]
+    fn test_hash_trait() {
+        let mut set = HashSet::new();
+        set.insert(MmItem::DekuMask);
+        set.insert(MmItem::Hookshot);
+        set.insert(MmItem::DekuMask); // Duplicate
+
+        assert_eq!(set.len(), 2);
+        assert!(set.contains(&MmItem::DekuMask));
+        assert!(set.contains(&MmItem::Hookshot));
+    }
+
+    #[test]
+    fn test_eq_trait() {
+        assert_eq!(MmItem::HerosBow, MmItem::HerosBow);
+        assert_ne!(MmItem::HerosBow, MmItem::Bomb);
+    }
+
+    #[test]
+    fn test_by_name_upgrades() {
+        assert_eq!(MmItem::by_name("AdultWallet"), Some(MmItem::AdultWallet));
+        assert_eq!(MmItem::by_name("GiantWallet"), Some(MmItem::GiantWallet));
+        assert_eq!(MmItem::by_name("MagicMeter"), Some(MmItem::MagicMeter));
+        assert_eq!(MmItem::by_name("DoubleMagic"), Some(MmItem::DoubleMagic));
+        assert_eq!(
+            MmItem::by_name("DoubleDefense"),
+            Some(MmItem::DoubleDefense)
+        );
+    }
+
+    #[test]
+    fn test_by_name_capacity_upgrades() {
+        assert_eq!(MmItem::by_name("Quiver30"), Some(MmItem::Quiver30));
+        assert_eq!(MmItem::by_name("quiver_40"), Some(MmItem::Quiver40));
+        assert_eq!(MmItem::by_name("Quiver50"), Some(MmItem::Quiver50));
+        assert_eq!(MmItem::by_name("BombBag20"), Some(MmItem::BombBag20));
+        assert_eq!(MmItem::by_name("bomb_bag_30"), Some(MmItem::BombBag30));
+        assert_eq!(MmItem::by_name("BombBag40"), Some(MmItem::BombBag40));
+    }
+
+    #[test]
+    fn test_by_name_rupees() {
+        assert_eq!(MmItem::by_name("GreenRupee"), Some(MmItem::GreenRupee));
+        assert_eq!(MmItem::by_name("BlueRupee"), Some(MmItem::BlueRupee));
+        assert_eq!(MmItem::by_name("RedRupee"), Some(MmItem::RedRupee));
+        assert_eq!(MmItem::by_name("PurpleRupee"), Some(MmItem::PurpleRupee));
+        assert_eq!(MmItem::by_name("SilverRupee"), Some(MmItem::SilverRupee));
+        assert_eq!(MmItem::by_name("GoldRupee"), Some(MmItem::GoldRupee));
+    }
+
+    #[test]
+    fn test_by_name_special_items() {
+        assert_eq!(
+            MmItem::by_name("BomberNotebook"),
+            Some(MmItem::BomberNotebook)
+        );
+        assert_eq!(MmItem::by_name("GiantsWallet"), Some(MmItem::GiantsWallet));
+        assert_eq!(
+            MmItem::by_name("OceanTitleDeedTraded"),
+            Some(MmItem::OceanTitleDeedTraded)
+        );
     }
 }
