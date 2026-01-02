@@ -396,4 +396,232 @@ locations:
         assert_eq!(region.locations[1].location_type, LocationType::Npc);
         assert_eq!(region.locations[2].location_type, LocationType::GossipStone);
     }
+
+    #[test]
+    fn test_game_enum_deserialization() {
+        let yaml_oot = r#"
+id: "test_oot"
+name: "Test OoT"
+game: oot
+"#;
+        let yaml_mm = r#"
+id: "test_mm"
+name: "Test MM"
+game: mm
+"#;
+        let region_oot: Region = serde_yaml::from_str(yaml_oot).unwrap();
+        let region_mm: Region = serde_yaml::from_str(yaml_mm).unwrap();
+        assert_eq!(region_oot.game, Game::Oot);
+        assert_eq!(region_mm.game, Game::Mm);
+    }
+
+    #[test]
+    fn test_location_default_type() {
+        // LocationType should default to Chest when not specified
+        let yaml = r#"
+id: "test"
+name: "Test"
+game: oot
+locations:
+  - id: "loc1"
+    name: "Location Without Type"
+"#;
+        let region: Region = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(region.locations[0].location_type, LocationType::Chest);
+    }
+
+    #[test]
+    fn test_exit_default_type() {
+        // ExitType should default to Normal when not specified
+        let yaml = r#"
+id: "test"
+name: "Test"
+game: oot
+exits:
+  - target: "other_region"
+"#;
+        let region: Region = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(region.exits[0].exit_type, ExitType::Normal);
+    }
+
+    #[test]
+    fn test_world_get_region() {
+        let mut world = World::new();
+        let region = Region::new("test_region", "Test Region", Game::Oot);
+        world.add_region(region);
+
+        // Test get_region
+        let retrieved = world.get_region("test_region");
+        assert!(retrieved.is_some());
+        assert_eq!(retrieved.unwrap().name, "Test Region");
+
+        // Test non-existent region
+        assert!(world.get_region("nonexistent").is_none());
+    }
+
+    #[test]
+    fn test_world_get_region_mut() {
+        let mut world = World::new();
+        let region = Region::new("mutable_region", "Mutable Region", Game::Mm);
+        world.add_region(region);
+
+        // Test get_region_mut and modify
+        {
+            let region_mut = world.get_region_mut("mutable_region");
+            assert!(region_mut.is_some());
+            let r = region_mut.unwrap();
+            r.add_location(Location::new(
+                "new_loc",
+                "New Location",
+                LocationType::Chest,
+            ));
+        }
+
+        // Verify modification persisted
+        let region = world.get_region("mutable_region").unwrap();
+        assert_eq!(region.locations.len(), 1);
+        assert_eq!(region.locations[0].id, "new_loc");
+    }
+
+    #[test]
+    fn test_region_add_event() {
+        let mut region = Region::new("event_region", "Event Region", Game::Oot);
+        let event = Event::new("boss_defeated", "Boss Defeated").with_logic("has(BossKey)");
+        region.add_event(event);
+
+        assert_eq!(region.events.len(), 1);
+        assert_eq!(region.events[0].id, "boss_defeated");
+        assert_eq!(region.events[0].name, "Boss Defeated");
+        assert_eq!(region.events[0].logic, Some("has(BossKey)".to_string()));
+    }
+
+    #[test]
+    fn test_deserialize_events() {
+        let yaml = r#"
+id: "deku_tree"
+name: "Deku Tree"
+game: oot
+events:
+  - id: "deku_tree_clear"
+    name: "Deku Tree Cleared"
+    logic: "can_defeat(QueenGohma)"
+  - id: "nuts_access"
+    name: "Nuts Available"
+"#;
+        let region: Region = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(region.events.len(), 2);
+        assert_eq!(region.events[0].id, "deku_tree_clear");
+        assert_eq!(
+            region.events[0].logic,
+            Some("can_defeat(QueenGohma)".to_string())
+        );
+        assert_eq!(region.events[1].id, "nuts_access");
+        assert!(region.events[1].logic.is_none());
+    }
+
+    #[test]
+    fn test_deserialize_all_exit_types() {
+        let yaml = r#"
+id: "test"
+name: "Test"
+game: oot
+exits:
+  - target: "a"
+    exitType: normal
+  - target: "b"
+    exitType: oneWay
+  - target: "c"
+    exitType: lockedDoor
+  - target: "d"
+    exitType: warp
+  - target: "e"
+    exitType: owl
+  - target: "f"
+    exitType: dungeon
+  - target: "g"
+    exitType: grotto
+  - target: "h"
+    exitType: interior
+  - target: "i"
+    exitType: overworld
+"#;
+        let region: Region = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(region.exits.len(), 9);
+        assert_eq!(region.exits[0].exit_type, ExitType::Normal);
+        assert_eq!(region.exits[1].exit_type, ExitType::OneWay);
+        assert_eq!(region.exits[2].exit_type, ExitType::LockedDoor);
+        assert_eq!(region.exits[3].exit_type, ExitType::Warp);
+        assert_eq!(region.exits[4].exit_type, ExitType::Owl);
+        assert_eq!(region.exits[5].exit_type, ExitType::Dungeon);
+        assert_eq!(region.exits[6].exit_type, ExitType::Grotto);
+        assert_eq!(region.exits[7].exit_type, ExitType::Interior);
+        assert_eq!(region.exits[8].exit_type, ExitType::Overworld);
+    }
+
+    #[test]
+    fn test_deserialize_all_location_types() {
+        let yaml = r#"
+id: "test"
+name: "Test"
+game: oot
+locations:
+  - id: "a"
+    name: "Chest"
+    locationType: chest
+  - id: "b"
+    name: "Freestanding"
+    locationType: freestanding
+  - id: "c"
+    name: "NPC"
+    locationType: npc
+  - id: "d"
+    name: "Event"
+    locationType: event
+  - id: "e"
+    name: "Song"
+    locationType: song
+  - id: "f"
+    name: "Collectible"
+    locationType: collectible
+  - id: "g"
+    name: "Shop"
+    locationType: shop
+  - id: "h"
+    name: "Scrub"
+    locationType: scrub
+  - id: "i"
+    name: "Gossip Stone"
+    locationType: gossipStone
+  - id: "j"
+    name: "Boss"
+    locationType: boss
+  - id: "k"
+    name: "Cow"
+    locationType: cow
+  - id: "l"
+    name: "Fishing"
+    locationType: fishing
+  - id: "m"
+    name: "Fairy"
+    locationType: fairy
+"#;
+        let region: Region = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(region.locations.len(), 13);
+        assert_eq!(region.locations[0].location_type, LocationType::Chest);
+        assert_eq!(
+            region.locations[1].location_type,
+            LocationType::Freestanding
+        );
+        assert_eq!(region.locations[2].location_type, LocationType::Npc);
+        assert_eq!(region.locations[3].location_type, LocationType::Event);
+        assert_eq!(region.locations[4].location_type, LocationType::Song);
+        assert_eq!(region.locations[5].location_type, LocationType::Collectible);
+        assert_eq!(region.locations[6].location_type, LocationType::Shop);
+        assert_eq!(region.locations[7].location_type, LocationType::Scrub);
+        assert_eq!(region.locations[8].location_type, LocationType::GossipStone);
+        assert_eq!(region.locations[9].location_type, LocationType::Boss);
+        assert_eq!(region.locations[10].location_type, LocationType::Cow);
+        assert_eq!(region.locations[11].location_type, LocationType::Fishing);
+        assert_eq!(region.locations[12].location_type, LocationType::Fairy);
+    }
 }
