@@ -864,10 +864,7 @@ mod tests {
     #[test]
     fn test_item_mapping_name_of() {
         let mapper = ItemMapping::new();
-        assert_eq!(
-            mapper.name_of(Item::Oot(OotItem::Bow)).as_str(),
-            "Bow"
-        );
+        assert_eq!(mapper.name_of(Item::Oot(OotItem::Bow)).as_str(), "Bow");
         assert_eq!(
             mapper.name_of(Item::Mm(MmItem::HerosBow)).as_str(),
             "HerosBow"
