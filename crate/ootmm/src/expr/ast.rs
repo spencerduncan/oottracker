@@ -852,10 +852,7 @@ mod tests {
                 Expr::call("inner", vec![Expr::Number(1)]),
             ],
         );
-        assert_eq!(
-            expr.to_string(),
-            "complex((true && false), !x, inner(1))"
-        );
+        assert_eq!(expr.to_string(), "complex((true && false), !x, inner(1))");
     }
 
     // ===== Structural tests =====
