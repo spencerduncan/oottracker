@@ -622,9 +622,11 @@ impl Application for State<ootr_static::Rando> {
                     Packet::UpdateCell(cell_id, value) => {
                         if let Some(ref connection) = self.connection {
                             if let Some(app) = connection.firebase_app() {
-                                app.set_cell(&mut self.model, cell_id, value)
-                                    .expect("failed to apply state change from Firebase");
-                                //TODO show error message instead of panicking?
+                                if let Err(e) = app.set_cell(&mut self.model, cell_id, value) {
+                                    return self.notify(Message::ConnectionError(
+                                        ConnectionError::from(e),
+                                    ));
+                                }
                             }
                         }
                     }
@@ -1053,6 +1055,8 @@ impl Application for State<ootr_static::Rando> {
 #[derive(Debug, From, FromArc, Clone)]
 enum ConnectionError {
     ExtraPathSegments,
+    #[from]
+    Firebase(firebase::Error),
     MissingRoomName,
     #[from]
     Net(net::Error),
@@ -1070,6 +1074,7 @@ impl fmt::Display for ConnectionError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ConnectionError::ExtraPathSegments => write!(f, "too many path segments in URL"),
+            ConnectionError::Firebase(e) => write!(f, "Firebase error: {}", e),
             ConnectionError::MissingRoomName => write!(f, "missing room name"),
             ConnectionError::Net(e) => e.fmt(f),
             ConnectionError::Reqwest(e) => {
