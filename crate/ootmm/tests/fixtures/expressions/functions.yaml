@@ -1,0 +1,94 @@
+# Function call expression test cases
+name: Function Call Expressions
+description: Tests for function call parsing functionality
+
+test_cases:
+  # Basic function calls
+  - name: function_no_args
+    expression: "func()"
+    should_parse: true
+    description: Function with no arguments
+
+  - name: function_one_arg
+    expression: "has(HOOKSHOT)"
+    should_parse: true
+    description: Function with one argument
+
+  - name: function_two_args
+    expression: "has_count(BOTTLE, 2)"
+    should_parse: true
+    description: Function with two arguments
+
+  - name: function_three_args
+    expression: "between(DAY1_AM_6, DAY1_PM_6, DAY1_PM_10)"
+    should_parse: true
+    description: Function with three arguments
+
+  # Common OoTMM functions
+  - name: has_function
+    expression: "has(HOOKSHOT)"
+    should_parse: true
+    description: has() function for item checks
+
+  - name: event_function
+    expression: "event(MIDO_MOVED)"
+    should_parse: true
+    description: event() function for event checks
+
+  - name: setting_function
+    expression: "setting(skip_child_zelda)"
+    should_parse: true
+    description: setting() function for settings
+
+  - name: trick_function
+    expression: "trick(logic_grottos_without_agony)"
+    should_parse: true
+    description: trick() function for trick checks
+
+  - name: can_use_function
+    expression: "can_use(HOOKSHOT)"
+    should_parse: true
+    description: can_use() function for usability checks
+
+  # Complex function arguments
+  - name: function_with_expr_arg
+    expression: "func(a && b)"
+    should_parse: true
+    description: Function with expression as argument
+
+  - name: function_with_nested_call
+    expression: "outer(inner(arg))"
+    should_parse: true
+    description: Nested function calls
+
+  - name: function_with_or_args
+    expression: "any(a || b, c || d)"
+    should_parse: true
+    description: Function with OR expressions as args
+
+  # Functions in larger expressions
+  - name: function_and_identifier
+    expression: "is_adult && has(HOOKSHOT)"
+    should_parse: true
+    description: Function combined with identifier
+
+  - name: function_or_function
+    expression: "event(MIDO_MOVED) || setting(skip_child_zelda)"
+    should_parse: true
+    description: Two functions with OR
+
+  - name: complex_function_expr
+    expression: "(has(HOOKSHOT) || has(LONGSHOT)) && is_adult"
+    should_parse: true
+    description: Complex expression with functions
+
+  # Error cases
+  - name: function_unclosed_paren
+    expression: "has(HOOKSHOT"
+    should_parse: false
+    description: Unclosed function parenthesis
+
+  - name: function_missing_comma
+    expression: "has_count(BOTTLE 2)"
+    should_parse: false
+    description: Missing comma between arguments
