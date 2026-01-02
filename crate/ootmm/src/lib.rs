@@ -13,6 +13,7 @@
 )]
 #![forbid(unsafe_code)]
 
+pub mod checks;
 pub mod embedded_data;
 pub mod error;
 pub mod expr;
@@ -26,6 +27,9 @@ pub mod world_database;
 pub use item::{Game, Item, ItemCategory, MmItem, OotItem};
 pub use items::{ItemMapping, ItemName, MappingError};
 pub use world_database::WorldDatabase;
+
+// Re-export check tracking types
+pub use checks::{CheckError, CheckStatus, CheckTracker, GameContext};
 
 // Re-export embedded data convenience functions
 pub use embedded_data::{create_world_database, create_world_database_from};
