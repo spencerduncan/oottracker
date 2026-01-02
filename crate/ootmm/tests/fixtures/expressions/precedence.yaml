@@ -1,0 +1,89 @@
+# Operator precedence test cases
+name: Operator Precedence
+description: Tests for operator precedence and associativity
+
+test_cases:
+  # AND has higher precedence than OR
+  - name: and_over_or_left
+    expression: "a || b && c"
+    should_parse: true
+    description: AND binds tighter than OR (a || (b && c))
+
+  - name: and_over_or_right
+    expression: "a && b || c"
+    should_parse: true
+    description: AND binds tighter than OR ((a && b) || c)
+
+  - name: and_over_or_complex
+    expression: "a || b && c || d"
+    should_parse: true
+    description: Multiple mixed operators
+
+  # NOT has highest precedence
+  - name: not_over_and
+    expression: "!a && b"
+    should_parse: true
+    description: NOT binds tighter than AND ((!a) && b)
+
+  - name: not_over_or
+    expression: "!a || b"
+    should_parse: true
+    description: NOT binds tighter than OR ((!a) || b)
+
+  - name: not_in_complex
+    expression: "!a && !b || !c"
+    should_parse: true
+    description: Multiple NOT operators with AND/OR
+
+  # Left associativity
+  - name: and_left_assoc
+    expression: "a && b && c"
+    should_parse: true
+    description: AND is left-associative ((a && b) && c)
+
+  - name: or_left_assoc
+    expression: "a || b || c"
+    should_parse: true
+    description: OR is left-associative ((a || b) || c)
+
+  - name: long_chain
+    expression: "a && b && c && d && e"
+    should_parse: true
+    description: Long chain of AND operators
+
+  # Parentheses override precedence
+  - name: paren_override_and
+    expression: "(a || b) && c"
+    should_parse: true
+    description: Parentheses make OR group first
+
+  - name: paren_override_or
+    expression: "a || (b && c)"
+    should_parse: true
+    description: Explicit grouping matching natural precedence
+
+  - name: paren_nested
+    expression: "((a || b) && (c || d))"
+    should_parse: true
+    description: Nested parenthetical groups
+
+  - name: paren_not
+    expression: "!(a && b)"
+    should_parse: true
+    description: NOT of grouped expression
+
+  # Complex real-world precedence
+  - name: complex_precedence_1
+    expression: "is_adult && has(HOOKSHOT) || is_child && has(BOOMERANG)"
+    should_parse: true
+    description: Real-world item check expression
+
+  - name: complex_precedence_2
+    expression: "!is_child && (has(BOW) || has(SLINGSHOT)) && event(DEKU_TREE_CLEAR)"
+    should_parse: true
+    description: Complex logic condition
+
+  - name: complex_precedence_3
+    expression: "(a || b) && (c || d) && (e || f)"
+    should_parse: true
+    description: Multiple OR groups with AND

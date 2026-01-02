@@ -1,0 +1,116 @@
+# Basic expression parsing test cases
+name: Basic Expression Parsing
+description: Tests for fundamental expression parsing functionality
+
+test_cases:
+  # Boolean literals
+  - name: parse_true
+    expression: "true"
+    should_parse: true
+    description: Simple true literal
+
+  - name: parse_false
+    expression: "false"
+    should_parse: true
+    description: Simple false literal
+
+  # Numeric literals
+  - name: parse_number
+    expression: "42"
+    should_parse: true
+    description: Simple numeric literal
+
+  - name: parse_zero
+    expression: "0"
+    should_parse: true
+    description: Zero literal
+
+  - name: parse_negative_number
+    expression: "-1"
+    should_parse: false
+    description: Negative numbers not currently supported by lexer
+
+  # String literals
+  - name: parse_string
+    expression: '"hello"'
+    should_parse: true
+    description: Simple string literal
+
+  - name: parse_empty_string
+    expression: '""'
+    should_parse: true
+    description: Empty string literal
+
+  # Identifiers
+  - name: parse_identifier
+    expression: "is_adult"
+    should_parse: true
+    description: Simple identifier
+
+  - name: parse_identifier_with_underscores
+    expression: "has_item_count"
+    should_parse: true
+    description: Identifier with underscores
+
+  - name: parse_uppercase_identifier
+    expression: "HOOKSHOT"
+    should_parse: true
+    description: Uppercase identifier
+
+  # Logical operators
+  - name: parse_and
+    expression: "a && b"
+    should_parse: true
+    description: Simple AND expression
+
+  - name: parse_or
+    expression: "a || b"
+    should_parse: true
+    description: Simple OR expression
+
+  - name: parse_not
+    expression: "!a"
+    should_parse: true
+    description: Simple NOT expression
+
+  - name: parse_double_not
+    expression: "!!a"
+    should_parse: true
+    description: Double negation
+
+  # Parentheses
+  - name: parse_parentheses
+    expression: "(a)"
+    should_parse: true
+    description: Expression in parentheses
+
+  - name: parse_nested_parentheses
+    expression: "((a))"
+    should_parse: true
+    description: Nested parentheses
+
+  # Error cases
+  - name: parse_empty
+    expression: ""
+    should_parse: false
+    description: Empty input should fail
+
+  - name: parse_unclosed_paren
+    expression: "(a"
+    should_parse: false
+    description: Unclosed parenthesis should fail
+
+  - name: parse_extra_tokens
+    expression: "a b"
+    should_parse: false
+    description: Extra tokens should fail
+
+  - name: parse_dangling_operator
+    expression: "a &&"
+    should_parse: false
+    description: Dangling operator should fail
+
+  - name: parse_leading_operator
+    expression: "&& a"
+    should_parse: false
+    description: Leading binary operator should fail
