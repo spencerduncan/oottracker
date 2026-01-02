@@ -220,7 +220,10 @@ mod tests {
         // Test MQ display for main dungeons
         let main_dungeons = [
             (MainDungeon::DekuTree, "is Deku Tree MQ or vanilla"),
-            (MainDungeon::DodongosCavern, "is Dodongo's Cavern MQ or vanilla"),
+            (
+                MainDungeon::DodongosCavern,
+                "is Dodongo's Cavern MQ or vanilla",
+            ),
             (MainDungeon::JabuJabu, "is Jabu-Jabu MQ or vanilla"),
             (MainDungeon::ForestTemple, "is Forest Temple MQ or vanilla"),
             (MainDungeon::FireTemple, "is Fire Temple MQ or vanilla"),
@@ -239,8 +242,14 @@ mod tests {
     fn display_mq_mini_dungeons() {
         let mini_dungeons = [
             (Dungeon::IceCavern, "is Ice Cavern MQ or vanilla"),
-            (Dungeon::BottomOfTheWell, "is Bottom of the Well MQ or vanilla"),
-            (Dungeon::GerudoTrainingGround, "is Gerudo Training Ground MQ or vanilla"),
+            (
+                Dungeon::BottomOfTheWell,
+                "is Bottom of the Well MQ or vanilla",
+            ),
+            (
+                Dungeon::GerudoTrainingGround,
+                "is Gerudo Training Ground MQ or vanilla",
+            ),
             (Dungeon::GanonsCastle, "is Ganon's Castle MQ or vanilla"),
         ];
 
@@ -318,8 +327,7 @@ mod tests {
 
     #[test]
     fn display_location_with_special_characters() {
-        let check: Check<MockRando> =
-            Check::Location("KF Mido's Top Left Chest".to_string());
+        let check: Check<MockRando> = Check::Location("KF Mido's Top Left Chest".to_string());
         assert_eq!(format!("{}", check), "KF Mido's Top Left Chest");
     }
 
@@ -335,29 +343,20 @@ mod tests {
 
     #[test]
     fn display_setting_with_underscores() {
-        let check: Check<MockRando> =
-            Check::Setting("shuffle_interior_entrances".to_string());
-        assert_eq!(
-            format!("{}", check),
-            "setting: shuffle_interior_entrances"
-        );
+        let check: Check<MockRando> = Check::Setting("shuffle_interior_entrances".to_string());
+        assert_eq!(format!("{}", check), "setting: shuffle_interior_entrances");
     }
 
     #[test]
     fn display_trick_with_underscores() {
-        let check: Check<MockRando> =
-            Check::Trick("logic_dc_jump".to_string());
+        let check: Check<MockRando> = Check::Trick("logic_dc_jump".to_string());
         assert_eq!(format!("{}", check), "trick: logic_dc_jump");
     }
 
     #[test]
     fn display_logic_helper_with_underscores() {
-        let check: Check<MockRando> =
-            Check::LogicHelper("can_blast_or_smash".to_string());
-        assert_eq!(
-            format!("{}", check),
-            "logic helper \"can_blast_or_smash\""
-        );
+        let check: Check<MockRando> = Check::LogicHelper("can_blast_or_smash".to_string());
+        assert_eq!(format!("{}", check), "logic helper \"can_blast_or_smash\"");
     }
 
     #[test]

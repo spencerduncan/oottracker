@@ -299,10 +299,7 @@ mod tests {
         // Equal regions must have equal hashes (Rust contract)
         let hash1 = compute_hash(&region1);
         let hash2 = compute_hash(&region2);
-        assert_eq!(
-            hash1, hash2,
-            "Equal regions must have equal hashes"
-        );
+        assert_eq!(hash1, hash2, "Equal regions must have equal hashes");
     }
 
     #[test]
@@ -420,7 +417,9 @@ mod tests {
         assert!(!region.time_passes);
         assert!(region.events.contains("Deku Tree Clear"));
         assert!(region.locations.contains("Deku Tree Compass Chest"));
-        assert!(region.exits.contains(&MockRegionName::from("Kokiri Forest")));
+        assert!(region
+            .exits
+            .contains(&MockRegionName::from("Kokiri Forest")));
     }
 
     #[test]

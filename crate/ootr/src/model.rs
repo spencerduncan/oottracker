@@ -704,12 +704,7 @@ mod tests {
         for reward in enum_iterator::all::<DungeonReward>() {
             let item: Item = reward.into();
             let result = DungeonReward::try_from(item);
-            assert_eq!(
-                result,
-                Ok(reward),
-                "TryFrom<Item> failed for {:?}",
-                reward
-            );
+            assert_eq!(result, Ok(reward), "TryFrom<Item> failed for {:?}", reward);
         }
     }
 
