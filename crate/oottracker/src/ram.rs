@@ -1,6 +1,5 @@
 use {
     crate::{
-        mm_save::{MM_ADDR, MM_SIZE},
         save::{self, Save},
         scene::{Scene, SceneFlags},
     },
@@ -22,13 +21,18 @@ use {
     tokio::io::{AsyncRead, AsyncReadExt as _, AsyncWrite, AsyncWriteExt as _},
 };
 
+use crate::mm_save;
+
 pub const SIZE: usize = 0x80_0000;
-pub const NUM_RANGES: usize = 8;
 pub const TEXT_LEN: usize = 0xc0;
 pub const PAUSE_CTX_LEN: usize = 0x16;
 
-// OoT memory ranges (RDRAM addresses)
-pub static RANGES: [u32; NUM_RANGES * 2] = [
+// ============================================================================
+// OoT RAM Ranges
+// ============================================================================
+
+pub const OOT_NUM_RANGES: usize = 8;
+pub static OOT_RANGES: [u32; OOT_NUM_RANGES * 2] = [
     save::ADDR,
     save::SIZE as u32,
     0x1c84b4,
@@ -47,18 +51,31 @@ pub static RANGES: [u32; NUM_RANGES * 2] = [
     PAUSE_CTX_LEN as u32, // relevant parts of z64_game.pause_ctxt
 ];
 
-// MM memory ranges (RDRAM addresses)
-// MM SaveContext: 0x801ef670 converted to RDRAM = 0x1ef670
-pub const MM_SAVE_RDRAM_ADDR: u32 = MM_ADDR & 0x00FF_FFFF; // 0x1ef670
+// ============================================================================
+// MM RAM Ranges
+// ============================================================================
+
+/// MM SaveContext offset in RDRAM (0x801ef670 - 0x80000000)
+pub const MM_SAVE_ADDR: u32 = 0x1ef670;
+
 pub const MM_NUM_RANGES: usize = 1;
 pub static MM_RANGES: [u32; MM_NUM_RANGES * 2] = [
-    MM_SAVE_RDRAM_ADDR,
-    MM_SIZE as u32, // 0x48d0 = 18640 bytes
+    MM_SAVE_ADDR,
+    mm_save::MM_SIZE as u32, // MM SaveContext (0x48d0 bytes)
 ];
 
-// Combo randomizer context addresses (System Bus addresses)
-pub const COMBO_OOT_CONTEXT_ADDR: u32 = 0x8000_6584;
-pub const COMBO_MM_CONTEXT_ADDR: u32 = 0x8009_8280;
+// ============================================================================
+// Combo Context Addresses (for OoTMM game detection)
+// ============================================================================
+
+/// OoT combo context address offset (0x80006584 - 0x80000000)
+pub const OOT_COMBO_CONTEXT_ADDR: u32 = 0x6584;
+/// MM combo context address offset (0x80098280 - 0x80000000)
+pub const MM_COMBO_CONTEXT_ADDR: u32 = 0x98280;
+
+// ============================================================================
+// Game Type Detection
+// ============================================================================
 
 /// Detected game type for auto-tracking
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -84,6 +101,13 @@ impl GameType {
         matches!(self, GameType::MajorasMask | GameType::Combo)
     }
 }
+
+// ============================================================================
+// Legacy aliases for backwards compatibility
+// ============================================================================
+
+pub const NUM_RANGES: usize = OOT_NUM_RANGES;
+pub static RANGES: [u32; NUM_RANGES * 2] = OOT_RANGES;
 
 #[derive(Debug, From, Clone)]
 pub enum DecodeError {

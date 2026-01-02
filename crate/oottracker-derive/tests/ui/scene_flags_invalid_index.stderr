@@ -1,0 +1,5 @@
+error: expected integer literal
+  --> tests/ui/scene_flags_invalid_index.rs:27:9
+   |
+27 |         invalid: "Test Scene" {
+   |         ^^^^^^^

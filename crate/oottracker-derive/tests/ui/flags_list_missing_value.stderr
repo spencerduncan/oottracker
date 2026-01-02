@@ -1,0 +1,5 @@
+error: expected `=`
+  --> tests/ui/flags_list_missing_value.rs:15:19
+   |
+15 |             FLAG_A,
+   |                   ^

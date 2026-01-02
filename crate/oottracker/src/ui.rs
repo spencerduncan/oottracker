@@ -2380,6 +2380,464 @@ cells! {
         active: Box::new(|_| false),
         toggle: Box::new(|_| ()),
     },
+
+    // ============================================================================
+    // MM Items - Transformation Masks
+    // ============================================================================
+    MmDekuMask: Simple {
+        img: ImageInfo::mm("deku_mask"),
+        active: Box::new(|_| false), // TODO: Connect to MM save data
+        toggle: Box::new(|_| ()),
+    },
+    MmGoronMask: Simple {
+        img: ImageInfo::mm("goron_mask"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmZoraMask: Simple {
+        img: ImageInfo::mm("zora_mask"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmFierceDeityMask: Simple {
+        img: ImageInfo::mm("fierce_deity_mask"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+
+    // ============================================================================
+    // MM Items - Collectible Masks (24 unique)
+    // ============================================================================
+    MmPostmanHat: Simple {
+        img: ImageInfo::mm("postman_hat"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmAllNightMask: Simple {
+        img: ImageInfo::mm("all_night_mask"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmBlastMask: Simple {
+        img: ImageInfo::mm("blast_mask"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmStoneMask: Simple {
+        img: ImageInfo::mm("stone_mask"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmGreatFairyMask: Simple {
+        img: ImageInfo::mm("great_fairy_mask"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmKeatonMask: Simple {
+        img: ImageInfo::mm("keaton_mask"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmBremenMask: Simple {
+        img: ImageInfo::mm("bremen_mask"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmBunnyHood: Simple {
+        img: ImageInfo::mm("bunny_hood"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmDonGeroMask: Simple {
+        img: ImageInfo::mm("don_gero_mask"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmMaskOfScents: Simple {
+        img: ImageInfo::mm("mask_of_scents"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmRomaniMask: Simple {
+        img: ImageInfo::mm("romani_mask"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmCircusLeaderMask: Simple {
+        img: ImageInfo::mm("circus_leader_mask"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmKafeiMask: Simple {
+        img: ImageInfo::mm("kafei_mask"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmCouplesMask: Simple {
+        img: ImageInfo::mm("couples_mask"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmMaskOfTruth: Simple {
+        img: ImageInfo::mm("mask_of_truth"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmKamaroMask: Simple {
+        img: ImageInfo::mm("kamaro_mask"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmGibdoMask: Simple {
+        img: ImageInfo::mm("gibdo_mask"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmGaroMask: Simple {
+        img: ImageInfo::mm("garo_mask"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmCaptainHat: Simple {
+        img: ImageInfo::mm("captain_hat"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmGiantMask: Simple {
+        img: ImageInfo::mm("giant_mask"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+
+    // ============================================================================
+    // MM Items - Boss Remains
+    // ============================================================================
+    MmOdolwaRemains: Simple {
+        img: ImageInfo::mm("odolwa_remains"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmGohtRemains: Simple {
+        img: ImageInfo::mm("goht_remains"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmGyorgRemains: Simple {
+        img: ImageInfo::mm("gyorg_remains"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmTwinmoldRemains: Simple {
+        img: ImageInfo::mm("twinmold_remains"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+
+    // ============================================================================
+    // MM Items - Stray Fairies (per dungeon)
+    // ============================================================================
+    MmStrayFairyWoodfall: Count {
+        dimmed_img: ImageInfo::mm("stray_fairy_woodfall"),
+        img: ImageInfo::mm("stray_fairy_woodfall"),
+        get: Box::new(|_| 0), // TODO: Connect to MM save data
+        set: Box::new(|_, _| ()),
+        max: 15,
+        step: 1,
+    },
+    MmStrayFairySnowhead: Count {
+        dimmed_img: ImageInfo::mm("stray_fairy_snowhead"),
+        img: ImageInfo::mm("stray_fairy_snowhead"),
+        get: Box::new(|_| 0),
+        set: Box::new(|_, _| ()),
+        max: 15,
+        step: 1,
+    },
+    MmStrayFairyGreatBay: Count {
+        dimmed_img: ImageInfo::mm("stray_fairy_great_bay"),
+        img: ImageInfo::mm("stray_fairy_great_bay"),
+        get: Box::new(|_| 0),
+        set: Box::new(|_, _| ()),
+        max: 15,
+        step: 1,
+    },
+    MmStrayFairyStoneTower: Count {
+        dimmed_img: ImageInfo::mm("stray_fairy_stone_tower"),
+        img: ImageInfo::mm("stray_fairy_stone_tower"),
+        get: Box::new(|_| 0),
+        set: Box::new(|_, _| ()),
+        max: 15,
+        step: 1,
+    },
+    MmStrayFairyClockTown: Simple {
+        img: ImageInfo::mm("stray_fairy_clock_town"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+
+    // ============================================================================
+    // MM Items - Songs
+    // ============================================================================
+    MmSongOfTime: Simple {
+        img: ImageInfo::mm("song_of_time"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmSongOfHealing: Simple {
+        img: ImageInfo::mm("song_of_healing"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmEponasSong: Simple {
+        img: ImageInfo::mm("eponas_song"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmSongOfSoaring: Simple {
+        img: ImageInfo::mm("song_of_soaring"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmSongOfStorms: Simple {
+        img: ImageInfo::mm("song_of_storms"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmSonataOfAwakening: Simple {
+        img: ImageInfo::mm("sonata_of_awakening"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmGoronLullaby: Simple {
+        img: ImageInfo::mm("goron_lullaby"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmNewWaveBossaNova: Simple {
+        img: ImageInfo::mm("new_wave_bossa_nova"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmElegyOfEmptiness: Simple {
+        img: ImageInfo::mm("elegy_of_emptiness"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmOathToOrder: Simple {
+        img: ImageInfo::mm("oath_to_order"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+
+    // ============================================================================
+    // MM Items - Bomber's Notebook
+    // ============================================================================
+    MmBomberNotebook: Simple {
+        img: ImageInfo::mm("bomber_notebook"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+
+    // ============================================================================
+    // MM Items - Equipment
+    // ============================================================================
+    MmOcarina: Simple {
+        img: ImageInfo::mm("ocarina"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmHerosBow: Simple {
+        img: ImageInfo::mm("heros_bow"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmFireArrow: Simple {
+        img: ImageInfo::mm("fire_arrow"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmIceArrow: Simple {
+        img: ImageInfo::mm("ice_arrow"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmLightArrow: Simple {
+        img: ImageInfo::mm("light_arrow"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmHookshot: Simple {
+        img: ImageInfo::mm("hookshot"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmBombs: Simple {
+        img: ImageInfo::mm("bombs"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmBombchu: Simple {
+        img: ImageInfo::mm("bombchu"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmPowderKeg: Simple {
+        img: ImageInfo::mm("powder_keg"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmLensOfTruth: Simple {
+        img: ImageInfo::mm("lens_of_truth"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmPictographBox: Simple {
+        img: ImageInfo::mm("pictograph_box"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmGreatFairySword: Simple {
+        img: ImageInfo::mm("great_fairy_sword"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmMagicBean: Simple {
+        img: ImageInfo::mm("magic_bean"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+
+    // ============================================================================
+    // MM Items - Swords
+    // ============================================================================
+    MmSword: Sequence {
+        idx: Box::new(|_| 0), // TODO: Connect to MM save data
+        img: Box::new(|_| (false, ImageInfo::mm("kokiri_sword"))),
+        increment: Box::new(|_| ()),
+        decrement: Box::new(|_| ()),
+    },
+
+    // ============================================================================
+    // MM Items - Shields
+    // ============================================================================
+    MmShield: Sequence {
+        idx: Box::new(|_| 0),
+        img: Box::new(|_| (false, ImageInfo::mm("hero_shield"))),
+        increment: Box::new(|_| ()),
+        decrement: Box::new(|_| ()),
+    },
+
+    // ============================================================================
+    // MM Items - Bottles
+    // ============================================================================
+    MmBottle: Count {
+        dimmed_img: ImageInfo::mm("bottle"),
+        img: ImageInfo::mm("bottle"),
+        get: Box::new(|_| 0),
+        set: Box::new(|_, _| ()),
+        max: 6,
+        step: 1,
+    },
+
+    // ============================================================================
+    // MM Items - Wallet/Upgrades
+    // ============================================================================
+    MmWallet: Sequence {
+        idx: Box::new(|_| 0),
+        img: Box::new(|_| (false, ImageInfo::mm("wallet"))),
+        increment: Box::new(|_| ()),
+        decrement: Box::new(|_| ()),
+    },
+    MmMagic: Simple {
+        img: ImageInfo::mm("magic"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+    MmDoubleDefense: Simple {
+        img: ImageInfo::mm("double_defense"),
+        active: Box::new(|_| false),
+        toggle: Box::new(|_| ()),
+    },
+
+    // ============================================================================
+    // MM Items - Dungeon Keys
+    // ============================================================================
+    MmWoodfallSmallKeys: TrackerCellKind::SmallKeys {
+        get: Box::new(|_| 0),
+        set: Box::new(|_, _| ()),
+        max_vanilla: 1,
+        max_mq: 1,
+    },
+    MmSnowheadSmallKeys: TrackerCellKind::SmallKeys {
+        get: Box::new(|_| 0),
+        set: Box::new(|_, _| ()),
+        max_vanilla: 3,
+        max_mq: 3,
+    },
+    MmGreatBaySmallKeys: TrackerCellKind::SmallKeys {
+        get: Box::new(|_| 0),
+        set: Box::new(|_, _| ()),
+        max_vanilla: 1,
+        max_mq: 1,
+    },
+    MmStoneTowerSmallKeys: TrackerCellKind::SmallKeys {
+        get: Box::new(|_| 0),
+        set: Box::new(|_, _| ()),
+        max_vanilla: 4,
+        max_mq: 4,
+    },
+
+    // ============================================================================
+    // MM Items - Item Sharing Indicators (OoTMM combo rando)
+    // ============================================================================
+    MmSharedOcarina: Overlay {
+        main_img: ImageInfo::mm("ocarina"),
+        overlay_img: ImageInfo::extra("oot_badge"),
+        active: Box::new(|_| (false, false)),
+        toggle_main: Box::new(|_| ()),
+        toggle_overlay: Box::new(|_| ()),
+    },
+    MmSharedHookshot: Overlay {
+        main_img: ImageInfo::mm("hookshot"),
+        overlay_img: ImageInfo::extra("oot_badge"),
+        active: Box::new(|_| (false, false)),
+        toggle_main: Box::new(|_| ()),
+        toggle_overlay: Box::new(|_| ()),
+    },
+    MmSharedBow: Overlay {
+        main_img: ImageInfo::mm("heros_bow"),
+        overlay_img: ImageInfo::extra("oot_badge"),
+        active: Box::new(|_| (false, false)),
+        toggle_main: Box::new(|_| ()),
+        toggle_overlay: Box::new(|_| ()),
+    },
+    MmSharedBombs: Overlay {
+        main_img: ImageInfo::mm("bombs"),
+        overlay_img: ImageInfo::extra("oot_badge"),
+        active: Box::new(|_| (false, false)),
+        toggle_main: Box::new(|_| ()),
+        toggle_overlay: Box::new(|_| ()),
+    },
+    MmSharedMagic: Overlay {
+        main_img: ImageInfo::mm("magic"),
+        overlay_img: ImageInfo::extra("oot_badge"),
+        active: Box::new(|_| (false, false)),
+        toggle_main: Box::new(|_| ()),
+        toggle_overlay: Box::new(|_| ()),
+    },
+    MmSharedLens: Overlay {
+        main_img: ImageInfo::mm("lens_of_truth"),
+        overlay_img: ImageInfo::extra("oot_badge"),
+        active: Box::new(|_| (false, false)),
+        toggle_main: Box::new(|_| ()),
+        toggle_overlay: Box::new(|_| ()),
+    },
+    MmSharedWallet: Overlay {
+        main_img: ImageInfo::mm("wallet"),
+        overlay_img: ImageInfo::extra("oot_badge"),
+        active: Box::new(|_| (false, false)),
+        toggle_main: Box::new(|_| ()),
+        toggle_overlay: Box::new(|_| ()),
+    },
 }
 
 impl TrackerCellId {
@@ -2436,6 +2894,13 @@ pub enum TrackerLayout {
     TsgMainWithRewardLocations,
     TsgMainWithRewardLocationsEdit,
     TriforcePieces,
+    // MM-specific layouts
+    MmDefault,
+    MmMasks,
+    MmBossRemains,
+    MmStrayFairies,
+    MmSongs,
+    MmEquipment,
 }
 
 pub struct CellLayout {
@@ -3014,6 +3479,189 @@ impl TrackerLayout {
                 ]
             ),
             Self::TriforcePieces => columns!(1, [Triforce,]),
+
+            // ============================================================================
+            // MM Layouts
+            // ============================================================================
+            Self::MmDefault => {
+                // Default MM layout showing key items
+                // Row 1: Boss Remains (4)
+                // Row 2: Transformation Masks (4)
+                // Row 3: Equipment (6)
+                // Row 4: Songs (6)
+                // Row 5: Stray Fairies (5)
+                columns!(
+                    6,
+                    [
+                        // Row 1: Boss Remains
+                        MmOdolwaRemains,
+                        MmGohtRemains,
+                        MmGyorgRemains,
+                        MmTwinmoldRemains,
+                        MmBomberNotebook,
+                        MmBottle,
+                        // Row 2: Transformation Masks + Upgrades
+                        MmDekuMask,
+                        MmGoronMask,
+                        MmZoraMask,
+                        MmFierceDeityMask,
+                        MmMagic,
+                        MmDoubleDefense,
+                        // Row 3: Equipment
+                        MmOcarina,
+                        MmHerosBow,
+                        MmHookshot,
+                        MmBombs,
+                        MmPowderKeg,
+                        MmLensOfTruth,
+                        // Row 4: Songs (first 6)
+                        MmSongOfTime,
+                        MmSongOfHealing,
+                        MmEponasSong,
+                        MmSongOfSoaring,
+                        MmSongOfStorms,
+                        MmSonataOfAwakening,
+                        // Row 5: More Songs + Fairies
+                        MmGoronLullaby,
+                        MmNewWaveBossaNova,
+                        MmElegyOfEmptiness,
+                        MmOathToOrder,
+                        MmStrayFairyClockTown,
+                        Blank,
+                        // Row 6: Stray Fairies by dungeon
+                        MmStrayFairyWoodfall,
+                        MmStrayFairySnowhead,
+                        MmStrayFairyGreatBay,
+                        MmStrayFairyStoneTower,
+                        Blank,
+                        Blank,
+                    ]
+                )
+            }
+
+            Self::MmMasks => {
+                // Grid layout for all masks
+                // 4 Transformation + 20 Regular = 24 total
+                // 6x4 grid
+                columns!(
+                    6,
+                    [
+                        // Row 1: Transformation Masks
+                        MmDekuMask,
+                        MmGoronMask,
+                        MmZoraMask,
+                        MmFierceDeityMask,
+                        Blank,
+                        Blank,
+                        // Row 2: Regular Masks 1-6
+                        MmPostmanHat,
+                        MmAllNightMask,
+                        MmBlastMask,
+                        MmStoneMask,
+                        MmGreatFairyMask,
+                        MmKeatonMask,
+                        // Row 3: Regular Masks 7-12
+                        MmBremenMask,
+                        MmBunnyHood,
+                        MmDonGeroMask,
+                        MmMaskOfScents,
+                        MmRomaniMask,
+                        MmCircusLeaderMask,
+                        // Row 4: Regular Masks 13-18
+                        MmKafeiMask,
+                        MmCouplesMask,
+                        MmMaskOfTruth,
+                        MmKamaroMask,
+                        MmGibdoMask,
+                        MmGaroMask,
+                        // Row 5: Regular Masks 19-20
+                        MmCaptainHat,
+                        MmGiantMask,
+                        Blank,
+                        Blank,
+                        Blank,
+                        Blank,
+                    ]
+                )
+            }
+
+            Self::MmBossRemains => {
+                // Compact boss remains display
+                columns!(
+                    4,
+                    [
+                        MmOdolwaRemains,
+                        MmGohtRemains,
+                        MmGyorgRemains,
+                        MmTwinmoldRemains,
+                    ]
+                )
+            }
+
+            Self::MmStrayFairies => {
+                // Stray fairy counters per dungeon
+                columns!(
+                    5,
+                    [
+                        MmStrayFairyWoodfall,
+                        MmStrayFairySnowhead,
+                        MmStrayFairyGreatBay,
+                        MmStrayFairyStoneTower,
+                        MmStrayFairyClockTown,
+                    ]
+                )
+            }
+
+            Self::MmSongs => {
+                // All MM songs in a grid
+                columns!(
+                    5,
+                    [
+                        // Row 1: Shared songs
+                        MmSongOfTime,
+                        MmSongOfHealing,
+                        MmEponasSong,
+                        MmSongOfSoaring,
+                        MmSongOfStorms,
+                        // Row 2: MM-specific songs
+                        MmSonataOfAwakening,
+                        MmGoronLullaby,
+                        MmNewWaveBossaNova,
+                        MmElegyOfEmptiness,
+                        MmOathToOrder,
+                    ]
+                )
+            }
+
+            Self::MmEquipment => {
+                // MM equipment and items
+                columns!(
+                    6,
+                    [
+                        // Row 1: Main equipment
+                        MmOcarina,
+                        MmHerosBow,
+                        MmHookshot,
+                        MmBombs,
+                        MmBombchu,
+                        MmPowderKeg,
+                        // Row 2: More equipment
+                        MmLensOfTruth,
+                        MmPictographBox,
+                        MmGreatFairySword,
+                        MmMagicBean,
+                        MmSword,
+                        MmShield,
+                        // Row 3: Arrows + Upgrades
+                        MmFireArrow,
+                        MmIceArrow,
+                        MmLightArrow,
+                        MmBottle,
+                        MmWallet,
+                        MmMagic,
+                    ]
+                )
+            }
         }
     }
 }
@@ -3056,6 +3704,12 @@ impl fmt::Display for TrackerLayout {
             Self::TsgMainWithRewardLocations => write!(f, "tsg-main-locs"),
             Self::TsgMainWithRewardLocationsEdit => write!(f, "tsg-main-locs-edit"),
             Self::TriforcePieces => write!(f, "triforce-pieces"),
+            Self::MmDefault => write!(f, "mm-default"),
+            Self::MmMasks => write!(f, "mm-masks"),
+            Self::MmBossRemains => write!(f, "mm-boss-remains"),
+            Self::MmStrayFairies => write!(f, "mm-stray-fairies"),
+            Self::MmSongs => write!(f, "mm-songs"),
+            Self::MmEquipment => write!(f, "mm-equipment"),
         }
     }
 }
@@ -3078,6 +3732,12 @@ impl<'a> FromParam<'a> for TrackerLayout {
             "tsg-main-locs" => Self::TsgMainWithRewardLocations,
             "tsg-main-locs-edit" => Self::TsgMainWithRewardLocationsEdit,
             "triforce-pieces" => Self::TriforcePieces,
+            "mm-default" => Self::MmDefault,
+            "mm-masks" => Self::MmMasks,
+            "mm-boss-remains" => Self::MmBossRemains,
+            "mm-stray-fairies" => Self::MmStrayFairies,
+            "mm-songs" => Self::MmSongs,
+            "mm-equipment" => Self::MmEquipment,
             _ => return Err(()),
         })
     }
@@ -3236,6 +3896,7 @@ pub enum ImageDirContext {
 pub enum ImageDir {
     Xopar,
     Extra,
+    Mm,
 }
 
 impl ImageDir {
@@ -3243,12 +3904,16 @@ impl ImageDir {
         match (self, ctx) {
             (ImageDir::Xopar, ImageDirContext::Normal) => "xopar-images",
             (ImageDir::Extra, ImageDirContext::Normal) => "extra-images",
+            (ImageDir::Mm, ImageDirContext::Normal) => "mm-images",
             (ImageDir::Xopar, ImageDirContext::Count(_)) => "xopar-images-count",
             (ImageDir::Extra, ImageDirContext::Count(_)) => "extra-images-count",
+            (ImageDir::Mm, ImageDirContext::Count(_)) => "mm-images-count",
             (ImageDir::Xopar, ImageDirContext::Dimmed) => "xopar-images-dimmed",
             (ImageDir::Extra, ImageDirContext::Dimmed) => "extra-images-dimmed",
+            (ImageDir::Mm, ImageDirContext::Dimmed) => "mm-images-dimmed",
             (ImageDir::Xopar, ImageDirContext::OverlayOnly) => "xopar-overlays",
             (ImageDir::Extra, ImageDirContext::OverlayOnly) => "extra-overlays",
+            (ImageDir::Mm, ImageDirContext::OverlayOnly) => "mm-overlays",
         }
     }
 }
@@ -3274,21 +3939,35 @@ impl ImageInfo {
         }
     }
 
+    pub fn mm(name: impl Into<Cow<'static, str>>) -> ImageInfo {
+        ImageInfo {
+            dir: ImageDir::Mm,
+            name: name.into(),
+        }
+    }
+
     #[cfg(feature = "embed-images")]
     pub fn embedded<T: FromEmbeddedImage>(&self, ctx: ImageDirContext) -> T {
         match (self.dir, ctx) {
             (ImageDir::Xopar, ImageDirContext::Normal) => images::xopar_images(&self.name),
             (ImageDir::Extra, ImageDirContext::Normal) => images::extra_images(&self.name),
+            // MM images fall back to extra images until MM assets are added
+            (ImageDir::Mm, ImageDirContext::Normal) => images::extra_images(&self.name),
             (ImageDir::Xopar, ImageDirContext::Count(count)) => {
                 images::xopar_images_count(&format!("{}_{}", self.name, count))
             }
             (ImageDir::Extra, ImageDirContext::Count(count)) => {
                 images::extra_images_count(&format!("{}_{}", self.name, count))
             }
+            (ImageDir::Mm, ImageDirContext::Count(count)) => {
+                images::extra_images_count(&format!("{}_{}", self.name, count))
+            }
             (ImageDir::Xopar, ImageDirContext::Dimmed) => images::xopar_images_dimmed(&self.name),
             (ImageDir::Extra, ImageDirContext::Dimmed) => images::extra_images_dimmed(&self.name),
+            (ImageDir::Mm, ImageDirContext::Dimmed) => images::extra_images_dimmed(&self.name),
             (ImageDir::Xopar, ImageDirContext::OverlayOnly) => images::xopar_overlays(&self.name),
             (ImageDir::Extra, ImageDirContext::OverlayOnly) => images::extra_overlays(&self.name),
+            (ImageDir::Mm, ImageDirContext::OverlayOnly) => images::extra_overlays(&self.name),
         }
     }
 
@@ -3321,8 +4000,8 @@ impl OverlayImageInfo {
         (match (self.dir, main_active) {
             (ImageDir::Xopar, false) => images::xopar_images_overlay_dimmed,
             (ImageDir::Xopar, true) => images::xopar_images_overlay,
-            (ImageDir::Extra, false) => images::extra_images_overlay_dimmed,
-            (ImageDir::Extra, true) => images::extra_images_overlay,
+            (ImageDir::Extra | ImageDir::Mm, false) => images::extra_images_overlay_dimmed,
+            (ImageDir::Extra | ImageDir::Mm, true) => images::extra_images_overlay,
         })(&format!("{}_{}", self.main, self.overlay))
     }
 
@@ -3331,7 +4010,7 @@ impl OverlayImageInfo {
             "{}-images-overlay{}{}{}_{}",
             match self.dir {
                 ImageDir::Xopar => "xopar",
-                ImageDir::Extra => "extra",
+                ImageDir::Extra | ImageDir::Mm => "extra",
             },
             if main_active { "" } else { "-dimmed" },
             sep,

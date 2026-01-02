@@ -1,0 +1,5 @@
+error: expected `for`
+  --> tests/ui/flags_list_invalid_flag_name.rs:15:17
+   |
+15 |             123 = 0x0001,
+   |                 ^

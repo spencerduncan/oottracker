@@ -428,7 +428,7 @@ async fn retroarch_detect_game(sock: &UdpSocket) -> Result<ram::GameType, Error>
     let oot_magic = retroarch_read_memory_range(sock, crate::save::ADDR + 0x1c, 6).await?;
     if oot_magic == b"ZELDAZ" {
         // Check for combo context to distinguish between standalone OoT and combo
-        let combo_check = retroarch_read_memory_range(sock, ram::COMBO_OOT_CONTEXT_ADDR & 0x00FF_FFFF, 4).await?;
+        let combo_check = retroarch_read_memory_range(sock, ram::OOT_COMBO_CONTEXT_ADDR, 4).await?;
         if combo_check.iter().any(|&b| b != 0) {
             return Ok(ram::GameType::Combo);
         }
@@ -437,7 +437,7 @@ async fn retroarch_detect_game(sock: &UdpSocket) -> Result<ram::GameType, Error>
 
     // Check for MM by reading a signature byte at the MM save context location
     // MM has a different memory layout - check if MM save context appears valid
-    let mm_check = retroarch_read_memory_range(sock, ram::MM_SAVE_RDRAM_ADDR, 4).await?;
+    let mm_check = retroarch_read_memory_range(sock, ram::MM_SAVE_ADDR, 4).await?;
     if mm_check.iter().any(|&b| b != 0) {
         // Additional validation could be added here
         // For now, if we have non-zero data at MM save location and no OoT magic, assume MM

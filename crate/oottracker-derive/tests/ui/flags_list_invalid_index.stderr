@@ -1,0 +1,5 @@
+error: expected integer literal
+  --> tests/ui/flags_list_invalid_index.rs:14:9
+   |
+14 |         abc: {
+   |         ^^^

@@ -90,8 +90,8 @@ namespace Net.Fenhl.OotAutoTracker {
         internal const int MM_SAVE_SIZE = 0x48d0; // 18640 bytes
 
         // Combo randomizer context addresses (RDRAM)
-        internal const int COMBO_OOT_CONTEXT = 0x6584;
-        internal const int COMBO_MM_CONTEXT = 0x98280;
+        internal const int OOT_COMBO_CONTEXT_ADDR = 0x6584;
+        internal const int MM_COMBO_CONTEXT_ADDR = 0x98280;
     }
 
     // Game type detection
@@ -821,7 +821,7 @@ namespace Net.Fenhl.OotAutoTracker {
                     this.isVanilla = Enumerable.SequenceEqual(version, new List<byte>(new byte[] { 0, 0, 0 }));
 
                     // Check for combo randomizer context
-                    var comboCheck = APIs.Memory.ReadByteRange(MmAddresses.COMBO_OOT_CONTEXT, 4, "RDRAM");
+                    var comboCheck = APIs.Memory.ReadByteRange(MmAddresses.OOT_COMBO_CONTEXT_ADDR, 4, "RDRAM");
                     bool isCombo = comboCheck.Any(b => b != 0);
 
                     if (isCombo) {

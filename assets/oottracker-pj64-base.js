@@ -1,5 +1,5 @@
 // The constants above are generated from Rust code in crate/oottracker-utils/src/release.rs. If they're missing, you have the wrong file.
-// Generated constants include: TCP_PORT, SAVE_ADDR, SAVE_SIZE, RAM_RANGES, MM_SAVE_ADDR, MM_SAVE_SIZE, MM_RAM_RANGES, COMBO_OOT_CONTEXT, COMBO_MM_CONTEXT
+// Generated constants include: TCP_PORT, SAVE_ADDR, SAVE_SIZE, RAM_RANGES, MM_SAVE_ADDR, MM_SAVE_SIZE, MM_RAM_RANGES, OOT_COMBO_CONTEXT_ADDR, MM_COMBO_CONTEXT_ADDR
 
 const VERSION = 5; // do not rename this variable, the build script checks against it
 
@@ -47,8 +47,8 @@ function checkOotGameMode(saveData) {
 
 // Check for combo randomizer context
 function checkComboContext() {
-    if (typeof COMBO_OOT_CONTEXT === 'undefined') { return false; }
-    var comboData = mem.getblock(ADDR_ANY_RDRAM.start + COMBO_OOT_CONTEXT, 4);
+    if (typeof OOT_COMBO_CONTEXT_ADDR === 'undefined') { return false; }
+    var comboData = mem.getblock(ADDR_ANY_RDRAM.start + OOT_COMBO_CONTEXT_ADDR, 4);
     return comboData[0] != 0 || comboData[1] != 0 || comboData[2] != 0 || comboData[3] != 0;
 }
 

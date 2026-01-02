@@ -645,8 +645,16 @@ impl Task<Result<(), Error>> for BuildPj64 {
                             .join(", ")
                     )?;
                     // MM constants
-                    writeln!(&mut buf, "const MM_SAVE_ADDR = 0x{:x};", oottracker::ram::MM_SAVE_RDRAM_ADDR)?;
-                    writeln!(&mut buf, "const MM_SAVE_SIZE = 0x{:x};", oottracker::mm_save::MM_SIZE)?;
+                    writeln!(
+                        &mut buf,
+                        "const MM_SAVE_ADDR = {};",
+                        oottracker::ram::MM_SAVE_ADDR
+                    )?;
+                    writeln!(
+                        &mut buf,
+                        "const MM_SAVE_SIZE = {};",
+                        oottracker::mm_save::MM_SIZE
+                    )?;
                     writeln!(
                         &mut buf,
                         "const MM_RAM_RANGES = [{}];",
@@ -654,12 +662,20 @@ impl Task<Result<(), Error>> for BuildPj64 {
                             .iter()
                             .copied()
                             .tuples()
-                            .map(|(start, len)| format!("[0x{:x}, 0x{:x}]", start, len))
+                            .map(|(start, len)| format!("[{}, {}]", start, len))
                             .join(", ")
                     )?;
-                    // Combo randomizer context addresses (RDRAM)
-                    writeln!(&mut buf, "const COMBO_OOT_CONTEXT = 0x{:x};", oottracker::ram::COMBO_OOT_CONTEXT_ADDR & 0x00FF_FFFF)?;
-                    writeln!(&mut buf, "const COMBO_MM_CONTEXT = 0x{:x};", oottracker::ram::COMBO_MM_CONTEXT_ADDR & 0x00FF_FFFF)?;
+                    // Combo context addresses (for OoTMM game detection)
+                    writeln!(
+                        &mut buf,
+                        "const OOT_COMBO_CONTEXT_ADDR = {};",
+                        oottracker::ram::OOT_COMBO_CONTEXT_ADDR
+                    )?;
+                    writeln!(
+                        &mut buf,
+                        "const MM_COMBO_CONTEXT_ADDR = {};",
+                        oottracker::ram::MM_COMBO_CONTEXT_ADDR
+                    )?;
                     let mut base =
                         BufReader::new(File::open("assets/oottracker-pj64-base.js").await?).lines();
                     while let Some(line) = base.next_line().await? {
