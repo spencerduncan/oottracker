@@ -155,7 +155,7 @@ impl SaveReader for MockSaveReader {
         if let Some(ref error) = self.error {
             return Err(error.clone());
         }
-        self.save.clone().ok_or(MockError::NoData)
+        self.save.ok_or(MockError::NoData)
     }
 }
 
@@ -207,7 +207,7 @@ mod tests {
     #[test]
     fn test_mock_save_reader_with_save() {
         let save = Save::default();
-        let reader = MockSaveReader::with_save(save.clone());
+        let reader = MockSaveReader::with_save(save);
 
         let result = reader.read_save();
         assert!(result.is_ok());
