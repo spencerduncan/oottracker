@@ -7,9 +7,16 @@
     unused_qualifications,
     warnings
 )]
+#![allow(clippy::large_enum_variant)]
 #![forbid(unsafe_code)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+// Mark tokio as used even on platforms where it's not directly imported
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+use tokio as _;
+
+#[cfg(target_os = "windows")]
+use tokio::fs;
 use {
     derivative::Derivative,
     derive_more::From,
@@ -43,7 +50,6 @@ use {
     },
     semver::Version,
     std::{convert::Infallible as Never, env, fmt, io, sync::Arc},
-    tokio::fs,
     url::Url,
     wheel::FromArc,
 };
@@ -51,7 +57,7 @@ use {
 use {
     futures::stream::TryStreamExt as _,
     std::time::Duration,
-    tokio::{fs::File, io::AsyncWriteExt as _, time::sleep},
+    tokio::{fs, fs::File, io::AsyncWriteExt as _, time::sleep},
 };
 
 mod logic;
@@ -339,15 +345,13 @@ impl<R: Rando + 'static> State<R> {
         if self
             .connection
             .as_ref()
-            .map_or(true, |connection| connection.can_change_state())
+            .is_none_or(|connection| connection.can_change_state())
         {
             TrackerLayout::from(&self.config)
+        } else if let Some(ref config) = self.config {
+            TrackerLayout::new_auto(config)
         } else {
-            if let Some(ref config) = self.config {
-                TrackerLayout::new_auto(config)
-            } else {
-                TrackerLayout::default_auto()
-            }
+            TrackerLayout::default_auto()
         }
     }
 
@@ -502,7 +506,7 @@ impl Application for State<ootr_static::Rando> {
         if let Some(ref connection) = self.connection {
             format!("OoT Tracker ({} connected)", connection.display_kind())
         } else {
-            format!("OoT Tracker")
+            "OoT Tracker".to_string()
         }
     }
 
@@ -515,7 +519,7 @@ impl Application for State<ootr_static::Rando> {
                 if self
                     .notification
                     .as_ref()
-                    .map_or(true, |&(is_temp, _)| is_temp)
+                    .is_none_or(|&(is_temp, _)| is_temp)
                 {
                     // don't override an existing, probably more descriptive error message
                     return self.notify(message);
@@ -526,20 +530,18 @@ impl Application for State<ootr_static::Rando> {
             Message::Connect => {
                 if self.connection.is_some() {
                     self.connection = None;
-                } else {
-                    if let Some(ref menu_state) = self.menu_state {
-                        let params = menu_state.connection_params.clone();
-                        let model = self.model.clone();
-                        return Command::single(Action::Future(
-                            async move {
-                                match connect(params, model).await {
-                                    Ok(connection) => Message::SetConnection(connection),
-                                    Err(e) => Message::ConnectionError(e),
-                                }
+                } else if let Some(ref menu_state) = self.menu_state {
+                    let params = menu_state.connection_params.clone();
+                    let model = self.model.clone();
+                    return Command::single(Action::Future(
+                        async move {
+                            match connect(params, model).await {
+                                Ok(connection) => Message::SetConnection(connection),
+                                Err(e) => Message::ConnectionError(e),
                             }
-                            .boxed(),
-                        ));
-                    }
+                        }
+                        .boxed(),
+                    ));
                 }
             }
             Message::ConnectionError(_) => return self.notify(message),
@@ -566,7 +568,7 @@ impl Application for State<ootr_static::Rando> {
                 if cell.kind().left_click(
                     self.connection
                         .as_ref()
-                        .map_or(true, |connection| connection.can_change_state()),
+                        .is_none_or(|connection| connection.can_change_state()),
                     self.keyboard_modifiers,
                     &mut self.model,
                 ) {
@@ -652,7 +654,7 @@ impl Application for State<ootr_static::Rando> {
                         if cell.kind().right_click(
                             self.connection
                                 .as_ref()
-                                .map_or(true, |connection| connection.can_change_state()),
+                                .is_none_or(|connection| connection.can_change_state()),
                             self.keyboard_modifiers,
                             &mut self.model,
                         ) {
@@ -1161,7 +1163,9 @@ async fn connect(
                             .await?,
                         ),
                         Some("restream") => {
-                            return Err(ConnectionError::UnsupportedRoomKind(format!("restream")))
+                            return Err(ConnectionError::UnsupportedRoomKind(
+                                "restream".to_string(),
+                            ))
                         } //TODO support for single-player restream room connections
                         Some(room_kind) => {
                             return Err(ConnectionError::UnsupportedRoomKind(room_kind.to_owned()))
@@ -1354,6 +1358,11 @@ async fn run_updater(
             .spawn()?;
         std::process::exit(0)
     }
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    {
+        let _ = client;
+        unimplemented!("automatic updates are not supported on this platform")
+    }
 }
 
 #[derive(Debug, Default, clap::Parser)]
@@ -1366,7 +1375,7 @@ struct Args {
 #[derive(Debug, From)]
 enum Error {
     Iced(iced::Error),
-    Icon(iced::window::icon::Error),
+    Icon(window::icon::Error),
 }
 
 impl fmt::Display for Error {

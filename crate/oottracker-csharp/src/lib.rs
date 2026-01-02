@@ -19,7 +19,7 @@ use {
         ram::{self, Ram},
         save::{self, GameMode, Save},
         ui::{
-            dirs, CellOverlay, CellRender, CellStyle, Config, ImageDirContext, LocationStyle,
+            CellOverlay, CellRender, CellStyle, Config, ImageDirContext, LocationStyle,
             TrackerCellId, TrackerLayout,
         },
         ModelState, TrackerCtx,
@@ -28,11 +28,18 @@ use {
     std::{
         env,
         ffi::CString,
-        fmt, fs,
+        fmt,
         net::{Ipv4Addr, Ipv6Addr, TcpStream},
-        process::{self, Command},
         slice,
         time::Duration,
+    },
+};
+#[cfg(target_os = "windows")]
+use {
+    oottracker::ui::dirs,
+    std::{
+        fs,
+        process::{self, Command},
     },
 };
 
@@ -164,7 +171,7 @@ pub extern "C" fn update_available() -> HandleOwned<DebugResult<bool>> {
             .build()
             .map_err(DebugError::from)
             .and_then(|client| repo.latest_release_sync(&client).map_err(DebugError::from))
-            .and_then(|release| release.ok_or_else(|| DebugError(format!("no releases"))))
+            .and_then(|release| release.ok_or_else(|| DebugError("no releases".to_string())))
             .and_then(|release| Ok(release.version()? > version())),
     )
 }
@@ -232,7 +239,7 @@ pub extern "C" fn run_updater() -> HandleOwned<DebugResult<()>> {
 
     #[cfg(not(target_os = "windows"))]
     fn inner() -> DebugResult<()> {
-        Err(DebugError(format!("updater only available on Windows")))
+        Err(DebugError("updater only available on Windows".to_string()))
     }
 
     HandleOwned::new(inner())
@@ -277,7 +284,7 @@ pub unsafe extern "C" fn opt_config_result_is_ok_some(
 ) -> FfiBool {
     (&*opt_cfg_res)
         .as_ref()
-        .map_or(false, |opt_cfg| opt_cfg.is_some())
+        .is_ok_and(|opt_cfg| opt_cfg.is_some())
         .into()
 }
 
@@ -634,7 +641,7 @@ pub unsafe extern "C" fn save_send(
     save: *const Save,
 ) -> HandleOwned<DebugResult<()>> {
     HandleOwned::new(
-        Packet::SaveInit((&*save).clone())
+        Packet::SaveInit(*save)
             .write_sync(&mut *tcp_stream)
             .map_err(DebugError::from),
     )
@@ -645,7 +652,7 @@ pub unsafe extern "C" fn save_send(
 /// `save1` and `save2` must point at valid `Save`s.
 #[no_mangle]
 pub unsafe extern "C" fn saves_equal(save1: *const Save, save2: *const Save) -> FfiBool {
-    (&*save1 == &*save2).into()
+    (*save1 == *save2).into()
 }
 
 /// # Safety
@@ -816,7 +823,7 @@ pub unsafe extern "C" fn ram_free(ram: HandleOwned<Ram>) {
 /// `ram1` and `ram2` must point at valid `Ram` values.
 #[no_mangle]
 pub unsafe extern "C" fn ram_equal(ram1: *const Ram, ram2: *const Ram) -> FfiBool {
-    (&*ram1 == &*ram2).into()
+    (*ram1 == *ram2).into()
 }
 
 /// # Safety
@@ -839,7 +846,7 @@ pub unsafe extern "C" fn model_set_ram(model: *mut ModelState, ram: *const Ram) 
 /// `ram` must point at a valid `Ram` and must not be mutated during the function call.
 #[no_mangle]
 pub unsafe extern "C" fn ram_clone_save(ram: *const Ram) -> HandleOwned<Save> {
-    HandleOwned::new((&*ram).save.clone())
+    HandleOwned::new((*ram).save)
 }
 
 /// # Safety
