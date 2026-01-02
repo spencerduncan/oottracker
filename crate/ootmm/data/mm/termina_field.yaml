@@ -1,0 +1,86 @@
+regions:
+  - id: "termina_field"
+    name: "Termina Field"
+    game: mm
+    locations:
+      - id: "tf_bio_baba_grotto_hp"
+        name: "Bio Baba Grotto Heart Piece"
+        locationType: freestanding
+        logic: "canUseProjectile || has(ZoraMask)"
+      - id: "tf_peahat_grotto_hp"
+        name: "Peahat Grotto Heart Piece"
+        locationType: freestanding
+        logic: "has(Hookshot) || has(ZoraMask)"
+      - id: "tf_dodongo_grotto_hp"
+        name: "Dodongo Grotto Heart Piece"
+        locationType: freestanding
+        logic: "has(GoronMask) || has(Bombchus)"
+      - id: "tf_kamaro"
+        name: "Kamaro's Mask"
+        locationType: npc
+        logic: "has(OcarinaOfTime) && hasSong(SongOfHealing)"
+    exits:
+      - target: "clock_town_south"
+        exitType: overworld
+      - target: "clock_town_east"
+        exitType: overworld
+      - target: "clock_town_west"
+        exitType: overworld
+      - target: "road_to_southern_swamp"
+        exitType: overworld
+      - target: "milk_road"
+        exitType: overworld
+      - target: "path_to_mountain_village"
+        exitType: overworld
+        logic: "has(HerosBow) || epona"
+      - target: "great_bay_coast"
+        exitType: overworld
+        logic: "epona"
+      - target: "ikana_canyon"
+        exitType: overworld
+        logic: "epona && has(GaroMask)"
+
+  - id: "road_to_southern_swamp"
+    name: "Road to Southern Swamp"
+    game: mm
+    locations:
+      - id: "rss_tree_hp"
+        name: "Tree Heart Piece"
+        locationType: freestanding
+        logic: "has(Hookshot)"
+      - id: "rss_tingle_map_clock_town"
+        name: "Tingle Clock Town Map"
+        locationType: npc
+        logic: "canUseProjectile"
+      - id: "rss_tingle_map_woodfall"
+        name: "Tingle Woodfall Map"
+        locationType: npc
+        logic: "canUseProjectile"
+    exits:
+      - target: "termina_field"
+        exitType: overworld
+      - target: "southern_swamp"
+        exitType: overworld
+
+  - id: "southern_swamp"
+    name: "Southern Swamp"
+    game: mm
+    locations:
+      - id: "ss_pictograph_contest"
+        name: "Pictograph Contest"
+        locationType: npc
+        logic: "has(Pictograph)"
+      - id: "ss_boat_archery"
+        name: "Boat Archery"
+        locationType: npc
+        logic: "has(HerosBow) && event(WoodfallClear)"
+    exits:
+      - target: "road_to_southern_swamp"
+        exitType: overworld
+      - target: "woodfall"
+        exitType: overworld
+        logic: "has(DekuMask)"
+    events:
+      - id: "woodfall_clear"
+        name: "Woodfall Temple Clear"
+        logic: "boss(Odolwa)"

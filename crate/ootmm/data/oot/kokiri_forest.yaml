@@ -1,0 +1,91 @@
+regions:
+  - id: "kokiri_forest"
+    name: "Kokiri Forest"
+    game: oot
+    locations:
+      - id: "kf_midos_top_left_chest"
+        name: "Mido's House Top Left Chest"
+        locationType: chest
+      - id: "kf_midos_top_right_chest"
+        name: "Mido's House Top Right Chest"
+        locationType: chest
+      - id: "kf_midos_bottom_left_chest"
+        name: "Mido's House Bottom Left Chest"
+        locationType: chest
+      - id: "kf_midos_bottom_right_chest"
+        name: "Mido's House Bottom Right Chest"
+        locationType: chest
+      - id: "kf_kokiri_sword_chest"
+        name: "Kokiri Sword Chest"
+        locationType: chest
+    exits:
+      - target: "lost_woods"
+        exitType: overworld
+      - target: "lost_woods_bridge"
+        exitType: overworld
+        logic: "true"
+      - target: "deku_tree"
+        exitType: dungeon
+        logic: "event(ShowedMidoSwordShield)"
+    events:
+      - id: "showed_mido_sword_shield"
+        name: "Showed Mido Sword and Shield"
+        logic: "has(KokiriSword) && has(DekuShield)"
+
+  - id: "lost_woods"
+    name: "Lost Woods"
+    game: oot
+    locations:
+      - id: "lw_skull_kid"
+        name: "Skull Kid"
+        locationType: npc
+        logic: "has(SariasOcarina)"
+      - id: "lw_ocarina_memory_game"
+        name: "Ocarina Memory Game"
+        locationType: npc
+        logic: "has(SariasOcarina)"
+      - id: "lw_target_in_woods"
+        name: "Target in Woods"
+        locationType: npc
+        logic: "has(Slingshot)"
+    exits:
+      - target: "kokiri_forest"
+        exitType: overworld
+      - target: "sacred_forest_meadow"
+        exitType: overworld
+      - target: "goron_city"
+        exitType: overworld
+      - target: "zoras_river"
+        exitType: overworld
+
+  - id: "lost_woods_bridge"
+    name: "Lost Woods Bridge"
+    game: oot
+    locations:
+      - id: "lw_gift_from_saria"
+        name: "Gift from Saria"
+        locationType: npc
+    exits:
+      - target: "kokiri_forest"
+        exitType: overworld
+      - target: "hyrule_field"
+        exitType: overworld
+
+  - id: "sacred_forest_meadow"
+    name: "Sacred Forest Meadow"
+    game: oot
+    locations:
+      - id: "sfm_wolfos_grotto_chest"
+        name: "Wolfos Grotto Chest"
+        locationType: chest
+        logic: "true"
+      - id: "sfm_sarias_song"
+        name: "Saria's Song"
+        locationType: song
+        logic: "has(SariasOcarina)"
+    exits:
+      - target: "lost_woods"
+        exitType: overworld
+      - target: "forest_temple"
+        exitType: dungeon
+        logic: "has(Hookshot)"

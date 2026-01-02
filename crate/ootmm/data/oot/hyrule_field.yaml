@@ -1,0 +1,73 @@
+regions:
+  - id: "hyrule_field"
+    name: "Hyrule Field"
+    game: oot
+    locations:
+      - id: "hf_ocarina_of_time"
+        name: "Ocarina of Time"
+        locationType: npc
+        logic: "event(ZeldasLetter) && isChild"
+      - id: "hf_near_market_grotto_chest"
+        name: "Near Market Grotto Chest"
+        locationType: chest
+        logic: "canBlastOrSmash"
+      - id: "hf_tektite_grotto_freestanding_poh"
+        name: "Tektite Grotto Freestanding PoH"
+        locationType: freestanding
+        logic: "has(GoldScale) || has(IronBoots)"
+    exits:
+      - target: "market"
+        exitType: overworld
+      - target: "lon_lon_ranch"
+        exitType: overworld
+      - target: "kakariko_village"
+        exitType: overworld
+      - target: "zoras_river"
+        exitType: overworld
+      - target: "lake_hylia"
+        exitType: overworld
+      - target: "gerudo_valley"
+        exitType: overworld
+      - target: "lost_woods_bridge"
+        exitType: overworld
+
+  - id: "market"
+    name: "Market"
+    game: oot
+    locations:
+      - id: "market_treasure_chest_game"
+        name: "Treasure Chest Game"
+        locationType: chest
+        logic: "isChild && (has(Lens) || setting(logicLens, none))"
+      - id: "market_bombchu_bowling_first_prize"
+        name: "Bombchu Bowling First Prize"
+        locationType: npc
+        logic: "isChild && has(Bombchus)"
+      - id: "market_bombchu_bowling_second_prize"
+        name: "Bombchu Bowling Second Prize"
+        locationType: npc
+        logic: "isChild && has(Bombchus)"
+    exits:
+      - target: "hyrule_field"
+        exitType: overworld
+      - target: "temple_of_time"
+        exitType: interior
+      - target: "hyrule_castle"
+        exitType: overworld
+        logic: "isChild"
+
+  - id: "temple_of_time"
+    name: "Temple of Time"
+    game: oot
+    locations:
+      - id: "tot_light_arrows"
+        name: "Light Arrows Cutscene"
+        locationType: npc
+        logic: "isAdult && has(ShadowMedallion) && has(SpiritMedallion)"
+    exits:
+      - target: "market"
+        exitType: interior
+    events:
+      - id: "time_travel"
+        name: "Time Travel"
+        logic: "has(OcarinaOfTime) && hasSong(SongOfTime)"

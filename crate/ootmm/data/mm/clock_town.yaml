@@ -1,0 +1,108 @@
+regions:
+  - id: "clock_town_south"
+    name: "South Clock Town"
+    game: mm
+    locations:
+      - id: "sct_clock_tower_happy_mask_salesman"
+        name: "Clock Tower Happy Mask Salesman"
+        locationType: npc
+        logic: "has(OcarinaOfTime)"
+      - id: "sct_stray_fairy"
+        name: "South Clock Town Stray Fairy"
+        locationType: collectible
+        logic: "has(GreatFairyMask) || canUseProjectile"
+    exits:
+      - target: "clock_town_north"
+        exitType: overworld
+      - target: "clock_town_east"
+        exitType: overworld
+      - target: "clock_town_west"
+        exitType: overworld
+      - target: "clock_tower"
+        exitType: interior
+      - target: "termina_field"
+        exitType: overworld
+
+  - id: "clock_town_north"
+    name: "North Clock Town"
+    game: mm
+    locations:
+      - id: "nct_keaton_quiz"
+        name: "Keaton Quiz"
+        locationType: npc
+        logic: "has(KeatonMask)"
+      - id: "nct_tree_hp"
+        name: "Tree Heart Piece"
+        locationType: freestanding
+        logic: "has(DekuMask) || canHitHighTargets"
+      - id: "nct_deku_playground_all_days"
+        name: "Deku Playground All Three Days"
+        locationType: npc
+        logic: "has(DekuMask)"
+    exits:
+      - target: "clock_town_south"
+        exitType: overworld
+      - target: "clock_town_east"
+        exitType: overworld
+      - target: "great_fairy_fountain_clock_town"
+        exitType: grotto
+
+  - id: "clock_town_east"
+    name: "East Clock Town"
+    game: mm
+    locations:
+      - id: "ect_mayor_dotour_hp"
+        name: "Mayor Dotour Heart Piece"
+        locationType: npc
+        logic: "has(CoupleMask)"
+      - id: "ect_shooting_gallery_perfect"
+        name: "Shooting Gallery Perfect"
+        locationType: npc
+        logic: "has(HerosBow)"
+      - id: "ect_treasure_chest_game_goron"
+        name: "Treasure Chest Game Goron"
+        locationType: chest
+        logic: "has(GoronMask)"
+    exits:
+      - target: "clock_town_south"
+        exitType: overworld
+      - target: "clock_town_north"
+        exitType: overworld
+      - target: "stock_pot_inn"
+        exitType: interior
+      - target: "termina_field"
+        exitType: overworld
+
+  - id: "clock_town_west"
+    name: "West Clock Town"
+    game: mm
+    locations:
+      - id: "wct_swordsman_school_hp"
+        name: "Swordsman School Heart Piece"
+        locationType: npc
+        logic: "true"
+      - id: "wct_postman_freedom"
+        name: "Postman Freedom"
+        locationType: npc
+        logic: "has(PriorityMail)"
+      - id: "wct_rosa_sisters_hp"
+        name: "Rosa Sisters Heart Piece"
+        locationType: npc
+        logic: "has(KamaroMask)"
+    exits:
+      - target: "clock_town_south"
+        exitType: overworld
+      - target: "termina_field"
+        exitType: overworld
+
+  - id: "great_fairy_fountain_clock_town"
+    name: "Great Fairy Fountain Clock Town"
+    game: mm
+    locations:
+      - id: "gf_clock_town_magic"
+        name: "Great Fairy Magic Meter"
+        locationType: fairy
+        logic: "hasAllStrayFairies(ClockTown)"
+    exits:
+      - target: "clock_town_north"
+        exitType: grotto
