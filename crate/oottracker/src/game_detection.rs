@@ -789,11 +789,8 @@ mod tests {
         assert_eq!(mm_result.active_game, ActiveGame::MajorasMask);
         assert_eq!(mm_result.scene_id, 0x6E);
 
-        let combo_result = GameDetectionResult::combo(
-            ActiveGame::OcarinaOfTime,
-            0x51,
-            TransitionState::Stable,
-        );
+        let combo_result =
+            GameDetectionResult::combo(ActiveGame::OcarinaOfTime, 0x51, TransitionState::Stable);
         assert_eq!(combo_result.game_type, GameType::OoTMMCombo);
         assert!(combo_result.is_in_oot());
         assert!(!combo_result.is_in_mm());
@@ -870,19 +867,13 @@ mod tests {
     fn test_transition_scene_detection() {
         let detector = GameDetector::with_game_type(GameType::OoTMMCombo);
 
-        assert!(detector.is_transition_scene(
-            oot_scenes::HAPPY_MASK_SHOP,
-            ActiveGame::OcarinaOfTime
-        ));
-        assert!(!detector.is_transition_scene(
-            oot_scenes::KOKIRI_FOREST,
-            ActiveGame::OcarinaOfTime
-        ));
+        assert!(
+            detector.is_transition_scene(oot_scenes::HAPPY_MASK_SHOP, ActiveGame::OcarinaOfTime)
+        );
+        assert!(!detector.is_transition_scene(oot_scenes::KOKIRI_FOREST, ActiveGame::OcarinaOfTime));
 
         assert!(detector.is_transition_scene(mm_scenes::CLOCK_TOWER, ActiveGame::MajorasMask));
-        assert!(
-            !detector.is_transition_scene(mm_scenes::CLOCK_TOWN_SOUTH, ActiveGame::MajorasMask)
-        );
+        assert!(!detector.is_transition_scene(mm_scenes::CLOCK_TOWN_SOUTH, ActiveGame::MajorasMask));
     }
 
     #[test]

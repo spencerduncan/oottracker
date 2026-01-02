@@ -6,10 +6,7 @@
 //! Reference: OoTMM source - packages/core/include/combo/mm/save.h
 //! MM SaveContext address: 0x801ef670 (size 0x48d0 = 18,640 bytes)
 
-use {
-    bitflags::bitflags,
-    derivative::Derivative,
-};
+use {bitflags::bitflags, derivative::Derivative};
 
 /// MM SaveContext base address in N64 memory
 pub const MM_ADDR: u32 = 0x801ef670;
@@ -167,10 +164,18 @@ impl MmQuestItems {
     /// Returns the number of boss remains collected
     pub fn num_remains(&self) -> u8 {
         let mut count = 0;
-        if self.contains(Self::REMAINS_ODOLWA) { count += 1; }
-        if self.contains(Self::REMAINS_GOHT) { count += 1; }
-        if self.contains(Self::REMAINS_GYORG) { count += 1; }
-        if self.contains(Self::REMAINS_TWINMOLD) { count += 1; }
+        if self.contains(Self::REMAINS_ODOLWA) {
+            count += 1;
+        }
+        if self.contains(Self::REMAINS_GOHT) {
+            count += 1;
+        }
+        if self.contains(Self::REMAINS_GYORG) {
+            count += 1;
+        }
+        if self.contains(Self::REMAINS_TWINMOLD) {
+            count += 1;
+        }
         count
     }
 
@@ -630,10 +635,8 @@ impl MmSaveStub {
         save.masks.transformation = MmTransformationMasks::DEKU
             | MmTransformationMasks::GORON
             | MmTransformationMasks::ZORA;
-        save.masks.masks_low = MmMasksLow::BUNNY
-            | MmMasksLow::STONE
-            | MmMasksLow::GREAT_FAIRY
-            | MmMasksLow::BREMEN;
+        save.masks.masks_low =
+            MmMasksLow::BUNNY | MmMasksLow::STONE | MmMasksLow::GREAT_FAIRY | MmMasksLow::BREMEN;
 
         // Sample quest items
         save.quest_items = MmQuestItems::REMAINS_ODOLWA
@@ -655,12 +658,14 @@ impl MmSaveStub {
         // Sample magic/health
         save.magic = MmMagicCapacity::Double;
         save.health_capacity = 0x140; // 5 hearts
-        save.health = 0x100;          // 4 hearts
+        save.health = 0x100; // 4 hearts
         save.double_defense = true;
 
         // Sample dungeon progress
-        save.dungeon_items.woodfall = MmDungeonItems::MAP | MmDungeonItems::COMPASS | MmDungeonItems::BOSS_KEY;
-        save.dungeon_items.snowhead = MmDungeonItems::MAP | MmDungeonItems::COMPASS | MmDungeonItems::BOSS_KEY;
+        save.dungeon_items.woodfall =
+            MmDungeonItems::MAP | MmDungeonItems::COMPASS | MmDungeonItems::BOSS_KEY;
+        save.dungeon_items.snowhead =
+            MmDungeonItems::MAP | MmDungeonItems::COMPASS | MmDungeonItems::BOSS_KEY;
         save.small_keys.woodfall = 1;
         save.small_keys.snowhead = 3;
 
@@ -771,7 +776,10 @@ mod tests {
         let stub = MmSaveStub::new();
         assert_eq!(stub.game_mode(), MmGameMode::Gameplay);
         assert!(!stub.get_save().inventory.ocarina);
-        assert_eq!(stub.get_save().masks.transformation, MmTransformationMasks::empty());
+        assert_eq!(
+            stub.get_save().masks.transformation,
+            MmTransformationMasks::empty()
+        );
     }
 
     #[test]
@@ -785,10 +793,22 @@ mod tests {
         assert!(save.inventory.hookshot);
 
         // Check sample masks
-        assert!(save.masks.transformation.contains(MmTransformationMasks::DEKU));
-        assert!(save.masks.transformation.contains(MmTransformationMasks::GORON));
-        assert!(save.masks.transformation.contains(MmTransformationMasks::ZORA));
-        assert!(!save.masks.transformation.contains(MmTransformationMasks::FIERCE_DEITY));
+        assert!(save
+            .masks
+            .transformation
+            .contains(MmTransformationMasks::DEKU));
+        assert!(save
+            .masks
+            .transformation
+            .contains(MmTransformationMasks::GORON));
+        assert!(save
+            .masks
+            .transformation
+            .contains(MmTransformationMasks::ZORA));
+        assert!(!save
+            .masks
+            .transformation
+            .contains(MmTransformationMasks::FIERCE_DEITY));
 
         // Check remains
         assert!(save.quest_items.contains(MmQuestItems::REMAINS_ODOLWA));
