@@ -1,5 +1,7 @@
 //! Majora's Mask items.
 
+use crate::item::ItemCategory;
+
 /// MM item enum - all trackable items from Majora's Mask.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[allow(missing_docs)]
@@ -425,6 +427,241 @@ impl MmItem {
                 | Self::BossKeyGreatBayTemple
                 | Self::BossKeyStoneTowerTemple
         )
+    }
+
+    /// Returns the category of this item.
+    #[must_use]
+    pub const fn category(&self) -> ItemCategory {
+        match self {
+            // Transformation Masks
+            Self::DekuMask | Self::GoronMask | Self::ZoraMask | Self::FierceDeityMask => {
+                ItemCategory::TransformationMask
+            }
+
+            // Regular Masks
+            Self::PostmanHat
+            | Self::AllNightMask
+            | Self::BlastMask
+            | Self::StoneMask
+            | Self::GreatFairyMask
+            | Self::KeatonMask
+            | Self::BremenMask
+            | Self::BunnyHood
+            | Self::DonGeroMask
+            | Self::MaskOfScents
+            | Self::RomaniMask
+            | Self::CircusLeaderMask
+            | Self::KafeiMask
+            | Self::CouplesMask
+            | Self::MaskOfTruth
+            | Self::KamaroMask
+            | Self::GibdoMask
+            | Self::GaroMask
+            | Self::CaptainHat
+            | Self::GiantMask => ItemCategory::Mask,
+
+            // Swords
+            Self::KokiriSword | Self::RazorSword | Self::GildedSword | Self::GreatFairySword => {
+                ItemCategory::Sword
+            }
+
+            // Shields
+            Self::HeroShield | Self::MirrorShield => ItemCategory::Shield,
+
+            // Equipment
+            Self::HerosBow
+            | Self::Bomb
+            | Self::Bombchu
+            | Self::DekuStick
+            | Self::DekuNut
+            | Self::MagicBean
+            | Self::PowderKeg
+            | Self::Hookshot
+            | Self::LensOfTruth
+            | Self::PictographBox => ItemCategory::Equipment,
+
+            // Arrows (Equipment)
+            Self::FireArrow | Self::IceArrow | Self::LightArrow => ItemCategory::Equipment,
+
+            // Ocarina
+            Self::OcarinaOfTime => ItemCategory::Ocarina,
+
+            // Bottles and contents
+            Self::Bottle
+            | Self::BottleRedPotion
+            | Self::BottleGreenPotion
+            | Self::BottleBluePotion
+            | Self::BottleFairy
+            | Self::BottleDekuPrincess
+            | Self::BottleFish
+            | Self::BottleBugs
+            | Self::BottlePoe
+            | Self::BottleBigPoe
+            | Self::BottleHotSpringWater
+            | Self::BottleZoraEgg
+            | Self::BottleMushroom
+            | Self::BottleGoldDust
+            | Self::BottleMilk
+            | Self::BottleHalfMilk
+            | Self::BottleChateau
+            | Self::BottleSeaHorse => ItemCategory::Bottle,
+
+            // Songs
+            Self::SongOfTime
+            | Self::SongOfHealing
+            | Self::EponasSong
+            | Self::SongOfSoaring
+            | Self::SongOfStorms
+            | Self::SonataOfAwakening
+            | Self::GoronLullaby
+            | Self::NewWaveBossaNova
+            | Self::ElegyOfEmptiness
+            | Self::OathToOrder => ItemCategory::Song,
+
+            // Upgrades
+            Self::AdultWallet
+            | Self::GiantWallet
+            | Self::GiantsWallet
+            | Self::Quiver30
+            | Self::Quiver40
+            | Self::Quiver50
+            | Self::BombBag20
+            | Self::BombBag30
+            | Self::BombBag40
+            | Self::MagicMeter
+            | Self::DoubleMagic
+            | Self::DoubleDefense => ItemCategory::Upgrade,
+
+            // Quest Items (Title Deeds, Letters, etc.)
+            Self::MoonsTear
+            | Self::LandTitleDeed
+            | Self::SwampTitleDeed
+            | Self::MountainTitleDeed
+            | Self::OceanTitleDeed
+            | Self::OceanTitleDeedTraded
+            | Self::RoomKey
+            | Self::LetterToKafei
+            | Self::PendantOfMemories
+            | Self::LetterToMama
+            | Self::SpecialDeliveryToMama => ItemCategory::Trade,
+
+            // Boss Remains (Quest Items)
+            Self::OdolwaRemains
+            | Self::GohtRemains
+            | Self::GyorgRemains
+            | Self::TwinmoldRemains => ItemCategory::QuestItem,
+
+            // Generic Dungeon Items
+            Self::Map | Self::Compass => ItemCategory::DungeonItem,
+
+            // Small Keys
+            Self::SmallKey
+            | Self::SmallKeyWoodfallTemple
+            | Self::SmallKeySnowheadTemple
+            | Self::SmallKeyGreatBayTemple
+            | Self::SmallKeyStoneTowerTemple => ItemCategory::SmallKey,
+
+            // Boss Keys
+            Self::BossKey
+            | Self::BossKeyWoodfallTemple
+            | Self::BossKeySnowheadTemple
+            | Self::BossKeyGreatBayTemple
+            | Self::BossKeyStoneTowerTemple => ItemCategory::BossKey,
+
+            // Stray Fairies (Tokens)
+            Self::StrayFairy
+            | Self::StrayFairyWoodfall
+            | Self::StrayFairySnowhead
+            | Self::StrayFairyGreatBay
+            | Self::StrayFairyStoneTower
+            | Self::StrayFairyClockTown => ItemCategory::Token,
+
+            // Collectibles/Consumables
+            Self::HeartContainer
+            | Self::PieceOfHeart
+            | Self::GreenRupee
+            | Self::BlueRupee
+            | Self::RedRupee
+            | Self::PurpleRupee
+            | Self::SilverRupee
+            | Self::GoldRupee => ItemCategory::Consumable,
+
+            // Special
+            Self::BomberNotebook => ItemCategory::Special,
+        }
+    }
+
+    /// Returns true if this item can stack (be collected multiple times).
+    #[must_use]
+    pub const fn is_stackable(&self) -> bool {
+        matches!(
+            self,
+            Self::Bomb
+                | Self::DekuStick
+                | Self::DekuNut
+                | Self::Bottle
+                | Self::SmallKey
+                | Self::SmallKeyWoodfallTemple
+                | Self::SmallKeySnowheadTemple
+                | Self::SmallKeyGreatBayTemple
+                | Self::SmallKeyStoneTowerTemple
+                | Self::StrayFairy
+                | Self::StrayFairyWoodfall
+                | Self::StrayFairySnowhead
+                | Self::StrayFairyGreatBay
+                | Self::StrayFairyStoneTower
+                | Self::StrayFairyClockTown
+                | Self::HeartContainer
+                | Self::PieceOfHeart
+                | Self::GreenRupee
+                | Self::BlueRupee
+                | Self::RedRupee
+                | Self::PurpleRupee
+                | Self::SilverRupee
+                | Self::GoldRupee
+        )
+    }
+
+    /// Returns the maximum count for this item.
+    /// Returns 1 for non-stackable items.
+    #[must_use]
+    pub const fn max_count(&self) -> u32 {
+        match self {
+            // Bombs max at 40 with biggest bomb bag
+            Self::Bomb => 40,
+            // Deku Sticks max at 30 (no upgrade in MM)
+            Self::DekuStick => 30,
+            // Deku Nuts max at 40 (no upgrade in MM)
+            Self::DekuNut => 40,
+            // 6 bottles in MM
+            Self::Bottle => 6,
+            // Dungeon-specific small key counts
+            Self::SmallKeyWoodfallTemple => 1,
+            Self::SmallKeySnowheadTemple => 3,
+            Self::SmallKeyGreatBayTemple => 1,
+            Self::SmallKeyStoneTowerTemple => 4,
+            Self::SmallKey => 99, // Generic key, no specific limit
+            // Stray Fairies per dungeon
+            Self::StrayFairyWoodfall => 15,
+            Self::StrayFairySnowhead => 15,
+            Self::StrayFairyGreatBay => 15,
+            Self::StrayFairyStoneTower => 15,
+            Self::StrayFairyClockTown => 1, // Only 1 in Clock Town
+            Self::StrayFairy => 99,         // Generic
+            // Heart pieces
+            Self::PieceOfHeart => 52, // MM has 52 pieces
+            // Heart containers
+            Self::HeartContainer => 4, // 4 from dungeons
+            // Rupees (effectively unlimited in inventory, but track collected)
+            Self::GreenRupee
+            | Self::BlueRupee
+            | Self::RedRupee
+            | Self::PurpleRupee
+            | Self::SilverRupee
+            | Self::GoldRupee => 999,
+            // All other items are single-obtain
+            _ => 1,
+        }
     }
 }
 
