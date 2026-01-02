@@ -450,4 +450,64 @@ mod json_parsing_tests {
         assert_eq!(result["deleted"], false);
         assert!(result["data"].is_null());
     }
+
+    #[test]
+    fn test_json_numeric_types() {
+        // Test various numeric types: integers, floats, negative numbers
+        let input = r#"{"int": 42, "negative": -17, "float": 3.14, "exp": 1.5e10}"#;
+        let reader = Cursor::new(input);
+        let result: serde_json::Value = read_json_lenient_sync(reader).unwrap();
+        assert_eq!(result["int"], 42);
+        assert_eq!(result["negative"], -17);
+        assert_eq!(result["float"], 3.14);
+        assert_eq!(result["exp"], 1.5e10);
+    }
+
+    #[test]
+    fn test_empty_json_structures() {
+        // Test empty object
+        let input = "{}";
+        let reader = Cursor::new(input);
+        let result: serde_json::Value = read_json_lenient_sync(reader).unwrap();
+        assert!(result.is_object());
+        assert_eq!(result.as_object().unwrap().len(), 0);
+
+        // Test empty array
+        let input = "[]";
+        let reader = Cursor::new(input);
+        let result: serde_json::Value = read_json_lenient_sync(reader).unwrap();
+        assert!(result.is_array());
+        assert_eq!(result.as_array().unwrap().len(), 0);
+    }
+
+    #[test]
+    fn test_multiple_consecutive_comment_lines() {
+        let input = r#"# comment 1
+# comment 2
+# comment 3
+{"key": "value"}
+# trailing comment"#;
+        let reader = Cursor::new(input);
+        let result: HashMap<String, String> = read_json_lenient_sync(reader).unwrap();
+        assert_eq!(result.get("key"), Some(&"value".to_string()));
+    }
+
+    #[test]
+    fn test_whitespace_only_lines() {
+        let input = "   \n\t\n{\"key\": \"value\"}\n   \n";
+        let reader = Cursor::new(input);
+        let result: HashMap<String, String> = read_json_lenient_sync(reader).unwrap();
+        assert_eq!(result.get("key"), Some(&"value".to_string()));
+    }
+
+    #[test]
+    fn test_large_array_parsing() {
+        // Test parsing a larger array structure
+        let input = "[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]";
+        let reader = Cursor::new(input);
+        let result: Vec<i32> = read_json_lenient_sync(reader).unwrap();
+        assert_eq!(result.len(), 20);
+        assert_eq!(result[0], 1);
+        assert_eq!(result[19], 20);
+    }
 }
