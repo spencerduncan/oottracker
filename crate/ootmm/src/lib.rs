@@ -18,6 +18,7 @@ pub mod error;
 pub mod expr;
 pub mod item;
 pub mod items;
+pub mod rando;
 pub mod region;
 pub mod world_database;
 
@@ -28,3 +29,6 @@ pub use world_database::WorldDatabase;
 
 // Re-export embedded data convenience functions
 pub use embedded_data::{create_world_database, create_world_database_from};
+
+// Re-export rando types
+pub use rando::{OotmmRando, OotmmRandoError, OotmmRegionName};
