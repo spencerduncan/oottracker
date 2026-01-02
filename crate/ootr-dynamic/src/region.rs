@@ -176,4 +176,139 @@ mod tests {
         let result = parse_dungeon_info(" MQ");
         assert!(result.is_err());
     }
+
+    #[test]
+    fn test_all_main_dungeons_mq() {
+        let cases = [
+            ("Deku Tree MQ", MainDungeon::DekuTree),
+            ("Dodongos Cavern MQ", MainDungeon::DodongosCavern),
+            ("Jabu Jabus Belly MQ", MainDungeon::JabuJabu),
+            ("Forest Temple MQ", MainDungeon::ForestTemple),
+            ("Fire Temple MQ", MainDungeon::FireTemple),
+            ("Water Temple MQ", MainDungeon::WaterTemple),
+            ("Shadow Temple MQ", MainDungeon::ShadowTemple),
+            ("Spirit Temple MQ", MainDungeon::SpiritTemple),
+        ];
+
+        for (input, expected_dungeon) in cases {
+            let result = parse_dungeon_info(input).unwrap();
+            assert_eq!(
+                result,
+                Some((Dungeon::Main(expected_dungeon), Mq::Mq)),
+                "Failed for input: {}",
+                input
+            );
+        }
+    }
+
+    #[test]
+    fn test_lowercase_mq_returns_error() {
+        // "mq" in lowercase should not be recognized
+        let result = parse_dungeon_info("Deku Tree mq");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_mq_without_leading_space_returns_error() {
+        // "MQ" without space should not be recognized
+        let result = parse_dungeon_info("Deku TreeMQ");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_overworld_mq_returns_error() {
+        // "Overworld MQ" is not special-cased - the Overworld/Bosses check
+        // happens before MQ suffix stripping, so this returns an error
+        let result = parse_dungeon_info("Overworld MQ");
+        assert!(result.is_err());
+        match result {
+            Err(RandoErr::UnknownRegionFilename(name)) => {
+                assert_eq!(name, "Overworld");
+            }
+            _ => panic!("Expected UnknownRegionFilename error"),
+        }
+    }
+
+    #[test]
+    fn test_bosses_mq_returns_error() {
+        // "Bosses MQ" is not special-cased - the Overworld/Bosses check
+        // happens before MQ suffix stripping, so this returns an error
+        let result = parse_dungeon_info("Bosses MQ");
+        assert!(result.is_err());
+        match result {
+            Err(RandoErr::UnknownRegionFilename(name)) => {
+                assert_eq!(name, "Bosses");
+            }
+            _ => panic!("Expected UnknownRegionFilename error"),
+        }
+    }
+
+    #[test]
+    fn test_double_space_before_mq_returns_error() {
+        // Double space before MQ should not match
+        let result = parse_dungeon_info("Deku Tree  MQ");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_just_mq_returns_error() {
+        let result = parse_dungeon_info("MQ");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_similar_but_invalid_names() {
+        // Names that are close but not exact matches
+        let invalid_names = [
+            "Deku",            // Partial name
+            "Tree",            // Partial name
+            "Forest",          // Partial name
+            "Temple",          // Partial name
+            "Fire Temple ",    // Trailing space
+            " Fire Temple",    // Leading space
+            "FireTemple",      // Missing space
+            "Jabu Jabu Belly", // Wrong spelling (extra space)
+        ];
+
+        for name in invalid_names {
+            let result = parse_dungeon_info(name);
+            assert!(
+                result.is_err(),
+                "Expected error for input '{}', got {:?}",
+                name,
+                result
+            );
+        }
+    }
+
+    #[test]
+    fn test_mq_suffix_with_extra_text_returns_error() {
+        // Extra text after MQ should make it not match the suffix
+        let result = parse_dungeon_info("Deku Tree MQ Extra");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_dungeon_name_with_apostrophe_variation() {
+        // Test that the expected format without apostrophe works
+        // "Jabu Jabus Belly" is the expected format (no apostrophe)
+        let result = parse_dungeon_info("Jabu Jabus Belly").unwrap();
+        assert_eq!(
+            result,
+            Some((Dungeon::Main(MainDungeon::JabuJabu), Mq::Vanilla))
+        );
+
+        let result = parse_dungeon_info("Jabu Jabus Belly MQ").unwrap();
+        assert_eq!(result, Some((Dungeon::Main(MainDungeon::JabuJabu), Mq::Mq)));
+    }
+
+    #[test]
+    fn test_ganons_castle_variations() {
+        // Test that Ganons Castle works (no apostrophe)
+        let result = parse_dungeon_info("Ganons Castle").unwrap();
+        assert_eq!(result, Some((Dungeon::GanonsCastle, Mq::Vanilla)));
+
+        let result = parse_dungeon_info("Ganons Castle MQ").unwrap();
+        assert_eq!(result, Some((Dungeon::GanonsCastle, Mq::Mq)));
+    }
 }
