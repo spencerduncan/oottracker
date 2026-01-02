@@ -64,9 +64,7 @@ fn main() {
 
         // Convert path to forward slashes for cross-platform compatibility
         // Windows paths with backslashes don't work in include_str! macros
-        let rel_path_str = rel_path
-            .to_string_lossy()
-            .replace('\\', "/");
+        let rel_path_str = rel_path.to_string_lossy().replace('\\', "/");
 
         writeln!(file, "    /// World data from `{}`", rel_path_str).unwrap();
         writeln!(
