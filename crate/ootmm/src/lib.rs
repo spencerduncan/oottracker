@@ -17,6 +17,8 @@ pub mod error;
 pub mod expr;
 pub mod item;
 pub mod region;
+pub mod world_database;
 
 // Re-export item types for convenience
 pub use item::{Game, Item, ItemCategory, MmItem, OotItem};
+pub use world_database::WorldDatabase;
