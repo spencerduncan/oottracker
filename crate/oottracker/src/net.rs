@@ -349,9 +349,7 @@ impl Connection for RetroArchConnection {
 /// <https://github.com/eadmaster/console_hiscore/blob/master/tools/retroarchpythonapi.py>
 async fn retroarch_read_ram(sock: &UdpSocket) -> Result<Ram, Error> {
     let ranges = stream::iter(ram::RANGES.iter().copied().tuples())
-        .then(|(start, len)| async move {
-            retroarch_read_memory_range(sock, start, len).await
-        })
+        .then(|(start, len)| async move { retroarch_read_memory_range(sock, start, len).await })
         .try_collect::<Vec<_>>()
         .await?;
     Ok(Ram::from_range_bufs(ranges)?)
@@ -362,9 +360,7 @@ async fn retroarch_read_ram(sock: &UdpSocket) -> Result<Ram, Error> {
 #[allow(dead_code)]
 async fn retroarch_read_mm_ram(sock: &UdpSocket) -> Result<Vec<u8>, Error> {
     let ranges = stream::iter(ram::MM_RANGES.iter().copied().tuples())
-        .then(|(start, len)| async move {
-            retroarch_read_memory_range(sock, start, len).await
-        })
+        .then(|(start, len)| async move { retroarch_read_memory_range(sock, start, len).await })
         .try_collect::<Vec<_>>()
         .await?;
     // For MM, we just return the first range which is the full save context
@@ -373,9 +369,13 @@ async fn retroarch_read_mm_ram(sock: &UdpSocket) -> Result<Vec<u8>, Error> {
 
 /// Read a single memory range via RetroArch UDP API
 /// Converts RDRAM address to system bus address and handles word alignment
-async fn retroarch_read_memory_range(sock: &UdpSocket, start: u32, len: u32) -> Result<Vec<u8>, Error> {
+async fn retroarch_read_memory_range(
+    sock: &UdpSocket,
+    start: u32,
+    len: u32,
+) -> Result<Vec<u8>, Error> {
     let start = 0x8000_0000 + start; // ram::RANGES uses RDRAM addresses but READ_CORE_MEMORY uses system bus addresses
-    // make sure we're word-aligned on both ends
+                                     // make sure we're word-aligned on both ends
     let offset_in_word = start & 0x3;
     let mut aligned_start = (start - offset_in_word) as usize;
     let mut aligned_len = len + offset_in_word;
