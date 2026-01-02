@@ -40,6 +40,7 @@ pub mod info_tables;
 mod item_ids;
 pub mod knowledge;
 pub mod mm_save;
+pub mod mm_scene;
 pub mod net;
 pub mod proto;
 pub mod ram;
