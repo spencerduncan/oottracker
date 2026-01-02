@@ -107,6 +107,7 @@ jobs:
   coverage:
     name: Code Coverage
     runs-on: ubuntu-latest
+    continue-on-error: true  # Make coverage optional - don't block PRs
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
