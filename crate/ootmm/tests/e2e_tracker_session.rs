@@ -338,7 +338,10 @@ fn test_e2e_progressive_item_collection() {
 
     // Stage 1: Empty state
     let stage1 = session.count_accessible_locations();
-    assert_eq!(stage1, 3, "Stage 1 (empty): Should have 3 accessible locations");
+    assert_eq!(
+        stage1, 3,
+        "Stage 1 (empty): Should have 3 accessible locations"
+    );
 
     // Stage 2: Add Kokiri Sword
     session.add_item("KOKIRISWORD");
@@ -529,7 +532,10 @@ regions:
     // Default is child
     session.set_age(Age::Child);
     let child_accessible = session.count_accessible_locations();
-    assert_eq!(child_accessible, 1, "Child should access 1 location initially");
+    assert_eq!(
+        child_accessible, 1,
+        "Child should access 1 location initially"
+    );
 
     // Add slingshot as child
     session.add_item("SLINGSHOT");
@@ -542,7 +548,10 @@ regions:
     // Switch to adult
     session.set_age(Age::Adult);
     let adult_accessible = session.count_accessible_locations();
-    assert_eq!(adult_accessible, 1, "Adult should access 1 location initially");
+    assert_eq!(
+        adult_accessible, 1,
+        "Adult should access 1 location initially"
+    );
 
     // Add hookshot as adult
     session.add_item("HOOKSHOT");
