@@ -1,9 +1,10 @@
 //! Majora's Mask items.
 
 use crate::item::ItemCategory;
+use serde::{Deserialize, Serialize};
 
 /// MM item enum - all trackable items from Majora's Mask.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[allow(missing_docs)]
 pub enum MmItem {
     // Masks - Transformation

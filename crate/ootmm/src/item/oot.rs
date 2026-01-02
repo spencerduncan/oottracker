@@ -1,9 +1,10 @@
 //! Ocarina of Time items.
 
 use crate::item::ItemCategory;
+use serde::{Deserialize, Serialize};
 
 /// OoT item enum - all trackable items from Ocarina of Time.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[allow(missing_docs)]
 pub enum OotItem {
     // Swords
