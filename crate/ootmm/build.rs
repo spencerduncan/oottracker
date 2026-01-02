@@ -62,12 +62,18 @@ fn main() {
             .strip_prefix(env!("CARGO_MANIFEST_DIR"))
             .unwrap_or(path);
 
-        writeln!(file, "    /// World data from `{}`", rel_path.display()).unwrap();
+        // Convert path to forward slashes for cross-platform compatibility
+        // Windows paths with backslashes don't work in include_str! macros
+        let rel_path_str = rel_path
+            .to_string_lossy()
+            .replace('\\', "/");
+
+        writeln!(file, "    /// World data from `{}`", rel_path_str).unwrap();
         writeln!(
             file,
             "    pub const {}: &str = include_str!(concat!(env!(\"CARGO_MANIFEST_DIR\"), \"/{}\"));",
             const_name,
-            rel_path.display()
+            rel_path_str
         )
         .unwrap();
         writeln!(file).unwrap();
