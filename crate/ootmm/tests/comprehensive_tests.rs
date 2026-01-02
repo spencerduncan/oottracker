@@ -371,8 +371,11 @@ mod world_database_validation {
 
         // Create 100 regions with valid interconnections
         for i in 0..100 {
-            let mut region =
-                create_test_region(&format!("region_{}", i), &format!("Region {}", i), Game::Oot);
+            let mut region = create_test_region(
+                &format!("region_{}", i),
+                &format!("Region {}", i),
+                Game::Oot,
+            );
 
             // Each region connects to the next (wrapping)
             let next = (i + 1) % 100;
@@ -774,10 +777,7 @@ mod rando_trait_implementation {
         assert!(!items.is_empty(), "Item table should not be empty");
 
         // Check for specific items
-        assert!(
-            items.contains_key("MasterSword"),
-            "Should have MasterSword"
-        );
+        assert!(items.contains_key("MasterSword"), "Should have MasterSword");
         assert!(items.contains_key("Hookshot"), "Should have Hookshot");
         assert!(items.contains_key("DekuMask"), "Should have DekuMask");
         assert!(
@@ -795,8 +795,14 @@ mod rando_trait_implementation {
         assert!(!escaped.is_empty(), "Escaped items should not be empty");
 
         // Key progression items should be escaped
-        assert!(escaped.contains_key("Hookshot"), "Hookshot should be escaped");
-        assert!(escaped.contains_key("DekuMask"), "DekuMask should be escaped");
+        assert!(
+            escaped.contains_key("Hookshot"),
+            "Hookshot should be escaped"
+        );
+        assert!(
+            escaped.contains_key("DekuMask"),
+            "DekuMask should be escaped"
+        );
         assert!(
             escaped.contains_key("ForestMedallion"),
             "ForestMedallion should be escaped"
