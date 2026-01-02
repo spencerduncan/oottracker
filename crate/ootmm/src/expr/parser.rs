@@ -454,4 +454,272 @@ mod tests {
         let result = parse("a &&");
         assert!(matches!(result, Err(ParseError::UnexpectedEof)));
     }
+
+    // ===== Additional parser error handling tests =====
+
+    #[test]
+    fn test_parse_missing_operand_or() {
+        let result = parse("a ||");
+        assert!(matches!(result, Err(ParseError::UnexpectedEof)));
+    }
+
+    #[test]
+    fn test_parse_not_without_operand() {
+        let result = parse("!");
+        assert!(matches!(result, Err(ParseError::UnexpectedEof)));
+    }
+
+    #[test]
+    fn test_parse_unclosed_function_call() {
+        let result = parse("func(a, b");
+        assert!(matches!(result, Err(ParseError::Expected { .. })));
+    }
+
+    #[test]
+    fn test_parse_missing_comma_in_args() {
+        let result = parse("func(a b)");
+        assert!(matches!(result, Err(ParseError::Expected { .. })));
+    }
+
+    #[test]
+    fn test_parse_extra_closing_paren() {
+        let result = parse("(a))");
+        assert!(matches!(result, Err(ParseError::UnexpectedToken(_))));
+    }
+
+    #[test]
+    fn test_parse_empty_parens_as_expr() {
+        let result = parse("()");
+        assert!(matches!(result, Err(ParseError::UnexpectedToken(_))));
+    }
+
+    #[test]
+    fn test_parse_double_operator_and() {
+        let result = parse("a && && b");
+        assert!(matches!(result, Err(ParseError::UnexpectedToken(_))));
+    }
+
+    #[test]
+    fn test_parse_double_operator_or() {
+        let result = parse("a || || b");
+        assert!(matches!(result, Err(ParseError::UnexpectedToken(_))));
+    }
+
+    #[test]
+    fn test_parse_trailing_comma_in_func() {
+        let result = parse("func(a,)");
+        assert!(matches!(result, Err(ParseError::UnexpectedToken(_))));
+    }
+
+    #[test]
+    fn test_parse_leading_comma_in_func() {
+        let result = parse("func(,a)");
+        assert!(matches!(result, Err(ParseError::UnexpectedToken(_))));
+    }
+
+    #[test]
+    fn test_parse_standalone_comma() {
+        let result = parse(",");
+        assert!(matches!(result, Err(ParseError::UnexpectedToken(_))));
+    }
+
+    #[test]
+    fn test_parse_operator_at_start() {
+        let result = parse("|| a");
+        assert!(matches!(result, Err(ParseError::UnexpectedToken(_))));
+    }
+
+    #[test]
+    fn test_parse_deeply_nested_unclosed() {
+        let result = parse("((((a");
+        assert!(matches!(result, Err(ParseError::Expected { .. })));
+    }
+
+    #[test]
+    fn test_parse_mismatched_parens() {
+        let result = parse("(a && b))");
+        assert!(matches!(result, Err(ParseError::UnexpectedToken(_))));
+    }
+
+    // ===== Additional parser success cases =====
+
+    #[test]
+    fn test_parse_triple_not() {
+        let expr = parse("!!!a").unwrap();
+        assert_eq!(
+            expr,
+            Expr::not(Expr::not(Expr::not(Expr::Ident("a".into()))))
+        );
+    }
+
+    #[test]
+    fn test_parse_not_in_parentheses() {
+        let expr = parse("!(a)").unwrap();
+        assert_eq!(expr, Expr::not(Expr::Ident("a".into())));
+    }
+
+    #[test]
+    fn test_parse_function_with_nested_function_arg() {
+        let expr = parse("outer(inner(x))").unwrap();
+        assert_eq!(
+            expr,
+            Expr::call(
+                "outer",
+                vec![Expr::call("inner", vec![Expr::Ident("x".into())])]
+            )
+        );
+    }
+
+    #[test]
+    fn test_parse_function_with_multiple_nested_args() {
+        let expr = parse("f(a(x), b(y))").unwrap();
+        assert_eq!(
+            expr,
+            Expr::call(
+                "f",
+                vec![
+                    Expr::call("a", vec![Expr::Ident("x".into())]),
+                    Expr::call("b", vec![Expr::Ident("y".into())])
+                ]
+            )
+        );
+    }
+
+    #[test]
+    fn test_parse_function_with_logical_expr_arg() {
+        let expr = parse("check(a || b && c)").unwrap();
+        assert_eq!(
+            expr,
+            Expr::call(
+                "check",
+                vec![Expr::or(
+                    Expr::Ident("a".into()),
+                    Expr::and(Expr::Ident("b".into()), Expr::Ident("c".into()))
+                )]
+            )
+        );
+    }
+
+    #[test]
+    fn test_parse_mixed_literals_in_call() {
+        let expr = parse("func(true, 42, \"hello\", x)").unwrap();
+        assert_eq!(
+            expr,
+            Expr::call(
+                "func",
+                vec![
+                    Expr::Bool(true),
+                    Expr::Number(42),
+                    Expr::String("hello".into()),
+                    Expr::Ident("x".into())
+                ]
+            )
+        );
+    }
+
+    #[test]
+    fn test_parse_complex_precedence_chain() {
+        // a || b && c || d && e should parse as (a || (b && c)) || (d && e)
+        let expr = parse("a || b && c || d && e").unwrap();
+        assert_eq!(
+            expr,
+            Expr::or(
+                Expr::or(
+                    Expr::Ident("a".into()),
+                    Expr::and(Expr::Ident("b".into()), Expr::Ident("c".into()))
+                ),
+                Expr::and(Expr::Ident("d".into()), Expr::Ident("e".into()))
+            )
+        );
+    }
+
+    #[test]
+    fn test_parse_not_with_function_call() {
+        let expr = parse("!has(ITEM)").unwrap();
+        assert_eq!(
+            expr,
+            Expr::not(Expr::call("has", vec![Expr::Ident("ITEM".into())]))
+        );
+    }
+
+    #[test]
+    fn test_parse_number_zero() {
+        let expr = parse("0").unwrap();
+        assert_eq!(expr, Expr::Number(0));
+    }
+
+    #[test]
+    fn test_parse_empty_string() {
+        let expr = parse("\"\"").unwrap();
+        assert_eq!(expr, Expr::String("".into()));
+    }
+
+    #[test]
+    fn test_parse_string_with_spaces() {
+        let expr = parse("\"hello world\"").unwrap();
+        assert_eq!(expr, Expr::String("hello world".into()));
+    }
+
+    #[test]
+    fn test_parse_deeply_nested_parens() {
+        let expr = parse("((((a))))").unwrap();
+        assert_eq!(expr, Expr::Ident("a".into()));
+    }
+
+    #[test]
+    fn test_parse_four_way_and() {
+        let expr = parse("a && b && c && d").unwrap();
+        // Left-associative: ((a && b) && c) && d
+        assert_eq!(
+            expr,
+            Expr::and(
+                Expr::and(
+                    Expr::and(Expr::Ident("a".into()), Expr::Ident("b".into())),
+                    Expr::Ident("c".into())
+                ),
+                Expr::Ident("d".into())
+            )
+        );
+    }
+
+    #[test]
+    fn test_parse_four_way_or() {
+        let expr = parse("a || b || c || d").unwrap();
+        // Left-associative: ((a || b) || c) || d
+        assert_eq!(
+            expr,
+            Expr::or(
+                Expr::or(
+                    Expr::or(Expr::Ident("a".into()), Expr::Ident("b".into())),
+                    Expr::Ident("c".into())
+                ),
+                Expr::Ident("d".into())
+            )
+        );
+    }
+
+    #[test]
+    fn test_parse_function_with_five_args() {
+        let expr = parse("f(1, 2, 3, 4, 5)").unwrap();
+        assert_eq!(
+            expr,
+            Expr::call(
+                "f",
+                vec![
+                    Expr::Number(1),
+                    Expr::Number(2),
+                    Expr::Number(3),
+                    Expr::Number(4),
+                    Expr::Number(5)
+                ]
+            )
+        );
+    }
+
+    #[test]
+    fn test_parse_lex_error_propagation() {
+        // Lexer error should be wrapped in ParseError::LexError
+        let result = parse("a @ b");
+        assert!(matches!(result, Err(ParseError::LexError(_))));
+    }
 }
