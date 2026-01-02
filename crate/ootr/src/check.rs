@@ -60,3 +60,146 @@ impl<R: Rando> fmt::Display for Check<R> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::model::{MainDungeon, Medallion};
+    use crate::region::Mq;
+    use crate::{RandoErr, Regions};
+    use std::{
+        collections::{HashMap, HashSet},
+        sync::Arc,
+    };
+
+    /// Mock error type for testing.
+    #[derive(Debug, Clone)]
+    struct MockErr;
+
+    impl fmt::Display for MockErr {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "mock error")
+        }
+    }
+
+    impl RandoErr for MockErr {
+        const ITEM_NOT_FOUND: Self = MockErr;
+    }
+
+    /// Mock Rando implementation for testing Check Display.
+    struct MockRando;
+
+    impl Rando for MockRando {
+        type Err = MockErr;
+        type RegionName = String;
+
+        fn escaped_items(&self) -> Result<Arc<HashMap<String, crate::item::Item>>, Self::Err> {
+            Ok(Arc::new(HashMap::new()))
+        }
+
+        fn item_table(&self) -> Result<Arc<HashMap<String, crate::item::Item>>, Self::Err> {
+            Ok(Arc::new(HashMap::new()))
+        }
+
+        fn logic_tricks(&self) -> Result<Arc<HashSet<String>>, Self::Err> {
+            Ok(Arc::new(HashSet::new()))
+        }
+
+        fn regions(&self) -> Result<Regions<Self>, Self::Err> {
+            Ok(Arc::new(Vec::new()))
+        }
+
+        fn root() -> Self::RegionName {
+            "Root".to_string()
+        }
+
+        fn setting_infos(&self) -> Result<Arc<HashSet<String>>, Self::Err> {
+            Ok(Arc::new(HashSet::new()))
+        }
+    }
+
+    #[test]
+    fn display_event() {
+        let check: Check<MockRando> = Check::Event("Deku Tree Clear".to_string());
+        assert_eq!(format!("{}", check), "event: Deku Tree Clear");
+    }
+
+    #[test]
+    fn display_location() {
+        let check: Check<MockRando> = Check::Location("KF Midos Top Left Chest".to_string());
+        assert_eq!(format!("{}", check), "KF Midos Top Left Chest");
+    }
+
+    #[test]
+    fn display_exit_with_vanilla() {
+        let check: Check<MockRando> = Check::Exit {
+            from: "Kokiri Forest".to_string(),
+            from_mq: Some(Mq::Vanilla),
+            to: "Lost Woods".to_string(),
+        };
+        assert_eq!(format!("{}", check), "Kokiri Forest (vanilla) → Lost Woods");
+    }
+
+    #[test]
+    fn display_exit_with_mq() {
+        let check: Check<MockRando> = Check::Exit {
+            from: "Deku Tree Lobby".to_string(),
+            from_mq: Some(Mq::Mq),
+            to: "Deku Tree Basement".to_string(),
+        };
+        assert_eq!(
+            format!("{}", check),
+            "Deku Tree Lobby (MQ) → Deku Tree Basement"
+        );
+    }
+
+    #[test]
+    fn display_exit_overworld() {
+        let check: Check<MockRando> = Check::Exit {
+            from: "Hyrule Field".to_string(),
+            from_mq: None,
+            to: "Lon Lon Ranch".to_string(),
+        };
+        assert_eq!(
+            format!("{}", check),
+            "Hyrule Field (overworld) → Lon Lon Ranch"
+        );
+    }
+
+    #[test]
+    fn display_logic_helper() {
+        let check: Check<MockRando> = Check::LogicHelper("can_use_hookshot".to_string());
+        assert_eq!(format!("{}", check), "logic helper \"can_use_hookshot\"");
+    }
+
+    #[test]
+    fn display_mq_dungeon() {
+        let check: Check<MockRando> = Check::Mq(Dungeon::Main(MainDungeon::ForestTemple));
+        assert_eq!(format!("{}", check), "is Forest Temple MQ or vanilla");
+    }
+
+    #[test]
+    fn display_setting() {
+        let check: Check<MockRando> = Check::Setting("shuffle_ganon_bosskey".to_string());
+        assert_eq!(format!("{}", check), "setting: shuffle_ganon_bosskey");
+    }
+
+    #[test]
+    fn display_trial_active() {
+        let check: Check<MockRando> = Check::TrialActive(Medallion::Light);
+        assert_eq!(format!("{}", check), "Light trial active");
+    }
+
+    #[test]
+    fn display_trick() {
+        let check: Check<MockRando> = Check::Trick("logic_grottos_without_agony".to_string());
+        assert_eq!(format!("{}", check), "trick: logic_grottos_without_agony");
+    }
+
+    #[test]
+    fn display_anonymous_event() {
+        let inner_check = Check::Location("Test Location".to_string());
+        let check: Check<MockRando> = Check::AnonymousEvent(Box::new(inner_check), 1);
+        assert_eq!(format!("{}", check), "requirement 1 for Test Location");
+    }
+}
