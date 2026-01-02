@@ -615,4 +615,246 @@ mod tests {
             "Twinrova"
         );
     }
+
+    // MainDungeon exhaustive roundtrip test
+    #[test]
+    fn test_main_dungeon_display_from_str_roundtrip() {
+        // Test that Display -> FromStr roundtrips for all MainDungeon variants
+        for dungeon in enum_iterator::all::<MainDungeon>() {
+            let display_str = dungeon.to_string();
+            let parsed = MainDungeon::from_str(&display_str);
+            assert_eq!(
+                parsed,
+                Ok(dungeon),
+                "Roundtrip failed for {:?}: '{}' did not parse back",
+                dungeon,
+                display_str
+            );
+        }
+    }
+
+    // Medallion TryFrom<Item> tests
+    #[test]
+    fn test_medallion_try_from_item_valid() {
+        for medallion in enum_iterator::all::<Medallion>() {
+            let item: Item = medallion.into();
+            let result = Medallion::try_from(item);
+            assert_eq!(
+                result,
+                Ok(medallion),
+                "TryFrom<Item> failed for {:?}",
+                medallion
+            );
+        }
+    }
+
+    #[test]
+    fn test_medallion_try_from_item_invalid() {
+        let invalid_items = [
+            Item("Invalid Item".to_string()),
+            Item("Light".to_string()), // Missing "Medallion"
+            Item("".to_string()),
+            Item("Kokiri Emerald".to_string()), // A stone, not a medallion
+        ];
+
+        for item in &invalid_items {
+            let result = Medallion::try_from(item.clone());
+            assert!(
+                result.is_err(),
+                "Expected error for item '{}', got {:?}",
+                item.name(),
+                result
+            );
+        }
+    }
+
+    // Stone TryFrom<Item> tests
+    #[test]
+    fn test_stone_try_from_item_valid() {
+        for stone in enum_iterator::all::<Stone>() {
+            let item: Item = stone.into();
+            let result = Stone::try_from(item);
+            assert_eq!(result, Ok(stone), "TryFrom<Item> failed for {:?}", stone);
+        }
+    }
+
+    #[test]
+    fn test_stone_try_from_item_invalid() {
+        let invalid_items = [
+            Item("Invalid Item".to_string()),
+            Item("Kokiri".to_string()), // Partial name
+            Item("".to_string()),
+            Item("Light Medallion".to_string()), // A medallion, not a stone
+        ];
+
+        for item in &invalid_items {
+            let result = Stone::try_from(item.clone());
+            assert!(
+                result.is_err(),
+                "Expected error for item '{}', got {:?}",
+                item.name(),
+                result
+            );
+        }
+    }
+
+    // DungeonReward TryFrom<Item> tests
+    #[test]
+    fn test_dungeon_reward_try_from_item_valid() {
+        for reward in enum_iterator::all::<DungeonReward>() {
+            let item: Item = reward.into();
+            let result = DungeonReward::try_from(item);
+            assert_eq!(
+                result,
+                Ok(reward),
+                "TryFrom<Item> failed for {:?}",
+                reward
+            );
+        }
+    }
+
+    #[test]
+    fn test_dungeon_reward_try_from_item_invalid() {
+        let invalid_items = [
+            Item("Invalid Item".to_string()),
+            Item("Light".to_string()),
+            Item("".to_string()),
+            Item("Hookshot".to_string()),
+        ];
+
+        for item in &invalid_items {
+            let result = DungeonReward::try_from(item.clone());
+            assert!(
+                result.is_err(),
+                "Expected error for item '{}', got {:?}",
+                item.name(),
+                result
+            );
+        }
+    }
+
+    // DungeonReward roundtrip tests
+    #[test]
+    fn test_dungeon_reward_display_from_str_roundtrip() {
+        for reward in enum_iterator::all::<DungeonReward>() {
+            let display_str = reward.to_string();
+            let parsed = DungeonReward::from_str(&display_str);
+            assert_eq!(
+                parsed,
+                Ok(reward),
+                "Roundtrip failed for {:?}: '{}' did not parse back",
+                reward,
+                display_str
+            );
+        }
+    }
+
+    // Item conversion roundtrip tests
+    #[test]
+    fn test_medallion_to_item_roundtrip() {
+        for medallion in enum_iterator::all::<Medallion>() {
+            let item: Item = medallion.into();
+            let back: Result<Medallion, ()> = Medallion::try_from(item.clone());
+            assert_eq!(
+                back,
+                Ok(medallion),
+                "Item roundtrip failed for {:?} -> {:?}",
+                medallion,
+                item
+            );
+        }
+    }
+
+    #[test]
+    fn test_stone_to_item_roundtrip() {
+        for stone in enum_iterator::all::<Stone>() {
+            let item: Item = stone.into();
+            let back: Result<Stone, ()> = Stone::try_from(item.clone());
+            assert_eq!(
+                back,
+                Ok(stone),
+                "Item roundtrip failed for {:?} -> {:?}",
+                stone,
+                item
+            );
+        }
+    }
+
+    #[test]
+    fn test_dungeon_reward_to_item_roundtrip() {
+        for reward in enum_iterator::all::<DungeonReward>() {
+            let item: Item = reward.into();
+            let back: Result<DungeonReward, ()> = DungeonReward::try_from(item.clone());
+            assert_eq!(
+                back,
+                Ok(reward),
+                "Item roundtrip failed for {:?} -> {:?}",
+                reward,
+                item
+            );
+        }
+    }
+
+    // Dungeon exhaustive tests
+    #[test]
+    fn test_dungeon_from_str_invalid() {
+        assert_eq!(Dungeon::from_str("Invalid Dungeon"), Err(()));
+        assert_eq!(Dungeon::from_str(""), Err(()));
+        assert_eq!(Dungeon::from_str("Temple"), Err(()));
+    }
+
+    // DungeonRewardLocation exhaustive roundtrip
+    #[test]
+    fn test_dungeon_reward_location_roundtrip() {
+        // Test Links Pocket
+        let links_pocket = DungeonRewardLocation::LinksPocket;
+        let parsed = DungeonRewardLocation::from_str(links_pocket.as_str());
+        assert_eq!(parsed, Ok(links_pocket));
+
+        // Test all dungeon locations
+        for dungeon in enum_iterator::all::<MainDungeon>() {
+            let location = DungeonRewardLocation::Dungeon(dungeon);
+            let as_str = location.as_str();
+            let parsed = DungeonRewardLocation::from_str(as_str);
+            assert_eq!(
+                parsed,
+                Ok(location),
+                "Roundtrip failed for {:?}: '{}' did not parse back",
+                location,
+                as_str
+            );
+        }
+    }
+
+    // Medallion exhaustive roundtrip
+    #[test]
+    fn test_medallion_display_from_str_roundtrip() {
+        for medallion in enum_iterator::all::<Medallion>() {
+            let display_str = medallion.to_string();
+            let parsed = Medallion::from_str(&display_str);
+            assert_eq!(
+                parsed,
+                Ok(medallion),
+                "Roundtrip failed for {:?}: '{}' did not parse back",
+                medallion,
+                display_str
+            );
+        }
+    }
+
+    // Stone exhaustive roundtrip
+    #[test]
+    fn test_stone_display_from_str_roundtrip() {
+        for stone in enum_iterator::all::<Stone>() {
+            let display_str = stone.to_string();
+            let parsed = Stone::from_str(&display_str);
+            assert_eq!(
+                parsed,
+                Ok(stone),
+                "Roundtrip failed for {:?}: '{}' did not parse back",
+                stone,
+                display_str
+            );
+        }
+    }
 }

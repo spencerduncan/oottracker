@@ -202,4 +202,169 @@ mod tests {
         let check: Check<MockRando> = Check::AnonymousEvent(Box::new(inner_check), 1);
         assert_eq!(format!("{}", check), "requirement 1 for Test Location");
     }
+
+    #[test]
+    fn display_anonymous_event_nested() {
+        // Test deeply nested anonymous event
+        let inner = Check::Event("Deku Tree Clear".to_string());
+        let middle: Check<MockRando> = Check::AnonymousEvent(Box::new(inner), 2);
+        let outer: Check<MockRando> = Check::AnonymousEvent(Box::new(middle), 1);
+        assert_eq!(
+            format!("{}", outer),
+            "requirement 1 for requirement 2 for event: Deku Tree Clear"
+        );
+    }
+
+    #[test]
+    fn display_mq_all_dungeons() {
+        // Test MQ display for main dungeons
+        let main_dungeons = [
+            (MainDungeon::DekuTree, "is Deku Tree MQ or vanilla"),
+            (MainDungeon::DodongosCavern, "is Dodongo's Cavern MQ or vanilla"),
+            (MainDungeon::JabuJabu, "is Jabu-Jabu MQ or vanilla"),
+            (MainDungeon::ForestTemple, "is Forest Temple MQ or vanilla"),
+            (MainDungeon::FireTemple, "is Fire Temple MQ or vanilla"),
+            (MainDungeon::WaterTemple, "is Water Temple MQ or vanilla"),
+            (MainDungeon::ShadowTemple, "is Shadow Temple MQ or vanilla"),
+            (MainDungeon::SpiritTemple, "is Spirit Temple MQ or vanilla"),
+        ];
+
+        for (dungeon, expected) in &main_dungeons {
+            let check: Check<MockRando> = Check::Mq(Dungeon::Main(*dungeon));
+            assert_eq!(format!("{}", check), *expected);
+        }
+    }
+
+    #[test]
+    fn display_mq_mini_dungeons() {
+        let mini_dungeons = [
+            (Dungeon::IceCavern, "is Ice Cavern MQ or vanilla"),
+            (Dungeon::BottomOfTheWell, "is Bottom of the Well MQ or vanilla"),
+            (Dungeon::GerudoTrainingGround, "is Gerudo Training Ground MQ or vanilla"),
+            (Dungeon::GanonsCastle, "is Ganon's Castle MQ or vanilla"),
+        ];
+
+        for (dungeon, expected) in &mini_dungeons {
+            let check: Check<MockRando> = Check::Mq(*dungeon);
+            assert_eq!(format!("{}", check), *expected);
+        }
+    }
+
+    #[test]
+    fn display_trial_active_all_medallions() {
+        let medallions = [
+            (Medallion::Light, "Light trial active"),
+            (Medallion::Forest, "Forest trial active"),
+            (Medallion::Fire, "Fire trial active"),
+            (Medallion::Water, "Water trial active"),
+            (Medallion::Shadow, "Shadow trial active"),
+            (Medallion::Spirit, "Spirit trial active"),
+        ];
+
+        for (medallion, expected) in &medallions {
+            let check: Check<MockRando> = Check::TrialActive(*medallion);
+            assert_eq!(format!("{}", check), *expected);
+        }
+    }
+
+    #[test]
+    fn check_equality() {
+        let check1: Check<MockRando> = Check::Event("test".to_string());
+        let check2: Check<MockRando> = Check::Event("test".to_string());
+        let check3: Check<MockRando> = Check::Event("different".to_string());
+
+        assert_eq!(check1, check2);
+        assert_ne!(check1, check3);
+    }
+
+    #[test]
+    fn check_hash_consistency() {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+
+        fn compute_hash<T: Hash>(value: &T) -> u64 {
+            let mut hasher = DefaultHasher::new();
+            value.hash(&mut hasher);
+            hasher.finish()
+        }
+
+        let check1: Check<MockRando> = Check::Event("test".to_string());
+        let check2: Check<MockRando> = Check::Event("test".to_string());
+
+        assert_eq!(compute_hash(&check1), compute_hash(&check2));
+    }
+
+    #[test]
+    fn check_clone() {
+        let original: Check<MockRando> = Check::Exit {
+            from: "Kokiri Forest".to_string(),
+            from_mq: Some(Mq::Vanilla),
+            to: "Lost Woods".to_string(),
+        };
+        let cloned = original.clone();
+
+        assert_eq!(original, cloned);
+    }
+
+    #[test]
+    fn display_exit_with_empty_region_names() {
+        let check: Check<MockRando> = Check::Exit {
+            from: "".to_string(),
+            from_mq: None,
+            to: "".to_string(),
+        };
+        assert_eq!(format!("{}", check), " (overworld) → ");
+    }
+
+    #[test]
+    fn display_location_with_special_characters() {
+        let check: Check<MockRando> =
+            Check::Location("KF Mido's Top Left Chest".to_string());
+        assert_eq!(format!("{}", check), "KF Mido's Top Left Chest");
+    }
+
+    #[test]
+    fn display_event_with_spaces() {
+        let check: Check<MockRando> =
+            Check::Event("Forest Temple Boss Key Door Opened".to_string());
+        assert_eq!(
+            format!("{}", check),
+            "event: Forest Temple Boss Key Door Opened"
+        );
+    }
+
+    #[test]
+    fn display_setting_with_underscores() {
+        let check: Check<MockRando> =
+            Check::Setting("shuffle_interior_entrances".to_string());
+        assert_eq!(
+            format!("{}", check),
+            "setting: shuffle_interior_entrances"
+        );
+    }
+
+    #[test]
+    fn display_trick_with_underscores() {
+        let check: Check<MockRando> =
+            Check::Trick("logic_dc_jump".to_string());
+        assert_eq!(format!("{}", check), "trick: logic_dc_jump");
+    }
+
+    #[test]
+    fn display_logic_helper_with_underscores() {
+        let check: Check<MockRando> =
+            Check::LogicHelper("can_blast_or_smash".to_string());
+        assert_eq!(
+            format!("{}", check),
+            "logic helper \"can_blast_or_smash\""
+        );
+    }
+
+    #[test]
+    fn check_debug_format() {
+        let check: Check<MockRando> = Check::Event("test".to_string());
+        let debug_str = format!("{:?}", check);
+        assert!(debug_str.contains("Event"));
+        assert!(debug_str.contains("test"));
+    }
 }

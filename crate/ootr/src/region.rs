@@ -235,4 +235,228 @@ mod tests {
         // Should not be equal since dungeon MQ status differs
         assert_ne!(region1, region2);
     }
+
+    #[test]
+    fn test_region_inequality_on_name_difference() {
+        use mock::{MockRando, MockRegionName};
+
+        let region1: Region<MockRando> = Region {
+            name: MockRegionName::from("Kokiri Forest"),
+            dungeon: None,
+            scene: None,
+            hint: None,
+            time_passes: false,
+            events: HashSet::new(),
+            locations: HashSet::new(),
+            exits: HashSet::new(),
+        };
+
+        let region2: Region<MockRando> = Region {
+            name: MockRegionName::from("Lost Woods"),
+            dungeon: None,
+            scene: None,
+            hint: None,
+            time_passes: false,
+            events: HashSet::new(),
+            locations: HashSet::new(),
+            exits: HashSet::new(),
+        };
+
+        // Should not be equal since names differ
+        assert_ne!(region1, region2);
+    }
+
+    #[test]
+    fn test_region_hash_consistency_with_equality() {
+        use mock::{MockRando, MockRegionName};
+
+        // Two equal regions should have the same hash
+        let region1: Region<MockRando> = Region {
+            name: MockRegionName::from("Hyrule Field"),
+            dungeon: None,
+            scene: Some("hyrule_field".to_string()),
+            hint: Some("hint1".to_string()),
+            time_passes: true,
+            events: HashSet::from(["event1".to_string()]),
+            locations: HashSet::from(["loc1".to_string()]),
+            exits: HashSet::from([MockRegionName::from("Kakariko")]),
+        };
+
+        let region2: Region<MockRando> = Region {
+            name: MockRegionName::from("Hyrule Field"),
+            dungeon: None,
+            scene: Some("different_scene".to_string()),
+            hint: Some("hint2".to_string()),
+            time_passes: false,
+            events: HashSet::from(["event2".to_string()]),
+            locations: HashSet::from(["loc2".to_string()]),
+            exits: HashSet::new(),
+        };
+
+        // Should be equal (ignoring non-key fields)
+        assert_eq!(region1, region2);
+
+        // Equal regions must have equal hashes (Rust contract)
+        let hash1 = compute_hash(&region1);
+        let hash2 = compute_hash(&region2);
+        assert_eq!(
+            hash1, hash2,
+            "Equal regions must have equal hashes"
+        );
+    }
+
+    #[test]
+    fn test_region_hash_differs_on_name() {
+        use mock::{MockRando, MockRegionName};
+
+        let region1: Region<MockRando> = Region {
+            name: MockRegionName::from("Kokiri Forest"),
+            dungeon: None,
+            scene: None,
+            hint: None,
+            time_passes: false,
+            events: HashSet::new(),
+            locations: HashSet::new(),
+            exits: HashSet::new(),
+        };
+
+        let region2: Region<MockRando> = Region {
+            name: MockRegionName::from("Lost Woods"),
+            dungeon: None,
+            scene: None,
+            hint: None,
+            time_passes: false,
+            events: HashSet::new(),
+            locations: HashSet::new(),
+            exits: HashSet::new(),
+        };
+
+        // Different names should produce different hashes (with high probability)
+        let hash1 = compute_hash(&region1);
+        let hash2 = compute_hash(&region2);
+        assert_ne!(
+            hash1, hash2,
+            "Different region names should produce different hashes"
+        );
+    }
+
+    #[test]
+    fn test_region_hash_differs_on_dungeon() {
+        use crate::model::MainDungeon;
+        use mock::{MockRando, MockRegionName};
+
+        let region1: Region<MockRando> = Region {
+            name: MockRegionName::from("Temple"),
+            dungeon: Some((Dungeon::Main(MainDungeon::ForestTemple), Mq::Vanilla)),
+            scene: None,
+            hint: None,
+            time_passes: false,
+            events: HashSet::new(),
+            locations: HashSet::new(),
+            exits: HashSet::new(),
+        };
+
+        let region2: Region<MockRando> = Region {
+            name: MockRegionName::from("Temple"),
+            dungeon: Some((Dungeon::Main(MainDungeon::FireTemple), Mq::Vanilla)),
+            scene: None,
+            hint: None,
+            time_passes: false,
+            events: HashSet::new(),
+            locations: HashSet::new(),
+            exits: HashSet::new(),
+        };
+
+        // Different dungeons should produce different hashes
+        let hash1 = compute_hash(&region1);
+        let hash2 = compute_hash(&region2);
+        assert_ne!(
+            hash1, hash2,
+            "Different dungeons should produce different hashes"
+        );
+    }
+
+    #[test]
+    fn test_mq_copy_clone() {
+        let mq1 = Mq::Vanilla;
+        let mq2 = mq1; // Copy
+        let mq3 = mq1.clone(); // Clone
+
+        assert_eq!(mq1, mq2);
+        assert_eq!(mq1, mq3);
+    }
+
+    #[test]
+    fn test_mq_debug() {
+        assert_eq!(format!("{:?}", Mq::Vanilla), "Vanilla");
+        assert_eq!(format!("{:?}", Mq::Mq), "Mq");
+    }
+
+    #[test]
+    fn test_region_with_dungeon_context() {
+        use crate::model::MainDungeon;
+        use mock::{MockRando, MockRegionName};
+
+        // Test region with full dungeon context
+        let region: Region<MockRando> = Region {
+            name: MockRegionName::from("Deku Tree Lobby"),
+            dungeon: Some((Dungeon::Main(MainDungeon::DekuTree), Mq::Vanilla)),
+            scene: Some("deku_tree".to_string()),
+            hint: Some("Inside the Deku Tree".to_string()),
+            time_passes: false,
+            events: HashSet::from(["Deku Tree Clear".to_string()]),
+            locations: HashSet::from(["Deku Tree Compass Chest".to_string()]),
+            exits: HashSet::from([MockRegionName::from("Kokiri Forest")]),
+        };
+
+        // Verify all fields are accessible
+        assert_eq!(region.name, "Deku Tree Lobby");
+        assert_eq!(
+            region.dungeon,
+            Some((Dungeon::Main(MainDungeon::DekuTree), Mq::Vanilla))
+        );
+        assert_eq!(region.scene, Some("deku_tree".to_string()));
+        assert_eq!(region.hint, Some("Inside the Deku Tree".to_string()));
+        assert!(!region.time_passes);
+        assert!(region.events.contains("Deku Tree Clear"));
+        assert!(region.locations.contains("Deku Tree Compass Chest"));
+        assert!(region.exits.contains(&MockRegionName::from("Kokiri Forest")));
+    }
+
+    #[test]
+    fn test_region_with_mini_dungeon() {
+        use mock::{MockRando, MockRegionName};
+
+        let region: Region<MockRando> = Region {
+            name: MockRegionName::from("Ice Cavern"),
+            dungeon: Some((Dungeon::IceCavern, Mq::Vanilla)),
+            scene: None,
+            hint: None,
+            time_passes: false,
+            events: HashSet::new(),
+            locations: HashSet::new(),
+            exits: HashSet::new(),
+        };
+
+        assert_eq!(region.dungeon, Some((Dungeon::IceCavern, Mq::Vanilla)));
+    }
+
+    #[test]
+    fn test_region_overworld_no_dungeon() {
+        use mock::{MockRando, MockRegionName};
+
+        let region: Region<MockRando> = Region {
+            name: MockRegionName::from("Hyrule Field"),
+            dungeon: None,
+            scene: Some("hyrule_field".to_string()),
+            hint: None,
+            time_passes: true,
+            events: HashSet::new(),
+            locations: HashSet::new(),
+            exits: HashSet::new(),
+        };
+
+        assert!(region.dungeon.is_none());
+        assert!(region.time_passes);
+    }
 }
