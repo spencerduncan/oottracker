@@ -32,7 +32,8 @@ use {
 };
 
 /// Type alias for the subscription stream returned by `DynRoom::subscribe`.
-pub type SubscriptionStream = Pin<Box<dyn Stream<Item = Result<(TrackerCellId, Json), Error>> + Send>>;
+pub type SubscriptionStream =
+    Pin<Box<dyn Stream<Item = Result<(TrackerCellId, Json), Error>> + Send>>;
 
 // to obtain a Firebase web tracker's API key, open a room in the tracker and copy the element `apiKey` from the local storage entry starting with `firebase:authUser`.
 include!("../../../assets/firebase-api-keys.rs");
@@ -913,9 +914,7 @@ impl DynRoom {
             .await?)
     }
 
-    pub fn subscribe(
-        &self,
-    ) -> SubscriptionStream {
+    pub fn subscribe(&self) -> SubscriptionStream {
         let session = Arc::clone(&self.session);
         let name = self.name.clone();
         Box::pin(try_stream! {

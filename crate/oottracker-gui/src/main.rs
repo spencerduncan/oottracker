@@ -15,6 +15,8 @@
 #[cfg(not(any(target_os = "macos", target_os = "windows")))]
 use tokio as _;
 
+#[cfg(target_os = "windows")]
+use tokio::fs;
 use {
     derivative::Derivative,
     derive_more::From,
@@ -57,8 +59,6 @@ use {
     std::time::Duration,
     tokio::{fs, fs::File, io::AsyncWriteExt as _, time::sleep},
 };
-#[cfg(target_os = "windows")]
-use tokio::fs;
 
 mod logic;
 mod subscriptions;
@@ -1163,7 +1163,9 @@ async fn connect(
                             .await?,
                         ),
                         Some("restream") => {
-                            return Err(ConnectionError::UnsupportedRoomKind("restream".to_string()))
+                            return Err(ConnectionError::UnsupportedRoomKind(
+                                "restream".to_string(),
+                            ))
                         } //TODO support for single-player restream room connections
                         Some(room_kind) => {
                             return Err(ConnectionError::UnsupportedRoomKind(room_kind.to_owned()))

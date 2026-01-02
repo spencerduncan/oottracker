@@ -37,7 +37,10 @@ use {
 #[cfg(target_os = "windows")]
 use {
     oottracker::ui::dirs,
-    std::{fs, process::{self, Command}},
+    std::{
+        fs,
+        process::{self, Command},
+    },
 };
 
 #[repr(transparent)]
