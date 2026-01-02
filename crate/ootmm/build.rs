@@ -58,14 +58,11 @@ fn main() {
 
     for (name, path) in &world_files {
         let const_name = name.to_uppercase().replace('-', "_");
-        let rel_path = path.strip_prefix(env!("CARGO_MANIFEST_DIR")).unwrap_or(path);
+        let rel_path = path
+            .strip_prefix(env!("CARGO_MANIFEST_DIR"))
+            .unwrap_or(path);
 
-        writeln!(
-            file,
-            "    /// World data from `{}`",
-            rel_path.display()
-        )
-        .unwrap();
+        writeln!(file, "    /// World data from `{}`", rel_path.display()).unwrap();
         writeln!(
             file,
             "    pub const {}: &str = include_str!(concat!(env!(\"CARGO_MANIFEST_DIR\"), \"/{}\"));",
@@ -77,9 +74,17 @@ fn main() {
     }
 
     // Generate a list of all world files
-    writeln!(file, "    /// Returns all embedded world data files as (name, content) pairs").unwrap();
+    writeln!(
+        file,
+        "    /// Returns all embedded world data files as (name, content) pairs"
+    )
+    .unwrap();
     writeln!(file, "    #[must_use]").unwrap();
-    writeln!(file, "    pub fn all() -> &'static [(&'static str, &'static str)] {{").unwrap();
+    writeln!(
+        file,
+        "    pub fn all() -> &'static [(&'static str, &'static str)] {{"
+    )
+    .unwrap();
     writeln!(file, "        &[").unwrap();
     for (name, _) in &world_files {
         let const_name = name.to_uppercase().replace('-', "_");
@@ -92,15 +97,31 @@ fn main() {
     writeln!(file).unwrap();
 
     // Generate a function to get world data by name
-    writeln!(file, "/// Returns embedded world data by file name (without extension).").unwrap();
+    writeln!(
+        file,
+        "/// Returns embedded world data by file name (without extension)."
+    )
+    .unwrap();
     writeln!(file, "///").unwrap();
     writeln!(file, "/// # Arguments").unwrap();
-    writeln!(file, "/// * `name` - The name of the world file (e.g., \"oot_kokiri\")").unwrap();
+    writeln!(
+        file,
+        "/// * `name` - The name of the world file (e.g., \"oot_kokiri\")"
+    )
+    .unwrap();
     writeln!(file, "///").unwrap();
     writeln!(file, "/// # Returns").unwrap();
-    writeln!(file, "/// The YAML content of the world file, or `None` if not found.").unwrap();
+    writeln!(
+        file,
+        "/// The YAML content of the world file, or `None` if not found."
+    )
+    .unwrap();
     writeln!(file, "#[must_use]").unwrap();
-    writeln!(file, "pub fn get_world_data(name: &str) -> Option<&'static str> {{").unwrap();
+    writeln!(
+        file,
+        "pub fn get_world_data(name: &str) -> Option<&'static str> {{"
+    )
+    .unwrap();
     writeln!(file, "    match name {{").unwrap();
     for (name, _) in &world_files {
         let const_name = name.to_uppercase().replace('-', "_");

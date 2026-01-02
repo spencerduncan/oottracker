@@ -48,7 +48,10 @@ pub fn create_world_database() -> Result<WorldDatabase> {
 
     for (name, content) in world::all() {
         db.load_from_str(content).map_err(|e| {
-            crate::error::Error::world_load(format!("failed to load embedded world '{}': {}", name, e))
+            crate::error::Error::world_load(format!(
+                "failed to load embedded world '{}': {}",
+                name, e
+            ))
         })?;
     }
 
@@ -79,7 +82,9 @@ pub fn create_world_database() -> Result<WorldDatabase> {
 /// let db = embedded_data::create_world_database_from(["oot_kokiri"])
 ///     .expect("Failed to load world data");
 /// ```
-pub fn create_world_database_from<'a>(names: impl IntoIterator<Item = &'a str>) -> Result<WorldDatabase> {
+pub fn create_world_database_from<'a>(
+    names: impl IntoIterator<Item = &'a str>,
+) -> Result<WorldDatabase> {
     let mut db = WorldDatabase::new();
 
     for name in names {
@@ -88,7 +93,10 @@ pub fn create_world_database_from<'a>(names: impl IntoIterator<Item = &'a str>) 
         })?;
 
         db.load_from_str(content).map_err(|e| {
-            crate::error::Error::world_load(format!("failed to load embedded world '{}': {}", name, e))
+            crate::error::Error::world_load(format!(
+                "failed to load embedded world '{}': {}",
+                name, e
+            ))
         })?;
     }
 
@@ -169,8 +177,8 @@ mod tests {
 
     #[test]
     fn test_create_world_database_from_specific() {
-        let db = create_world_database_from(["oot_kokiri"])
-            .expect("Failed to create world database");
+        let db =
+            create_world_database_from(["oot_kokiri"]).expect("Failed to create world database");
 
         // Should have OoT regions
         assert!(db.has_region("kokiri_forest"));
