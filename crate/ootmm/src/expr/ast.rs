@@ -428,4 +428,489 @@ mod tests {
         );
         assert_eq!(expr.to_string(), "a(b(c(x)))");
     }
+
+    // ===== Number edge cases =====
+
+    #[test]
+    fn test_number_edge_cases() {
+        assert_eq!(Expr::Number(i64::MIN).to_string(), "-9223372036854775808");
+        assert_eq!(Expr::Number(i64::MAX).to_string(), "9223372036854775807");
+        assert_eq!(Expr::Number(-999999999).to_string(), "-999999999");
+    }
+
+    #[test]
+    fn test_equality_number_edge_cases() {
+        assert_eq!(Expr::Number(i64::MIN), Expr::Number(i64::MIN));
+        assert_eq!(Expr::Number(i64::MAX), Expr::Number(i64::MAX));
+        assert_ne!(Expr::Number(i64::MIN), Expr::Number(i64::MAX));
+    }
+
+    // ===== String edge cases =====
+
+    #[test]
+    fn test_display_string_special_characters() {
+        // Note: Display doesn't escape internal quotes (raw display)
+        assert_eq!(
+            Expr::String("hello\nworld".into()).to_string(),
+            "\"hello\nworld\""
+        );
+        assert_eq!(
+            Expr::String("tab\there".into()).to_string(),
+            "\"tab\there\""
+        );
+        assert_eq!(
+            Expr::String("back\\slash".into()).to_string(),
+            "\"back\\slash\""
+        );
+    }
+
+    #[test]
+    fn test_display_string_with_internal_quotes() {
+        assert_eq!(
+            Expr::String("say \"hi\"".into()).to_string(),
+            "\"say \"hi\"\""
+        );
+    }
+
+    #[test]
+    fn test_string_whitespace_only() {
+        assert_eq!(Expr::String("   ".into()).to_string(), "\"   \"");
+        assert_eq!(Expr::String("\t\n".into()).to_string(), "\"\t\n\"");
+    }
+
+    #[test]
+    fn test_equality_string_whitespace() {
+        assert_eq!(Expr::String(" ".into()), Expr::String(" ".into()));
+        assert_ne!(Expr::String(" ".into()), Expr::String("  ".into()));
+        assert_ne!(Expr::String("".into()), Expr::String(" ".into()));
+    }
+
+    // ===== Ident edge cases =====
+
+    #[test]
+    fn test_display_ident_with_numbers() {
+        assert_eq!(Expr::Ident("var1".into()).to_string(), "var1");
+        assert_eq!(Expr::Ident("item_42".into()).to_string(), "item_42");
+        assert_eq!(Expr::Ident("_private".into()).to_string(), "_private");
+    }
+
+    #[test]
+    fn test_display_ident_empty() {
+        // Edge case: empty identifier (unusual but valid at AST level)
+        assert_eq!(Expr::Ident("".into()).to_string(), "");
+    }
+
+    #[test]
+    fn test_equality_ident_case_sensitive() {
+        assert_ne!(Expr::Ident("Foo".into()), Expr::Ident("foo".into()));
+        assert_ne!(Expr::Ident("FOO".into()), Expr::Ident("foo".into()));
+    }
+
+    // ===== Debug trait tests =====
+
+    #[test]
+    fn test_debug_bool() {
+        let expr = Expr::Bool(true);
+        let debug_str = format!("{:?}", expr);
+        assert!(debug_str.contains("Bool"));
+        assert!(debug_str.contains("true"));
+    }
+
+    #[test]
+    fn test_debug_number() {
+        let expr = Expr::Number(42);
+        let debug_str = format!("{:?}", expr);
+        assert!(debug_str.contains("Number"));
+        assert!(debug_str.contains("42"));
+    }
+
+    #[test]
+    fn test_debug_string() {
+        let expr = Expr::String("test".into());
+        let debug_str = format!("{:?}", expr);
+        assert!(debug_str.contains("String"));
+        assert!(debug_str.contains("test"));
+    }
+
+    #[test]
+    fn test_debug_ident() {
+        let expr = Expr::Ident("my_var".into());
+        let debug_str = format!("{:?}", expr);
+        assert!(debug_str.contains("Ident"));
+        assert!(debug_str.contains("my_var"));
+    }
+
+    #[test]
+    fn test_debug_and() {
+        let expr = Expr::and(Expr::Bool(true), Expr::Bool(false));
+        let debug_str = format!("{:?}", expr);
+        assert!(debug_str.contains("And"));
+    }
+
+    #[test]
+    fn test_debug_or() {
+        let expr = Expr::or(Expr::Bool(true), Expr::Bool(false));
+        let debug_str = format!("{:?}", expr);
+        assert!(debug_str.contains("Or"));
+    }
+
+    #[test]
+    fn test_debug_not() {
+        let expr = Expr::not(Expr::Bool(true));
+        let debug_str = format!("{:?}", expr);
+        assert!(debug_str.contains("Not"));
+    }
+
+    #[test]
+    fn test_debug_call() {
+        let expr = Expr::call("func", vec![Expr::Number(1)]);
+        let debug_str = format!("{:?}", expr);
+        assert!(debug_str.contains("Call"));
+        assert!(debug_str.contains("func"));
+    }
+
+    // ===== Clone independence tests =====
+
+    #[test]
+    fn test_clone_string_independence() {
+        let original = Expr::String("hello".into());
+        let cloned = original.clone();
+        // Verify they are equal
+        assert_eq!(original, cloned);
+        // Verify they have the same display
+        assert_eq!(original.to_string(), cloned.to_string());
+    }
+
+    #[test]
+    fn test_clone_and_independence() {
+        let original = Expr::and(Expr::Bool(true), Expr::Ident("x".into()));
+        let cloned = original.clone();
+        assert_eq!(original, cloned);
+        assert_eq!(original.to_string(), cloned.to_string());
+    }
+
+    #[test]
+    fn test_clone_or_independence() {
+        let original = Expr::or(Expr::Number(1), Expr::Number(2));
+        let cloned = original.clone();
+        assert_eq!(original, cloned);
+        assert_eq!(original.to_string(), cloned.to_string());
+    }
+
+    #[test]
+    fn test_clone_not_independence() {
+        let original = Expr::not(Expr::Ident("flag".into()));
+        let cloned = original.clone();
+        assert_eq!(original, cloned);
+        assert_eq!(original.to_string(), cloned.to_string());
+    }
+
+    #[test]
+    fn test_clone_call_independence() {
+        let original = Expr::call("func", vec![Expr::Number(1), Expr::Number(2)]);
+        let cloned = original.clone();
+        assert_eq!(original, cloned);
+        assert_eq!(original.to_string(), cloned.to_string());
+    }
+
+    // ===== Call equality edge cases =====
+
+    #[test]
+    fn test_equality_call_different_arg_counts() {
+        let expr1 = Expr::call("func", vec![Expr::Number(1)]);
+        let expr2 = Expr::call("func", vec![Expr::Number(1), Expr::Number(2)]);
+        assert_ne!(expr1, expr2);
+    }
+
+    #[test]
+    fn test_equality_call_empty_vs_nonempty() {
+        let expr1 = Expr::call("func", vec![]);
+        let expr2 = Expr::call("func", vec![Expr::Bool(true)]);
+        assert_ne!(expr1, expr2);
+    }
+
+    #[test]
+    fn test_equality_call_same_args_different_order() {
+        let expr1 = Expr::call("func", vec![Expr::Number(1), Expr::Number(2)]);
+        let expr2 = Expr::call("func", vec![Expr::Number(2), Expr::Number(1)]);
+        assert_ne!(expr1, expr2);
+    }
+
+    // ===== Mixed complex nesting tests =====
+
+    #[test]
+    fn test_all_variants_combined() {
+        // Build: (has("SWORD") && count(RUPEES, 50)) || !is_adult
+        let expr = Expr::or(
+            Expr::and(
+                Expr::call("has", vec![Expr::String("SWORD".into())]),
+                Expr::call(
+                    "count",
+                    vec![Expr::Ident("RUPEES".into()), Expr::Number(50)],
+                ),
+            ),
+            Expr::not(Expr::Ident("is_adult".into())),
+        );
+        assert_eq!(
+            expr.to_string(),
+            "((has(\"SWORD\") && count(RUPEES, 50)) || !is_adult)"
+        );
+    }
+
+    #[test]
+    fn test_not_of_and() {
+        let expr = Expr::not(Expr::and(Expr::Bool(true), Expr::Bool(false)));
+        assert_eq!(expr.to_string(), "!(true && false)");
+    }
+
+    #[test]
+    fn test_not_of_or() {
+        let expr = Expr::not(Expr::or(Expr::Bool(true), Expr::Bool(false)));
+        assert_eq!(expr.to_string(), "!(true || false)");
+    }
+
+    #[test]
+    fn test_not_of_call() {
+        let expr = Expr::not(Expr::call("has", vec![Expr::Ident("ITEM".into())]));
+        assert_eq!(expr.to_string(), "!has(ITEM)");
+    }
+
+    #[test]
+    fn test_call_with_logical_expression_args() {
+        let expr = Expr::call(
+            "check",
+            vec![
+                Expr::and(Expr::Bool(true), Expr::Bool(false)),
+                Expr::or(Expr::Ident("a".into()), Expr::Ident("b".into())),
+            ],
+        );
+        assert_eq!(expr.to_string(), "check((true && false), (a || b))");
+    }
+
+    #[test]
+    fn test_and_with_calls_on_both_sides() {
+        let expr = Expr::and(
+            Expr::call("has", vec![Expr::Ident("A".into())]),
+            Expr::call("has", vec![Expr::Ident("B".into())]),
+        );
+        assert_eq!(expr.to_string(), "(has(A) && has(B))");
+    }
+
+    #[test]
+    fn test_or_with_not_on_both_sides() {
+        let expr = Expr::or(
+            Expr::not(Expr::Ident("a".into())),
+            Expr::not(Expr::Ident("b".into())),
+        );
+        assert_eq!(expr.to_string(), "(!a || !b)");
+    }
+
+    // ===== Very deep nesting stress tests =====
+
+    #[test]
+    fn test_very_deep_and_chain() {
+        // Build a chain of 10 ANDs
+        let mut expr = Expr::Ident("v0".into());
+        for i in 1..10 {
+            expr = Expr::and(expr, Expr::Ident(format!("v{}", i)));
+        }
+        let display = expr.to_string();
+        assert!(display.contains("v0"));
+        assert!(display.contains("v9"));
+        assert!(display.contains("&&"));
+    }
+
+    #[test]
+    fn test_very_deep_or_chain() {
+        // Build a chain of 10 ORs
+        let mut expr = Expr::Ident("v0".into());
+        for i in 1..10 {
+            expr = Expr::or(expr, Expr::Ident(format!("v{}", i)));
+        }
+        let display = expr.to_string();
+        assert!(display.contains("v0"));
+        assert!(display.contains("v9"));
+        assert!(display.contains("||"));
+    }
+
+    #[test]
+    fn test_very_deep_not_chain() {
+        // Build 10 levels of NOT
+        let mut expr = Expr::Bool(true);
+        for _ in 0..10 {
+            expr = Expr::not(expr);
+        }
+        assert_eq!(expr.to_string(), "!!!!!!!!!!true");
+    }
+
+    #[test]
+    fn test_very_deep_call_chain() {
+        // Build nested calls: f(f(f(f(f(x)))))
+        let mut expr = Expr::Ident("x".into());
+        for _ in 0..5 {
+            expr = Expr::call("f", vec![expr]);
+        }
+        assert_eq!(expr.to_string(), "f(f(f(f(f(x)))))");
+    }
+
+    #[test]
+    fn test_alternating_and_or() {
+        // (((a && b) || c) && d) || e
+        let expr = Expr::or(
+            Expr::and(
+                Expr::or(
+                    Expr::and(Expr::Ident("a".into()), Expr::Ident("b".into())),
+                    Expr::Ident("c".into()),
+                ),
+                Expr::Ident("d".into()),
+            ),
+            Expr::Ident("e".into()),
+        );
+        assert_eq!(expr.to_string(), "((((a && b) || c) && d) || e)");
+    }
+
+    // ===== Display consistency tests =====
+
+    #[test]
+    fn test_display_consistency_after_clone() {
+        let expressions = vec![
+            Expr::Bool(true),
+            Expr::Number(42),
+            Expr::String("test".into()),
+            Expr::Ident("foo".into()),
+            Expr::and(Expr::Bool(true), Expr::Bool(false)),
+            Expr::or(Expr::Bool(true), Expr::Bool(false)),
+            Expr::not(Expr::Bool(true)),
+            Expr::call("func", vec![Expr::Number(1), Expr::Number(2)]),
+        ];
+
+        for expr in expressions {
+            let cloned = expr.clone();
+            assert_eq!(
+                expr.to_string(),
+                cloned.to_string(),
+                "Display should be identical for {:?}",
+                expr
+            );
+        }
+    }
+
+    #[test]
+    fn test_equality_reflexive() {
+        // Every expression should equal itself
+        let expressions = vec![
+            Expr::Bool(true),
+            Expr::Bool(false),
+            Expr::Number(0),
+            Expr::Number(i64::MIN),
+            Expr::String("".into()),
+            Expr::String("test".into()),
+            Expr::Ident("x".into()),
+            Expr::and(Expr::Bool(true), Expr::Bool(false)),
+            Expr::or(Expr::Bool(true), Expr::Bool(false)),
+            Expr::not(Expr::Bool(true)),
+            Expr::call("f", vec![]),
+            Expr::call("f", vec![Expr::Number(1)]),
+        ];
+
+        for expr in expressions {
+            assert_eq!(expr, expr.clone(), "Expression should equal its clone");
+        }
+    }
+
+    #[test]
+    fn test_equality_symmetric() {
+        let a = Expr::and(Expr::Bool(true), Expr::Ident("x".into()));
+        let b = Expr::and(Expr::Bool(true), Expr::Ident("x".into()));
+        assert_eq!(a, b);
+        assert_eq!(b, a);
+    }
+
+    // ===== Call with mixed argument types =====
+
+    #[test]
+    fn test_call_all_arg_types() {
+        let expr = Expr::call(
+            "mixed",
+            vec![
+                Expr::Bool(true),
+                Expr::Number(42),
+                Expr::String("hello".into()),
+                Expr::Ident("var".into()),
+            ],
+        );
+        assert_eq!(expr.to_string(), "mixed(true, 42, \"hello\", var)");
+    }
+
+    #[test]
+    fn test_call_with_nested_expressions_as_args() {
+        let expr = Expr::call(
+            "complex",
+            vec![
+                Expr::and(Expr::Bool(true), Expr::Bool(false)),
+                Expr::not(Expr::Ident("x".into())),
+                Expr::call("inner", vec![Expr::Number(1)]),
+            ],
+        );
+        assert_eq!(
+            expr.to_string(),
+            "complex((true && false), !x, inner(1))"
+        );
+    }
+
+    // ===== Structural tests =====
+
+    #[test]
+    fn test_and_is_not_commutative_structurally() {
+        let expr1 = Expr::and(Expr::Ident("a".into()), Expr::Ident("b".into()));
+        let expr2 = Expr::and(Expr::Ident("b".into()), Expr::Ident("a".into()));
+        // Structurally different (AST comparison, not logical equivalence)
+        assert_ne!(expr1, expr2);
+    }
+
+    #[test]
+    fn test_or_is_not_commutative_structurally() {
+        let expr1 = Expr::or(Expr::Ident("a".into()), Expr::Ident("b".into()));
+        let expr2 = Expr::or(Expr::Ident("b".into()), Expr::Ident("a".into()));
+        // Structurally different
+        assert_ne!(expr1, expr2);
+    }
+
+    #[test]
+    fn test_deeply_nested_equality() {
+        let expr1 = Expr::and(
+            Expr::or(
+                Expr::not(Expr::Bool(true)),
+                Expr::call("f", vec![Expr::Number(1)]),
+            ),
+            Expr::Ident("x".into()),
+        );
+        let expr2 = Expr::and(
+            Expr::or(
+                Expr::not(Expr::Bool(true)),
+                Expr::call("f", vec![Expr::Number(1)]),
+            ),
+            Expr::Ident("x".into()),
+        );
+        assert_eq!(expr1, expr2);
+    }
+
+    #[test]
+    fn test_deeply_nested_inequality() {
+        let expr1 = Expr::and(
+            Expr::or(
+                Expr::not(Expr::Bool(true)),
+                Expr::call("f", vec![Expr::Number(1)]),
+            ),
+            Expr::Ident("x".into()),
+        );
+        let expr2 = Expr::and(
+            Expr::or(
+                Expr::not(Expr::Bool(false)), // Changed from true to false
+                Expr::call("f", vec![Expr::Number(1)]),
+            ),
+            Expr::Ident("x".into()),
+        );
+        assert_ne!(expr1, expr2);
+    }
 }
