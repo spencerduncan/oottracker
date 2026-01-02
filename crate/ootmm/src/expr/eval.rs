@@ -375,6 +375,10 @@ mod tests {
         fn is_child(&self) -> bool {
             !self.is_adult
         }
+
+        fn mm_time(&self) -> u32 {
+            0 // Default to time 0 for tests
+        }
     }
 
     // --- Boolean literal tests ---

@@ -124,6 +124,10 @@ mod tests {
         fn is_child(&self) -> bool {
             false
         }
+
+        fn mm_time(&self) -> u32 {
+            0 // Default to time 0 for tests
+        }
     }
 
     // --- event() tests ---
