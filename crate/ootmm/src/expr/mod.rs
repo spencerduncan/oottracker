@@ -14,7 +14,7 @@ mod token;
 pub mod builtins;
 
 pub use ast::Expr;
-pub use eval::{eval, EvalContext, EvalError};
+pub use eval::{eval, eval_str, EvalContext, EvalError, Evaluator};
 pub use lexer::{LexError, Lexer};
 pub use parser::{parse, ParseError, Parser};
 pub use token::Token;
