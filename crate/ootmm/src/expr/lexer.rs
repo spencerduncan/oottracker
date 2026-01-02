@@ -527,4 +527,198 @@ mod tests {
         assert_eq!(lexer.next_token().unwrap(), Token::RParen);
         assert_eq!(lexer.next_token().unwrap(), Token::Eof);
     }
+
+    // ===== Edge case tests for comprehensive coverage =====
+
+    #[test]
+    fn test_leading_zeroes_in_number() {
+        let mut lexer = Lexer::new("007 0123");
+        assert_eq!(lexer.next_token().unwrap(), Token::Number(7));
+        assert_eq!(lexer.next_token().unwrap(), Token::Number(123));
+    }
+
+    #[test]
+    fn test_consecutive_commas() {
+        let mut lexer = Lexer::new(",,,");
+        assert_eq!(lexer.next_token().unwrap(), Token::Comma);
+        assert_eq!(lexer.next_token().unwrap(), Token::Comma);
+        assert_eq!(lexer.next_token().unwrap(), Token::Comma);
+        assert_eq!(lexer.next_token().unwrap(), Token::Eof);
+    }
+
+    #[test]
+    fn test_consecutive_not_operators() {
+        let mut lexer = Lexer::new("!!!");
+        assert_eq!(lexer.next_token().unwrap(), Token::Not);
+        assert_eq!(lexer.next_token().unwrap(), Token::Not);
+        assert_eq!(lexer.next_token().unwrap(), Token::Not);
+        assert_eq!(lexer.next_token().unwrap(), Token::Eof);
+    }
+
+    #[test]
+    fn test_ampersand_followed_by_alpha() {
+        let mut lexer = Lexer::new("&a");
+        let err = lexer.next_token().unwrap_err();
+        assert!(matches!(err, LexError::UnexpectedChar('&', 0)));
+    }
+
+    #[test]
+    fn test_pipe_followed_by_alpha() {
+        let mut lexer = Lexer::new("|x");
+        let err = lexer.next_token().unwrap_err();
+        assert!(matches!(err, LexError::UnexpectedChar('|', 0)));
+    }
+
+    #[test]
+    fn test_string_with_parentheses() {
+        let mut lexer = Lexer::new("\"(hello)\"");
+        assert_eq!(lexer.next_token().unwrap(), Token::String("(hello)".into()));
+    }
+
+    #[test]
+    fn test_string_with_quotes_adjacent() {
+        let mut lexer = Lexer::new("\"a\"\"b\"");
+        assert_eq!(lexer.next_token().unwrap(), Token::String("a".into()));
+        assert_eq!(lexer.next_token().unwrap(), Token::String("b".into()));
+    }
+
+    #[test]
+    fn test_identifier_all_underscores() {
+        let mut lexer = Lexer::new("___");
+        assert_eq!(lexer.next_token().unwrap(), Token::Ident("___".into()));
+    }
+
+    #[test]
+    fn test_identifier_mixed_case() {
+        let mut lexer = Lexer::new("camelCase PascalCase snake_case SCREAMING_CASE");
+        assert_eq!(
+            lexer.next_token().unwrap(),
+            Token::Ident("camelCase".into())
+        );
+        assert_eq!(
+            lexer.next_token().unwrap(),
+            Token::Ident("PascalCase".into())
+        );
+        assert_eq!(
+            lexer.next_token().unwrap(),
+            Token::Ident("snake_case".into())
+        );
+        assert_eq!(
+            lexer.next_token().unwrap(),
+            Token::Ident("SCREAMING_CASE".into())
+        );
+    }
+
+    #[test]
+    fn test_adjacent_operators_and_parens() {
+        let mut lexer = Lexer::new("&&()||!");
+        assert_eq!(lexer.next_token().unwrap(), Token::And);
+        assert_eq!(lexer.next_token().unwrap(), Token::LParen);
+        assert_eq!(lexer.next_token().unwrap(), Token::RParen);
+        assert_eq!(lexer.next_token().unwrap(), Token::Or);
+        assert_eq!(lexer.next_token().unwrap(), Token::Not);
+    }
+
+    #[test]
+    fn test_carriage_return_whitespace() {
+        let mut lexer = Lexer::new("a\r\nb");
+        assert_eq!(lexer.next_token().unwrap(), Token::Ident("a".into()));
+        assert_eq!(lexer.next_token().unwrap(), Token::Ident("b".into()));
+    }
+
+    #[test]
+    fn test_max_i64_number() {
+        let mut lexer = Lexer::new("9223372036854775807");
+        assert_eq!(
+            lexer.next_token().unwrap(),
+            Token::Number(9223372036854775807)
+        );
+    }
+
+    #[test]
+    fn test_string_with_newline_inside() {
+        let mut lexer = Lexer::new("\"line1\nline2\"");
+        assert_eq!(
+            lexer.next_token().unwrap(),
+            Token::String("line1\nline2".into())
+        );
+    }
+
+    #[test]
+    fn test_unexpected_char_at_various_positions() {
+        // Error at position 5
+        let mut lexer = Lexer::new("test @error");
+        assert_eq!(lexer.next_token().unwrap(), Token::Ident("test".into()));
+        let err = lexer.next_token().unwrap_err();
+        assert!(matches!(err, LexError::UnexpectedChar('@', 5)));
+    }
+
+    #[test]
+    fn test_special_chars_in_error() {
+        let test_chars = ['#', '$', '%', '^', '*', '~', '`', '\\', '/', ':'];
+        for ch in test_chars {
+            let input = ch.to_string();
+            let mut lexer = Lexer::new(&input);
+            let err = lexer.next_token().unwrap_err();
+            assert!(matches!(err, LexError::UnexpectedChar(c, 0) if c == ch));
+        }
+    }
+
+    #[test]
+    fn test_numbers_followed_by_identifiers() {
+        let mut lexer = Lexer::new("123abc");
+        assert_eq!(lexer.next_token().unwrap(), Token::Number(123));
+        assert_eq!(lexer.next_token().unwrap(), Token::Ident("abc".into()));
+    }
+
+    #[test]
+    fn test_deeply_nested_function_calls() {
+        let mut lexer = Lexer::new("f(g(h(x)))");
+        assert_eq!(lexer.next_token().unwrap(), Token::Ident("f".into()));
+        assert_eq!(lexer.next_token().unwrap(), Token::LParen);
+        assert_eq!(lexer.next_token().unwrap(), Token::Ident("g".into()));
+        assert_eq!(lexer.next_token().unwrap(), Token::LParen);
+        assert_eq!(lexer.next_token().unwrap(), Token::Ident("h".into()));
+        assert_eq!(lexer.next_token().unwrap(), Token::LParen);
+        assert_eq!(lexer.next_token().unwrap(), Token::Ident("x".into()));
+        assert_eq!(lexer.next_token().unwrap(), Token::RParen);
+        assert_eq!(lexer.next_token().unwrap(), Token::RParen);
+        assert_eq!(lexer.next_token().unwrap(), Token::RParen);
+    }
+
+    #[test]
+    fn test_empty_function_parentheses() {
+        let mut lexer = Lexer::new("func()");
+        assert_eq!(lexer.next_token().unwrap(), Token::Ident("func".into()));
+        assert_eq!(lexer.next_token().unwrap(), Token::LParen);
+        assert_eq!(lexer.next_token().unwrap(), Token::RParen);
+    }
+
+    #[test]
+    fn test_string_at_eof_unterminated() {
+        let mut lexer = Lexer::new("\"");
+        let err = lexer.next_token().unwrap_err();
+        assert!(matches!(err, LexError::UnterminatedString(0)));
+    }
+
+    #[test]
+    fn test_mixed_whitespace_between_operators() {
+        let mut lexer = Lexer::new("a  &&  \t\n  b");
+        assert_eq!(lexer.next_token().unwrap(), Token::Ident("a".into()));
+        assert_eq!(lexer.next_token().unwrap(), Token::And);
+        assert_eq!(lexer.next_token().unwrap(), Token::Ident("b".into()));
+    }
+
+    #[test]
+    fn test_identifier_starting_with_keyword_prefix() {
+        let mut lexer = Lexer::new("trueValue falsehood");
+        assert_eq!(
+            lexer.next_token().unwrap(),
+            Token::Ident("trueValue".into())
+        );
+        assert_eq!(
+            lexer.next_token().unwrap(),
+            Token::Ident("falsehood".into())
+        );
+    }
 }
