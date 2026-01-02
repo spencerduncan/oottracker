@@ -1,0 +1,557 @@
+# Sample OoTMM world data with real logic expressions
+# This fixture tests the integration of WorldDatabase with expression parsing
+
+regions:
+  # ===========================================================================
+  # Kokiri Forest - Starting area
+  # ===========================================================================
+  - id: "kokiri_forest"
+    name: "Kokiri Forest"
+    game: oot
+    locations:
+      - id: "kf_midos_chest_top_left"
+        name: "KF Mido's Top Left Chest"
+        locationType: chest
+        logic: "true"
+      - id: "kf_midos_chest_top_right"
+        name: "KF Mido's Top Right Chest"
+        locationType: chest
+        logic: "true"
+      - id: "kf_midos_chest_bottom_left"
+        name: "KF Mido's Bottom Left Chest"
+        locationType: chest
+        logic: "true"
+      - id: "kf_midos_chest_bottom_right"
+        name: "KF Mido's Bottom Right Chest"
+        locationType: chest
+        logic: "true"
+      - id: "kf_kokiri_sword_chest"
+        name: "KF Kokiri Sword Chest"
+        locationType: chest
+        logic: "true"
+      - id: "kf_gs_know_it_all_house"
+        name: "KF GS Know It All House"
+        locationType: collectible
+        logic: "is_child && at_night && can_child_attack"
+      - id: "kf_gs_bean_patch"
+        name: "KF GS Bean Patch"
+        locationType: collectible
+        logic: "can_plant_bugs && can_child_attack"
+      - id: "kf_gs_house_of_twins"
+        name: "KF GS House of Twins"
+        locationType: collectible
+        logic: "is_adult && at_night && (can_use(Hookshot) || can_use(Boomerang))"
+      - id: "kf_shop_item_1"
+        name: "KF Shop Item 1"
+        locationType: shop
+        logic: "true"
+      - id: "kf_storms_grotto_chest"
+        name: "KF Storms Grotto Chest"
+        locationType: chest
+        logic: "can_play(Song_of_Storms)"
+    exits:
+      - target: "lost_woods"
+        exitType: overworld
+        logic: "true"
+      - target: "lost_woods_bridge"
+        exitType: overworld
+        logic: "is_adult || (is_child && event(SHOWED_MIDO_SWORD_SHIELD))"
+      - target: "deku_tree"
+        exitType: dungeon
+        logic: "is_child || setting(open_forest)"
+      - target: "kf_links_house"
+        exitType: interior
+        logic: "true"
+      - target: "kf_midos_house"
+        exitType: interior
+        logic: "true"
+      - target: "kf_sarias_house"
+        exitType: interior
+        logic: "true"
+      - target: "kf_know_it_all_house"
+        exitType: interior
+        logic: "true"
+      - target: "kf_twins_house"
+        exitType: interior
+        logic: "true"
+      - target: "kf_shop"
+        exitType: interior
+        logic: "true"
+      - target: "kf_storms_grotto"
+        exitType: grotto
+        logic: "can_play(Song_of_Storms)"
+    events:
+      - id: "SHOWED_MIDO_SWORD_SHIELD"
+        name: "Showed Mido Sword and Shield"
+        logic: "is_child && has(Kokiri_Sword) && has(Deku_Shield)"
+
+  # ===========================================================================
+  # Deku Tree - First dungeon
+  # ===========================================================================
+  - id: "deku_tree"
+    name: "Inside The Deku Tree"
+    game: oot
+    locations:
+      - id: "deku_tree_map_chest"
+        name: "Deku Tree Map Chest"
+        locationType: chest
+        logic: "true"
+      - id: "deku_tree_slingshot_room_side_chest"
+        name: "Deku Tree Slingshot Room Side Chest"
+        locationType: chest
+        logic: "true"
+      - id: "deku_tree_slingshot_chest"
+        name: "Deku Tree Slingshot Chest"
+        locationType: chest
+        logic: "true"
+      - id: "deku_tree_compass_chest"
+        name: "Deku Tree Compass Chest"
+        locationType: chest
+        logic: "true"
+      - id: "deku_tree_compass_room_side_chest"
+        name: "Deku Tree Compass Room Side Chest"
+        locationType: chest
+        logic: "true"
+      - id: "deku_tree_basement_chest"
+        name: "Deku Tree Basement Chest"
+        locationType: chest
+        logic: "is_child && (can_child_attack || Nuts)"
+      - id: "deku_tree_gs_compass_room"
+        name: "Deku Tree GS Compass Room"
+        locationType: collectible
+        logic: "can_child_attack"
+      - id: "deku_tree_gs_basement_vines"
+        name: "Deku Tree GS Basement Vines"
+        locationType: collectible
+        logic: "can_use_projectile || (trick(logic_deku_basement_gs) && can_jumpslash)"
+      - id: "deku_tree_gs_basement_gate"
+        name: "Deku Tree GS Basement Gate"
+        locationType: collectible
+        logic: "can_child_attack"
+      - id: "deku_tree_gs_basement_back_room"
+        name: "Deku Tree GS Basement Back Room"
+        locationType: collectible
+        logic: "(can_blast_or_smash || can_use(Boomerang)) && (can_use_projectile || can_use(Dins_Fire))"
+      - id: "deku_tree_queen_gohma_heart"
+        name: "Deku Tree Queen Gohma Heart Container"
+        locationType: boss
+        logic: "has_fire_source_with_torch && (Nuts || can_use(Slingshot) || can_use(Bow))"
+    exits:
+      - target: "kokiri_forest"
+        exitType: dungeon
+        logic: "true"
+      - target: "deku_tree_boss"
+        exitType: dungeon
+        logic: "has_fire_source_with_torch && has_shield"
+    events:
+      - id: "DEKU_TREE_CLEAR"
+        name: "Deku Tree Cleared"
+        logic: "has_fire_source_with_torch && (Nuts || can_use(Slingshot)) && can_child_attack"
+
+  # ===========================================================================
+  # Lost Woods - Forest area
+  # ===========================================================================
+  - id: "lost_woods"
+    name: "Lost Woods"
+    game: oot
+    locations:
+      - id: "lw_skull_kid"
+        name: "LW Skull Kid"
+        locationType: npc
+        logic: "is_child && can_play(Sarias_Song)"
+      - id: "lw_ocarina_memory_game"
+        name: "LW Ocarina Memory Game"
+        locationType: npc
+        logic: "is_child && Ocarina"
+      - id: "lw_target_in_woods"
+        name: "LW Target in Woods"
+        locationType: npc
+        logic: "is_child && can_use(Slingshot)"
+      - id: "lw_deku_scrub_near_bridge"
+        name: "LW Deku Scrub Near Bridge"
+        locationType: npc
+        logic: "is_child && (can_stun_deku || setting(shuffle_scrubs))"
+      - id: "lw_deku_scrub_grotto_front"
+        name: "LW Deku Scrub Grotto Front"
+        locationType: scrub
+        logic: "can_blast_or_smash && (can_stun_deku || setting(shuffle_scrubs))"
+      - id: "lw_gs_bean_patch_near_bridge"
+        name: "LW GS Bean Patch Near Bridge"
+        locationType: collectible
+        logic: "can_plant_bugs && can_child_attack"
+      - id: "lw_gs_bean_patch_near_theater"
+        name: "LW GS Bean Patch Near Theater"
+        locationType: collectible
+        logic: "can_plant_bugs && (can_child_attack || (is_adult && can_use(Hookshot)))"
+      - id: "lw_gs_above_theater"
+        name: "LW GS Above Theater"
+        locationType: collectible
+        logic: "is_adult && at_night && (can_use(Hookshot) || (trick(logic_lost_woods_gs_bean) && can_use(Boomerang) && has(Magic_Bean)))"
+    exits:
+      - target: "kokiri_forest"
+        exitType: overworld
+        logic: "true"
+      - target: "goron_city"
+        exitType: overworld
+        logic: "true"
+      - target: "zoras_river"
+        exitType: overworld
+        logic: "has(Scale) || can_use(Iron_Boots)"
+      - target: "sacred_forest_meadow"
+        exitType: overworld
+        logic: "is_adult || can_use(Slingshot) || can_use(Boomerang) || Sticks || Kokiri_Sword"
+      - target: "lw_bridge"
+        exitType: overworld
+        logic: "true"
+    events:
+      - id: "SKULL_KID_ITEM"
+        name: "Got Skull Kid Item"
+        logic: "is_child && can_play(Sarias_Song)"
+
+  # ===========================================================================
+  # Lost Woods Bridge - Saria's spot
+  # ===========================================================================
+  - id: "lost_woods_bridge"
+    name: "LW Bridge From Forest"
+    game: oot
+    locations:
+      - id: "lw_gift_from_saria"
+        name: "LW Gift From Saria"
+        locationType: npc
+        logic: "true"
+    exits:
+      - target: "lost_woods"
+        exitType: overworld
+        logic: "true"
+      - target: "hyrule_field"
+        exitType: overworld
+        logic: "true"
+
+  # ===========================================================================
+  # Clock Town - MM starting area
+  # ===========================================================================
+  - id: "clock_town_south"
+    name: "Clock Town South"
+    game: mm
+    locations:
+      - id: "ct_clock_tower_entrance"
+        name: "Clock Tower Entrance"
+        locationType: chest
+        logic: "true"
+      - id: "ct_south_chest"
+        name: "Clock Town South Chest"
+        locationType: chest
+        logic: "has(Deku_Mask) || has(Hookshot)"
+      - id: "ct_bank_reward_1"
+        name: "Clock Town Bank Reward 1"
+        locationType: npc
+        logic: "true"
+      - id: "ct_bank_reward_2"
+        name: "Clock Town Bank Reward 2"
+        locationType: npc
+        logic: "has(Wallet, 2)"
+      - id: "ct_postman_game"
+        name: "Clock Town Postman Game"
+        locationType: event
+        logic: "has(Bunny_Hood) || trick(logic_postman_no_bunny)"
+    exits:
+      - target: "clock_town_north"
+        exitType: overworld
+        logic: "true"
+      - target: "clock_town_east"
+        exitType: overworld
+        logic: "true"
+      - target: "clock_town_west"
+        exitType: overworld
+        logic: "true"
+      - target: "clock_tower"
+        exitType: interior
+        logic: "event(CLOCK_TOWER_OPENED)"
+      - target: "termina_field"
+        exitType: overworld
+        logic: "has(Deku_Mask) || is_human"
+    events:
+      - id: "CLOCK_TOWER_OPENED"
+        name: "Clock Tower Opened"
+        logic: "has(Ocarina) && has(Moon_Tear)"
+
+  # ===========================================================================
+  # Termina Field
+  # ===========================================================================
+  - id: "termina_field"
+    name: "Termina Field"
+    game: mm
+    locations:
+      - id: "tf_tall_grass_chest"
+        name: "Termina Field Tall Grass Chest"
+        locationType: chest
+        logic: "true"
+      - id: "tf_underwater_chest"
+        name: "Termina Field Underwater Chest"
+        locationType: chest
+        logic: "has(Zora_Mask) || (has(Scale) && can_use(Hookshot))"
+      - id: "tf_stump_chest"
+        name: "Termina Field Stump Chest"
+        locationType: chest
+        logic: "has(Hookshot) || (has(Deku_Mask) && can_use(Deku_Flower))"
+      - id: "tf_peahat_grotto_chest"
+        name: "Termina Field Peahat Grotto Chest"
+        locationType: chest
+        logic: "can_fight_peahat"
+      - id: "tf_kamaro_mask"
+        name: "Termina Field Kamaro's Mask"
+        locationType: npc
+        logic: "at_night && can_play(Song_of_Healing)"
+    exits:
+      - target: "clock_town_south"
+        exitType: overworld
+        logic: "true"
+      - target: "southern_swamp"
+        exitType: overworld
+        logic: "true"
+      - target: "mountain_village"
+        exitType: overworld
+        logic: "has(Goron_Mask) || (has(Bow) && has(Fire_Arrows))"
+      - target: "great_bay"
+        exitType: overworld
+        logic: "has(Epona) || has(Goron_Mask)"
+      - target: "ikana_canyon"
+        exitType: overworld
+        logic: "has(Hookshot) && has(Garo_Mask)"
+    events:
+      - id: "TERMINA_FIELD_FROGS"
+        name: "Termina Field Frogs"
+        logic: "can_play(Don_Gero_Song) && has(Don_Gero_Mask)"
+
+  # ===========================================================================
+  # Woodfall Temple - MM first dungeon
+  # ===========================================================================
+  - id: "woodfall_temple"
+    name: "Woodfall Temple"
+    game: mm
+    locations:
+      - id: "wt_map_chest"
+        name: "Woodfall Temple Map Chest"
+        locationType: chest
+        logic: "true"
+      - id: "wt_compass_chest"
+        name: "Woodfall Temple Compass Chest"
+        locationType: chest
+        logic: "has(Small_Key_Woodfall_Temple, 1) && (has(Deku_Mask) || has(Hookshot))"
+      - id: "wt_boss_key_chest"
+        name: "Woodfall Temple Boss Key Chest"
+        locationType: chest
+        logic: "has(Bow) && has(Small_Key_Woodfall_Temple, 1)"
+      - id: "wt_entrance_freestanding"
+        name: "Woodfall Temple Entrance Freestanding"
+        locationType: freestanding
+        logic: "true"
+      - id: "wt_dragonfly_chest"
+        name: "Woodfall Temple Dragonfly Chest"
+        locationType: chest
+        logic: "has(Bow) || (has(Deku_Mask) && has(Great_Fairy_Mask))"
+      - id: "wt_central_platform_chest"
+        name: "Woodfall Temple Central Platform Chest"
+        locationType: chest
+        logic: "has(Deku_Mask) && has(Small_Key_Woodfall_Temple, 1)"
+      - id: "wt_odolwa_heart"
+        name: "Woodfall Temple Odolwa Heart Container"
+        locationType: boss
+        logic: "has(Boss_Key_Woodfall_Temple) && (has(Bow) || has(Deku_Mask))"
+      - id: "wt_odolwa_remains"
+        name: "Woodfall Temple Odolwa's Remains"
+        locationType: boss
+        logic: "has(Boss_Key_Woodfall_Temple) && (has(Bow) || has(Deku_Mask))"
+    exits:
+      - target: "southern_swamp"
+        exitType: dungeon
+        logic: "true"
+      - target: "woodfall_temple_boss"
+        exitType: dungeon
+        logic: "has(Boss_Key_Woodfall_Temple)"
+    events:
+      - id: "WOODFALL_TEMPLE_CLEAR"
+        name: "Woodfall Temple Cleared"
+        logic: "has(Boss_Key_Woodfall_Temple) && (has(Bow) || has(Deku_Mask))"
+
+  # ===========================================================================
+  # Interior locations - minimal definitions for exit targets
+  # ===========================================================================
+  - id: "kf_links_house"
+    name: "Link's House"
+    game: oot
+    exits:
+      - target: "kokiri_forest"
+        exitType: interior
+        logic: "true"
+
+  - id: "kf_midos_house"
+    name: "Mido's House"
+    game: oot
+    exits:
+      - target: "kokiri_forest"
+        exitType: interior
+        logic: "true"
+
+  - id: "kf_sarias_house"
+    name: "Saria's House"
+    game: oot
+    exits:
+      - target: "kokiri_forest"
+        exitType: interior
+        logic: "true"
+
+  - id: "kf_know_it_all_house"
+    name: "Know It All Brothers' House"
+    game: oot
+    exits:
+      - target: "kokiri_forest"
+        exitType: interior
+        logic: "true"
+
+  - id: "kf_twins_house"
+    name: "House of Twins"
+    game: oot
+    exits:
+      - target: "kokiri_forest"
+        exitType: interior
+        logic: "true"
+
+  - id: "kf_shop"
+    name: "Kokiri Shop"
+    game: oot
+    exits:
+      - target: "kokiri_forest"
+        exitType: interior
+        logic: "true"
+
+  - id: "kf_storms_grotto"
+    name: "Kokiri Forest Storms Grotto"
+    game: oot
+    exits:
+      - target: "kokiri_forest"
+        exitType: grotto
+        logic: "true"
+
+  - id: "deku_tree_boss"
+    name: "Queen Gohma's Lair"
+    game: oot
+    exits:
+      - target: "deku_tree"
+        exitType: dungeon
+        logic: "true"
+
+  - id: "lw_bridge"
+    name: "Lost Woods Bridge"
+    game: oot
+    exits:
+      - target: "lost_woods"
+        exitType: overworld
+        logic: "true"
+
+  - id: "sacred_forest_meadow"
+    name: "Sacred Forest Meadow"
+    game: oot
+    exits:
+      - target: "lost_woods"
+        exitType: overworld
+        logic: "true"
+
+  - id: "goron_city"
+    name: "Goron City"
+    game: oot
+    exits:
+      - target: "lost_woods"
+        exitType: overworld
+        logic: "true"
+
+  - id: "zoras_river"
+    name: "Zora's River"
+    game: oot
+    exits:
+      - target: "lost_woods"
+        exitType: overworld
+        logic: "true"
+
+  - id: "hyrule_field"
+    name: "Hyrule Field"
+    game: oot
+    exits:
+      - target: "lost_woods_bridge"
+        exitType: overworld
+        logic: "true"
+
+  - id: "clock_town_north"
+    name: "Clock Town North"
+    game: mm
+    exits:
+      - target: "clock_town_south"
+        exitType: overworld
+        logic: "true"
+
+  - id: "clock_town_east"
+    name: "Clock Town East"
+    game: mm
+    exits:
+      - target: "clock_town_south"
+        exitType: overworld
+        logic: "true"
+
+  - id: "clock_town_west"
+    name: "Clock Town West"
+    game: mm
+    exits:
+      - target: "clock_town_south"
+        exitType: overworld
+        logic: "true"
+
+  - id: "clock_tower"
+    name: "Clock Tower"
+    game: mm
+    exits:
+      - target: "clock_town_south"
+        exitType: interior
+        logic: "true"
+
+  - id: "southern_swamp"
+    name: "Southern Swamp"
+    game: mm
+    exits:
+      - target: "termina_field"
+        exitType: overworld
+        logic: "true"
+      - target: "woodfall_temple"
+        exitType: dungeon
+        logic: "has(Deku_Mask)"
+
+  - id: "mountain_village"
+    name: "Mountain Village"
+    game: mm
+    exits:
+      - target: "termina_field"
+        exitType: overworld
+        logic: "true"
+
+  - id: "great_bay"
+    name: "Great Bay"
+    game: mm
+    exits:
+      - target: "termina_field"
+        exitType: overworld
+        logic: "true"
+
+  - id: "ikana_canyon"
+    name: "Ikana Canyon"
+    game: mm
+    exits:
+      - target: "termina_field"
+        exitType: overworld
+        logic: "true"
+
+  - id: "woodfall_temple_boss"
+    name: "Odolwa's Lair"
+    game: mm
+    exits:
+      - target: "woodfall_temple"
+        exitType: dungeon
+        logic: "true"

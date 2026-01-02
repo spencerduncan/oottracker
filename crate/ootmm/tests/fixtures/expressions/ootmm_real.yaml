@@ -1,0 +1,508 @@
+# Real OoTMM/OoT Randomizer logic expression test cases
+# These expressions are based on actual logic files from the OoTMM and OoT Randomizer projects.
+name: Real OoTMM Logic Expressions
+description: Integration tests using authentic logic expressions from OoTMM randomizer
+
+test_cases:
+  # ============================================================================
+  # Simple boolean and identifier expressions
+  # ============================================================================
+
+  - name: simple_true
+    expression: "true"
+    should_parse: true
+    description: Unrestricted access (always accessible)
+
+  - name: simple_false
+    expression: "false"
+    should_parse: true
+    description: Never accessible
+
+  - name: is_adult
+    expression: "is_adult"
+    should_parse: true
+    description: Adult Link only access
+
+  - name: is_child
+    expression: "is_child"
+    should_parse: true
+    description: Child Link only access
+
+  - name: at_night
+    expression: "at_night"
+    should_parse: true
+    description: Nighttime only access
+
+  # ============================================================================
+  # Basic item identifier checks
+  # ============================================================================
+
+  - name: item_nuts
+    expression: "Nuts"
+    should_parse: true
+    description: Deku Nuts check
+
+  - name: item_sticks
+    expression: "Sticks"
+    should_parse: true
+    description: Deku Sticks check
+
+  - name: item_kokiri_sword
+    expression: "Kokiri_Sword"
+    should_parse: true
+    description: Kokiri Sword check
+
+  - name: item_boomerang
+    expression: "Boomerang"
+    should_parse: true
+    description: Boomerang check
+
+  - name: item_slingshot
+    expression: "Slingshot"
+    should_parse: true
+    description: Slingshot check
+
+  - name: item_hover_boots
+    expression: "Hover_Boots"
+    should_parse: true
+    description: Hover Boots check
+
+  # ============================================================================
+  # can_use() function calls - equipment usability checks
+  # ============================================================================
+
+  - name: can_use_hookshot
+    expression: "can_use(Hookshot)"
+    should_parse: true
+    description: Can use Hookshot (implies adult + has Hookshot)
+
+  - name: can_use_longshot
+    expression: "can_use(Longshot)"
+    should_parse: true
+    description: Can use Longshot
+
+  - name: can_use_bow
+    expression: "can_use(Bow)"
+    should_parse: true
+    description: Can use Bow (adult only)
+
+  - name: can_use_dins_fire
+    expression: "can_use(Dins_Fire)"
+    should_parse: true
+    description: Can use Din's Fire spell
+
+  - name: can_use_farores_wind
+    expression: "can_use(Farores_Wind)"
+    should_parse: true
+    description: Can use Farore's Wind spell
+
+  - name: can_use_boomerang
+    expression: "can_use(Boomerang)"
+    should_parse: true
+    description: Can use Boomerang (child only)
+
+  - name: can_use_slingshot
+    expression: "can_use(Slingshot)"
+    should_parse: true
+    description: Can use Slingshot (child only)
+
+  # ============================================================================
+  # has() function calls - item possession checks
+  # ============================================================================
+
+  - name: has_hookshot
+    expression: "has(Hookshot)"
+    should_parse: true
+    description: Has Hookshot item
+
+  - name: has_bow
+    expression: "has(Bow)"
+    should_parse: true
+    description: Has Bow item
+
+  - name: has_bomb
+    expression: "has(Bomb)"
+    should_parse: true
+    description: Has Bombs
+
+  - name: has_bombchu
+    expression: "has(Bombchu)"
+    should_parse: true
+    description: Has Bombchus
+
+  - name: has_with_count
+    expression: "has(Bottle, 2)"
+    should_parse: true
+    description: Has at least 2 Bottles
+
+  - name: has_small_key_with_count
+    expression: "has(Small_Key_Forest_Temple, 5)"
+    should_parse: true
+    description: Has 5 small keys for Forest Temple
+
+  # ============================================================================
+  # can_play() function calls - song checks
+  # ============================================================================
+
+  - name: can_play_sarias_song
+    expression: "can_play(Sarias_Song)"
+    should_parse: true
+    description: Can play Saria's Song
+
+  - name: can_play_zeldas_lullaby
+    expression: "can_play(Zeldas_Lullaby)"
+    should_parse: true
+    description: Can play Zelda's Lullaby
+
+  - name: can_play_eponas_song
+    expression: "can_play(Eponas_Song)"
+    should_parse: true
+    description: Can play Epona's Song
+
+  - name: can_play_song_of_time
+    expression: "can_play(Song_of_Time)"
+    should_parse: true
+    description: Can play Song of Time
+
+  # ============================================================================
+  # event() function calls - game event checks
+  # ============================================================================
+
+  - name: event_mido_moved
+    expression: "event(MIDO_MOVED)"
+    should_parse: true
+    description: Mido has moved from blocking the path
+
+  - name: event_deku_tree_clear
+    expression: "event(DEKU_TREE_CLEAR)"
+    should_parse: true
+    description: Deku Tree dungeon completed
+
+  - name: event_water_temple_clear
+    expression: "event(WATER_TEMPLE_CLEAR)"
+    should_parse: true
+    description: Water Temple dungeon completed
+
+  # ============================================================================
+  # setting() function calls - randomizer settings
+  # ============================================================================
+
+  - name: setting_shuffle_scrubs
+    expression: "setting(shuffle_scrubs)"
+    should_parse: true
+    description: Deku Scrub shuffle setting enabled
+
+  - name: setting_skip_child_zelda
+    expression: "setting(skip_child_zelda)"
+    should_parse: true
+    description: Skip Child Zelda cutscene setting
+
+  - name: setting_open_door_of_time
+    expression: "setting(open_door_of_time)"
+    should_parse: true
+    description: Door of Time is already open
+
+  # ============================================================================
+  # trick() function calls - logic trick settings
+  # ============================================================================
+
+  - name: trick_deku_b1_skip
+    expression: "trick(logic_deku_b1_skip)"
+    should_parse: true
+    description: Trick to skip Deku Tree B1
+
+  - name: trick_grottos_without_agony
+    expression: "trick(logic_grottos_without_agony)"
+    should_parse: true
+    description: Find grottos without Stone of Agony
+
+  - name: trick_visible_collisions
+    expression: "trick(logic_visible_collisions)"
+    should_parse: true
+    description: Use visible collision tricks
+
+  # ============================================================================
+  # Simple OR expressions - multiple pathways
+  # ============================================================================
+
+  - name: adult_or_child_attack
+    expression: "is_adult || can_child_attack"
+    should_parse: true
+    description: Adult or child can attack
+
+  - name: hookshot_or_longshot
+    expression: "has(Hookshot) || has(Longshot)"
+    should_parse: true
+    description: Has either Hookshot or Longshot
+
+  - name: bow_or_slingshot
+    expression: "can_use(Bow) || can_use(Slingshot)"
+    should_parse: true
+    description: Can use ranged projectile
+
+  - name: multiple_progression_items
+    expression: "Hookshot || Longshot || Hover_Boots"
+    should_parse: true
+    description: Any of several progression items
+
+  # ============================================================================
+  # Simple AND expressions - multiple requirements
+  # ============================================================================
+
+  - name: adult_and_hookshot
+    expression: "is_adult && has(Hookshot)"
+    should_parse: true
+    description: Adult with Hookshot
+
+  - name: child_and_boomerang
+    expression: "is_child && can_use(Boomerang)"
+    should_parse: true
+    description: Child with Boomerang
+
+  - name: bow_and_fire_arrows
+    expression: "has(Bow) && has(Fire_Arrows)"
+    should_parse: true
+    description: Bow with Fire Arrows
+
+  - name: sword_and_shield
+    expression: "has(Kokiri_Sword) && has(Deku_Shield)"
+    should_parse: true
+    description: Required equipment for Mido
+
+  # ============================================================================
+  # NOT expressions - negation
+  # ============================================================================
+
+  - name: not_adult
+    expression: "!is_adult"
+    should_parse: true
+    description: Not adult (effectively child)
+
+  - name: not_shuffle_setting
+    expression: "!setting(shuffle_scrubs)"
+    should_parse: true
+    description: Scrub shuffle disabled
+
+  - name: has_item_and_not_setting
+    expression: "has(Odd_Mushroom) && !setting(adult_trade_shuffle)"
+    should_parse: true
+    description: Has item and setting is off
+
+  # ============================================================================
+  # Complex compound expressions - real logic patterns
+  # ============================================================================
+
+  - name: complex_longshot_or_hover
+    expression: "(is_adult && has(Longshot)) || (is_adult && Hover_Boots)"
+    should_parse: true
+    description: Adult with Longshot or Hover Boots
+
+  - name: complex_dungeon_access
+    expression: "(has(Hookshot) || has(Longshot)) && is_adult"
+    should_parse: true
+    description: Adult with any hookshot type
+
+  - name: complex_graveyard_poh
+    expression: "(is_adult && Longshot) || (trick(logic_graveyard_poh) && can_use(Boomerang))"
+    should_parse: true
+    description: Real graveyard PoH logic
+
+  - name: complex_deku_tree_access
+    expression: "is_child || setting(open_forest)"
+    should_parse: true
+    description: Deku Tree access logic
+
+  - name: complex_fire_temple_entry
+    expression: "(is_adult && has(Goron_Tunic)) || (is_adult && trick(logic_fewer_tunic_requirements))"
+    should_parse: true
+    description: Fire Temple entry requirements
+
+  - name: complex_water_temple_central
+    expression: "has(Zora_Tunic) && has(Iron_Boots) && (has(Hookshot) || has(Longshot))"
+    should_parse: true
+    description: Water Temple central room access
+
+  - name: complex_spirit_temple_child
+    expression: "is_child && (has(Bombchu) || (has(Bomb) && has(Dins_Fire)))"
+    should_parse: true
+    description: Spirit Temple child side access
+
+  - name: complex_shadow_temple_boss
+    expression: "is_adult && has(Hover_Boots) && has(Lens_of_Truth) && has(Bow) && has(Small_Key_Shadow_Temple, 5)"
+    should_parse: true
+    description: Shadow Temple boss requirements
+
+  # ============================================================================
+  # Deeply nested expressions
+  # ============================================================================
+
+  - name: deeply_nested_or_chain
+    expression: "((has(Hookshot) || has(Longshot)) || has(Hover_Boots)) || can_use(Bow)"
+    should_parse: true
+    description: Multiple OR options deeply nested
+
+  - name: deeply_nested_and_or_mix
+    expression: "((is_adult && has(Bow)) || (is_child && can_use(Slingshot))) && (Bomb || Bombchu)"
+    should_parse: true
+    description: Complex age-specific logic with explosives
+
+  - name: triple_nested_parentheses
+    expression: "(((is_adult && Hookshot) || (is_child && Boomerang)) && has_fire_source)"
+    should_parse: true
+    description: Deeply nested with fire source
+
+  - name: complex_dungeon_progression
+    expression: "(has(Small_Key_Forest_Temple, 1) && (has(Bow) || has(Slingshot))) || (has(Small_Key_Forest_Temple, 2) && Hookshot)"
+    should_parse: true
+    description: Forest Temple progression logic
+
+  # ============================================================================
+  # MM-specific expressions (Majora's Mask)
+  # ============================================================================
+
+  - name: mm_deku_mask
+    expression: "has(Deku_Mask)"
+    should_parse: true
+    description: MM Deku Mask possession
+
+  - name: mm_goron_mask
+    expression: "has(Goron_Mask)"
+    should_parse: true
+    description: MM Goron Mask possession
+
+  - name: mm_zora_mask
+    expression: "has(Zora_Mask)"
+    should_parse: true
+    description: MM Zora Mask possession
+
+  - name: mm_fierce_deity
+    expression: "has(Fierce_Deity_Mask)"
+    should_parse: true
+    description: MM Fierce Deity Mask
+
+  - name: mm_transformation_check
+    expression: "has(Deku_Mask) || has(Goron_Mask) || has(Zora_Mask)"
+    should_parse: true
+    description: Any transformation mask
+
+  - name: mm_remains_check
+    expression: "has(Odolwa_Remains) && has(Goht_Remains) && has(Gyorg_Remains) && has(Twinmold_Remains)"
+    should_parse: true
+    description: All boss remains collected
+
+  # ============================================================================
+  # Multi-function expressions
+  # ============================================================================
+
+  - name: multi_function_or
+    expression: "event(MIDO_MOVED) || setting(skip_child_zelda)"
+    should_parse: true
+    description: Event or setting check
+
+  - name: multi_function_and
+    expression: "has(Hookshot) && event(WATER_TEMPLE_CLEAR) && setting(shuffle_scrubs)"
+    should_parse: true
+    description: Item, event, and setting check
+
+  - name: can_use_with_setting
+    expression: "can_use(Hookshot) || setting(logic_tricks_enabled)"
+    should_parse: true
+    description: Equipment or trick setting
+
+  - name: complex_multi_function
+    expression: "(event(DEKU_TREE_CLEAR) && has(Kokiri_Emerald)) || (setting(skip_child_zelda) && is_adult)"
+    should_parse: true
+    description: Complex multi-function logic
+
+  # ============================================================================
+  # Edge cases that should parse
+  # ============================================================================
+
+  - name: single_character_ident
+    expression: "a"
+    should_parse: true
+    description: Single character identifier
+
+  - name: long_identifier
+    expression: "this_is_a_very_long_identifier_name"
+    should_parse: true
+    description: Long identifier with underscores
+
+  - name: uppercase_identifier
+    expression: "HOOKSHOT_OR_LONGSHOT"
+    should_parse: true
+    description: All uppercase identifier
+
+  - name: mixed_case_identifier
+    expression: "canUseHookshot"
+    should_parse: true
+    description: CamelCase identifier
+
+  - name: whitespace_around_operators
+    expression: "a   &&   b   ||   c"
+    should_parse: true
+    description: Extra whitespace is allowed
+
+  - name: no_whitespace
+    expression: "a&&b||c"
+    should_parse: true
+    description: No whitespace between tokens
+
+  - name: function_with_complex_arg
+    expression: "has(Small_Key_Spirit_Temple, 3)"
+    should_parse: true
+    description: Function with underscore-heavy identifier
+
+  # ============================================================================
+  # Error cases - expressions that should fail to parse
+  # ============================================================================
+
+  - name: error_unclosed_paren
+    expression: "(has(Hookshot) && is_adult"
+    should_parse: false
+    description: Missing closing parenthesis
+
+  - name: error_extra_close_paren
+    expression: "has(Hookshot))"
+    should_parse: false
+    description: Extra closing parenthesis
+
+  - name: error_empty_function_name
+    expression: "(Hookshot)"
+    should_parse: true
+    description: Parenthesized identifier (valid, just grouped expression)
+
+  - name: error_missing_operand
+    expression: "has(Hookshot) &&"
+    should_parse: false
+    description: Dangling AND operator
+
+  - name: error_missing_operand_or
+    expression: "|| has(Bow)"
+    should_parse: false
+    description: Leading OR operator
+
+  - name: error_double_operator
+    expression: "a && && b"
+    should_parse: false
+    description: Double AND operator
+
+  - name: error_empty_expression
+    expression: ""
+    should_parse: false
+    description: Empty expression
+
+  - name: error_just_operator
+    expression: "&&"
+    should_parse: false
+    description: Just an operator
+
+  - name: error_unclosed_function
+    expression: "has(Hookshot"
+    should_parse: false
+    description: Unclosed function call
+
+  - name: error_missing_comma
+    expression: "has(Bottle 2)"
+    should_parse: false
+    description: Missing comma in function args
