@@ -142,10 +142,8 @@ impl<R: Rando + 'static> State<R> {
     pub(crate) fn update(&mut self, msg: Message<R>) -> Command<crate::Message<R>> {
         match msg {
             Message::EditPlandoPath(new_path) => {
-                if let Ok(new_path) = new_path.parse() {
-                    if let SettingsInfo::Plando(ref mut path) = self.settings_info {
-                        *path = new_path;
-                    }
+                if let SettingsInfo::Plando(ref mut path) = self.settings_info {
+                    *path = PathBuf::from(new_path);
                 }
             }
             Message::EditSettingsString(new_string) => {
@@ -154,10 +152,8 @@ impl<R: Rando + 'static> State<R> {
                 }
             }
             Message::EditWeightsPath(new_path) => {
-                if let Ok(new_path) = new_path.parse() {
-                    if let SettingsInfo::Weights(ref mut path) = self.settings_info {
-                        *path = new_path;
-                    }
+                if let SettingsInfo::Weights(ref mut path) = self.settings_info {
+                    *path = PathBuf::from(new_path);
                 }
             }
             Message::PickRegion(new_region) => self.current_region = new_region,

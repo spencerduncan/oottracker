@@ -1,10 +1,9 @@
-use {
-    std::{env, fs, path::Path, process::Command},
-    wheel::traits::{IoResultExt as _, SyncCommandOutputExt as _},
-};
-
 #[cfg(windows)]
 fn main() -> wheel::Result {
+    use {
+        std::{env, fs, path::Path, process::Command},
+        wheel::traits::{IoResultExt as _, SyncCommandOutputExt as _},
+    };
     println!("cargo:rerun-if-changed=nonexistent.foo"); // check a nonexistent file to make sure build script is always run (see https://github.com/rust-lang/cargo/issues/4213 and https://github.com/rust-lang/cargo/issues/5663)
     let is_release = match &env::var("PROFILE").expect("missing PROFILE envar")[..] {
         "debug" => false,
