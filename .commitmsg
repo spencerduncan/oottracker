@@ -1,0 +1,18 @@
+feat: Implement MM save data parsing from raw N64 memory
+
+Add TryFrom<&[u8]> and TryFrom<Vec<u8>> implementations for MmSave to
+parse Majora's Mask save context data from raw N64 memory bytes.
+
+Changes:
+- Add memory layout offset constants for parsing save structure
+- Add MmDecodeError type for parsing failures
+- Add TryFrom<u8> and From<MmBottle> for bottle content conversion
+- Implement TryFrom<&[u8]> for MmSave to parse player state, inventory,
+  quest items, dungeon progress, and time state
+- Add comprehensive parsing tests
+
+Closes #125
+
+Generated with Claude Code
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>

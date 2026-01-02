@@ -21,11 +21,18 @@ use {
     tokio::io::{AsyncRead, AsyncReadExt as _, AsyncWrite, AsyncWriteExt as _},
 };
 
+use crate::mm_save;
+
 pub const SIZE: usize = 0x80_0000;
-pub const NUM_RANGES: usize = 8;
 pub const TEXT_LEN: usize = 0xc0;
 pub const PAUSE_CTX_LEN: usize = 0x16;
-pub static RANGES: [u32; NUM_RANGES * 2] = [
+
+// ============================================================================
+// OoT RAM Ranges
+// ============================================================================
+
+pub const OOT_NUM_RANGES: usize = 8;
+pub static OOT_RANGES: [u32; OOT_NUM_RANGES * 2] = [
     save::ADDR,
     save::SIZE as u32,
     0x1c84b4,
@@ -43,6 +50,35 @@ pub static RANGES: [u32; NUM_RANGES * 2] = [
     0x1d8dd4,
     PAUSE_CTX_LEN as u32, // relevant parts of z64_game.pause_ctxt
 ];
+
+// ============================================================================
+// MM RAM Ranges
+// ============================================================================
+
+/// MM SaveContext offset in RDRAM (0x801ef670 - 0x80000000)
+pub const MM_SAVE_ADDR: u32 = 0x1ef670;
+
+pub const MM_NUM_RANGES: usize = 1;
+pub static MM_RANGES: [u32; MM_NUM_RANGES * 2] = [
+    MM_SAVE_ADDR,
+    mm_save::MM_SIZE as u32, // MM SaveContext (0x48d0 bytes)
+];
+
+// ============================================================================
+// Combo Context Addresses (for OoTMM game detection)
+// ============================================================================
+
+/// OoT combo context address offset (0x80006584 - 0x80000000)
+pub const OOT_COMBO_CONTEXT_ADDR: u32 = 0x6584;
+/// MM combo context address offset (0x80098280 - 0x80000000)
+pub const MM_COMBO_CONTEXT_ADDR: u32 = 0x98280;
+
+// ============================================================================
+// Legacy aliases for backwards compatibility
+// ============================================================================
+
+pub const NUM_RANGES: usize = OOT_NUM_RANGES;
+pub static RANGES: [u32; NUM_RANGES * 2] = OOT_RANGES;
 
 #[derive(Debug, From, Clone)]
 pub enum DecodeError {
