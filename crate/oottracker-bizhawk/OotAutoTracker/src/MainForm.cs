@@ -83,6 +83,25 @@ namespace Net.Fenhl.OotAutoTracker {
         [DllImport("oottracker")] internal static extern void model_set_tracker_ctx(ModelState model, int length, IntPtr data);
     }
 
+    // MM memory address constants (RDRAM addresses)
+    internal static class MmAddresses {
+        // MM SaveContext: 0x801ef670 (System Bus) = 0x1ef670 (RDRAM)
+        internal const int MM_SAVE_ADDR = 0x1ef670;
+        internal const int MM_SAVE_SIZE = 0x48d0; // 18640 bytes
+
+        // Combo randomizer context addresses (RDRAM)
+        internal const int OOT_COMBO_CONTEXT_ADDR = 0x6584;
+        internal const int MM_COMBO_CONTEXT_ADDR = 0x98280;
+    }
+
+    // Game type detection
+    internal enum GameType {
+        Unknown,
+        OcarinaOfTime,
+        MajorasMask,
+        Combo
+    }
+
     internal class StringHandle : SafeHandle {
         internal StringHandle() : base(IntPtr.Zero, true) {}
 
@@ -550,12 +569,14 @@ namespace Net.Fenhl.OotAutoTracker {
         private bool initialized = false;
         private Config cfg = Native.config_default();
         private bool isVanilla;
+        private GameType detectedGame = GameType.Unknown;
         //private TcpStream? stream;
         private uint? autoTrackerContextAddr;
         private uint autoTrackerContextVersion = 0;
         private RawRam? rawRam;
         private Ram? prevRam;
         private List<byte> prevSaveData = new List<byte>();
+        private byte[]? prevMmSaveData;
         private Save? prevSave;
         private ModelState model = ModelState.FromSaveAndKnowledge(Native.save_default(), Native.knowledge_none());
         private string[] cellImages = new string[52];
@@ -760,6 +781,8 @@ namespace Net.Fenhl.OotAutoTracker {
 
             APIs.Memory.SetBigEndian(true);
             this.model.Dispose();
+            this.detectedGame = GameType.Unknown;
+            this.prevMmSaveData = null;
             /*
             if (this.stream != null) { this.stream.Disconnect().Dispose(); }
             this.stream = null;
@@ -773,17 +796,46 @@ namespace Net.Fenhl.OotAutoTracker {
                 UpdateGame(false, "Not playing anything");
             } else {
                 var rom_ident = APIs.Memory.ReadByteRange(0x20, 0x18, "ROM");
-                if (!Enumerable.SequenceEqual(rom_ident.GetRange(0, 0x15), new List<byte>(Encoding.UTF8.GetBytes("THE LEGEND OF ZELDA \0")))) {
+                // Check for OoT ROM: "THE LEGEND OF ZELDA \0"
+                bool isOotRom = Enumerable.SequenceEqual(rom_ident.GetRange(0, 0x15), new List<byte>(Encoding.UTF8.GetBytes("THE LEGEND OF ZELDA \0")));
+                // Check for MM ROM: "ZELDA MAJORA'S MASK " at offset 0x20
+                bool isMmRom = Enumerable.SequenceEqual(rom_ident.GetRange(0, 0x14), new List<byte>(Encoding.UTF8.GetBytes("ZELDA MAJORA'S MASK ")));
+
+                if (!isOotRom && !isMmRom) {
                     this.model = ModelState.FromSaveAndKnowledge(Native.save_default(), Native.knowledge_none());
-                    UpdateGame(false, $"Game: Expected OoT or OoTR, found {APIs.GameInfo.GetGameInfo()?.Name ?? "Null"} ({string.Join<byte>(", ", rom_ident.GetRange(0, 0x15))})");
+                    UpdateGame(false, $"Game: Expected OoT/OoTR/MM/MMR, found {APIs.GameInfo.GetGameInfo()?.Name ?? "Null"} ({string.Join<byte>(", ", rom_ident.GetRange(0, 0x15))})");
+                } else if (isMmRom) {
+                    // Majora's Mask detected
+                    this.detectedGame = GameType.MajorasMask;
+                    var version = rom_ident.GetRange(0x14, 4);
+                    this.isVanilla = Enumerable.SequenceEqual(version, new List<byte>(new byte[] { 0, 0, 0, 0 }));
+                    this.model = ModelState.FromSaveAndKnowledge(Native.save_default(), Native.knowledge_none());
+                    if (this.isVanilla) {
+                        UpdateGame(true, "Playing MM (vanilla)");
+                    } else {
+                        UpdateGame(true, $"Playing MM randomizer");
+                    }
                 } else {
+                    // OoT detected - check if it's combo mode
                     var version = rom_ident.GetRange(0x15, 3);
                     this.isVanilla = Enumerable.SequenceEqual(version, new List<byte>(new byte[] { 0, 0, 0 }));
-                    this.model = ModelState.FromSaveAndKnowledge(Native.save_default(), this.isVanilla ? Native.knowledge_vanilla() : Native.knowledge_none());
-                    if (this.isVanilla) {
-                        UpdateGame(true, "Playing OoT (vanilla)");
+
+                    // Check for combo randomizer context
+                    var comboCheck = APIs.Memory.ReadByteRange(MmAddresses.OOT_COMBO_CONTEXT_ADDR, 4, "RDRAM");
+                    bool isCombo = comboCheck.Any(b => b != 0);
+
+                    if (isCombo) {
+                        this.detectedGame = GameType.Combo;
+                        this.model = ModelState.FromSaveAndKnowledge(Native.save_default(), Native.knowledge_none());
+                        UpdateGame(true, "Playing OoTMM combo randomizer");
                     } else {
-                        UpdateGame(true, $"Playing OoTR version {version[0]}.{version[1]}.{version[2]}");
+                        this.detectedGame = GameType.OcarinaOfTime;
+                        this.model = ModelState.FromSaveAndKnowledge(Native.save_default(), this.isVanilla ? Native.knowledge_vanilla() : Native.knowledge_none());
+                        if (this.isVanilla) {
+                            UpdateGame(true, "Playing OoT (vanilla)");
+                        } else {
+                            UpdateGame(true, $"Playing OoTR version {version[0]}.{version[1]}.{version[2]}");
+                        }
                     }
                     /*
                     using (var stream_res = TcpStreamResult.Connect(IPAddress.IPv6Loopback)) { //TODO only connect manually
@@ -811,76 +863,66 @@ namespace Net.Fenhl.OotAutoTracker {
         public override void UpdateValues(ToolFormUpdateType type) {
             if (type != ToolFormUpdateType.PreFrame) { return; } //TODO setting to also enable auto-tracking during turbo (ToolFormUpdateType.FastPreFrame)?
             if ((APIs.GameInfo.GetGameInfo()?.Name ?? "Null") == "Null") { return; }
-            if (this.autoTrackerContextAddr == null && Enumerable.SequenceEqual(APIs.Memory.ReadByteRange(0x11a5d0 + 0x1c, 6, "RDRAM"), new List<byte>(Encoding.UTF8.GetBytes("ZELDAZ")))) { // don't check auto-tracker context version while rom is loaded but not properly initialized
-                var randoContextAddr = 0x8040_0000;
-                var newAutoTrackerContextAddr = APIs.Memory.ReadU32(randoContextAddr + 0xc, "System Bus");
-                if (newAutoTrackerContextAddr >= 0x8000_0000 && newAutoTrackerContextAddr != 0xffff_ffff) {
-                    this.autoTrackerContextAddr = newAutoTrackerContextAddr;
-                    this.autoTrackerContextVersion = APIs.Memory.ReadU32(newAutoTrackerContextAddr, "System Bus");
-                    var length = 0;
-                    switch (this.autoTrackerContextVersion) {
-                        case 0: {
-                            // no extra features supported
-                            break;
-                        }
-                        case 1: {
-                            length = 0x38;
-                            break;
-                        }
-                        default: {
-                            throw new NotImplementedException($"auto-tracker context version {this.autoTrackerContextVersion} not supported"); //TODO display error instead of crashing
-                        }
-                    }
-                    if (length > 0) {
-                        this.model.SetAutoTrackerContext(APIs.Memory, newAutoTrackerContextAddr, length);
-                    }
-                }
+
+            // Handle MM save context reading
+            if (this.detectedGame == GameType.MajorasMask || this.detectedGame == GameType.Combo) {
+                ReadMmSaveContext();
             }
-            bool changed = true;
-            if (this.rawRam == null) {
-                this.rawRam = new RawRam(APIs.Memory);
-            } else {
-                changed = this.rawRam.Update(APIs.Memory);
-            }
-            if (!changed) { return; }
-            using (var ram_res = this.rawRam.ToRam()) {
-                if (ram_res.IsOk()) {
-                    var ram = ram_res.Unwrap();
-                    if (prevRam != null && ram.Equals(prevRam)) { return; }
-                    if (prevRam != null) { prevRam.Dispose(); }
-                    prevRam = ram;
-                } else {
-                    UpdateSave(false, $"Failed to read game RAM: {ram_res.DebugErr().AsString()}");
-                    return;
-                }
-            }
-            UpdateSave(true, $"Save data ok, last checked {DateTime.Now}");
-            this.model.SetRam(prevRam);
-            UpdateCells();
-            var save = prevRam.CloneSave();
-            if (prevSave != null && save.Equals(prevSave)) { return; }
-            if (prevSave == null) {
-                /*
-                if (this.stream != null) {
-                    using (UnitResult unit_res = save.Send(this.stream)) {
-                        if (!unit_res.IsOk()) {
-                            if (this.stream != null) { this.stream.Dispose(); }
-                            this.stream = null;
-                            using (StringHandle err = unit_res.DebugErr()) {
-                                UpdateConnection(false, $"Failed to send save data: {err.AsString()}");
+
+            // Handle OoT/combo save context reading
+            if (this.detectedGame == GameType.OcarinaOfTime || this.detectedGame == GameType.Combo) {
+                if (this.autoTrackerContextAddr == null && Enumerable.SequenceEqual(APIs.Memory.ReadByteRange(0x11a5d0 + 0x1c, 6, "RDRAM"), new List<byte>(Encoding.UTF8.GetBytes("ZELDAZ")))) { // don't check auto-tracker context version while rom is loaded but not properly initialized
+                    var randoContextAddr = 0x8040_0000;
+                    var newAutoTrackerContextAddr = APIs.Memory.ReadU32(randoContextAddr + 0xc, "System Bus");
+                    if (newAutoTrackerContextAddr >= 0x8000_0000 && newAutoTrackerContextAddr != 0xffff_ffff) {
+                        this.autoTrackerContextAddr = newAutoTrackerContextAddr;
+                        this.autoTrackerContextVersion = APIs.Memory.ReadU32(newAutoTrackerContextAddr, "System Bus");
+                        var length = 0;
+                        switch (this.autoTrackerContextVersion) {
+                            case 0: {
+                                // no extra features supported
+                                break;
                             }
-                        } else {
-                            UpdateConnection(true, $"Connected, initial save data sent {DateTime.Now}");
+                            case 1: {
+                                length = 0x38;
+                                break;
+                            }
+                            default: {
+                                throw new NotImplementedException($"auto-tracker context version {this.autoTrackerContextVersion} not supported"); //TODO display error instead of crashing
+                            }
+                        }
+                        if (length > 0) {
+                            this.model.SetAutoTrackerContext(APIs.Memory, newAutoTrackerContextAddr, length);
                         }
                     }
                 }
-                */
-                prevSave = save;
-            } else if (!save.Equals(prevSave)) {
-                /*
-                if (this.stream != null) {
-                    using (SavesDiff diff = prevSave.Diff(save)) {
-                        using (UnitResult unit_res = diff.Send(this.stream)) {
+                bool changed = true;
+                if (this.rawRam == null) {
+                    this.rawRam = new RawRam(APIs.Memory);
+                } else {
+                    changed = this.rawRam.Update(APIs.Memory);
+                }
+                if (!changed) { return; }
+                using (var ram_res = this.rawRam.ToRam()) {
+                    if (ram_res.IsOk()) {
+                        var ram = ram_res.Unwrap();
+                        if (prevRam != null && ram.Equals(prevRam)) { return; }
+                        if (prevRam != null) { prevRam.Dispose(); }
+                        prevRam = ram;
+                    } else {
+                        UpdateSave(false, $"Failed to read game RAM: {ram_res.DebugErr().AsString()}");
+                        return;
+                    }
+                }
+                UpdateSave(true, $"Save data ok, last checked {DateTime.Now}");
+                this.model.SetRam(prevRam);
+                UpdateCells();
+                var save = prevRam.CloneSave();
+                if (prevSave != null && save.Equals(prevSave)) { return; }
+                if (prevSave == null) {
+                    /*
+                    if (this.stream != null) {
+                        using (UnitResult unit_res = save.Send(this.stream)) {
                             if (!unit_res.IsOk()) {
                                 if (this.stream != null) { this.stream.Dispose(); }
                                 this.stream = null;
@@ -888,17 +930,55 @@ namespace Net.Fenhl.OotAutoTracker {
                                     UpdateConnection(false, $"Failed to send save data: {err.AsString()}");
                                 }
                             } else {
-                                UpdateConnection(true, $"Connected, save data last sent {DateTime.Now}");
+                                UpdateConnection(true, $"Connected, initial save data sent {DateTime.Now}");
                             }
                         }
                     }
+                    */
+                    prevSave = save;
+                } else if (!save.Equals(prevSave)) {
+                    /*
+                    if (this.stream != null) {
+                        using (SavesDiff diff = prevSave.Diff(save)) {
+                            using (UnitResult unit_res = diff.Send(this.stream)) {
+                                if (!unit_res.IsOk()) {
+                                    if (this.stream != null) { this.stream.Dispose(); }
+                                    this.stream = null;
+                                    using (StringHandle err = unit_res.DebugErr()) {
+                                        UpdateConnection(false, $"Failed to send save data: {err.AsString()}");
+                                    }
+                                } else {
+                                    UpdateConnection(true, $"Connected, save data last sent {DateTime.Now}");
+                                }
+                            }
+                        }
+                    }
+                    */
+                    prevSave.Dispose();
+                    prevSave = save;
+                } else {
+                    save.Dispose();
                 }
-                */
-                prevSave.Dispose();
-                prevSave = save;
-            } else {
-                save.Dispose();
             }
+        }
+
+        /// <summary>
+        /// Read MM save context from RDRAM
+        /// </summary>
+        private void ReadMmSaveContext() {
+            // Read MM save context data
+            var mmSaveData = APIs.Memory.ReadByteRange(MmAddresses.MM_SAVE_ADDR, MmAddresses.MM_SAVE_SIZE, "RDRAM").ToArray();
+
+            // Check if data has changed
+            if (this.prevMmSaveData != null && Enumerable.SequenceEqual(mmSaveData, this.prevMmSaveData)) {
+                return;
+            }
+
+            this.prevMmSaveData = mmSaveData;
+            UpdateSave(true, $"MM save data ok, last checked {DateTime.Now}");
+
+            // TODO: Once MM save parsing is implemented in Rust FFI, process the data here
+            // For now, we just read and store the raw bytes for future use
         }
 
         private void UpdateCells() {

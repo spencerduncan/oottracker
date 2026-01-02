@@ -74,6 +74,35 @@ pub const OOT_COMBO_CONTEXT_ADDR: u32 = 0x6584;
 pub const MM_COMBO_CONTEXT_ADDR: u32 = 0x98280;
 
 // ============================================================================
+// Game Type Detection
+// ============================================================================
+
+/// Detected game type for auto-tracking
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum GameType {
+    #[default]
+    Unknown,
+    /// Ocarina of Time (standalone or OoTR)
+    OcarinaOfTime,
+    /// Majora's Mask (standalone or MMR)
+    MajorasMask,
+    /// OoTMM combo randomizer
+    Combo,
+}
+
+impl GameType {
+    /// Check if the game is OoT or combo mode (supports OoT tracking)
+    pub fn supports_oot(&self) -> bool {
+        matches!(self, GameType::OcarinaOfTime | GameType::Combo)
+    }
+
+    /// Check if the game is MM or combo mode (supports MM tracking)
+    pub fn supports_mm(&self) -> bool {
+        matches!(self, GameType::MajorasMask | GameType::Combo)
+    }
+}
+
+// ============================================================================
 // Legacy aliases for backwards compatibility
 // ============================================================================
 
