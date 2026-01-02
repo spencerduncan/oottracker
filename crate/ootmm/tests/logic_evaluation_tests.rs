@@ -21,7 +21,10 @@ mod forest_temple_access {
         let ctx = MockEvalContext::adult().with_item("HOOKSHOT");
 
         let result = eval_str("is_adult && has(HOOKSHOT)", &ctx).unwrap();
-        assert!(result, "Adult with hookshot should be able to access Forest Temple");
+        assert!(
+            result,
+            "Adult with hookshot should be able to access Forest Temple"
+        );
     }
 
     #[test]
@@ -29,7 +32,10 @@ mod forest_temple_access {
         let ctx = MockEvalContext::child().with_item("HOOKSHOT");
 
         let result = eval_str("is_adult && has(HOOKSHOT)", &ctx).unwrap();
-        assert!(!result, "Child should not be able to access Forest Temple even with hookshot");
+        assert!(
+            !result,
+            "Child should not be able to access Forest Temple even with hookshot"
+        );
     }
 
     #[test]
@@ -37,7 +43,10 @@ mod forest_temple_access {
         let ctx = MockEvalContext::adult();
 
         let result = eval_str("is_adult && has(HOOKSHOT)", &ctx).unwrap();
-        assert!(!result, "Adult without hookshot should not be able to access Forest Temple");
+        assert!(
+            !result,
+            "Adult without hookshot should not be able to access Forest Temple"
+        );
     }
 
     #[test]
@@ -45,7 +54,10 @@ mod forest_temple_access {
         let ctx = MockEvalContext::child();
 
         let result = eval_str("is_adult && has(HOOKSHOT)", &ctx).unwrap();
-        assert!(!result, "Child without hookshot should not be able to access Forest Temple");
+        assert!(
+            !result,
+            "Child without hookshot should not be able to access Forest Temple"
+        );
     }
 }
 
@@ -59,12 +71,13 @@ mod boolean_and_operator {
     /// Tests has(A) && has(B) when both items are present.
     #[test]
     fn both_items_present_returns_true() {
-        let ctx = MockEvalContext::new()
-            .with_item("BOMBS")
-            .with_item("BOW");
+        let ctx = MockEvalContext::new().with_item("BOMBS").with_item("BOW");
 
         let result = eval_str("has(BOMBS) && has(BOW)", &ctx).unwrap();
-        assert!(result, "has(BOMBS) && has(BOW) should be true when both items are present");
+        assert!(
+            result,
+            "has(BOMBS) && has(BOW) should be true when both items are present"
+        );
     }
 
     /// Tests has(A) && has(B) when only A is present.
@@ -73,7 +86,10 @@ mod boolean_and_operator {
         let ctx = MockEvalContext::new().with_item("BOMBS");
 
         let result = eval_str("has(BOMBS) && has(BOW)", &ctx).unwrap();
-        assert!(!result, "has(BOMBS) && has(BOW) should be false when only BOMBS is present");
+        assert!(
+            !result,
+            "has(BOMBS) && has(BOW) should be false when only BOMBS is present"
+        );
     }
 
     /// Tests has(A) && has(B) when only B is present.
@@ -82,7 +98,10 @@ mod boolean_and_operator {
         let ctx = MockEvalContext::new().with_item("BOW");
 
         let result = eval_str("has(BOMBS) && has(BOW)", &ctx).unwrap();
-        assert!(!result, "has(BOMBS) && has(BOW) should be false when only BOW is present");
+        assert!(
+            !result,
+            "has(BOMBS) && has(BOW) should be false when only BOW is present"
+        );
     }
 
     /// Tests has(A) && has(B) when neither item is present.
@@ -91,7 +110,10 @@ mod boolean_and_operator {
         let ctx = MockEvalContext::new();
 
         let result = eval_str("has(BOMBS) && has(BOW)", &ctx).unwrap();
-        assert!(!result, "has(BOMBS) && has(BOW) should be false when neither item is present");
+        assert!(
+            !result,
+            "has(BOMBS) && has(BOW) should be false when neither item is present"
+        );
     }
 
     /// Tests chained AND operators.
@@ -110,8 +132,15 @@ mod boolean_and_operator {
             .with_item("HOOKSHOT")
             .with_item("BOMBS");
 
-        let result_missing = eval_str("is_adult && has(HOOKSHOT) && has(BOW) && has(BOMBS)", &ctx_missing).unwrap();
-        assert!(!result_missing, "Chained AND with one condition not met should be false");
+        let result_missing = eval_str(
+            "is_adult && has(HOOKSHOT) && has(BOW) && has(BOMBS)",
+            &ctx_missing,
+        )
+        .unwrap();
+        assert!(
+            !result_missing,
+            "Chained AND with one condition not met should be false"
+        );
     }
 }
 
@@ -128,7 +157,10 @@ mod boolean_or_operator {
         let ctx = MockEvalContext::new().with_item("HOOKSHOT");
 
         let result = eval_str("has(HOOKSHOT) || has(LONGSHOT)", &ctx).unwrap();
-        assert!(result, "has(HOOKSHOT) || has(LONGSHOT) should be true when HOOKSHOT is present");
+        assert!(
+            result,
+            "has(HOOKSHOT) || has(LONGSHOT) should be true when HOOKSHOT is present"
+        );
     }
 
     /// Tests has(A) || has(B) when only B is present.
@@ -137,7 +169,10 @@ mod boolean_or_operator {
         let ctx = MockEvalContext::new().with_item("LONGSHOT");
 
         let result = eval_str("has(HOOKSHOT) || has(LONGSHOT)", &ctx).unwrap();
-        assert!(result, "has(HOOKSHOT) || has(LONGSHOT) should be true when LONGSHOT is present");
+        assert!(
+            result,
+            "has(HOOKSHOT) || has(LONGSHOT) should be true when LONGSHOT is present"
+        );
     }
 
     /// Tests has(A) || has(B) when both items are present.
@@ -148,7 +183,10 @@ mod boolean_or_operator {
             .with_item("LONGSHOT");
 
         let result = eval_str("has(HOOKSHOT) || has(LONGSHOT)", &ctx).unwrap();
-        assert!(result, "has(HOOKSHOT) || has(LONGSHOT) should be true when both items are present");
+        assert!(
+            result,
+            "has(HOOKSHOT) || has(LONGSHOT) should be true when both items are present"
+        );
     }
 
     /// Tests has(A) || has(B) when neither item is present.
@@ -157,7 +195,10 @@ mod boolean_or_operator {
         let ctx = MockEvalContext::new();
 
         let result = eval_str("has(HOOKSHOT) || has(LONGSHOT)", &ctx).unwrap();
-        assert!(!result, "has(HOOKSHOT) || has(LONGSHOT) should be false when neither item is present");
+        assert!(
+            !result,
+            "has(HOOKSHOT) || has(LONGSHOT) should be false when neither item is present"
+        );
     }
 
     /// Tests chained OR operators.
@@ -166,7 +207,11 @@ mod boolean_or_operator {
         // Only one of many alternatives needed
         let ctx = MockEvalContext::new().with_item("BOMBS");
 
-        let result = eval_str("has(HOOKSHOT) || has(LONGSHOT) || has(BOMBS) || has(BOW)", &ctx).unwrap();
+        let result = eval_str(
+            "has(HOOKSHOT) || has(LONGSHOT) || has(BOMBS) || has(BOW)",
+            &ctx,
+        )
+        .unwrap();
         assert!(result, "Chained OR with one condition met should be true");
     }
 }
@@ -195,7 +240,10 @@ mod mixed_operators {
         // Child with hookshot should fail
         let ctx3 = MockEvalContext::child().with_item("HOOKSHOT");
         let result3 = eval_str("is_adult && (has(HOOKSHOT) || has(LONGSHOT))", &ctx3).unwrap();
-        assert!(!result3, "Child with hookshot should not satisfy the condition");
+        assert!(
+            !result3,
+            "Child with hookshot should not satisfy the condition"
+        );
     }
 
     /// Tests operator precedence: AND binds tighter than OR.
@@ -212,7 +260,10 @@ mod mixed_operators {
         // With child and only hookshot, should be false
         let ctx2 = MockEvalContext::child().with_item("HOOKSHOT");
         let result2 = eval_str("is_adult || has(HOOKSHOT) && has(BOW)", &ctx2).unwrap();
-        assert!(!result2, "Child with only hookshot should fail (need both for AND)");
+        assert!(
+            !result2,
+            "Child with only hookshot should fail (need both for AND)"
+        );
 
         // With child and both items, should be true
         let ctx3 = MockEvalContext::child()
@@ -240,15 +291,27 @@ mod mixed_operators {
     fn complex_nested_expression() {
         // Complex check like: (is_adult && has(HOOKSHOT)) || (is_child && has(BOOMERANG))
         let adult_ctx = MockEvalContext::adult().with_item("HOOKSHOT");
-        let result = eval_str("(is_adult && has(HOOKSHOT)) || (is_child && has(BOOMERANG))", &adult_ctx).unwrap();
+        let result = eval_str(
+            "(is_adult && has(HOOKSHOT)) || (is_child && has(BOOMERANG))",
+            &adult_ctx,
+        )
+        .unwrap();
         assert!(result, "Adult with hookshot should pass");
 
         let child_ctx = MockEvalContext::child().with_item("BOOMERANG");
-        let result2 = eval_str("(is_adult && has(HOOKSHOT)) || (is_child && has(BOOMERANG))", &child_ctx).unwrap();
+        let result2 = eval_str(
+            "(is_adult && has(HOOKSHOT)) || (is_child && has(BOOMERANG))",
+            &child_ctx,
+        )
+        .unwrap();
         assert!(result2, "Child with boomerang should pass");
 
         let wrong_items_ctx = MockEvalContext::adult().with_item("BOOMERANG");
-        let result3 = eval_str("(is_adult && has(HOOKSHOT)) || (is_child && has(BOOMERANG))", &wrong_items_ctx).unwrap();
+        let result3 = eval_str(
+            "(is_adult && has(HOOKSHOT)) || (is_child && has(BOOMERANG))",
+            &wrong_items_ctx,
+        )
+        .unwrap();
         assert!(!result3, "Adult with boomerang (wrong item) should fail");
     }
 }
@@ -264,20 +327,28 @@ mod parse_evaluate_pipeline {
     #[test]
     fn parse_and_expression() {
         let expr = parse("has(A) && has(B)").unwrap();
-        assert!(matches!(expr, Expr::And(_, _)), "Should parse as AND expression");
+        assert!(
+            matches!(expr, Expr::And(_, _)),
+            "Should parse as AND expression"
+        );
     }
 
     /// Tests that parsing produces the expected AST structure for OR.
     #[test]
     fn parse_or_expression() {
         let expr = parse("has(A) || has(B)").unwrap();
-        assert!(matches!(expr, Expr::Or(_, _)), "Should parse as OR expression");
+        assert!(
+            matches!(expr, Expr::Or(_, _)),
+            "Should parse as OR expression"
+        );
     }
 
     /// Tests parsing complex expressions.
     #[test]
     fn parse_complex_expression() {
-        let expr = parse("is_adult && (has(HOOKSHOT) || has(LONGSHOT)) && event(WATER_TEMPLE_CLEAR)").unwrap();
+        let expr =
+            parse("is_adult && (has(HOOKSHOT) || has(LONGSHOT)) && event(WATER_TEMPLE_CLEAR)")
+                .unwrap();
         assert!(matches!(expr, Expr::And(_, _)), "Top-level should be AND");
     }
 
