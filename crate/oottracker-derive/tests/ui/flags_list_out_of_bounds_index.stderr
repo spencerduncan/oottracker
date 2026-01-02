@@ -1,0 +1,12 @@
+error: proc macro panicked
+  --> tests/ui/flags_list_out_of_bounds_index.rs:13:1
+   |
+13 | / flags_list! {
+14 | |     pub struct InvalidFlags: [u16; 2] {
+15 | |         5: {
+16 | |             FLAG_A = 0x0001,
+...  |
+19 | | }
+   | |_^
+   |
+   = help: message: index out of bounds: the len is 2 but the index is 5

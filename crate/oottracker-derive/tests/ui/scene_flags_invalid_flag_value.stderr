@@ -1,0 +1,5 @@
+error: expected integer literal
+  --> tests/ui/scene_flags_invalid_flag_value.rs:29:27
+   |
+29 |                 "Chest" = "not_a_number",
+   |                           ^^^^^^^^^^^^^^
