@@ -7,6 +7,7 @@
 //! corresponding logic identifiers.
 
 use crate::mm_save::{MmBottle, MmMagicCapacity, MmSave, MmShield, MmSword, MmUpgrades};
+use ootmm::expr::EvalContext;
 use std::collections::HashMap;
 
 /// Logic identifiers for MM items.
@@ -971,6 +972,61 @@ impl<'a> MmGameContext<'a> {
     }
 }
 
+// =============================================================================
+// EvalContext Implementation
+// =============================================================================
+
+impl EvalContext for MmGameContext<'_> {
+    /// Check if the player has at least `count` of the specified item.
+    ///
+    /// Uses `item_count()` to get the actual count and compares against the requested count.
+    fn has_item(&self, item: &str, count: u32) -> bool {
+        self.item_count(item) >= count
+    }
+
+    /// Check if a game event has occurred.
+    ///
+    /// Currently returns false as event tracking is not yet implemented for MM.
+    fn event(&self, _name: &str) -> bool {
+        false
+    }
+
+    /// Get the value of a setting.
+    ///
+    /// Currently returns None as settings are not yet implemented for MM.
+    fn setting(&self, _name: &str) -> Option<bool> {
+        None
+    }
+
+    /// Check if a trick is enabled.
+    ///
+    /// Currently returns false as tricks are not yet implemented for MM.
+    fn trick(&self, _name: &str) -> bool {
+        false
+    }
+
+    /// Check if the player is currently Adult Link.
+    ///
+    /// In Majora's Mask, Link is always a child, so this returns false.
+    fn is_adult(&self) -> bool {
+        false
+    }
+
+    /// Check if the player is currently Child Link.
+    ///
+    /// In Majora's Mask, Link is always a child, so this returns true.
+    fn is_child(&self) -> bool {
+        true
+    }
+
+    /// Get the current MM time as a numeric value.
+    ///
+    /// Currently returns 0 as time tracking is not yet implemented.
+    fn mm_time(&self) -> u32 {
+        0
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1744,5 +1800,115 @@ mod tests {
         assert!(!logic_ids::DEKU_MASK.is_empty());
         assert!(!logic_ids::SONG_OF_TIME.is_empty());
         assert!(!logic_ids::HOOKSHOT.is_empty());
+    }
+
+    // ========================================================================
+    // EvalContext Implementation Tests
+    // ========================================================================
+
+    #[test]
+    fn test_eval_context_has_item_bottles_with_count() {
+        let mut save = make_save();
+        // Add 3 bottles
+        save.inventory.bottles[0] = MmBottle::Empty;
+        save.inventory.bottles[1] = MmBottle::RedPotion;
+        save.inventory.bottles[2] = MmBottle::Fairy;
+
+        let ctx = MmGameContext::new(&save);
+
+        // Test via EvalContext trait method
+        assert!(EvalContext::has_item(&ctx, "BOTTLE", 1));
+        assert!(EvalContext::has_item(&ctx, "BOTTLE", 2));
+        assert!(EvalContext::has_item(&ctx, "BOTTLE", 3));
+        assert!(!EvalContext::has_item(&ctx, "BOTTLE", 4));
+    }
+
+    #[test]
+    fn test_eval_context_has_item_hookshot() {
+        let mut save = make_save();
+        save.inventory.hookshot = true;
+
+        let ctx = MmGameContext::new(&save);
+
+        // Has hookshot with count 1 should return true
+        assert!(EvalContext::has_item(&ctx, "HOOKSHOT", 1));
+        // Non-stackable item with count 2 should return false
+        assert!(!EvalContext::has_item(&ctx, "HOOKSHOT", 2));
+    }
+
+    #[test]
+    fn test_eval_context_has_item_missing() {
+        let save = make_save();
+        let ctx = MmGameContext::new(&save);
+
+        assert!(!EvalContext::has_item(&ctx, "HOOKSHOT", 1));
+        assert!(!EvalContext::has_item(&ctx, "BOTTLE", 1));
+    }
+
+    #[test]
+    fn test_eval_context_has_item_keys() {
+        let mut save = make_save();
+        save.small_keys.woodfall = 2;
+        save.small_keys.snowhead = 3;
+
+        let ctx = MmGameContext::new(&save);
+
+        assert!(EvalContext::has_item(&ctx, "SMALL_KEY_WOODFALL_TEMPLE", 1));
+        assert!(EvalContext::has_item(&ctx, "SMALL_KEY_WOODFALL_TEMPLE", 2));
+        assert!(!EvalContext::has_item(&ctx, "SMALL_KEY_WOODFALL_TEMPLE", 3));
+
+        assert!(EvalContext::has_item(&ctx, "SMALL_KEY_SNOWHEAD_TEMPLE", 3));
+        assert!(!EvalContext::has_item(&ctx, "SMALL_KEY_SNOWHEAD_TEMPLE", 4));
+    }
+
+    #[test]
+    fn test_eval_context_has_item_stray_fairies() {
+        let mut save = make_save();
+        save.stray_fairies.woodfall = 15;
+
+        let ctx = MmGameContext::new(&save);
+
+        assert!(EvalContext::has_item(&ctx, "STRAY_FAIRY_WOODFALL", 1));
+        assert!(EvalContext::has_item(&ctx, "STRAY_FAIRY_WOODFALL", 15));
+        assert!(!EvalContext::has_item(&ctx, "STRAY_FAIRY_WOODFALL", 16));
+    }
+
+    #[test]
+    fn test_eval_context_is_child() {
+        let save = make_save();
+        let ctx = MmGameContext::new(&save);
+
+        // In MM, Link is always a child
+        assert!(EvalContext::is_child(&ctx));
+        assert!(!EvalContext::is_adult(&ctx));
+    }
+
+    #[test]
+    fn test_eval_context_event_setting_trick_stub() {
+        let save = make_save();
+        let ctx = MmGameContext::new(&save);
+
+        // Stub implementations
+        assert!(!EvalContext::event(&ctx, "any_event"));
+        assert_eq!(EvalContext::setting(&ctx, "any_setting"), None);
+        assert!(!EvalContext::trick(&ctx, "any_trick"));
+    }
+
+    #[test]
+    fn test_eval_context_mm_time_stub() {
+        let save = make_save();
+        let ctx = MmGameContext::new(&save);
+
+        assert_eq!(EvalContext::mm_time(&ctx), 0);
+    }
+
+    #[test]
+    fn test_eval_context_is_day_is_night() {
+        let save = make_save();
+        let ctx = MmGameContext::new(&save);
+
+        // With mm_time = 0 (default), is_day should be true
+        assert!(EvalContext::is_day(&ctx));
+        assert!(!EvalContext::is_night(&ctx));
     }
 }
