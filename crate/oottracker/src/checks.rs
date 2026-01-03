@@ -68,63 +68,269 @@ impl<R: Rando> CheckExt for Check<R> {
             return Ok(Some(checked));
         }
         Ok(match self {
+            // Anonymous events are created by at() and here() in the randomizer logic.
+            // They represent alternative paths/requirements to access the same check.
+            // The ID distinguishes which alternative path is being tracked.
+            // For tracking purposes, we check the underlying game state (the check itself).
             Check::AnonymousEvent(at_check, id) => match (&**at_check, id) {
-                (Check::Event(event), 0) if *event == "Deku Tree Clear" /*vanilla*/ => Some(
+                // ===== EVENT-BASED ANONYMOUS EVENTS =====
+                // These track dungeon clears and other events accessible via alternative paths
+
+                // Deku Tree Clear - tracked via room clear flag for Scrubs 231 puzzle room
+                (Check::Event(event), 0) if *event == "Deku Tree Clear" => Some(
                     model.ram.scene_flags().deku_tree.room_clear.contains(
                         crate::scene::DekuTreeRoomClear::SCRUBS_231_PUZZLE
                     )
                 ),
+
+                // Water level events - tracked via Water Temple switches
+                (Check::Event(event), _) if *event == "Raise Water Level" => Some(
+                    model.ram.scene_flags().water_temple.switches.contains(
+                        crate::scene::WaterTempleSwitches::RAISE_WATER_LEVEL
+                    )
+                ),
+
+                // GC Woods Warp Open - tracked via Goron City boulder switches
+                // This event is already handled in the regular Event match below, but we handle
+                // anonymous variants here for completeness
+                (Check::Event(event), _) if *event == "GC Woods Warp Open" => Some(
+                    model.ram.scene_flags().goron_city.switches.intersects(
+                        crate::scene::GoronCitySwitches::LW_LEFT_BOULDER
+                            | crate::scene::GoronCitySwitches::LW_MIDDLE_BOULDER
+                            | crate::scene::GoronCitySwitches::LW_RIGHT_BOULDER
+                    )
+                ),
+
+                // GF Gate Open - tracked via Gerudo Fortress switch
+                (Check::Event(event), _) if *event == "GF Gate Open" => Some(
+                    model.ram.scene_flags().gerudo_fortress.switches.contains(
+                        crate::scene::GerudoFortressSwitches::GF_GATE_OPEN
+                    )
+                ),
+
+                // Goron City Child Fire - tracked via Goron City switch
+                (Check::Event(event), _) if *event == "Goron City Child Fire" => Some(
+                    model.ram.scene_flags().goron_city.switches.contains(
+                        crate::scene::GoronCitySwitches::GORON_CITY_CHILD_FIRE
+                    )
+                ),
+
+                // Forest Temple poe sisters - tracked via Forest Temple switches
+                (Check::Event(event), _) if *event == "Forest Temple Jo and Beth" => Some(
+                    model.ram.scene_flags().forest_temple.switches.contains(
+                        crate::scene::ForestTempleSwitches::JOELLE_DEFEATED
+                            | crate::scene::ForestTempleSwitches::BETH_DEFEATED
+                    )
+                ),
+
+                // ===== EXIT-BASED ANONYMOUS EVENTS =====
+                // These track exits with multiple prerequisite paths
+                // Note: The derive macro generates constants with ENTRANCE_ prefix for exits
+
+                // Death Mountain -> Death Mountain Summit (overworld)
+                // Path 0: Blow up both boulders on the trail
                 (Check::Exit { from_mq: None, from, to }, 0) if *from == "Death Mountain" && *to == "Death Mountain Summit" => Some(
                     model.ram.scene_flags().death_mountain.switches.contains(
                         crate::scene::DeathMountainSwitches::DMT_TO_SUMMIT_FIRST_BOULDER
-                        | crate::scene::DeathMountainSwitches::DMT_TO_SUMMIT_SECOND_BOULDER
+                            | crate::scene::DeathMountainSwitches::DMT_TO_SUMMIT_SECOND_BOULDER
                     )
                 ),
+                // Path 1: Use magic bean plant after blowing up DC entrance
                 (Check::Exit { from_mq: None, from, to }, 1) if *from == "Death Mountain" && *to == "Death Mountain Summit" => Some(
                     model.ram.scene_flags().death_mountain.switches.contains(
                         crate::scene::DeathMountainSwitches::BLOW_UP_DC_ENTRANCE
-                        | crate::scene::DeathMountainSwitches::PLANT_BEAN
+                            | crate::scene::DeathMountainSwitches::PLANT_BEAN
                     )
                 ),
+
+                // Deku Tree Lobby -> Deku Tree Basement Backroom (vanilla)
+                // Path 0: Burn web and light torches after water room
                 (Check::Exit { from_mq: Some(Mq::Vanilla), from, to }, 0) if *from == "Deku Tree Lobby" && *to == "Deku Tree Basement Backroom" => Some(
                     model.ram.scene_flags().deku_tree.switches.contains(
                         crate::scene::DekuTreeSwitches::BASEMENT_BURN_FIRST_WEB_TO_BACK_ROOM
-                        | crate::scene::DekuTreeSwitches::LIGHT_TORCHES_AFTER_WATER_ROOM
+                            | crate::scene::DekuTreeSwitches::LIGHT_TORCHES_AFTER_WATER_ROOM
                     )
                 ),
+                // Path 1: Alternative path through basement
+                (Check::Exit { from_mq: Some(Mq::Vanilla), from, to }, 1) if *from == "Deku Tree Lobby" && *to == "Deku Tree Basement Backroom" => Some(
+                    model.ram.scene_flags().deku_tree.switches.contains(
+                        crate::scene::DekuTreeSwitches::REQ_1_FOR_ENTRANCE_DEKU_TREE_LOBBY_TO_DEKU_TREE_BASEMENT_BACKROOM
+                    )
+                ),
+                // Path 2: Push the block in basement
                 (Check::Exit { from_mq: Some(Mq::Vanilla), from, to }, 2) if *from == "Deku Tree Lobby" && *to == "Deku Tree Basement Backroom" => Some(
                     model.ram.scene_flags().deku_tree.switches.contains(
                         crate::scene::DekuTreeSwitches::BASEMENT_PUSHED_BLOCK
                     )
                 ),
+
+                // Deku Tree Lobby -> Deku Tree Boss Room (vanilla)
+                // Path 0: Direct approach
+                (Check::Exit { from_mq: Some(Mq::Vanilla), from, to }, 0) if *from == "Deku Tree Lobby" && *to == "Deku Tree Boss Room" => Some(
+                    model.ram.scene_flags().deku_tree.switches.contains(
+                        crate::scene::DekuTreeSwitches::REQ_0_FOR_ENTRANCE_DEKU_TREE_LOBBY_TO_DEKU_TREE_BOSS_ROOM
+                    )
+                ),
+                // Path 1: Push the basement block
                 (Check::Exit { from_mq: Some(Mq::Vanilla), from, to }, 1) if *from == "Deku Tree Lobby" && *to == "Deku Tree Boss Room" => Some(
                     model.ram.scene_flags().deku_tree.switches.contains(
                         crate::scene::DekuTreeSwitches::BASEMENT_PUSHED_BLOCK
                     )
                 ),
+
+                // Deku Tree Lobby -> Deku Tree Slingshot Room (vanilla)
+                (Check::Exit { from_mq: Some(Mq::Vanilla), from, to }, 0) if *from == "Deku Tree Lobby" && *to == "Deku Tree Slingshot Room" => Some(
+                    model.ram.scene_flags().deku_tree.room_clear.contains(
+                        crate::scene::DekuTreeRoomClear::REQ_0_FOR_ENTRANCE_DEKU_TREE_LOBBY_TO_DEKU_TREE_SLINGSHOT_ROOM
+                    )
+                ),
+
+                // Dodongo's Cavern Beginning -> Dodongo's Cavern Lobby
+                (Check::Exit { from_mq: _, from, to }, 0) if *from == "Dodongos Cavern Beginning" && *to == "Dodongos Cavern Lobby" => Some(
+                    model.ram.scene_flags().dodongos_cavern.switches.contains(
+                        crate::scene::DodongosCavernSwitches::REQ_0_FOR_ENTRANCE_DODONGOS_CAVERN_BEGINNING_TO_DODONGOS_CAVERN_LOBBY
+                    )
+                ),
+
+                // Dodongo's Cavern Lobby -> Dodongo's Cavern Staircase Room (vanilla)
+                (Check::Exit { from_mq: Some(Mq::Vanilla), from, to }, 0) if *from == "Dodongos Cavern Lobby" && *to == "Dodongos Cavern Staircase Room" => Some(
+                    model.ram.scene_flags().dodongos_cavern.switches.contains(
+                        crate::scene::DodongosCavernSwitches::REQ_0_FOR_ENTRANCE_DODONGOS_CAVERN_LOBBY_TO_DODONGOS_CAVERN_STAIRCASE_ROOM
+                    )
+                ),
+
+                // Dodongo's Cavern Lobby -> Dodongo's Cavern Far Bridge (vanilla)
+                (Check::Exit { from_mq: Some(Mq::Vanilla), from, to }, 0) if *from == "Dodongos Cavern Lobby" && *to == "Dodongos Cavern Far Bridge" => Some(
+                    model.ram.scene_flags().dodongos_cavern.switches.contains(
+                        crate::scene::DodongosCavernSwitches::REQ_0_FOR_ENTRANCE_DODONGOS_CAVERN_LOBBY_TO_DODONGOS_CAVERN_FAR_BRIDGE
+                    )
+                ),
+
+                // Dodongo's Cavern Lobby -> Dodongo's Cavern Lower Right Side (MQ)
+                (Check::Exit { from_mq: Some(Mq::Mq), from, to }, 0) if *from == "Dodongos Cavern Lobby" && *to == "Dodongos Cavern Lower Right Side" => Some(
+                    model.ram.scene_flags().dodongos_cavern.switches.contains(
+                        crate::scene::DodongosCavernSwitches::REQ_0_FOR_ENTRANCE_DODONGOS_CAVERN_LOBBY_TO_DODONGOS_CAVERN_LOWER_RIGHT_SIDE
+                    )
+                ),
+
+                // Dodongo's Cavern Lower Right Side -> Dodongo's Cavern Bomb Bag Area (MQ)
+                (Check::Exit { from_mq: Some(Mq::Mq), from, to }, 0) if *from == "Dodongos Cavern Lower Right Side" && *to == "Dodongos Cavern Bomb Bag Area" => Some(
+                    model.ram.scene_flags().dodongos_cavern.switches.contains(
+                        crate::scene::DodongosCavernSwitches::REQ_0_FOR_ENTRANCE_DODONGOS_CAVERN_LOWER_RIGHT_SIDE_TO_DODONGOS_CAVERN_BOMB_BAG_AREA
+                    )
+                ),
+
+                // Forest Temple NW Outdoors -> Forest Temple Outdoors High Balconies (vanilla)
+                (Check::Exit { from_mq: Some(Mq::Vanilla), from, to }, 0) if *from == "Forest Temple NW Outdoors" && *to == "Forest Temple Outdoors High Balconies" => Some(
+                    model.ram.scene_flags().forest_temple.room_clear.contains(
+                        crate::scene::ForestTempleRoomClear::REQ_0_FOR_ENTRANCE_FOREST_TEMPLE_NW_OUTDOORS_TO_FOREST_TEMPLE_OUTDOORS_HIGH_BALCONIES
+                    )
+                ),
+
+                // Gerudo Training Ground Lobby -> Gerudo Training Ground Lava Room (vanilla)
+                (Check::Exit { from_mq: Some(Mq::Vanilla), from, to }, 0) if *from == "Gerudo Training Ground Lobby" && *to == "Gerudo Training Ground Lava Room" => Some(
+                    model.ram.scene_flags().gerudo_training_ground.switches.contains(
+                        crate::scene::GerudoTrainingGroundSwitches::REQ_0_FOR_ENTRANCE_GERUDO_TRAINING_GROUND_LOBBY_TO_GERUDO_TRAINING_GROUND_LAVA_ROOM
+                    )
+                ),
+
+                // Hyrule Field grotto entrances
+                (Check::Exit { from_mq: None, from, to }, 0) if *from == "Hyrule Field" && *to == "HF Fairy Grotto" => Some(
+                    model.ram.scene_flags().hyrule_field.switches.contains(
+                        crate::scene::HyruleFieldSwitches::REQ_0_FOR_ENTRANCE_HYRULE_FIELD_TO_HF_FAIRY_GROTTO
+                    )
+                ),
+                (Check::Exit { from_mq: None, from, to }, 0) if *from == "Hyrule Field" && *to == "HF Near Market Grotto" => Some(
+                    model.ram.scene_flags().hyrule_field.switches.contains(
+                        crate::scene::HyruleFieldSwitches::REQ_0_FOR_ENTRANCE_HYRULE_FIELD_TO_HF_NEAR_MARKET_GROTTO
+                    )
+                ),
+                (Check::Exit { from_mq: None, from, to }, 0) if *from == "Hyrule Field" && *to == "HF Southeast Grotto" => Some(
+                    model.ram.scene_flags().hyrule_field.switches.contains(
+                        crate::scene::HyruleFieldSwitches::REQ_0_FOR_ENTRANCE_HYRULE_FIELD_TO_HF_SOUTHEAST_GROTTO
+                    )
+                ),
+
+                // Lost Woods grotto entrances
+                (Check::Exit { from_mq: None, from, to }, 0) if *from == "LW Beyond Mido" && *to == "LW Scrubs Grotto" => Some(
+                    model.ram.scene_flags().lost_woods.switches.contains(
+                        crate::scene::LostWoodsSwitches::REQ_0_FOR_ENTRANCE_LW_BEYOND_MIDO_TO_LW_SCRUBS_GROTTO
+                    )
+                ),
+                (Check::Exit { from_mq: None, from, to }, 0) if *from == "Lost Woods" && *to == "LW Near Shortcuts Grotto" => Some(
+                    model.ram.scene_flags().lost_woods.switches.contains(
+                        crate::scene::LostWoodsSwitches::REQ_0_FOR_ENTRANCE_LOST_WOODS_TO_LW_NEAR_SHORTCUTS_GROTTO
+                    )
+                ),
+
+                // Zora River grotto entrance
+                (Check::Exit { from_mq: None, from, to }, 0) if *from == "Zora River" && *to == "ZR Fairy Grotto" => Some(
+                    model.ram.scene_flags().zora_river.switches.contains(
+                        crate::scene::ZoraRiverSwitches::REQ_0_FOR_ENTRANCE_ZORA_RIVER_TO_ZR_FAIRY_GROTTO
+                    )
+                ),
+
+                // Death Mountain Summit grotto entrances
+                (Check::Exit { from_mq: None, from, to }, 0) if *from == "Death Mountain Summit" && *to == "DMT Cow Grotto" => Some(
+                    model.ram.scene_flags().death_mountain.switches.contains(
+                        crate::scene::DeathMountainSwitches::REQ_0_FOR_ENTRANCE_DEATH_MOUNTAIN_SUMMIT_TO_DMT_COW_GROTTO
+                    )
+                ),
+                (Check::Exit { from_mq: None, from, to }, 0) if *from == "Death Mountain Summit" && *to == "DMT Great Fairy Fountain" => Some(
+                    model.ram.scene_flags().death_mountain.switches.contains(
+                        crate::scene::DeathMountainSwitches::REQ_0_FOR_ENTRANCE_DEATH_MOUNTAIN_SUMMIT_TO_DMT_GREAT_FAIRY_FOUNTAIN
+                    )
+                ),
+
+                // ===== LOCATION-BASED ANONYMOUS EVENTS =====
+                // These track locations accessible from multiple regions with different requirements.
+                // The underlying check is the same - just the location/chest/skulltula flag.
+
+                // Deku Tree Queen Gohma Heart - alternative path from boss room
                 (Check::Location(loc), 0) if *loc == "Deku Tree Queen Gohma Heart" => Some(
                     model.ram.scene_flags().deku_tree.room_clear.contains(
                         crate::scene::DekuTreeRoomClear::SCRUBS_231_PUZZLE
                     )
                 ),
+
+                // Queen Gohma boss - same tracking as heart container
                 (Check::Location(loc), 0) if *loc == "Queen Gohma" => Some(
                     model.ram.scene_flags().deku_tree.room_clear.contains(
                         crate::scene::DekuTreeRoomClear::SCRUBS_231_PUZZLE
                     )
                 ),
-                // the anonymous event for this skulltula is really just collecting it from a different region with different item requirements
+
+                // Deku Tree GS Basement Backroom - accessible from different paths
+                // The derive macro generates these as location prereqs with format REQ_{id}_FOR_{location}
+                (Check::Location(loc), 0) if *loc == "Deku Tree GS Basement Backroom" => Some(
+                    model.ram.scene_flags().deku_tree.switches.contains(
+                        crate::scene::DekuTreeSwitches::REQ_0_FOR_DEKU_TREE_GS_BASEMENT_BACKROOM
+                    )
+                ),
+                (Check::Location(loc), 1) if *loc == "Deku Tree GS Basement Backroom" => Some(
+                    model.ram.scene_flags().deku_tree.switches.contains(
+                        crate::scene::DekuTreeSwitches::REQ_1_FOR_DEKU_TREE_GS_BASEMENT_BACKROOM
+                    )
+                ),
+
+                // Forest Temple GS Level Island Courtyard - accessible from different region
                 (Check::Location(loc), 0) if *loc == "Forest Temple GS Level Island Courtyard" => Some(
                     model.ram.save.gold_skulltulas.forest_temple.contains(
                         crate::scene::ForestTempleGoldSkulltulas::FOREST_TEMPLE_GS_LEVEL_ISLAND_COURTYARD
                     )
                 ),
-                // the anonymous events for this chest are really just opening it from different regions with different item requirements
+
+                // Forest Temple Raised Island Courtyard Chest - accessible from multiple regions
                 (Check::Location(loc), 0) | (Check::Location(loc), 1) if *loc == "Forest Temple Raised Island Courtyard Chest" => Some(
                     model.ram.scene_flags().forest_temple.chests.contains(
                         crate::scene::ForestTempleChests::FOREST_TEMPLE_RAISED_ISLAND_COURTYARD_CHEST
                     )
                 ),
-                (_, _) => None, //TODO make a list of all anonymous events
+
+                // Any other anonymous event - return None to let other checks handle it
+                // or to indicate the check status is unknown. The derive macro generated
+                // code in scene flags also handles additional anonymous events.
+                (_, _) => None,
             },
             Check::Event(event) => match &event[..] {
                 // Overworld
