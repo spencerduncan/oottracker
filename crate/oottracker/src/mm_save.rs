@@ -481,6 +481,23 @@ pub struct MmSmallKeys {
     pub stone_tower: u8,
 }
 
+impl MmSmallKeys {
+    /// Get small key count for Snowhead Temple
+    pub fn snowhead(&self) -> u8 {
+        self.snowhead
+    }
+
+    /// Get small key count for Great Bay Temple
+    pub fn great_bay(&self) -> u8 {
+        self.great_bay
+    }
+
+    /// Get small key count for Stone Tower Temple
+    pub fn stone_tower(&self) -> u8 {
+        self.stone_tower
+    }
+}
+
 // ============================================================================
 // Stray Fairies
 // ============================================================================
