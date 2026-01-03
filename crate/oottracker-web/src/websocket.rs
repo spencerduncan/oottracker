@@ -10,7 +10,7 @@ use {
     iced_core::keyboard::Modifiers as KeyboardModifiers,
     oottracker::websocket::{ClientMessage, MwItem, ServerMessage},
     sqlx::PgPool,
-    std::{sync::Arc, time::Duration},
+    std::{env, sync::Arc, time::Duration},
     tokio::{sync::Mutex, time::sleep},
     warp::{
         reject::Rejection,
@@ -18,6 +18,40 @@ use {
         ws::{Message, WebSocket},
     },
 };
+
+/// Default allowed origins for WebSocket connections.
+/// These can be overridden via the WEBSOCKET_ALLOWED_ORIGINS environment variable.
+const DEFAULT_ALLOWED_ORIGINS: &[&str] = &[
+    "http://localhost",
+    "http://localhost:8000",
+    "http://127.0.0.1",
+    "http://127.0.0.1:8000",
+    "https://oottracker.fenhl.net",
+];
+
+/// Validates whether the provided Origin header is allowed.
+/// Returns true if:
+/// - The origin is in the allowed list (from env var or default)
+/// - No origin is provided (same-origin requests from some clients)
+fn is_origin_allowed(origin: Option<&str>) -> bool {
+    let Some(origin) = origin else {
+        // Allow requests without Origin header (e.g., same-origin or non-browser clients)
+        return true;
+    };
+
+    // Check environment variable for custom allowed origins
+    if let Ok(allowed) = env::var("WEBSOCKET_ALLOWED_ORIGINS") {
+        return allowed.split(',').any(|allowed_origin| {
+            let allowed_origin = allowed_origin.trim();
+            origin == allowed_origin || origin.starts_with(&format!("{allowed_origin}:"))
+        });
+    }
+
+    // Check against default allowed origins
+    DEFAULT_ALLOWED_ORIGINS.iter().any(|&allowed_origin| {
+        origin == allowed_origin || origin.starts_with(&format!("{allowed_origin}:"))
+    })
+}
 
 type WsSink = Arc<Mutex<SplitSink<WebSocket, Message>>>;
 
@@ -608,12 +642,24 @@ async fn client_connection(
     }
 }
 
+/// Custom rejection for forbidden origin
+#[derive(Debug)]
+pub(crate) struct ForbiddenOrigin;
+
+impl warp::reject::Reject for ForbiddenOrigin {}
+
 pub(crate) async fn ws_handler(
     pool: PgPool,
     rooms: Rooms,
     restreams: Restreams,
     mw_rooms: MwRooms,
+    origin: Option<String>,
     ws: warp::ws::Ws,
 ) -> Result<impl Reply, Rejection> {
+    // Validate the Origin header
+    if !is_origin_allowed(origin.as_deref()) {
+        return Err(warp::reject::custom(ForbiddenOrigin));
+    }
+
     Ok(ws.on_upgrade(move |ws| client_connection(pool, rooms, restreams, mw_rooms, ws)))
 }

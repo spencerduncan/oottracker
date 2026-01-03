@@ -205,15 +205,18 @@ async fn main() -> Result<(), Error> {
         let rooms = Rooms::clone(&rooms);
         let restreams = Restreams::clone(&restreams);
         let mw_rooms = MwRooms::clone(&mw_rooms);
-        let handler = warp::ws().and_then(move |ws| {
-            websocket::ws_handler(
-                pool.clone(),
-                Rooms::clone(&rooms),
-                Restreams::clone(&restreams),
-                MwRooms::clone(&mw_rooms),
-                ws,
-            )
-        });
+        let handler = warp::header::optional::<String>("origin")
+            .and(warp::ws())
+            .and_then(move |origin, ws| {
+                websocket::ws_handler(
+                    pool.clone(),
+                    Rooms::clone(&rooms),
+                    Restreams::clone(&restreams),
+                    MwRooms::clone(&mw_rooms),
+                    origin,
+                    ws,
+                )
+            });
         tokio::spawn(warp::serve(handler).run(([127, 0, 0, 1], 24808))).err_into()
     };
     let rocket_task = tokio::spawn(http::rocket(pool, rooms, restreams, mw_rooms).launch()).map(
