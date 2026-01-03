@@ -2993,20 +2993,80 @@ cells! {
     // MM Items - Swords
     // ============================================================================
     MmSword: Sequence {
-        idx: Box::new(|_| 0), // TODO: Connect to MM save data
-        img: Box::new(|_| (false, ImageInfo::mm("kokiri_sword"))),
-        increment: Box::new(|_| ()),
-        decrement: Box::new(|_| ()),
+        idx: Box::new(|state| {
+            state.ram.mm_save.as_ref().map_or(0, |mm| match mm.sword {
+                crate::mm_save::MmSword::None => 0,
+                crate::mm_save::MmSword::KokiriSword => 1,
+                crate::mm_save::MmSword::RazorSword => 2,
+                crate::mm_save::MmSword::GildedSword => 3,
+            })
+        }),
+        img: Box::new(|state| {
+            state.ram.mm_save.as_ref().map_or((false, ImageInfo::mm("kokiri_sword")), |mm| match mm.sword {
+                crate::mm_save::MmSword::None => (false, ImageInfo::mm("kokiri_sword")),
+                crate::mm_save::MmSword::KokiriSword => (true, ImageInfo::mm("kokiri_sword")),
+                crate::mm_save::MmSword::RazorSword => (true, ImageInfo::mm("razor_sword")),
+                crate::mm_save::MmSword::GildedSword => (true, ImageInfo::mm("gilded_sword")),
+            })
+        }),
+        increment: Box::new(|state| {
+            if let Some(mm) = state.ram.mm_save.as_mut() {
+                mm.sword = match mm.sword {
+                    crate::mm_save::MmSword::None => crate::mm_save::MmSword::KokiriSword,
+                    crate::mm_save::MmSword::KokiriSword => crate::mm_save::MmSword::RazorSword,
+                    crate::mm_save::MmSword::RazorSword => crate::mm_save::MmSword::GildedSword,
+                    crate::mm_save::MmSword::GildedSword => crate::mm_save::MmSword::None,
+                };
+            }
+        }),
+        decrement: Box::new(|state| {
+            if let Some(mm) = state.ram.mm_save.as_mut() {
+                mm.sword = match mm.sword {
+                    crate::mm_save::MmSword::None => crate::mm_save::MmSword::GildedSword,
+                    crate::mm_save::MmSword::KokiriSword => crate::mm_save::MmSword::None,
+                    crate::mm_save::MmSword::RazorSword => crate::mm_save::MmSword::KokiriSword,
+                    crate::mm_save::MmSword::GildedSword => crate::mm_save::MmSword::RazorSword,
+                };
+            }
+        }),
     },
 
     // ============================================================================
     // MM Items - Shields
     // ============================================================================
     MmShield: Sequence {
-        idx: Box::new(|_| 0),
-        img: Box::new(|_| (false, ImageInfo::mm("hero_shield"))),
-        increment: Box::new(|_| ()),
-        decrement: Box::new(|_| ()),
+        idx: Box::new(|state| {
+            state.ram.mm_save.as_ref().map_or(0, |mm| match mm.shield {
+                crate::mm_save::MmShield::None => 0,
+                crate::mm_save::MmShield::HeroShield => 1,
+                crate::mm_save::MmShield::MirrorShield => 2,
+            })
+        }),
+        img: Box::new(|state| {
+            state.ram.mm_save.as_ref().map_or((false, ImageInfo::mm("hero_shield")), |mm| match mm.shield {
+                crate::mm_save::MmShield::None => (false, ImageInfo::mm("hero_shield")),
+                crate::mm_save::MmShield::HeroShield => (true, ImageInfo::mm("hero_shield")),
+                crate::mm_save::MmShield::MirrorShield => (true, ImageInfo::mm("mirror_shield")),
+            })
+        }),
+        increment: Box::new(|state| {
+            if let Some(mm) = state.ram.mm_save.as_mut() {
+                mm.shield = match mm.shield {
+                    crate::mm_save::MmShield::None => crate::mm_save::MmShield::HeroShield,
+                    crate::mm_save::MmShield::HeroShield => crate::mm_save::MmShield::MirrorShield,
+                    crate::mm_save::MmShield::MirrorShield => crate::mm_save::MmShield::None,
+                };
+            }
+        }),
+        decrement: Box::new(|state| {
+            if let Some(mm) = state.ram.mm_save.as_mut() {
+                mm.shield = match mm.shield {
+                    crate::mm_save::MmShield::None => crate::mm_save::MmShield::MirrorShield,
+                    crate::mm_save::MmShield::HeroShield => crate::mm_save::MmShield::None,
+                    crate::mm_save::MmShield::MirrorShield => crate::mm_save::MmShield::HeroShield,
+                };
+            }
+        }),
     },
 
     // ============================================================================
@@ -3015,8 +3075,28 @@ cells! {
     MmBottle: Count {
         dimmed_img: ImageInfo::mm("bottle"),
         img: ImageInfo::mm("bottle"),
-        get: Box::new(|_| 0),
-        set: Box::new(|_, _| ()),
+        get: Box::new(|state| {
+            state.ram.mm_save.as_ref().map_or(0, |mm| {
+                mm.inventory.bottles.iter().filter(|&&b| b != crate::mm_save::MmBottle::None).count() as u8
+            })
+        }),
+        set: Box::new(|state, value| {
+            if let Some(mm) = state.ram.mm_save.as_mut() {
+                // Set bottles to Empty up to the value, then None for the rest
+                for (i, bottle) in mm.inventory.bottles.iter_mut().enumerate() {
+                    *bottle = if (i as u8) < value {
+                        // Preserve existing bottle content, or set to Empty if was None
+                        if *bottle == crate::mm_save::MmBottle::None {
+                            crate::mm_save::MmBottle::Empty
+                        } else {
+                            *bottle
+                        }
+                    } else {
+                        crate::mm_save::MmBottle::None
+                    };
+                }
+            }
+        }),
         max: 6,
         step: 1,
     },
@@ -3025,10 +3105,60 @@ cells! {
     // MM Items - Wallet/Upgrades
     // ============================================================================
     MmWallet: Sequence {
-        idx: Box::new(|_| 0),
-        img: Box::new(|_| (false, ImageInfo::mm("wallet"))),
-        increment: Box::new(|_| ()),
-        decrement: Box::new(|_| ()),
+        idx: Box::new(|state| {
+            state.ram.mm_save.as_ref().map_or(0, |mm| {
+                let wallet = mm.upgrades.wallet();
+                if wallet == crate::mm_save::MmUpgrades::GIANTS_WALLET {
+                    2
+                } else if wallet == crate::mm_save::MmUpgrades::ADULTS_WALLET {
+                    1
+                } else {
+                    0
+                }
+            })
+        }),
+        img: Box::new(|state| {
+            state.ram.mm_save.as_ref().map_or((false, ImageInfo::mm("wallet")), |mm| {
+                let wallet = mm.upgrades.wallet();
+                if wallet == crate::mm_save::MmUpgrades::GIANTS_WALLET {
+                    (true, ImageInfo::mm("giants_wallet"))
+                } else if wallet == crate::mm_save::MmUpgrades::ADULTS_WALLET {
+                    (true, ImageInfo::mm("adults_wallet"))
+                } else {
+                    (false, ImageInfo::mm("wallet"))
+                }
+            })
+        }),
+        increment: Box::new(|state| {
+            if let Some(mm) = state.ram.mm_save.as_mut() {
+                let new_val = {
+                    let wallet = mm.upgrades.wallet();
+                    if wallet == crate::mm_save::MmUpgrades::ADULTS_WALLET {
+                        crate::mm_save::MmUpgrades::GIANTS_WALLET
+                    } else if wallet == crate::mm_save::MmUpgrades::GIANTS_WALLET {
+                        crate::mm_save::MmUpgrades::empty()
+                    } else {
+                        crate::mm_save::MmUpgrades::ADULTS_WALLET
+                    }
+                };
+                mm.upgrades.set_wallet(new_val);
+            }
+        }),
+        decrement: Box::new(|state| {
+            if let Some(mm) = state.ram.mm_save.as_mut() {
+                let new_val = {
+                    let wallet = mm.upgrades.wallet();
+                    if wallet == crate::mm_save::MmUpgrades::ADULTS_WALLET {
+                        crate::mm_save::MmUpgrades::empty()
+                    } else if wallet == crate::mm_save::MmUpgrades::GIANTS_WALLET {
+                        crate::mm_save::MmUpgrades::ADULTS_WALLET
+                    } else {
+                        crate::mm_save::MmUpgrades::GIANTS_WALLET
+                    }
+                };
+                mm.upgrades.set_wallet(new_val);
+            }
+        }),
     },
     MmMagic: Simple {
         img: ImageInfo::mm("magic"),
@@ -3037,8 +3167,14 @@ cells! {
     },
     MmDoubleDefense: Simple {
         img: ImageInfo::mm("double_defense"),
-        active: Box::new(|_| false),
-        toggle: Box::new(|_| ()),
+        active: Box::new(|state| {
+            state.ram.mm_save.as_ref().is_some_and(|mm| mm.double_defense)
+        }),
+        toggle: Box::new(|state| {
+            if let Some(mm) = state.ram.mm_save.as_mut() {
+                mm.double_defense = !mm.double_defense;
+            }
+        }),
     },
 
     // ============================================================================
