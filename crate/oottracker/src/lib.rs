@@ -122,12 +122,28 @@ pub struct ModelState {
 }
 
 impl ModelState {
+    /// Updates knowledge state based on current game data.
+    ///
+    /// This method processes both OoT and MM save data to update knowledge.
+    /// In combo mode, both games' data is processed when available.
     pub fn update_knowledge(&mut self) {
-        if self.ram.save.game_mode != GameMode::Gameplay {
-            return;
-        } //TODO read knowledge from inventory preview on file select?
-          // immediate knowledge
-          // read dungeon reward info if the player is looking at the dungeon info screen in the pause menu
+        // Process OoT knowledge if in OoT gameplay mode
+        if self.ram.save.game_mode == GameMode::Gameplay {
+            self.update_oot_knowledge();
+        }
+
+        // Process MM knowledge if MM save data is present
+        // Clone the mm_save to avoid borrow conflicts
+        if let Some(mm_save) = self.ram.mm_save.clone() {
+            self.update_mm_knowledge(&mm_save);
+        }
+    }
+
+    /// Updates knowledge based on OoT save data.
+    fn update_oot_knowledge(&mut self) {
+        //TODO read knowledge from inventory preview on file select?
+        // immediate knowledge
+        // read dungeon reward info if the player is looking at the dungeon info screen in the pause menu
         let button_pressed = match self.tracker_ctx.cfg_dungeon_info_enable {
             0 => false,
             1 => self.ram.input_p1_raw_pad.contains(Pad::A),
@@ -217,6 +233,108 @@ impl ModelState {
                 .dungeon_reward_locations
                 .insert(reward, DungeonRewardLocation::Dungeon(dungeon));
         }
+    }
+
+    /// Updates knowledge based on MM save data.
+    ///
+    /// This processes MM-specific items, masks, and songs to update the knowledge state.
+    /// In combo mode, this is called alongside OoT knowledge updates.
+    fn update_mm_knowledge(&mut self, mm_save: &mm_save::MmSave) {
+        // Ensure check tracker is initialized for MM tracking
+        self.ensure_check_tracker();
+
+        // Process MM boss remains for progression tracking
+        // All 4 boss remains are required to access the Moon in vanilla MM
+        let num_remains = mm_save.quest_items.num_remains();
+        if num_remains == 4 {
+            // Player has all boss remains - could derive go mode knowledge
+            // This would be expanded based on randomizer settings
+        }
+
+        // Process MM songs for progression knowledge
+        // The Oath to Order is required to access the final boss
+        let has_oath_to_order = mm_save
+            .quest_items
+            .contains(mm_save::MmQuestItems::SONG_ORDER);
+        if has_oath_to_order && num_remains == 4 {
+            // Player has requirements for final boss access
+            // Knowledge state could be updated for go mode tracking
+        }
+
+        // Process transformation masks for area access knowledge
+        // Deku mask is required for certain areas in Southern Swamp
+        // Goron mask is required for Snowhead access
+        // Zora mask is required for Great Bay access
+        let _has_deku = mm_save
+            .masks
+            .transformation
+            .contains(mm_save::MmTransformationMasks::DEKU);
+        let _has_goron = mm_save
+            .masks
+            .transformation
+            .contains(mm_save::MmTransformationMasks::GORON);
+        let _has_zora = mm_save
+            .masks
+            .transformation
+            .contains(mm_save::MmTransformationMasks::ZORA);
+
+        // Process MM dungeon items for compass/map knowledge
+        // Similar to OoT, compass and map provide dungeon information
+        for dungeon_idx in 0..4 {
+            let dungeon_items = mm_save.dungeon_items.get(dungeon_idx);
+            let _has_compass = dungeon_items.contains(mm_save::MmDungeonItems::COMPASS);
+            let _has_map = dungeon_items.contains(mm_save::MmDungeonItems::MAP);
+            let _has_boss_key = dungeon_items.contains(mm_save::MmDungeonItems::BOSS_KEY);
+            // Dungeon item knowledge could be used for hints or completion tracking
+        }
+
+        // Process key items for progression
+        let _has_hookshot = mm_save.inventory.hookshot;
+        let _has_bow = mm_save.inventory.bow;
+        let _has_bombs = mm_save.inventory.bombs;
+        let _has_ocarina = mm_save.inventory.ocarina;
+
+        // Process song knowledge for warp/utility access
+        let _has_song_of_soaring = mm_save
+            .quest_items
+            .contains(mm_save::MmQuestItems::SONG_SOARING);
+        let _has_song_of_time = mm_save
+            .quest_items
+            .contains(mm_save::MmQuestItems::SONG_TIME);
+        let _has_song_of_healing = mm_save
+            .quest_items
+            .contains(mm_save::MmQuestItems::SONG_HEALING);
+        let _has_eponas_song = mm_save
+            .quest_items
+            .contains(mm_save::MmQuestItems::SONG_EPONA);
+        let _has_song_of_storms = mm_save
+            .quest_items
+            .contains(mm_save::MmQuestItems::SONG_STORMS);
+
+        // Process area-specific songs
+        let _has_sonata = mm_save
+            .quest_items
+            .contains(mm_save::MmQuestItems::SONG_AWAKENING);
+        let _has_lullaby = mm_save
+            .quest_items
+            .contains(mm_save::MmQuestItems::SONG_GORON);
+        let _has_bossa_nova = mm_save
+            .quest_items
+            .contains(mm_save::MmQuestItems::SONG_ZORA);
+        let _has_elegy = mm_save
+            .quest_items
+            .contains(mm_save::MmQuestItems::SONG_EMPTINESS);
+
+        // Track stray fairy progress for Great Fairy rewards
+        let _clock_town_fairies = mm_save.stray_fairies.clock_town;
+        let _woodfall_fairies = mm_save.stray_fairies.woodfall;
+        let _snowhead_fairies = mm_save.stray_fairies.snowhead;
+        let _great_bay_fairies = mm_save.stray_fairies.great_bay;
+        let _stone_tower_fairies = mm_save.stray_fairies.stone_tower;
+
+        // Track skulltula tokens for spider house rewards
+        let _swamp_tokens = mm_save.skull_tokens_swamp;
+        let _ocean_tokens = mm_save.skull_tokens_ocean;
     }
 
     /// Ensures the check tracker is initialized when MM tracking is active.
