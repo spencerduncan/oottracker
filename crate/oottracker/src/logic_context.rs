@@ -1,99 +1,147 @@
-//! Game context implementations for logic evaluation.
+//! Logic context for Majora's Mask.
 //!
-//! This module provides game-specific implementations of the `EvalContext` trait
-//! from the `ootmm` crate, allowing logic expressions to be evaluated against
-//! actual game state.
+//! This module provides `MmGameContext` which translates `MmSave` data into
+//! logic conditions used by the OoTMM randomizer logic system.
+//!
+//! The context maps inventory items, masks, songs, and other game state to their
+//! corresponding logic identifiers.
 
-use std::collections::{HashMap, HashSet};
+use crate::mm_save::{MmBottle, MmMagicCapacity, MmSave, MmShield, MmSword, MmUpgrades};
+use std::collections::HashMap;
 
-use ootmm::expr::EvalContext;
-
-use crate::mm_save::{MmBottle, MmMagicCapacity, MmSave, MmSword};
-
-/// Context for evaluating logic expressions against Majora's Mask game state.
+/// Logic identifiers for MM items.
 ///
-/// This struct implements the `EvalContext` trait from `ootmm::expr`, allowing
-/// logic expressions to be evaluated against actual MM save data.
+/// These match the string identifiers used in the OoTMM logic system.
+pub mod logic_ids {
+    // Equipment items
+    pub const OCARINA_OF_TIME: &str = "OCARINA_OF_TIME";
+    pub const HEROS_BOW: &str = "HEROS_BOW";
+    pub const FIRE_ARROW: &str = "FIRE_ARROW";
+    pub const ICE_ARROW: &str = "ICE_ARROW";
+    pub const LIGHT_ARROW: &str = "LIGHT_ARROW";
+    pub const HOOKSHOT: &str = "HOOKSHOT";
+    pub const BOMB: &str = "BOMB";
+    pub const BOMBCHU: &str = "BOMBCHU";
+    pub const POWDER_KEG: &str = "POWDER_KEG";
+    pub const LENS_OF_TRUTH: &str = "LENS_OF_TRUTH";
+    pub const PICTOGRAPH_BOX: &str = "PICTOGRAPH_BOX";
+    pub const GREAT_FAIRY_SWORD: &str = "GREAT_FAIRY_SWORD";
+    pub const MAGIC_BEAN: &str = "MAGIC_BEAN";
+    pub const DEKU_STICK: &str = "DEKU_STICK";
+    pub const DEKU_NUT: &str = "DEKU_NUT";
+
+    // Transformation masks
+    pub const DEKU_MASK: &str = "DEKU_MASK";
+    pub const GORON_MASK: &str = "GORON_MASK";
+    pub const ZORA_MASK: &str = "ZORA_MASK";
+    pub const FIERCE_DEITY_MASK: &str = "FIERCE_DEITY_MASK";
+
+    // Regular masks
+    pub const POSTMAN_HAT: &str = "POSTMAN_HAT";
+    pub const ALL_NIGHT_MASK: &str = "ALL_NIGHT_MASK";
+    pub const BLAST_MASK: &str = "BLAST_MASK";
+    pub const STONE_MASK: &str = "STONE_MASK";
+    pub const GREAT_FAIRY_MASK: &str = "GREAT_FAIRY_MASK";
+    pub const KEATON_MASK: &str = "KEATON_MASK";
+    pub const BREMEN_MASK: &str = "BREMEN_MASK";
+    pub const BUNNY_HOOD: &str = "BUNNY_HOOD";
+    pub const DON_GERO_MASK: &str = "DON_GERO_MASK";
+    pub const MASK_OF_SCENTS: &str = "MASK_OF_SCENTS";
+    pub const ROMANI_MASK: &str = "ROMANI_MASK";
+    pub const CIRCUS_LEADER_MASK: &str = "CIRCUS_LEADER_MASK";
+    pub const KAFEI_MASK: &str = "KAFEI_MASK";
+    pub const COUPLES_MASK: &str = "COUPLES_MASK";
+    pub const MASK_OF_TRUTH: &str = "MASK_OF_TRUTH";
+    pub const KAMARO_MASK: &str = "KAMARO_MASK";
+    pub const GIBDO_MASK: &str = "GIBDO_MASK";
+    pub const GARO_MASK: &str = "GARO_MASK";
+    pub const CAPTAIN_HAT: &str = "CAPTAIN_HAT";
+    pub const GIANT_MASK: &str = "GIANT_MASK";
+
+    // Songs
+    pub const SONG_OF_TIME: &str = "SONG_OF_TIME";
+    pub const SONG_OF_HEALING: &str = "SONG_OF_HEALING";
+    pub const EPONAS_SONG: &str = "EPONAS_SONG";
+    pub const SONG_OF_SOARING: &str = "SONG_OF_SOARING";
+    pub const SONG_OF_STORMS: &str = "SONG_OF_STORMS";
+    pub const SONATA_OF_AWAKENING: &str = "SONATA_OF_AWAKENING";
+    pub const GORON_LULLABY: &str = "GORON_LULLABY";
+    pub const NEW_WAVE_BOSSA_NOVA: &str = "NEW_WAVE_BOSSA_NOVA";
+    pub const ELEGY_OF_EMPTINESS: &str = "ELEGY_OF_EMPTINESS";
+    pub const OATH_TO_ORDER: &str = "OATH_TO_ORDER";
+
+    // Boss remains
+    pub const ODOLWA_REMAINS: &str = "ODOLWA_REMAINS";
+    pub const GOHT_REMAINS: &str = "GOHT_REMAINS";
+    pub const GYORG_REMAINS: &str = "GYORG_REMAINS";
+    pub const TWINMOLD_REMAINS: &str = "TWINMOLD_REMAINS";
+
+    // Equipment
+    pub const KOKIRI_SWORD: &str = "KOKIRI_SWORD";
+    pub const RAZOR_SWORD: &str = "RAZOR_SWORD";
+    pub const GILDED_SWORD: &str = "GILDED_SWORD";
+    pub const HERO_SHIELD: &str = "HERO_SHIELD";
+    pub const MIRROR_SHIELD: &str = "MIRROR_SHIELD";
+
+    // Bottles
+    pub const BOTTLE: &str = "BOTTLE";
+
+    // Upgrades
+    pub const MAGIC_METER: &str = "MAGIC_METER";
+    pub const DOUBLE_MAGIC: &str = "DOUBLE_MAGIC";
+    pub const DOUBLE_DEFENSE: &str = "DOUBLE_DEFENSE";
+    pub const ADULT_WALLET: &str = "ADULT_WALLET";
+    pub const GIANT_WALLET: &str = "GIANT_WALLET";
+    pub const QUIVER_30: &str = "QUIVER_30";
+    pub const QUIVER_40: &str = "QUIVER_40";
+    pub const QUIVER_50: &str = "QUIVER_50";
+    pub const BOMB_BAG_20: &str = "BOMB_BAG_20";
+    pub const BOMB_BAG_30: &str = "BOMB_BAG_30";
+    pub const BOMB_BAG_40: &str = "BOMB_BAG_40";
+
+    // Dungeon-specific keys
+    pub const SMALL_KEY_WOODFALL_TEMPLE: &str = "SMALL_KEY_WOODFALL_TEMPLE";
+    pub const SMALL_KEY_SNOWHEAD_TEMPLE: &str = "SMALL_KEY_SNOWHEAD_TEMPLE";
+    pub const SMALL_KEY_GREAT_BAY_TEMPLE: &str = "SMALL_KEY_GREAT_BAY_TEMPLE";
+    pub const SMALL_KEY_STONE_TOWER_TEMPLE: &str = "SMALL_KEY_STONE_TOWER_TEMPLE";
+
+    // Stray fairies
+    pub const STRAY_FAIRY_CLOCK_TOWN: &str = "STRAY_FAIRY_CLOCK_TOWN";
+    pub const STRAY_FAIRY_WOODFALL: &str = "STRAY_FAIRY_WOODFALL";
+    pub const STRAY_FAIRY_SNOWHEAD: &str = "STRAY_FAIRY_SNOWHEAD";
+    pub const STRAY_FAIRY_GREAT_BAY: &str = "STRAY_FAIRY_GREAT_BAY";
+    pub const STRAY_FAIRY_STONE_TOWER: &str = "STRAY_FAIRY_STONE_TOWER";
+}
+
+/// Game context for MM logic evaluation.
+///
+/// This struct bridges `MmSave` data to the logic system by providing
+/// methods to query game state using logic identifiers.
 ///
 /// # Example
 ///
 /// ```ignore
-/// use oottracker::logic_context::MmGameContext;
 /// use oottracker::mm_save::MmSave;
-/// use ootmm::expr::eval_str;
+/// use oottracker::logic_context::MmGameContext;
 ///
 /// let save = MmSave::default();
 /// let ctx = MmGameContext::new(&save);
-/// let result = eval_str("has(HOOKSHOT)", &ctx);
+///
+/// // Check if player has an item
+/// assert!(!ctx.has_item("HOOKSHOT"));
+///
+/// // Get inventory as a map for logic evaluation
+/// let inventory = ctx.build_inventory();
 /// ```
+#[derive(Debug)]
 pub struct MmGameContext<'a> {
-    /// Reference to the MM save data
     save: &'a MmSave,
-    /// Events that have occurred in the game
-    events: HashSet<String>,
-    /// Randomizer settings (name -> enabled)
-    settings: HashMap<String, bool>,
-    /// Enabled tricks for logic evaluation
-    tricks: HashSet<String>,
 }
 
 impl<'a> MmGameContext<'a> {
-    /// Create a new game context from MM save data.
-    ///
-    /// Creates a context with empty events, settings, and tricks.
-    /// Use the builder methods to add these as needed.
+    /// Create a new game context from an `MmSave` reference.
     pub fn new(save: &'a MmSave) -> Self {
-        Self {
-            save,
-            events: HashSet::new(),
-            settings: HashMap::new(),
-            tricks: HashSet::new(),
-        }
-    }
-
-    /// Add an event to the context.
-    pub fn with_event(mut self, event: &str) -> Self {
-        self.events.insert(event.to_string());
-        self
-    }
-
-    /// Add multiple events to the context.
-    pub fn with_events(mut self, events: impl IntoIterator<Item = impl AsRef<str>>) -> Self {
-        for event in events {
-            self.events.insert(event.as_ref().to_string());
-        }
-        self
-    }
-
-    /// Set a setting value.
-    pub fn with_setting(mut self, name: &str, value: bool) -> Self {
-        self.settings.insert(name.to_string(), value);
-        self
-    }
-
-    /// Add multiple settings to the context.
-    pub fn with_settings(
-        mut self,
-        settings: impl IntoIterator<Item = (impl AsRef<str>, bool)>,
-    ) -> Self {
-        for (name, value) in settings {
-            self.settings.insert(name.as_ref().to_string(), value);
-        }
-        self
-    }
-
-    /// Enable a trick.
-    pub fn with_trick(mut self, trick: &str) -> Self {
-        self.tricks.insert(trick.to_string());
-        self
-    }
-
-    /// Enable multiple tricks.
-    pub fn with_tricks(mut self, tricks: impl IntoIterator<Item = impl AsRef<str>>) -> Self {
-        for trick in tricks {
-            self.tricks.insert(trick.as_ref().to_string());
-        }
-        self
+        Self { save }
     }
 
     /// Get a reference to the underlying save data.
@@ -101,235 +149,825 @@ impl<'a> MmGameContext<'a> {
         self.save
     }
 
-    /// Check if the player has an item by name.
-    ///
-    /// This is the core item lookup logic that maps item names to save data.
-    /// Item names are case-insensitive and support various aliases.
-    fn check_item(&self, item: &str, count: u32) -> bool {
-        let item_upper = item.to_uppercase();
+    // ========================================================================
+    // Equipment Item Accessors
+    // ========================================================================
 
-        // For most items, count > 1 doesn't make sense (they're boolean)
-        // but we support it for bottles and other countable items
-        match item_upper.as_str() {
-            // Inventory items
-            "OCARINA" | "OCARINA_OF_TIME" => self.save.has_ocarina(),
-            "BOW" | "HEROS_BOW" | "HERO_BOW" => self.save.has_heros_bow(),
-            "FIRE_ARROW" | "FIRE_ARROWS" => self.save.has_fire_arrow(),
-            "ICE_ARROW" | "ICE_ARROWS" => self.save.has_ice_arrow(),
-            "LIGHT_ARROW" | "LIGHT_ARROWS" => self.save.has_light_arrow(),
-            "HOOKSHOT" => self.save.has_hookshot(),
-            "BOMBS" | "BOMB" => self.save.has_bombs(),
-            "BOMBCHU" | "BOMBCHUS" => self.save.has_bombchu(),
-            "DEKU_STICK" | "DEKU_STICKS" => self.save.inventory.deku_sticks,
-            "DEKU_NUT" | "DEKU_NUTS" => self.save.inventory.deku_nuts,
-            "MAGIC_BEAN" | "MAGIC_BEANS" => self.save.has_magic_bean(),
-            "POWDER_KEG" | "POWDER_KEGS" => self.save.has_powder_keg(),
-            "PICTOGRAPH_BOX" | "PICTOGRAPH" => self.save.has_pictograph_box(),
-            "LENS" | "LENS_OF_TRUTH" => self.save.has_lens_of_truth(),
-            "GREAT_FAIRY_SWORD" | "GREAT_FAIRYS_SWORD" => self.save.has_great_fairy_sword(),
+    /// Check if player has the Ocarina of Time.
+    pub fn has_ocarina(&self) -> bool {
+        self.save.has_ocarina()
+    }
 
-            // Swords
-            "KOKIRI_SWORD" => self.save.sword != MmSword::None,
-            "RAZOR_SWORD" => matches!(self.save.sword, MmSword::RazorSword | MmSword::GildedSword),
-            "GILDED_SWORD" => self.save.sword == MmSword::GildedSword,
-            "SWORD" => self.save.sword != MmSword::None,
+    /// Check if player has the Hero's Bow.
+    pub fn has_bow(&self) -> bool {
+        self.save.has_heros_bow()
+    }
 
-            // Shields
-            "HERO_SHIELD" | "HEROS_SHIELD" => self.save.shield != crate::mm_save::MmShield::None,
-            "MIRROR_SHIELD" => self.save.shield == crate::mm_save::MmShield::MirrorShield,
-            "SHIELD" => self.save.shield != crate::mm_save::MmShield::None,
+    /// Check if player has Fire Arrows.
+    pub fn has_fire_arrow(&self) -> bool {
+        self.save.has_fire_arrow()
+    }
 
-            // Transformation masks
-            "DEKU_MASK" => self.save.has_deku_mask(),
-            "GORON_MASK" => self.save.has_goron_mask(),
-            "ZORA_MASK" => self.save.has_zora_mask(),
-            "FIERCE_DEITY_MASK" | "FIERCE_DEITY" => self.save.has_fierce_deity_mask(),
+    /// Check if player has Ice Arrows.
+    pub fn has_ice_arrow(&self) -> bool {
+        self.save.has_ice_arrow()
+    }
 
-            // Collectible masks
-            "POSTMAN_HAT" | "POSTMANS_HAT" => self.save.has_postman_hat(),
-            "ALL_NIGHT_MASK" => self.save.has_all_night_mask(),
-            "BLAST_MASK" => self.save.has_blast_mask(),
-            "STONE_MASK" => self.save.has_stone_mask(),
-            "GREAT_FAIRY_MASK" => self.save.has_great_fairy_mask(),
-            "KEATON_MASK" => self.save.has_keaton_mask(),
-            "BREMEN_MASK" => self.save.has_bremen_mask(),
-            "BUNNY_HOOD" => self.save.has_bunny_hood(),
-            "DON_GERO_MASK" | "DON_GEROS_MASK" => self.save.has_don_gero_mask(),
-            "MASK_OF_SCENTS" | "SCENTS_MASK" => self.save.has_mask_of_scents(),
-            "ROMANI_MASK" | "ROMANIS_MASK" => self.save.has_romani_mask(),
-            "CIRCUS_LEADER_MASK" | "TROUPE_LEADER_MASK" => self.save.has_circus_leader_mask(),
-            "KAFEI_MASK" | "KAFEIS_MASK" => self.save.has_kafei_mask(),
-            "COUPLES_MASK" | "COUPLE_MASK" => self.save.has_couples_mask(),
-            "MASK_OF_TRUTH" | "TRUTH_MASK" => self.save.has_mask_of_truth(),
-            "KAMARO_MASK" | "KAMAROS_MASK" => self.save.has_kamaro_mask(),
-            "GIBDO_MASK" => self.save.has_gibdo_mask(),
-            "GARO_MASK" | "GAROS_MASK" => self.save.has_garo_mask(),
-            "CAPTAIN_HAT" | "CAPTAINS_HAT" => self.save.has_captain_hat(),
-            "GIANT_MASK" | "GIANTS_MASK" => self.save.has_giant_mask(),
+    /// Check if player has Light Arrows.
+    pub fn has_light_arrow(&self) -> bool {
+        self.save.has_light_arrow()
+    }
 
-            // Songs
-            "SONG_OF_TIME" => self.save.has_song_of_time(),
-            "SONG_OF_HEALING" => self.save.has_song_of_healing(),
-            "EPONAS_SONG" | "EPONA_SONG" => self.save.has_eponas_song(),
-            "SONG_OF_SOARING" => self.save.has_song_of_soaring(),
-            "SONG_OF_STORMS" => self.save.has_song_of_storms(),
-            "SONATA_OF_AWAKENING" => self.save.has_sonata_of_awakening(),
-            "GORON_LULLABY" => self.save.has_goron_lullaby(),
-            "NEW_WAVE_BOSSA_NOVA" => self.save.has_new_wave_bossa_nova(),
-            "ELEGY_OF_EMPTINESS" => self.save.has_elegy_of_emptiness(),
-            "OATH_TO_ORDER" => self.save.has_oath_to_order(),
+    /// Check if player has the Hookshot.
+    pub fn has_hookshot(&self) -> bool {
+        self.save.has_hookshot()
+    }
 
-            // Boss remains
-            "ODOLWA_REMAINS" | "ODOLWAS_REMAINS" => self.save.has_odolwa_remains(),
-            "GOHT_REMAINS" | "GOHTS_REMAINS" => self.save.has_goht_remains(),
-            "GYORG_REMAINS" | "GYORGS_REMAINS" => self.save.has_gyorg_remains(),
-            "TWINMOLD_REMAINS" | "TWINMOLDS_REMAINS" => self.save.has_twinmold_remains(),
+    /// Check if player has Bombs.
+    pub fn has_bombs(&self) -> bool {
+        self.save.has_bombs()
+    }
 
-            // Bottles - support counting
-            "BOTTLE" | "EMPTY_BOTTLE" => self.count_bottles() >= count,
+    /// Check if player has Bombchus.
+    pub fn has_bombchu(&self) -> bool {
+        self.save.has_bombchu()
+    }
 
-            // Magic
-            "MAGIC" => self.save.has_magic(),
-            "DOUBLE_MAGIC" => self.save.magic == MmMagicCapacity::Double,
+    /// Check if player has Powder Kegs.
+    pub fn has_powder_keg(&self) -> bool {
+        self.save.has_powder_keg()
+    }
 
-            // Double defense
-            "DOUBLE_DEFENSE" => self.save.double_defense,
+    /// Check if player has the Lens of Truth.
+    pub fn has_lens_of_truth(&self) -> bool {
+        self.save.has_lens_of_truth()
+    }
 
-            // Small keys (support counting)
-            "SMALL_KEY_WOODFALL" | "WOODFALL_SMALL_KEY" => {
-                self.save.small_keys.woodfall as u32 >= count
-            }
-            "SMALL_KEY_SNOWHEAD" | "SNOWHEAD_SMALL_KEY" => {
-                self.save.small_keys.snowhead as u32 >= count
-            }
-            "SMALL_KEY_GREAT_BAY" | "GREAT_BAY_SMALL_KEY" => {
-                self.save.small_keys.great_bay as u32 >= count
-            }
-            "SMALL_KEY_STONE_TOWER" | "STONE_TOWER_SMALL_KEY" => {
-                self.save.small_keys.stone_tower as u32 >= count
-            }
+    /// Check if player has the Pictograph Box.
+    pub fn has_pictograph_box(&self) -> bool {
+        self.save.has_pictograph_box()
+    }
 
-            // Boss keys
-            "BOSS_KEY_WOODFALL" | "WOODFALL_BOSS_KEY" => self
-                .save
-                .dungeon_items
-                .woodfall
-                .contains(crate::mm_save::MmDungeonItems::BOSS_KEY),
-            "BOSS_KEY_SNOWHEAD" | "SNOWHEAD_BOSS_KEY" => self
-                .save
-                .dungeon_items
-                .snowhead
-                .contains(crate::mm_save::MmDungeonItems::BOSS_KEY),
-            "BOSS_KEY_GREAT_BAY" | "GREAT_BAY_BOSS_KEY" => self
-                .save
-                .dungeon_items
-                .great_bay
-                .contains(crate::mm_save::MmDungeonItems::BOSS_KEY),
-            "BOSS_KEY_STONE_TOWER" | "STONE_TOWER_BOSS_KEY" => self
-                .save
-                .dungeon_items
-                .stone_tower
-                .contains(crate::mm_save::MmDungeonItems::BOSS_KEY),
+    /// Check if player has the Great Fairy's Sword.
+    pub fn has_great_fairy_sword(&self) -> bool {
+        self.save.has_great_fairy_sword()
+    }
 
-            // Stray fairies (support counting)
-            "STRAY_FAIRY_CLOCK_TOWN" => self.save.stray_fairies.clock_town as u32 >= count,
-            "STRAY_FAIRY_WOODFALL" => self.save.stray_fairies.woodfall as u32 >= count,
-            "STRAY_FAIRY_SNOWHEAD" => self.save.stray_fairies.snowhead as u32 >= count,
-            "STRAY_FAIRY_GREAT_BAY" => self.save.stray_fairies.great_bay as u32 >= count,
-            "STRAY_FAIRY_STONE_TOWER" => self.save.stray_fairies.stone_tower as u32 >= count,
+    /// Check if player has Magic Beans.
+    pub fn has_magic_bean(&self) -> bool {
+        self.save.has_magic_bean()
+    }
 
-            // Skulltula tokens (support counting)
-            "SKULL_TOKEN_SWAMP" | "SWAMP_SKULLTULA_TOKEN" => {
-                self.save.skull_tokens_swamp as u32 >= count
-            }
-            "SKULL_TOKEN_OCEAN" | "OCEAN_SKULLTULA_TOKEN" => {
-                self.save.skull_tokens_ocean as u32 >= count
-            }
+    /// Check if player has Deku Sticks.
+    pub fn has_deku_stick(&self) -> bool {
+        self.save.inventory.deku_sticks
+    }
 
-            // Unknown item
-            _ => false,
+    /// Check if player has Deku Nuts.
+    pub fn has_deku_nut(&self) -> bool {
+        self.save.inventory.deku_nuts
+    }
+
+    // ========================================================================
+    // Transformation Mask Accessors
+    // ========================================================================
+
+    /// Check if player has the Deku Mask.
+    pub fn has_deku_mask(&self) -> bool {
+        self.save.has_deku_mask()
+    }
+
+    /// Check if player has the Goron Mask.
+    pub fn has_goron_mask(&self) -> bool {
+        self.save.has_goron_mask()
+    }
+
+    /// Check if player has the Zora Mask.
+    pub fn has_zora_mask(&self) -> bool {
+        self.save.has_zora_mask()
+    }
+
+    /// Check if player has the Fierce Deity Mask.
+    pub fn has_fierce_deity_mask(&self) -> bool {
+        self.save.has_fierce_deity_mask()
+    }
+
+    // ========================================================================
+    // Regular Mask Accessors
+    // ========================================================================
+
+    /// Check if player has the Postman's Hat.
+    pub fn has_postman_hat(&self) -> bool {
+        self.save.has_postman_hat()
+    }
+
+    /// Check if player has the All-Night Mask.
+    pub fn has_all_night_mask(&self) -> bool {
+        self.save.has_all_night_mask()
+    }
+
+    /// Check if player has the Blast Mask.
+    pub fn has_blast_mask(&self) -> bool {
+        self.save.has_blast_mask()
+    }
+
+    /// Check if player has the Stone Mask.
+    pub fn has_stone_mask(&self) -> bool {
+        self.save.has_stone_mask()
+    }
+
+    /// Check if player has the Great Fairy Mask.
+    pub fn has_great_fairy_mask(&self) -> bool {
+        self.save.has_great_fairy_mask()
+    }
+
+    /// Check if player has the Keaton Mask.
+    pub fn has_keaton_mask(&self) -> bool {
+        self.save.has_keaton_mask()
+    }
+
+    /// Check if player has the Bremen Mask.
+    pub fn has_bremen_mask(&self) -> bool {
+        self.save.has_bremen_mask()
+    }
+
+    /// Check if player has the Bunny Hood.
+    pub fn has_bunny_hood(&self) -> bool {
+        self.save.has_bunny_hood()
+    }
+
+    /// Check if player has Don Gero's Mask.
+    pub fn has_don_gero_mask(&self) -> bool {
+        self.save.has_don_gero_mask()
+    }
+
+    /// Check if player has the Mask of Scents.
+    pub fn has_mask_of_scents(&self) -> bool {
+        self.save.has_mask_of_scents()
+    }
+
+    /// Check if player has Romani's Mask.
+    pub fn has_romani_mask(&self) -> bool {
+        self.save.has_romani_mask()
+    }
+
+    /// Check if player has the Circus Leader's Mask.
+    pub fn has_circus_leader_mask(&self) -> bool {
+        self.save.has_circus_leader_mask()
+    }
+
+    /// Check if player has Kafei's Mask.
+    pub fn has_kafei_mask(&self) -> bool {
+        self.save.has_kafei_mask()
+    }
+
+    /// Check if player has the Couple's Mask.
+    pub fn has_couples_mask(&self) -> bool {
+        self.save.has_couples_mask()
+    }
+
+    /// Check if player has the Mask of Truth.
+    pub fn has_mask_of_truth(&self) -> bool {
+        self.save.has_mask_of_truth()
+    }
+
+    /// Check if player has Kamaro's Mask.
+    pub fn has_kamaro_mask(&self) -> bool {
+        self.save.has_kamaro_mask()
+    }
+
+    /// Check if player has the Gibdo Mask.
+    pub fn has_gibdo_mask(&self) -> bool {
+        self.save.has_gibdo_mask()
+    }
+
+    /// Check if player has the Garo's Mask.
+    pub fn has_garo_mask(&self) -> bool {
+        self.save.has_garo_mask()
+    }
+
+    /// Check if player has the Captain's Hat.
+    pub fn has_captain_hat(&self) -> bool {
+        self.save.has_captain_hat()
+    }
+
+    /// Check if player has the Giant's Mask.
+    pub fn has_giant_mask(&self) -> bool {
+        self.save.has_giant_mask()
+    }
+
+    // ========================================================================
+    // Song Accessors
+    // ========================================================================
+
+    /// Check if player has Song of Time.
+    pub fn has_song_of_time(&self) -> bool {
+        self.save.has_song_of_time()
+    }
+
+    /// Check if player has Song of Healing.
+    pub fn has_song_of_healing(&self) -> bool {
+        self.save.has_song_of_healing()
+    }
+
+    /// Check if player has Epona's Song.
+    pub fn has_eponas_song(&self) -> bool {
+        self.save.has_eponas_song()
+    }
+
+    /// Check if player has Song of Soaring.
+    pub fn has_song_of_soaring(&self) -> bool {
+        self.save.has_song_of_soaring()
+    }
+
+    /// Check if player has Song of Storms.
+    pub fn has_song_of_storms(&self) -> bool {
+        self.save.has_song_of_storms()
+    }
+
+    /// Check if player has Sonata of Awakening.
+    pub fn has_sonata_of_awakening(&self) -> bool {
+        self.save.has_sonata_of_awakening()
+    }
+
+    /// Check if player has Goron Lullaby.
+    pub fn has_goron_lullaby(&self) -> bool {
+        self.save.has_goron_lullaby()
+    }
+
+    /// Check if player has New Wave Bossa Nova.
+    pub fn has_new_wave_bossa_nova(&self) -> bool {
+        self.save.has_new_wave_bossa_nova()
+    }
+
+    /// Check if player has Elegy of Emptiness.
+    pub fn has_elegy_of_emptiness(&self) -> bool {
+        self.save.has_elegy_of_emptiness()
+    }
+
+    /// Check if player has Oath to Order.
+    pub fn has_oath_to_order(&self) -> bool {
+        self.save.has_oath_to_order()
+    }
+
+    // ========================================================================
+    // Boss Remains Accessors
+    // ========================================================================
+
+    /// Check if player has Odolwa's Remains.
+    pub fn has_odolwa_remains(&self) -> bool {
+        self.save.has_odolwa_remains()
+    }
+
+    /// Check if player has Goht's Remains.
+    pub fn has_goht_remains(&self) -> bool {
+        self.save.has_goht_remains()
+    }
+
+    /// Check if player has Gyorg's Remains.
+    pub fn has_gyorg_remains(&self) -> bool {
+        self.save.has_gyorg_remains()
+    }
+
+    /// Check if player has Twinmold's Remains.
+    pub fn has_twinmold_remains(&self) -> bool {
+        self.save.has_twinmold_remains()
+    }
+
+    /// Get the number of boss remains collected.
+    pub fn boss_remains_count(&self) -> u8 {
+        self.save.quest_items.num_remains()
+    }
+
+    // ========================================================================
+    // Equipment Accessors (Sword/Shield)
+    // ========================================================================
+
+    /// Check if player has Kokiri Sword.
+    pub fn has_kokiri_sword(&self) -> bool {
+        matches!(
+            self.save.sword,
+            MmSword::KokiriSword | MmSword::RazorSword | MmSword::GildedSword
+        )
+    }
+
+    /// Check if player has Razor Sword.
+    pub fn has_razor_sword(&self) -> bool {
+        matches!(self.save.sword, MmSword::RazorSword | MmSword::GildedSword)
+    }
+
+    /// Check if player has Gilded Sword.
+    pub fn has_gilded_sword(&self) -> bool {
+        matches!(self.save.sword, MmSword::GildedSword)
+    }
+
+    /// Check if player has Hero's Shield.
+    pub fn has_hero_shield(&self) -> bool {
+        matches!(
+            self.save.shield,
+            MmShield::HeroShield | MmShield::MirrorShield
+        )
+    }
+
+    /// Check if player has Mirror Shield.
+    pub fn has_mirror_shield(&self) -> bool {
+        matches!(self.save.shield, MmShield::MirrorShield)
+    }
+
+    // ========================================================================
+    // Upgrade Accessors
+    // ========================================================================
+
+    /// Check if player has magic.
+    pub fn has_magic(&self) -> bool {
+        self.save.has_magic()
+    }
+
+    /// Check if player has single magic meter.
+    pub fn has_magic_meter(&self) -> bool {
+        matches!(
+            self.save.magic,
+            MmMagicCapacity::Single | MmMagicCapacity::Double
+        )
+    }
+
+    /// Check if player has double magic.
+    pub fn has_double_magic(&self) -> bool {
+        matches!(self.save.magic, MmMagicCapacity::Double)
+    }
+
+    /// Check if player has double defense.
+    pub fn has_double_defense(&self) -> bool {
+        self.save.double_defense
+    }
+
+    /// Get wallet upgrade level (0 = none, 1 = adult, 2 = giant).
+    pub fn wallet_level(&self) -> u8 {
+        let wallet = self.save.upgrades.wallet();
+        if wallet.contains(MmUpgrades::GIANTS_WALLET) {
+            2
+        } else if wallet.contains(MmUpgrades::ADULTS_WALLET) {
+            1
+        } else {
+            0
         }
     }
 
-    /// Count the number of bottles the player has.
-    fn count_bottles(&self) -> u32 {
+    /// Check if player has Adult Wallet.
+    pub fn has_adult_wallet(&self) -> bool {
+        self.wallet_level() >= 1
+    }
+
+    /// Check if player has Giant Wallet.
+    pub fn has_giant_wallet(&self) -> bool {
+        self.wallet_level() >= 2
+    }
+
+    /// Get quiver upgrade level (0 = none, 1 = 30, 2 = 40, 3 = 50).
+    pub fn quiver_level(&self) -> u8 {
+        let quiver = self.save.upgrades.quiver();
+        if quiver.contains(MmUpgrades::QUIVER_50) {
+            3
+        } else if quiver.contains(MmUpgrades::QUIVER_40) {
+            2
+        } else if quiver.contains(MmUpgrades::QUIVER_30) {
+            1
+        } else {
+            0
+        }
+    }
+
+    /// Get bomb bag upgrade level (0 = none, 1 = 20, 2 = 30, 3 = 40).
+    pub fn bomb_bag_level(&self) -> u8 {
+        let bomb_bag = self.save.upgrades.bomb_bag();
+        if bomb_bag.contains(MmUpgrades::BOMB_BAG_40) {
+            3
+        } else if bomb_bag.contains(MmUpgrades::BOMB_BAG_30) {
+            2
+        } else if bomb_bag.contains(MmUpgrades::BOMB_BAG_20) {
+            1
+        } else {
+            0
+        }
+    }
+
+    // ========================================================================
+    // Bottle Accessors
+    // ========================================================================
+
+    /// Get the number of bottles the player has.
+    pub fn bottle_count(&self) -> u8 {
         self.save
             .inventory
             .bottles
             .iter()
-            .filter(|&&b| b != MmBottle::None)
-            .count() as u32
+            .filter(|b| !matches!(b, MmBottle::None))
+            .count() as u8
     }
 
-    /// Calculate MM time in minutes since Day 1 at 6:00 AM.
+    /// Check if player has at least one bottle.
+    pub fn has_bottle(&self) -> bool {
+        self.bottle_count() > 0
+    }
+
+    // ========================================================================
+    // Dungeon Key Accessors
+    // ========================================================================
+
+    /// Get Woodfall Temple small key count.
+    pub fn woodfall_keys(&self) -> u8 {
+        self.save.small_keys.woodfall
+    }
+
+    /// Get Snowhead Temple small key count.
+    pub fn snowhead_keys(&self) -> u8 {
+        self.save.small_keys.snowhead
+    }
+
+    /// Get Great Bay Temple small key count.
+    pub fn great_bay_keys(&self) -> u8 {
+        self.save.small_keys.great_bay
+    }
+
+    /// Get Stone Tower Temple small key count.
+    pub fn stone_tower_keys(&self) -> u8 {
+        self.save.small_keys.stone_tower
+    }
+
+    // ========================================================================
+    // Stray Fairy Accessors
+    // ========================================================================
+
+    /// Get Clock Town stray fairy count.
+    pub fn clock_town_fairies(&self) -> u8 {
+        self.save.stray_fairies.clock_town
+    }
+
+    /// Get Woodfall stray fairy count.
+    pub fn woodfall_fairies(&self) -> u8 {
+        self.save.stray_fairies.woodfall
+    }
+
+    /// Get Snowhead stray fairy count.
+    pub fn snowhead_fairies(&self) -> u8 {
+        self.save.stray_fairies.snowhead
+    }
+
+    /// Get Great Bay stray fairy count.
+    pub fn great_bay_fairies(&self) -> u8 {
+        self.save.stray_fairies.great_bay
+    }
+
+    /// Get Stone Tower stray fairy count.
+    pub fn stone_tower_fairies(&self) -> u8 {
+        self.save.stray_fairies.stone_tower
+    }
+
+    // ========================================================================
+    // Logic Identifier Lookup
+    // ========================================================================
+
+    /// Check if player has an item by its logic identifier.
     ///
-    /// The MM time system:
-    /// - Each day is 24 in-game hours (1440 minutes)
-    /// - Day 1 starts at 6:00 AM (time = 0x4000 in game units)
-    /// - Game time unit: 0x10000 = 24 hours, so 0x4000 = 6:00 AM
-    /// - Full cycle: 0-4319 minutes (72 hours = 4320 minutes)
-    fn calculate_mm_time(&self) -> u32 {
-        // Convert game time units to minutes since 6:00 AM
-        // Game time: 0x0000-0xFFFF maps to 00:00-24:00
-        // 0x4000 = 6:00 AM, 0xC000 = 6:00 PM
-        let time_units = self.save.time as u32;
+    /// The identifier is case-insensitive and supports both UPPER_SNAKE_CASE
+    /// and snake_case formats.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let ctx = MmGameContext::new(&save);
+    /// assert!(ctx.has_item("HOOKSHOT"));
+    /// assert!(ctx.has_item("hookshot"));
+    /// ```
+    pub fn has_item(&self, item: &str) -> bool {
+        let item_upper = item.to_uppercase();
+        match item_upper.as_str() {
+            // Equipment
+            "OCARINA_OF_TIME" | "OCARINAOFTTIME" => self.has_ocarina(),
+            "HEROS_BOW" | "HEROSBOW" => self.has_bow(),
+            "FIRE_ARROW" | "FIREARROW" => self.has_fire_arrow(),
+            "ICE_ARROW" | "ICEARROW" => self.has_ice_arrow(),
+            "LIGHT_ARROW" | "LIGHTARROW" => self.has_light_arrow(),
+            "HOOKSHOT" => self.has_hookshot(),
+            "BOMB" | "BOMBS" => self.has_bombs(),
+            "BOMBCHU" | "BOMBCHUS" => self.has_bombchu(),
+            "POWDER_KEG" | "POWDERKEG" => self.has_powder_keg(),
+            "LENS_OF_TRUTH" | "LENSOFTRUTH" => self.has_lens_of_truth(),
+            "PICTOGRAPH_BOX" | "PICTOGRAPHBOX" => self.has_pictograph_box(),
+            "GREAT_FAIRY_SWORD" | "GREATFAIRYSWORD" => self.has_great_fairy_sword(),
+            "MAGIC_BEAN" | "MAGICBEAN" => self.has_magic_bean(),
+            "DEKU_STICK" | "DEKUSTICK" => self.has_deku_stick(),
+            "DEKU_NUT" | "DEKUNUT" => self.has_deku_nut(),
 
-        // Convert to minutes within the current day (0-1439)
-        // 0x10000 time units = 1440 minutes
-        // Each time unit = 1440 / 65536 minutes
-        let minutes_since_midnight = (time_units * 1440) / 0x10000;
+            // Transformation masks
+            "DEKU_MASK" | "DEKUMASK" => self.has_deku_mask(),
+            "GORON_MASK" | "GORONMASK" => self.has_goron_mask(),
+            "ZORA_MASK" | "ZORAMASK" => self.has_zora_mask(),
+            "FIERCE_DEITY_MASK" | "FIERCEDEITYMASK" => self.has_fierce_deity_mask(),
 
-        // Adjust for 6 AM start (game day starts at 6 AM)
-        // If time is before 6 AM (< 360 minutes), it's actually the previous calendar day
-        let minutes_since_6am = if minutes_since_midnight >= 360 {
-            minutes_since_midnight - 360
-        } else {
-            // Before 6 AM: this is 18:00 (6 PM) to 24:00 (midnight) + midnight to 6 AM
-            // = 1080 (6 PM to midnight) + minutes_since_midnight
-            1080 + minutes_since_midnight
+            // Regular masks
+            "POSTMAN_HAT" | "POSTMANHAT" => self.has_postman_hat(),
+            "ALL_NIGHT_MASK" | "ALLNIGHTMASK" => self.has_all_night_mask(),
+            "BLAST_MASK" | "BLASTMASK" => self.has_blast_mask(),
+            "STONE_MASK" | "STONEMASK" => self.has_stone_mask(),
+            "GREAT_FAIRY_MASK" | "GREATFAIRYMASK" => self.has_great_fairy_mask(),
+            "KEATON_MASK" | "KEATONMASK" => self.has_keaton_mask(),
+            "BREMEN_MASK" | "BREMENMASK" => self.has_bremen_mask(),
+            "BUNNY_HOOD" | "BUNNYHOOD" => self.has_bunny_hood(),
+            "DON_GERO_MASK" | "DONGEROMASK" => self.has_don_gero_mask(),
+            "MASK_OF_SCENTS" | "MASKOFSCENTS" => self.has_mask_of_scents(),
+            "ROMANI_MASK" | "ROMANIMASK" => self.has_romani_mask(),
+            "CIRCUS_LEADER_MASK" | "CIRCUSLEADERMASK" => self.has_circus_leader_mask(),
+            "KAFEI_MASK" | "KAFEIMASK" => self.has_kafei_mask(),
+            "COUPLES_MASK" | "COUPLESMASK" => self.has_couples_mask(),
+            "MASK_OF_TRUTH" | "MASKOFTRUTH" => self.has_mask_of_truth(),
+            "KAMARO_MASK" | "KAMAROMASK" => self.has_kamaro_mask(),
+            "GIBDO_MASK" | "GIBDOMASK" => self.has_gibdo_mask(),
+            "GARO_MASK" | "GAROMASK" => self.has_garo_mask(),
+            "CAPTAIN_HAT" | "CAPTAINHAT" => self.has_captain_hat(),
+            "GIANT_MASK" | "GIANTMASK" => self.has_giant_mask(),
+
+            // Songs
+            "SONG_OF_TIME" | "SONGOFTIME" => self.has_song_of_time(),
+            "SONG_OF_HEALING" | "SONGOFHEALING" => self.has_song_of_healing(),
+            "EPONAS_SONG" | "EPONASSONG" => self.has_eponas_song(),
+            "SONG_OF_SOARING" | "SONGOFSOARING" => self.has_song_of_soaring(),
+            "SONG_OF_STORMS" | "SONGOFSTORMS" => self.has_song_of_storms(),
+            "SONATA_OF_AWAKENING" | "SONATAOFAWAKENING" => self.has_sonata_of_awakening(),
+            "GORON_LULLABY" | "GORONLULLABY" => self.has_goron_lullaby(),
+            "NEW_WAVE_BOSSA_NOVA" | "NEWWAVEBOSSANOVA" => self.has_new_wave_bossa_nova(),
+            "ELEGY_OF_EMPTINESS" | "ELEGYOFEMPTINESS" => self.has_elegy_of_emptiness(),
+            "OATH_TO_ORDER" | "OATHTOORDER" => self.has_oath_to_order(),
+
+            // Boss remains
+            "ODOLWA_REMAINS" | "ODOLWAREMAINS" => self.has_odolwa_remains(),
+            "GOHT_REMAINS" | "GOHTREMAINS" => self.has_goht_remains(),
+            "GYORG_REMAINS" | "GYORGREMAINS" => self.has_gyorg_remains(),
+            "TWINMOLD_REMAINS" | "TWINMOLDREMAINS" => self.has_twinmold_remains(),
+
+            // Swords
+            "KOKIRI_SWORD" | "KOKIRISWORD" => self.has_kokiri_sword(),
+            "RAZOR_SWORD" | "RAZORSWORD" => self.has_razor_sword(),
+            "GILDED_SWORD" | "GILDEDSWORD" => self.has_gilded_sword(),
+
+            // Shields
+            "HERO_SHIELD" | "HEROSHIELD" => self.has_hero_shield(),
+            "MIRROR_SHIELD" | "MIRRORSHIELD" => self.has_mirror_shield(),
+
+            // Bottles
+            "BOTTLE" => self.has_bottle(),
+
+            // Upgrades
+            "MAGIC" | "MAGIC_METER" | "MAGICMETER" => self.has_magic_meter(),
+            "DOUBLE_MAGIC" | "DOUBLEMAGIC" => self.has_double_magic(),
+            "DOUBLE_DEFENSE" | "DOUBLEDEFENSE" => self.has_double_defense(),
+            "ADULT_WALLET" | "ADULTWALLET" => self.has_adult_wallet(),
+            "GIANT_WALLET" | "GIANTWALLET" | "GIANTS_WALLET" | "GIANTSWALLET" => {
+                self.has_giant_wallet()
+            }
+
+            _ => false,
+        }
+    }
+
+    /// Get the count of an item by its logic identifier.
+    ///
+    /// For non-stackable items, returns 1 if owned, 0 otherwise.
+    /// For stackable items (bottles, keys, fairies), returns the count.
+    pub fn item_count(&self, item: &str) -> u32 {
+        let item_upper = item.to_uppercase();
+        match item_upper.as_str() {
+            // Stackable items
+            "BOTTLE" => u32::from(self.bottle_count()),
+            "SMALL_KEY_WOODFALL_TEMPLE" | "SMALLKEYWOODFALLTEMPLE" => {
+                u32::from(self.woodfall_keys())
+            }
+            "SMALL_KEY_SNOWHEAD_TEMPLE" | "SMALLKEYSNOWHEADTEMPLE" => {
+                u32::from(self.snowhead_keys())
+            }
+            "SMALL_KEY_GREAT_BAY_TEMPLE" | "SMALLKEYGREATBAYTEMPLE" => {
+                u32::from(self.great_bay_keys())
+            }
+            "SMALL_KEY_STONE_TOWER_TEMPLE" | "SMALLKEYSTONETOWERTEMPLE" => {
+                u32::from(self.stone_tower_keys())
+            }
+            "STRAY_FAIRY_CLOCK_TOWN" | "STRAYFAIRYCLOCKTOWN" => {
+                u32::from(self.clock_town_fairies())
+            }
+            "STRAY_FAIRY_WOODFALL" | "STRAYFAIRYWOODFALL" => u32::from(self.woodfall_fairies()),
+            "STRAY_FAIRY_SNOWHEAD" | "STRAYFAIRYSNOWHEAD" => u32::from(self.snowhead_fairies()),
+            "STRAY_FAIRY_GREAT_BAY" | "STRAYFAIRYGREATBAY" => u32::from(self.great_bay_fairies()),
+            "STRAY_FAIRY_STONE_TOWER" | "STRAYFAIRYSTONETOWER" => {
+                u32::from(self.stone_tower_fairies())
+            }
+            "BOSS_REMAINS" | "BOSSREMAINS" => u32::from(self.boss_remains_count()),
+
+            // Non-stackable items return 1 if owned, 0 otherwise
+            _ => {
+                if self.has_item(item) {
+                    1
+                } else {
+                    0
+                }
+            }
+        }
+    }
+
+    /// Build a complete inventory map for logic evaluation.
+    ///
+    /// Returns a `HashMap` mapping logic identifiers to item counts.
+    /// This can be used to populate a `GameContext` from the ootmm crate.
+    pub fn build_inventory(&self) -> HashMap<String, u32> {
+        let mut inventory = HashMap::new();
+
+        // Helper to add item if owned
+        let mut add_if_has = |id: &str, has: bool| {
+            if has {
+                inventory.insert(id.to_string(), 1);
+            }
         };
 
-        // Day is 1-indexed in the game, we want 0-indexed for calculation
-        let day_offset = self.save.day.saturating_sub(1);
+        // Equipment items
+        add_if_has(logic_ids::OCARINA_OF_TIME, self.has_ocarina());
+        add_if_has(logic_ids::HEROS_BOW, self.has_bow());
+        add_if_has(logic_ids::FIRE_ARROW, self.has_fire_arrow());
+        add_if_has(logic_ids::ICE_ARROW, self.has_ice_arrow());
+        add_if_has(logic_ids::LIGHT_ARROW, self.has_light_arrow());
+        add_if_has(logic_ids::HOOKSHOT, self.has_hookshot());
+        add_if_has(logic_ids::BOMB, self.has_bombs());
+        add_if_has(logic_ids::BOMBCHU, self.has_bombchu());
+        add_if_has(logic_ids::POWDER_KEG, self.has_powder_keg());
+        add_if_has(logic_ids::LENS_OF_TRUTH, self.has_lens_of_truth());
+        add_if_has(logic_ids::PICTOGRAPH_BOX, self.has_pictograph_box());
+        add_if_has(logic_ids::GREAT_FAIRY_SWORD, self.has_great_fairy_sword());
+        add_if_has(logic_ids::MAGIC_BEAN, self.has_magic_bean());
+        add_if_has(logic_ids::DEKU_STICK, self.has_deku_stick());
+        add_if_has(logic_ids::DEKU_NUT, self.has_deku_nut());
 
-        // Total time: (day * 1440) + time within day
-        // Clamp to valid range (0-4319)
-        let total = (day_offset * 1440) + minutes_since_6am;
-        total.min(4319)
-    }
-}
+        // Transformation masks
+        add_if_has(logic_ids::DEKU_MASK, self.has_deku_mask());
+        add_if_has(logic_ids::GORON_MASK, self.has_goron_mask());
+        add_if_has(logic_ids::ZORA_MASK, self.has_zora_mask());
+        add_if_has(logic_ids::FIERCE_DEITY_MASK, self.has_fierce_deity_mask());
 
-impl EvalContext for MmGameContext<'_> {
-    fn has_item(&self, item: &str, count: u32) -> bool {
-        self.check_item(item, count)
-    }
+        // Regular masks
+        add_if_has(logic_ids::POSTMAN_HAT, self.has_postman_hat());
+        add_if_has(logic_ids::ALL_NIGHT_MASK, self.has_all_night_mask());
+        add_if_has(logic_ids::BLAST_MASK, self.has_blast_mask());
+        add_if_has(logic_ids::STONE_MASK, self.has_stone_mask());
+        add_if_has(logic_ids::GREAT_FAIRY_MASK, self.has_great_fairy_mask());
+        add_if_has(logic_ids::KEATON_MASK, self.has_keaton_mask());
+        add_if_has(logic_ids::BREMEN_MASK, self.has_bremen_mask());
+        add_if_has(logic_ids::BUNNY_HOOD, self.has_bunny_hood());
+        add_if_has(logic_ids::DON_GERO_MASK, self.has_don_gero_mask());
+        add_if_has(logic_ids::MASK_OF_SCENTS, self.has_mask_of_scents());
+        add_if_has(logic_ids::ROMANI_MASK, self.has_romani_mask());
+        add_if_has(logic_ids::CIRCUS_LEADER_MASK, self.has_circus_leader_mask());
+        add_if_has(logic_ids::KAFEI_MASK, self.has_kafei_mask());
+        add_if_has(logic_ids::COUPLES_MASK, self.has_couples_mask());
+        add_if_has(logic_ids::MASK_OF_TRUTH, self.has_mask_of_truth());
+        add_if_has(logic_ids::KAMARO_MASK, self.has_kamaro_mask());
+        add_if_has(logic_ids::GIBDO_MASK, self.has_gibdo_mask());
+        add_if_has(logic_ids::GARO_MASK, self.has_garo_mask());
+        add_if_has(logic_ids::CAPTAIN_HAT, self.has_captain_hat());
+        add_if_has(logic_ids::GIANT_MASK, self.has_giant_mask());
 
-    fn event(&self, name: &str) -> bool {
-        self.events.contains(name)
-    }
+        // Songs
+        add_if_has(logic_ids::SONG_OF_TIME, self.has_song_of_time());
+        add_if_has(logic_ids::SONG_OF_HEALING, self.has_song_of_healing());
+        add_if_has(logic_ids::EPONAS_SONG, self.has_eponas_song());
+        add_if_has(logic_ids::SONG_OF_SOARING, self.has_song_of_soaring());
+        add_if_has(logic_ids::SONG_OF_STORMS, self.has_song_of_storms());
+        add_if_has(
+            logic_ids::SONATA_OF_AWAKENING,
+            self.has_sonata_of_awakening(),
+        );
+        add_if_has(logic_ids::GORON_LULLABY, self.has_goron_lullaby());
+        add_if_has(
+            logic_ids::NEW_WAVE_BOSSA_NOVA,
+            self.has_new_wave_bossa_nova(),
+        );
+        add_if_has(logic_ids::ELEGY_OF_EMPTINESS, self.has_elegy_of_emptiness());
+        add_if_has(logic_ids::OATH_TO_ORDER, self.has_oath_to_order());
 
-    fn setting(&self, name: &str) -> Option<bool> {
-        self.settings.get(name).copied()
-    }
+        // Boss remains
+        add_if_has(logic_ids::ODOLWA_REMAINS, self.has_odolwa_remains());
+        add_if_has(logic_ids::GOHT_REMAINS, self.has_goht_remains());
+        add_if_has(logic_ids::GYORG_REMAINS, self.has_gyorg_remains());
+        add_if_has(logic_ids::TWINMOLD_REMAINS, self.has_twinmold_remains());
 
-    fn trick(&self, name: &str) -> bool {
-        self.tricks.contains(name)
-    }
+        // Swords
+        add_if_has(logic_ids::KOKIRI_SWORD, self.has_kokiri_sword());
+        add_if_has(logic_ids::RAZOR_SWORD, self.has_razor_sword());
+        add_if_has(logic_ids::GILDED_SWORD, self.has_gilded_sword());
 
-    fn is_adult(&self) -> bool {
-        // In MM, Link is always the same age (young Link equivalent)
-        // For logic purposes, we return false for is_adult
-        false
-    }
+        // Shields
+        add_if_has(logic_ids::HERO_SHIELD, self.has_hero_shield());
+        add_if_has(logic_ids::MIRROR_SHIELD, self.has_mirror_shield());
 
-    fn is_child(&self) -> bool {
-        // In MM, Link is always the same age (young Link equivalent)
-        // For logic purposes, we return true for is_child
-        true
-    }
+        // Upgrades
+        add_if_has(logic_ids::MAGIC_METER, self.has_magic_meter());
+        add_if_has(logic_ids::DOUBLE_MAGIC, self.has_double_magic());
+        add_if_has(logic_ids::DOUBLE_DEFENSE, self.has_double_defense());
+        add_if_has(logic_ids::ADULT_WALLET, self.has_adult_wallet());
+        add_if_has(logic_ids::GIANT_WALLET, self.has_giant_wallet());
 
-    fn mm_time(&self) -> u32 {
-        self.calculate_mm_time()
+        // Quiver upgrades
+        if self.quiver_level() >= 1 {
+            inventory.insert(logic_ids::QUIVER_30.to_string(), 1);
+        }
+        if self.quiver_level() >= 2 {
+            inventory.insert(logic_ids::QUIVER_40.to_string(), 1);
+        }
+        if self.quiver_level() >= 3 {
+            inventory.insert(logic_ids::QUIVER_50.to_string(), 1);
+        }
+
+        // Bomb bag upgrades
+        if self.bomb_bag_level() >= 1 {
+            inventory.insert(logic_ids::BOMB_BAG_20.to_string(), 1);
+        }
+        if self.bomb_bag_level() >= 2 {
+            inventory.insert(logic_ids::BOMB_BAG_30.to_string(), 1);
+        }
+        if self.bomb_bag_level() >= 3 {
+            inventory.insert(logic_ids::BOMB_BAG_40.to_string(), 1);
+        }
+
+        // Stackable items with counts
+        let bottle_count = self.bottle_count();
+        if bottle_count > 0 {
+            inventory.insert(logic_ids::BOTTLE.to_string(), u32::from(bottle_count));
+        }
+
+        // Small keys
+        let wf_keys = self.woodfall_keys();
+        if wf_keys > 0 {
+            inventory.insert(
+                logic_ids::SMALL_KEY_WOODFALL_TEMPLE.to_string(),
+                u32::from(wf_keys),
+            );
+        }
+        let sh_keys = self.snowhead_keys();
+        if sh_keys > 0 {
+            inventory.insert(
+                logic_ids::SMALL_KEY_SNOWHEAD_TEMPLE.to_string(),
+                u32::from(sh_keys),
+            );
+        }
+        let gb_keys = self.great_bay_keys();
+        if gb_keys > 0 {
+            inventory.insert(
+                logic_ids::SMALL_KEY_GREAT_BAY_TEMPLE.to_string(),
+                u32::from(gb_keys),
+            );
+        }
+        let st_keys = self.stone_tower_keys();
+        if st_keys > 0 {
+            inventory.insert(
+                logic_ids::SMALL_KEY_STONE_TOWER_TEMPLE.to_string(),
+                u32::from(st_keys),
+            );
+        }
+
+        // Stray fairies
+        let ct_fairies = self.clock_town_fairies();
+        if ct_fairies > 0 {
+            inventory.insert(
+                logic_ids::STRAY_FAIRY_CLOCK_TOWN.to_string(),
+                u32::from(ct_fairies),
+            );
+        }
+        let wf_fairies = self.woodfall_fairies();
+        if wf_fairies > 0 {
+            inventory.insert(
+                logic_ids::STRAY_FAIRY_WOODFALL.to_string(),
+                u32::from(wf_fairies),
+            );
+        }
+        let sh_fairies = self.snowhead_fairies();
+        if sh_fairies > 0 {
+            inventory.insert(
+                logic_ids::STRAY_FAIRY_SNOWHEAD.to_string(),
+                u32::from(sh_fairies),
+            );
+        }
+        let gb_fairies = self.great_bay_fairies();
+        if gb_fairies > 0 {
+            inventory.insert(
+                logic_ids::STRAY_FAIRY_GREAT_BAY.to_string(),
+                u32::from(gb_fairies),
+            );
+        }
+        let st_fairies = self.stone_tower_fairies();
+        if st_fairies > 0 {
+            inventory.insert(
+                logic_ids::STRAY_FAIRY_STONE_TOWER.to_string(),
+                u32::from(st_fairies),
+            );
+        }
+
+        inventory
     }
 }
 
@@ -337,22 +975,24 @@ impl EvalContext for MmGameContext<'_> {
 mod tests {
     use super::*;
     use crate::mm_save::{
-        MmAllDungeonItems, MmBottle, MmDungeonItems, MmInventory, MmMagicCapacity, MmMasks,
-        MmMasksHigh, MmMasksLow, MmQuestItems, MmShield, MmSmallKeys, MmStrayFairies, MmSword,
-        MmTransformationMasks, PlayerForm,
+        MmInventory, MmMagicCapacity, MmMasksHigh, MmMasksLow, MmQuestItems, MmShield, MmSmallKeys,
+        MmStrayFairies, MmSword, MmTransformationMasks, MmUpgrades,
     };
 
-    /// Create a default save for testing
-    fn default_save() -> MmSave {
+    /// Create a default save for testing.
+    fn make_save() -> MmSave {
         MmSave::default()
     }
 
-    /// Create a save with specific inventory items
-    fn save_with_inventory(inventory: MmInventory) -> MmSave {
-        MmSave {
-            inventory,
-            ..Default::default()
-        }
+    /// Create a save with specific items for testing.
+    fn make_save_with_items() -> MmSave {
+        let mut save = MmSave::default();
+        save.inventory.ocarina = true;
+        save.inventory.bow = true;
+        save.inventory.hookshot = true;
+        save.inventory.bombs = true;
+        save.inventory.lens = true;
+        save
     }
 
     // ========================================================================
@@ -360,228 +1000,187 @@ mod tests {
     // ========================================================================
 
     #[test]
-    fn test_context_creation() {
-        let save = default_save();
+    fn test_new_context() {
+        let save = make_save();
         let ctx = MmGameContext::new(&save);
-        assert!(!ctx.is_adult());
-        assert!(ctx.is_child());
+        assert!(std::ptr::eq(ctx.save(), &save));
     }
 
     #[test]
-    fn test_context_with_events() {
-        let save = default_save();
-        let ctx = MmGameContext::new(&save)
-            .with_event("WOODFALL_CLEAR")
-            .with_event("SNOWHEAD_CLEAR");
+    fn test_empty_save_has_nothing() {
+        let save = make_save();
+        let ctx = MmGameContext::new(&save);
 
-        assert!(ctx.event("WOODFALL_CLEAR"));
-        assert!(ctx.event("SNOWHEAD_CLEAR"));
-        assert!(!ctx.event("GREAT_BAY_CLEAR"));
-    }
-
-    #[test]
-    fn test_context_with_settings() {
-        let save = default_save();
-        let ctx = MmGameContext::new(&save)
-            .with_setting("shuffle_songs", true)
-            .with_setting("keysanity", false);
-
-        assert_eq!(ctx.setting("shuffle_songs"), Some(true));
-        assert_eq!(ctx.setting("keysanity"), Some(false));
-        assert_eq!(ctx.setting("nonexistent"), None);
-    }
-
-    #[test]
-    fn test_context_with_tricks() {
-        let save = default_save();
-        let ctx = MmGameContext::new(&save)
-            .with_trick("goron_bomb_jump")
-            .with_trick("zora_clip");
-
-        assert!(ctx.trick("goron_bomb_jump"));
-        assert!(ctx.trick("zora_clip"));
-        assert!(!ctx.trick("nonexistent_trick"));
+        assert!(!ctx.has_ocarina());
+        assert!(!ctx.has_bow());
+        assert!(!ctx.has_hookshot());
+        assert!(!ctx.has_deku_mask());
+        assert!(!ctx.has_song_of_time());
     }
 
     // ========================================================================
-    // Inventory Item Tests
+    // Equipment Tests
     // ========================================================================
 
     #[test]
-    fn test_has_ocarina() {
-        let save = save_with_inventory(MmInventory {
+    fn test_equipment_items() {
+        let save = make_save_with_items();
+        let ctx = MmGameContext::new(&save);
+
+        assert!(ctx.has_ocarina());
+        assert!(ctx.has_bow());
+        assert!(ctx.has_hookshot());
+        assert!(ctx.has_bombs());
+        assert!(ctx.has_lens_of_truth());
+
+        // Items not in save
+        assert!(!ctx.has_fire_arrow());
+        assert!(!ctx.has_bombchu());
+        assert!(!ctx.has_powder_keg());
+    }
+
+    #[test]
+    fn test_all_equipment_accessors() {
+        let mut save = make_save();
+        save.inventory = MmInventory {
             ocarina: true,
-            ..Default::default()
-        });
-        let ctx = MmGameContext::new(&save);
-
-        assert!(ctx.has_item("OCARINA", 1));
-        assert!(ctx.has_item("ocarina", 1));
-        assert!(ctx.has_item("OCARINA_OF_TIME", 1));
-    }
-
-    #[test]
-    fn test_has_bow() {
-        let save = save_with_inventory(MmInventory {
             bow: true,
-            ..Default::default()
-        });
-        let ctx = MmGameContext::new(&save);
-
-        assert!(ctx.has_item("BOW", 1));
-        assert!(ctx.has_item("HEROS_BOW", 1));
-        assert!(ctx.has_item("HERO_BOW", 1));
-    }
-
-    #[test]
-    fn test_has_arrows() {
-        let save = save_with_inventory(MmInventory {
             fire_arrows: true,
             ice_arrows: true,
-            light_arrows: false,
-            ..Default::default()
-        });
-        let ctx = MmGameContext::new(&save);
-
-        assert!(ctx.has_item("FIRE_ARROW", 1));
-        assert!(ctx.has_item("FIRE_ARROWS", 1));
-        assert!(ctx.has_item("ICE_ARROW", 1));
-        assert!(!ctx.has_item("LIGHT_ARROW", 1));
-    }
-
-    #[test]
-    fn test_has_hookshot() {
-        let save = save_with_inventory(MmInventory {
-            hookshot: true,
-            ..Default::default()
-        });
-        let ctx = MmGameContext::new(&save);
-
-        assert!(ctx.has_item("HOOKSHOT", 1));
-    }
-
-    #[test]
-    fn test_has_bombs_and_bombchus() {
-        let save = save_with_inventory(MmInventory {
+            light_arrows: true,
             bombs: true,
             bombchus: true,
-            ..Default::default()
-        });
-        let ctx = MmGameContext::new(&save);
-
-        assert!(ctx.has_item("BOMBS", 1));
-        assert!(ctx.has_item("BOMB", 1));
-        assert!(ctx.has_item("BOMBCHU", 1));
-        assert!(ctx.has_item("BOMBCHUS", 1));
-    }
-
-    #[test]
-    fn test_has_lens_of_truth() {
-        let save = save_with_inventory(MmInventory {
+            deku_sticks: true,
+            deku_nuts: true,
+            magic_beans: true,
+            powder_keg: true,
+            pictograph_box: true,
             lens: true,
-            ..Default::default()
-        });
+            hookshot: true,
+            great_fairy_sword: true,
+            bottles: Default::default(),
+        };
+
         let ctx = MmGameContext::new(&save);
 
-        assert!(ctx.has_item("LENS", 1));
-        assert!(ctx.has_item("LENS_OF_TRUTH", 1));
-    }
-
-    #[test]
-    fn test_missing_item() {
-        let save = default_save();
-        let ctx = MmGameContext::new(&save);
-
-        assert!(!ctx.has_item("HOOKSHOT", 1));
-        assert!(!ctx.has_item("BOW", 1));
-        assert!(!ctx.has_item("NONEXISTENT_ITEM", 1));
+        assert!(ctx.has_ocarina());
+        assert!(ctx.has_bow());
+        assert!(ctx.has_fire_arrow());
+        assert!(ctx.has_ice_arrow());
+        assert!(ctx.has_light_arrow());
+        assert!(ctx.has_hookshot());
+        assert!(ctx.has_bombs());
+        assert!(ctx.has_bombchu());
+        assert!(ctx.has_powder_keg());
+        assert!(ctx.has_lens_of_truth());
+        assert!(ctx.has_pictograph_box());
+        assert!(ctx.has_great_fairy_sword());
+        assert!(ctx.has_magic_bean());
+        assert!(ctx.has_deku_stick());
+        assert!(ctx.has_deku_nut());
     }
 
     // ========================================================================
-    // Sword and Shield Tests
-    // ========================================================================
-
-    #[test]
-    fn test_swords() {
-        let save = MmSave {
-            sword: MmSword::GildedSword,
-            ..Default::default()
-        };
-        let ctx = MmGameContext::new(&save);
-
-        assert!(ctx.has_item("SWORD", 1));
-        assert!(ctx.has_item("KOKIRI_SWORD", 1));
-        assert!(ctx.has_item("RAZOR_SWORD", 1));
-        assert!(ctx.has_item("GILDED_SWORD", 1));
-    }
-
-    #[test]
-    fn test_razor_sword_not_gilded() {
-        let save = MmSave {
-            sword: MmSword::RazorSword,
-            ..Default::default()
-        };
-        let ctx = MmGameContext::new(&save);
-
-        assert!(ctx.has_item("SWORD", 1));
-        assert!(ctx.has_item("KOKIRI_SWORD", 1));
-        assert!(ctx.has_item("RAZOR_SWORD", 1));
-        assert!(!ctx.has_item("GILDED_SWORD", 1));
-    }
-
-    #[test]
-    fn test_shields() {
-        let save = MmSave {
-            shield: MmShield::MirrorShield,
-            ..Default::default()
-        };
-        let ctx = MmGameContext::new(&save);
-
-        assert!(ctx.has_item("SHIELD", 1));
-        assert!(ctx.has_item("HERO_SHIELD", 1));
-        assert!(ctx.has_item("MIRROR_SHIELD", 1));
-    }
-
-    // ========================================================================
-    // Mask Tests
+    // Transformation Mask Tests
     // ========================================================================
 
     #[test]
     fn test_transformation_masks() {
-        let save = MmSave {
-            masks: MmMasks {
-                transformation: MmTransformationMasks::DEKU
-                    | MmTransformationMasks::GORON
-                    | MmTransformationMasks::ZORA,
-                ..Default::default()
-            },
-            ..Default::default()
-        };
+        let mut save = make_save();
+        save.masks.transformation = MmTransformationMasks::DEKU
+            | MmTransformationMasks::GORON
+            | MmTransformationMasks::ZORA
+            | MmTransformationMasks::FIERCE_DEITY;
+
         let ctx = MmGameContext::new(&save);
 
-        assert!(ctx.has_item("DEKU_MASK", 1));
-        assert!(ctx.has_item("GORON_MASK", 1));
-        assert!(ctx.has_item("ZORA_MASK", 1));
-        assert!(!ctx.has_item("FIERCE_DEITY_MASK", 1));
+        assert!(ctx.has_deku_mask());
+        assert!(ctx.has_goron_mask());
+        assert!(ctx.has_zora_mask());
+        assert!(ctx.has_fierce_deity_mask());
     }
 
     #[test]
-    fn test_collectible_masks() {
-        let save = MmSave {
-            masks: MmMasks {
-                masks_low: MmMasksLow::BUNNY | MmMasksLow::STONE | MmMasksLow::BLAST,
-                masks_high: MmMasksHigh::CAPTAIN,
-                ..Default::default()
-            },
-            ..Default::default()
-        };
+    fn test_partial_transformation_masks() {
+        let mut save = make_save();
+        save.masks.transformation = MmTransformationMasks::DEKU | MmTransformationMasks::GORON;
+
         let ctx = MmGameContext::new(&save);
 
-        assert!(ctx.has_item("BUNNY_HOOD", 1));
-        assert!(ctx.has_item("STONE_MASK", 1));
-        assert!(ctx.has_item("BLAST_MASK", 1));
-        assert!(ctx.has_item("CAPTAIN_HAT", 1));
-        assert!(!ctx.has_item("GREAT_FAIRY_MASK", 1));
+        assert!(ctx.has_deku_mask());
+        assert!(ctx.has_goron_mask());
+        assert!(!ctx.has_zora_mask());
+        assert!(!ctx.has_fierce_deity_mask());
+    }
+
+    // ========================================================================
+    // Regular Mask Tests
+    // ========================================================================
+
+    #[test]
+    fn test_regular_masks_low() {
+        let mut save = make_save();
+        save.masks.masks_low = MmMasksLow::POSTMAN
+            | MmMasksLow::ALL_NIGHT
+            | MmMasksLow::BUNNY
+            | MmMasksLow::KEATON
+            | MmMasksLow::TRUTH;
+
+        let ctx = MmGameContext::new(&save);
+
+        assert!(ctx.has_postman_hat());
+        assert!(ctx.has_all_night_mask());
+        assert!(ctx.has_bunny_hood());
+        assert!(ctx.has_keaton_mask());
+        assert!(ctx.has_mask_of_truth());
+
+        // Not set
+        assert!(!ctx.has_blast_mask());
+        assert!(!ctx.has_stone_mask());
+    }
+
+    #[test]
+    fn test_regular_masks_high() {
+        let mut save = make_save();
+        save.masks.masks_high =
+            MmMasksHigh::GIBDO | MmMasksHigh::GARO | MmMasksHigh::CAPTAIN | MmMasksHigh::GIANT;
+
+        let ctx = MmGameContext::new(&save);
+
+        assert!(ctx.has_gibdo_mask());
+        assert!(ctx.has_garo_mask());
+        assert!(ctx.has_captain_hat());
+        assert!(ctx.has_giant_mask());
+    }
+
+    #[test]
+    fn test_all_regular_masks() {
+        let mut save = make_save();
+        save.masks.masks_low = MmMasksLow::all();
+        save.masks.masks_high = MmMasksHigh::all();
+
+        let ctx = MmGameContext::new(&save);
+
+        assert!(ctx.has_postman_hat());
+        assert!(ctx.has_all_night_mask());
+        assert!(ctx.has_blast_mask());
+        assert!(ctx.has_stone_mask());
+        assert!(ctx.has_great_fairy_mask());
+        assert!(ctx.has_keaton_mask());
+        assert!(ctx.has_bremen_mask());
+        assert!(ctx.has_bunny_hood());
+        assert!(ctx.has_don_gero_mask());
+        assert!(ctx.has_mask_of_scents());
+        assert!(ctx.has_romani_mask());
+        assert!(ctx.has_circus_leader_mask());
+        assert!(ctx.has_kafei_mask());
+        assert!(ctx.has_couples_mask());
+        assert!(ctx.has_mask_of_truth());
+        assert!(ctx.has_kamaro_mask());
+        assert!(ctx.has_gibdo_mask());
+        assert!(ctx.has_garo_mask());
+        assert!(ctx.has_captain_hat());
+        assert!(ctx.has_giant_mask());
     }
 
     // ========================================================================
@@ -590,21 +1189,50 @@ mod tests {
 
     #[test]
     fn test_songs() {
-        let save = MmSave {
-            quest_items: MmQuestItems::SONG_TIME
-                | MmQuestItems::SONG_HEALING
-                | MmQuestItems::SONG_SOARING
-                | MmQuestItems::SONG_AWAKENING,
-            ..Default::default()
-        };
+        let mut save = make_save();
+        save.quest_items = MmQuestItems::SONG_TIME
+            | MmQuestItems::SONG_HEALING
+            | MmQuestItems::SONG_SOARING
+            | MmQuestItems::SONG_AWAKENING;
+
         let ctx = MmGameContext::new(&save);
 
-        assert!(ctx.has_item("SONG_OF_TIME", 1));
-        assert!(ctx.has_item("SONG_OF_HEALING", 1));
-        assert!(ctx.has_item("SONG_OF_SOARING", 1));
-        assert!(ctx.has_item("SONATA_OF_AWAKENING", 1));
-        assert!(!ctx.has_item("GORON_LULLABY", 1));
-        assert!(!ctx.has_item("OATH_TO_ORDER", 1));
+        assert!(ctx.has_song_of_time());
+        assert!(ctx.has_song_of_healing());
+        assert!(ctx.has_song_of_soaring());
+        assert!(ctx.has_sonata_of_awakening());
+
+        assert!(!ctx.has_eponas_song());
+        assert!(!ctx.has_song_of_storms());
+        assert!(!ctx.has_goron_lullaby());
+    }
+
+    #[test]
+    fn test_all_songs() {
+        let mut save = make_save();
+        save.quest_items = MmQuestItems::SONG_TIME
+            | MmQuestItems::SONG_HEALING
+            | MmQuestItems::SONG_EPONA
+            | MmQuestItems::SONG_SOARING
+            | MmQuestItems::SONG_STORMS
+            | MmQuestItems::SONG_AWAKENING
+            | MmQuestItems::SONG_GORON
+            | MmQuestItems::SONG_ZORA
+            | MmQuestItems::SONG_EMPTINESS
+            | MmQuestItems::SONG_ORDER;
+
+        let ctx = MmGameContext::new(&save);
+
+        assert!(ctx.has_song_of_time());
+        assert!(ctx.has_song_of_healing());
+        assert!(ctx.has_eponas_song());
+        assert!(ctx.has_song_of_soaring());
+        assert!(ctx.has_song_of_storms());
+        assert!(ctx.has_sonata_of_awakening());
+        assert!(ctx.has_goron_lullaby());
+        assert!(ctx.has_new_wave_bossa_nova());
+        assert!(ctx.has_elegy_of_emptiness());
+        assert!(ctx.has_oath_to_order());
     }
 
     // ========================================================================
@@ -613,16 +1241,161 @@ mod tests {
 
     #[test]
     fn test_boss_remains() {
-        let save = MmSave {
-            quest_items: MmQuestItems::REMAINS_ODOLWA | MmQuestItems::REMAINS_GOHT,
-            ..Default::default()
-        };
+        let mut save = make_save();
+        save.quest_items = MmQuestItems::REMAINS_ODOLWA | MmQuestItems::REMAINS_GOHT;
+
         let ctx = MmGameContext::new(&save);
 
-        assert!(ctx.has_item("ODOLWA_REMAINS", 1));
-        assert!(ctx.has_item("GOHT_REMAINS", 1));
-        assert!(!ctx.has_item("GYORG_REMAINS", 1));
-        assert!(!ctx.has_item("TWINMOLD_REMAINS", 1));
+        assert!(ctx.has_odolwa_remains());
+        assert!(ctx.has_goht_remains());
+        assert!(!ctx.has_gyorg_remains());
+        assert!(!ctx.has_twinmold_remains());
+        assert_eq!(ctx.boss_remains_count(), 2);
+    }
+
+    #[test]
+    fn test_all_boss_remains() {
+        let mut save = make_save();
+        save.quest_items = MmQuestItems::REMAINS_ODOLWA
+            | MmQuestItems::REMAINS_GOHT
+            | MmQuestItems::REMAINS_GYORG
+            | MmQuestItems::REMAINS_TWINMOLD;
+
+        let ctx = MmGameContext::new(&save);
+
+        assert!(ctx.has_odolwa_remains());
+        assert!(ctx.has_goht_remains());
+        assert!(ctx.has_gyorg_remains());
+        assert!(ctx.has_twinmold_remains());
+        assert_eq!(ctx.boss_remains_count(), 4);
+    }
+
+    // ========================================================================
+    // Sword/Shield Tests
+    // ========================================================================
+
+    #[test]
+    fn test_swords() {
+        let mut save = make_save();
+        save.sword = MmSword::KokiriSword;
+        let ctx = MmGameContext::new(&save);
+        assert!(ctx.has_kokiri_sword());
+        assert!(!ctx.has_razor_sword());
+        assert!(!ctx.has_gilded_sword());
+
+        save.sword = MmSword::RazorSword;
+        let ctx = MmGameContext::new(&save);
+        assert!(ctx.has_kokiri_sword()); // Progressive
+        assert!(ctx.has_razor_sword());
+        assert!(!ctx.has_gilded_sword());
+
+        save.sword = MmSword::GildedSword;
+        let ctx = MmGameContext::new(&save);
+        assert!(ctx.has_kokiri_sword()); // Progressive
+        assert!(ctx.has_razor_sword()); // Progressive
+        assert!(ctx.has_gilded_sword());
+    }
+
+    #[test]
+    fn test_shields() {
+        let mut save = make_save();
+        save.shield = MmShield::HeroShield;
+        let ctx = MmGameContext::new(&save);
+        assert!(ctx.has_hero_shield());
+        assert!(!ctx.has_mirror_shield());
+
+        save.shield = MmShield::MirrorShield;
+        let ctx = MmGameContext::new(&save);
+        assert!(ctx.has_hero_shield()); // Progressive
+        assert!(ctx.has_mirror_shield());
+    }
+
+    // ========================================================================
+    // Upgrade Tests
+    // ========================================================================
+
+    #[test]
+    fn test_magic() {
+        let mut save = make_save();
+        save.magic = MmMagicCapacity::None;
+        let ctx = MmGameContext::new(&save);
+        assert!(!ctx.has_magic());
+        assert!(!ctx.has_magic_meter());
+        assert!(!ctx.has_double_magic());
+
+        save.magic = MmMagicCapacity::Single;
+        let ctx = MmGameContext::new(&save);
+        assert!(ctx.has_magic());
+        assert!(ctx.has_magic_meter());
+        assert!(!ctx.has_double_magic());
+
+        save.magic = MmMagicCapacity::Double;
+        let ctx = MmGameContext::new(&save);
+        assert!(ctx.has_magic());
+        assert!(ctx.has_magic_meter());
+        assert!(ctx.has_double_magic());
+    }
+
+    #[test]
+    fn test_wallets() {
+        let mut save = make_save();
+        save.upgrades = MmUpgrades::empty();
+        let ctx = MmGameContext::new(&save);
+        assert_eq!(ctx.wallet_level(), 0);
+        assert!(!ctx.has_adult_wallet());
+        assert!(!ctx.has_giant_wallet());
+
+        save.upgrades = MmUpgrades::ADULTS_WALLET;
+        let ctx = MmGameContext::new(&save);
+        assert_eq!(ctx.wallet_level(), 1);
+        assert!(ctx.has_adult_wallet());
+        assert!(!ctx.has_giant_wallet());
+
+        save.upgrades = MmUpgrades::GIANTS_WALLET;
+        let ctx = MmGameContext::new(&save);
+        assert_eq!(ctx.wallet_level(), 2);
+        assert!(ctx.has_adult_wallet());
+        assert!(ctx.has_giant_wallet());
+    }
+
+    #[test]
+    fn test_quiver_levels() {
+        let mut save = make_save();
+        save.upgrades = MmUpgrades::empty();
+        let ctx = MmGameContext::new(&save);
+        assert_eq!(ctx.quiver_level(), 0);
+
+        save.upgrades = MmUpgrades::QUIVER_30;
+        let ctx = MmGameContext::new(&save);
+        assert_eq!(ctx.quiver_level(), 1);
+
+        save.upgrades = MmUpgrades::QUIVER_40;
+        let ctx = MmGameContext::new(&save);
+        assert_eq!(ctx.quiver_level(), 2);
+
+        save.upgrades = MmUpgrades::QUIVER_50;
+        let ctx = MmGameContext::new(&save);
+        assert_eq!(ctx.quiver_level(), 3);
+    }
+
+    #[test]
+    fn test_bomb_bag_levels() {
+        let mut save = make_save();
+        save.upgrades = MmUpgrades::empty();
+        let ctx = MmGameContext::new(&save);
+        assert_eq!(ctx.bomb_bag_level(), 0);
+
+        save.upgrades = MmUpgrades::BOMB_BAG_20;
+        let ctx = MmGameContext::new(&save);
+        assert_eq!(ctx.bomb_bag_level(), 1);
+
+        save.upgrades = MmUpgrades::BOMB_BAG_30;
+        let ctx = MmGameContext::new(&save);
+        assert_eq!(ctx.bomb_bag_level(), 2);
+
+        save.upgrades = MmUpgrades::BOMB_BAG_40;
+        let ctx = MmGameContext::new(&save);
+        assert_eq!(ctx.bomb_bag_level(), 3);
     }
 
     // ========================================================================
@@ -630,349 +1403,346 @@ mod tests {
     // ========================================================================
 
     #[test]
-    fn test_bottles_count() {
-        let save = save_with_inventory(MmInventory {
-            bottles: [
-                MmBottle::Empty,
-                MmBottle::RedPotion,
-                MmBottle::None,
-                MmBottle::None,
-                MmBottle::Fairy,
-                MmBottle::None,
-            ],
-            ..Default::default()
-        });
+    fn test_bottles() {
+        let mut save = make_save();
         let ctx = MmGameContext::new(&save);
+        assert_eq!(ctx.bottle_count(), 0);
+        assert!(!ctx.has_bottle());
 
-        assert!(ctx.has_item("BOTTLE", 1));
-        assert!(ctx.has_item("BOTTLE", 2));
-        assert!(ctx.has_item("BOTTLE", 3));
-        assert!(!ctx.has_item("BOTTLE", 4));
-    }
-
-    #[test]
-    fn test_no_bottles() {
-        let save = default_save();
+        save.inventory.bottles[0] = MmBottle::Empty;
         let ctx = MmGameContext::new(&save);
+        assert_eq!(ctx.bottle_count(), 1);
+        assert!(ctx.has_bottle());
 
-        assert!(!ctx.has_item("BOTTLE", 1));
+        save.inventory.bottles[1] = MmBottle::RedPotion;
+        save.inventory.bottles[2] = MmBottle::Fairy;
+        let ctx = MmGameContext::new(&save);
+        assert_eq!(ctx.bottle_count(), 3);
+        assert!(ctx.has_bottle());
     }
 
     // ========================================================================
-    // Magic Tests
-    // ========================================================================
-
-    #[test]
-    fn test_magic() {
-        let save = MmSave {
-            magic: MmMagicCapacity::Single,
-            ..Default::default()
-        };
-        let ctx = MmGameContext::new(&save);
-
-        assert!(ctx.has_item("MAGIC", 1));
-        assert!(!ctx.has_item("DOUBLE_MAGIC", 1));
-    }
-
-    #[test]
-    fn test_double_magic() {
-        let save = MmSave {
-            magic: MmMagicCapacity::Double,
-            ..Default::default()
-        };
-        let ctx = MmGameContext::new(&save);
-
-        assert!(ctx.has_item("MAGIC", 1));
-        assert!(ctx.has_item("DOUBLE_MAGIC", 1));
-    }
-
-    // ========================================================================
-    // Dungeon Item Tests
+    // Dungeon Key Tests
     // ========================================================================
 
     #[test]
     fn test_small_keys() {
-        let save = MmSave {
-            small_keys: MmSmallKeys {
-                woodfall: 3,
-                snowhead: 1,
-                great_bay: 0,
-                stone_tower: 4,
-            },
-            ..Default::default()
+        let mut save = make_save();
+        save.small_keys = MmSmallKeys {
+            woodfall: 1,
+            snowhead: 3,
+            great_bay: 0,
+            stone_tower: 4,
         };
+
         let ctx = MmGameContext::new(&save);
-
-        assert!(ctx.has_item("SMALL_KEY_WOODFALL", 1));
-        assert!(ctx.has_item("SMALL_KEY_WOODFALL", 3));
-        assert!(!ctx.has_item("SMALL_KEY_WOODFALL", 4));
-
-        assert!(ctx.has_item("SMALL_KEY_SNOWHEAD", 1));
-        assert!(!ctx.has_item("SMALL_KEY_SNOWHEAD", 2));
-
-        assert!(!ctx.has_item("SMALL_KEY_GREAT_BAY", 1));
-
-        assert!(ctx.has_item("SMALL_KEY_STONE_TOWER", 4));
+        assert_eq!(ctx.woodfall_keys(), 1);
+        assert_eq!(ctx.snowhead_keys(), 3);
+        assert_eq!(ctx.great_bay_keys(), 0);
+        assert_eq!(ctx.stone_tower_keys(), 4);
     }
 
-    #[test]
-    fn test_boss_keys() {
-        let save = MmSave {
-            dungeon_items: MmAllDungeonItems {
-                woodfall: MmDungeonItems::BOSS_KEY,
-                snowhead: MmDungeonItems::empty(),
-                great_bay: MmDungeonItems::BOSS_KEY | MmDungeonItems::MAP,
-                stone_tower: MmDungeonItems::COMPASS,
-            },
-            ..Default::default()
-        };
-        let ctx = MmGameContext::new(&save);
-
-        assert!(ctx.has_item("BOSS_KEY_WOODFALL", 1));
-        assert!(!ctx.has_item("BOSS_KEY_SNOWHEAD", 1));
-        assert!(ctx.has_item("BOSS_KEY_GREAT_BAY", 1));
-        assert!(!ctx.has_item("BOSS_KEY_STONE_TOWER", 1));
-    }
+    // ========================================================================
+    // Stray Fairy Tests
+    // ========================================================================
 
     #[test]
     fn test_stray_fairies() {
-        let save = MmSave {
-            stray_fairies: MmStrayFairies {
-                clock_town: 1,
-                woodfall: 15,
-                snowhead: 10,
-                great_bay: 5,
-                stone_tower: 0,
-            },
-            ..Default::default()
+        let mut save = make_save();
+        save.stray_fairies = MmStrayFairies {
+            clock_town: 1,
+            woodfall: 15,
+            snowhead: 10,
+            great_bay: 5,
+            stone_tower: 0,
         };
+
         let ctx = MmGameContext::new(&save);
-
-        assert!(ctx.has_item("STRAY_FAIRY_CLOCK_TOWN", 1));
-        assert!(!ctx.has_item("STRAY_FAIRY_CLOCK_TOWN", 2));
-
-        assert!(ctx.has_item("STRAY_FAIRY_WOODFALL", 15));
-        assert!(!ctx.has_item("STRAY_FAIRY_WOODFALL", 16));
-
-        assert!(ctx.has_item("STRAY_FAIRY_SNOWHEAD", 10));
-        assert!(ctx.has_item("STRAY_FAIRY_GREAT_BAY", 5));
-        assert!(!ctx.has_item("STRAY_FAIRY_STONE_TOWER", 1));
+        assert_eq!(ctx.clock_town_fairies(), 1);
+        assert_eq!(ctx.woodfall_fairies(), 15);
+        assert_eq!(ctx.snowhead_fairies(), 10);
+        assert_eq!(ctx.great_bay_fairies(), 5);
+        assert_eq!(ctx.stone_tower_fairies(), 0);
     }
 
     // ========================================================================
-    // Skulltula Token Tests
+    // has_item Tests (String Lookup)
     // ========================================================================
 
     #[test]
-    fn test_skulltula_tokens() {
-        let save = MmSave {
-            skull_tokens_swamp: 30,
-            skull_tokens_ocean: 15,
-            ..Default::default()
-        };
+    fn test_has_item_equipment() {
+        let save = make_save_with_items();
         let ctx = MmGameContext::new(&save);
 
-        assert!(ctx.has_item("SKULL_TOKEN_SWAMP", 30));
-        assert!(!ctx.has_item("SKULL_TOKEN_SWAMP", 31));
+        // Different case formats
+        assert!(ctx.has_item("HOOKSHOT"));
+        assert!(ctx.has_item("hookshot"));
+        assert!(ctx.has_item("Hookshot"));
+        assert!(ctx.has_item("HEROS_BOW"));
+        assert!(ctx.has_item("heros_bow"));
+        assert!(ctx.has_item("HEROSBOW"));
 
-        assert!(ctx.has_item("SKULL_TOKEN_OCEAN", 15));
-        assert!(!ctx.has_item("SKULL_TOKEN_OCEAN", 16));
+        // Missing items
+        assert!(!ctx.has_item("FIRE_ARROW"));
+        assert!(!ctx.has_item("POWDER_KEG"));
+    }
+
+    #[test]
+    fn test_has_item_masks() {
+        let mut save = make_save();
+        save.masks.transformation = MmTransformationMasks::DEKU | MmTransformationMasks::GORON;
+        save.masks.masks_low = MmMasksLow::BUNNY | MmMasksLow::KEATON;
+
+        let ctx = MmGameContext::new(&save);
+
+        assert!(ctx.has_item("DEKU_MASK"));
+        assert!(ctx.has_item("DEKUMASK"));
+        assert!(ctx.has_item("deku_mask"));
+        assert!(ctx.has_item("GORON_MASK"));
+        assert!(ctx.has_item("BUNNY_HOOD"));
+        assert!(ctx.has_item("KEATON_MASK"));
+
+        assert!(!ctx.has_item("ZORA_MASK"));
+        assert!(!ctx.has_item("STONE_MASK"));
+    }
+
+    #[test]
+    fn test_has_item_songs() {
+        let mut save = make_save();
+        save.quest_items = MmQuestItems::SONG_TIME | MmQuestItems::SONG_SOARING;
+
+        let ctx = MmGameContext::new(&save);
+
+        assert!(ctx.has_item("SONG_OF_TIME"));
+        assert!(ctx.has_item("SONGOFTIME"));
+        assert!(ctx.has_item("SONG_OF_SOARING"));
+
+        assert!(!ctx.has_item("SONG_OF_HEALING"));
+        assert!(!ctx.has_item("EPONAS_SONG"));
+    }
+
+    #[test]
+    fn test_has_item_boss_remains() {
+        let mut save = make_save();
+        save.quest_items = MmQuestItems::REMAINS_ODOLWA | MmQuestItems::REMAINS_GYORG;
+
+        let ctx = MmGameContext::new(&save);
+
+        assert!(ctx.has_item("ODOLWA_REMAINS"));
+        assert!(ctx.has_item("GYORG_REMAINS"));
+        assert!(!ctx.has_item("GOHT_REMAINS"));
+        assert!(!ctx.has_item("TWINMOLD_REMAINS"));
+    }
+
+    #[test]
+    fn test_has_item_unknown() {
+        let save = make_save();
+        let ctx = MmGameContext::new(&save);
+
+        assert!(!ctx.has_item("NOT_AN_ITEM"));
+        assert!(!ctx.has_item("INVALID"));
+        assert!(!ctx.has_item(""));
     }
 
     // ========================================================================
-    // Time Tests
+    // item_count Tests
     // ========================================================================
 
     #[test]
-    fn test_mm_time_day_1_morning() {
-        // Day 1, 6:00 AM (game time = 0x4000)
-        let save = MmSave {
-            day: 1,
-            time: 0x4000,
-            ..Default::default()
-        };
+    fn test_item_count_non_stackable() {
+        let save = make_save_with_items();
         let ctx = MmGameContext::new(&save);
 
-        // Should be 0 minutes since Day 1 at 6 AM
-        assert_eq!(ctx.mm_time(), 0);
-        assert!(ctx.is_day());
-        assert!(!ctx.is_night());
+        assert_eq!(ctx.item_count("HOOKSHOT"), 1);
+        assert_eq!(ctx.item_count("HEROS_BOW"), 1);
+        assert_eq!(ctx.item_count("FIRE_ARROW"), 0);
     }
 
     #[test]
-    fn test_mm_time_day_1_noon() {
-        // Day 1, 12:00 PM (game time = 0x8000)
-        let save = MmSave {
-            day: 1,
-            time: 0x8000,
-            ..Default::default()
-        };
-        let ctx = MmGameContext::new(&save);
+    fn test_item_count_bottles() {
+        let mut save = make_save();
+        save.inventory.bottles[0] = MmBottle::Empty;
+        save.inventory.bottles[1] = MmBottle::Fairy;
 
-        // Should be 360 minutes (6 hours) since Day 1 at 6 AM
-        assert_eq!(ctx.mm_time(), 360);
-        assert!(ctx.is_day());
+        let ctx = MmGameContext::new(&save);
+        assert_eq!(ctx.item_count("BOTTLE"), 2);
     }
 
     #[test]
-    fn test_mm_time_day_1_evening() {
-        // Day 1, 6:00 PM (game time = 0xC000)
-        let save = MmSave {
-            day: 1,
-            time: 0xC000,
-            ..Default::default()
+    fn test_item_count_keys() {
+        let mut save = make_save();
+        save.small_keys = MmSmallKeys {
+            woodfall: 1,
+            snowhead: 3,
+            great_bay: 1,
+            stone_tower: 4,
         };
-        let ctx = MmGameContext::new(&save);
 
-        // Should be 720 minutes (12 hours) since Day 1 at 6 AM
-        assert_eq!(ctx.mm_time(), 720);
-        assert!(ctx.is_night());
+        let ctx = MmGameContext::new(&save);
+        assert_eq!(ctx.item_count("SMALL_KEY_WOODFALL_TEMPLE"), 1);
+        assert_eq!(ctx.item_count("SMALL_KEY_SNOWHEAD_TEMPLE"), 3);
+        assert_eq!(ctx.item_count("SMALL_KEY_GREAT_BAY_TEMPLE"), 1);
+        assert_eq!(ctx.item_count("SMALL_KEY_STONE_TOWER_TEMPLE"), 4);
     }
 
     #[test]
-    fn test_mm_time_day_2() {
-        // Day 2, 6:00 AM
-        let save = MmSave {
-            day: 2,
-            time: 0x4000,
-            ..Default::default()
+    fn test_item_count_fairies() {
+        let mut save = make_save();
+        save.stray_fairies = MmStrayFairies {
+            clock_town: 1,
+            woodfall: 15,
+            snowhead: 10,
+            great_bay: 5,
+            stone_tower: 0,
         };
-        let ctx = MmGameContext::new(&save);
 
-        // Should be 1440 minutes (24 hours) since Day 1 at 6 AM
-        assert_eq!(ctx.mm_time(), 1440);
+        let ctx = MmGameContext::new(&save);
+        assert_eq!(ctx.item_count("STRAY_FAIRY_CLOCK_TOWN"), 1);
+        assert_eq!(ctx.item_count("STRAY_FAIRY_WOODFALL"), 15);
+        assert_eq!(ctx.item_count("STRAY_FAIRY_SNOWHEAD"), 10);
+        assert_eq!(ctx.item_count("STRAY_FAIRY_GREAT_BAY"), 5);
+        assert_eq!(ctx.item_count("STRAY_FAIRY_STONE_TOWER"), 0);
     }
 
     #[test]
-    fn test_mm_time_day_3() {
-        // Day 3, 6:00 AM
-        let save = MmSave {
-            day: 3,
-            time: 0x4000,
-            ..Default::default()
-        };
+    fn test_item_count_boss_remains() {
+        let mut save = make_save();
+        save.quest_items =
+            MmQuestItems::REMAINS_ODOLWA | MmQuestItems::REMAINS_GOHT | MmQuestItems::REMAINS_GYORG;
+
         let ctx = MmGameContext::new(&save);
-
-        // Should be 2880 minutes (48 hours) since Day 1 at 6 AM
-        assert_eq!(ctx.mm_time(), 2880);
-    }
-
-    #[test]
-    fn test_mm_time_clamped() {
-        // Extreme day value should be clamped
-        let save = MmSave {
-            day: 100,
-            time: 0x4000,
-            ..Default::default()
-        };
-        let ctx = MmGameContext::new(&save);
-
-        // Should be clamped to 4319 (max valid time)
-        assert_eq!(ctx.mm_time(), 4319);
+        assert_eq!(ctx.item_count("BOSS_REMAINS"), 3);
     }
 
     // ========================================================================
-    // is_adult / is_child Tests
+    // build_inventory Tests
     // ========================================================================
 
     #[test]
-    fn test_always_child_in_mm() {
-        let save = default_save();
+    fn test_build_inventory_empty() {
+        let save = make_save();
         let ctx = MmGameContext::new(&save);
+        let inventory = ctx.build_inventory();
 
-        // MM Link is always "child" for logic purposes
-        assert!(ctx.is_child());
-        assert!(!ctx.is_adult());
+        assert!(inventory.is_empty());
     }
 
     #[test]
-    fn test_child_regardless_of_form() {
-        // Even as Fierce Deity, is_child should be true for logic purposes
-        let save = MmSave {
-            player_form: PlayerForm::FierceDeity,
-            ..Default::default()
-        };
+    fn test_build_inventory_with_items() {
+        let mut save = make_save();
+        save.inventory.ocarina = true;
+        save.inventory.hookshot = true;
+        save.masks.transformation = MmTransformationMasks::DEKU;
+        save.quest_items = MmQuestItems::SONG_TIME;
+        save.inventory.bottles[0] = MmBottle::Empty;
+        save.inventory.bottles[1] = MmBottle::Fairy;
+        save.small_keys.woodfall = 1;
+        save.stray_fairies.woodfall = 15;
+
         let ctx = MmGameContext::new(&save);
+        let inventory = ctx.build_inventory();
 
-        assert!(ctx.is_child());
-        assert!(!ctx.is_adult());
-    }
+        assert_eq!(inventory.get(logic_ids::OCARINA_OF_TIME), Some(&1));
+        assert_eq!(inventory.get(logic_ids::HOOKSHOT), Some(&1));
+        assert_eq!(inventory.get(logic_ids::DEKU_MASK), Some(&1));
+        assert_eq!(inventory.get(logic_ids::SONG_OF_TIME), Some(&1));
+        assert_eq!(inventory.get(logic_ids::BOTTLE), Some(&2));
+        assert_eq!(
+            inventory.get(logic_ids::SMALL_KEY_WOODFALL_TEMPLE),
+            Some(&1)
+        );
+        assert_eq!(inventory.get(logic_ids::STRAY_FAIRY_WOODFALL), Some(&15));
 
-    // ========================================================================
-    // Builder Pattern Tests
-    // ========================================================================
-
-    #[test]
-    fn test_builder_with_multiple_events() {
-        let save = default_save();
-        let ctx = MmGameContext::new(&save).with_events(["EVENT_A", "EVENT_B", "EVENT_C"]);
-
-        assert!(ctx.event("EVENT_A"));
-        assert!(ctx.event("EVENT_B"));
-        assert!(ctx.event("EVENT_C"));
-    }
-
-    #[test]
-    fn test_builder_with_multiple_settings() {
-        let save = default_save();
-        let ctx = MmGameContext::new(&save).with_settings([
-            ("setting_a", true),
-            ("setting_b", false),
-            ("setting_c", true),
-        ]);
-
-        assert_eq!(ctx.setting("setting_a"), Some(true));
-        assert_eq!(ctx.setting("setting_b"), Some(false));
-        assert_eq!(ctx.setting("setting_c"), Some(true));
+        // Items not owned should not be in inventory
+        assert!(!inventory.contains_key(logic_ids::FIRE_ARROW));
+        assert!(!inventory.contains_key(logic_ids::GORON_MASK));
     }
 
     #[test]
-    fn test_builder_with_multiple_tricks() {
-        let save = default_save();
-        let ctx = MmGameContext::new(&save).with_tricks(["trick_a", "trick_b"]);
+    fn test_build_inventory_upgrades() {
+        let mut save = make_save();
+        save.magic = MmMagicCapacity::Double;
+        save.double_defense = true;
+        save.upgrades = MmUpgrades::ADULTS_WALLET | MmUpgrades::QUIVER_40 | MmUpgrades::BOMB_BAG_30;
 
-        assert!(ctx.trick("trick_a"));
-        assert!(ctx.trick("trick_b"));
-        assert!(!ctx.trick("trick_c"));
-    }
-
-    #[test]
-    fn test_chained_builder() {
-        let save = save_with_inventory(MmInventory {
-            hookshot: true,
-            ..Default::default()
-        });
-        let ctx = MmGameContext::new(&save)
-            .with_event("BOSS_DEFEATED")
-            .with_setting("keysanity", true)
-            .with_trick("hookshot_jump");
-
-        assert!(ctx.has_item("HOOKSHOT", 1));
-        assert!(ctx.event("BOSS_DEFEATED"));
-        assert_eq!(ctx.setting("keysanity"), Some(true));
-        assert!(ctx.trick("hookshot_jump"));
-    }
-
-    // ========================================================================
-    // Double Defense Test
-    // ========================================================================
-
-    #[test]
-    fn test_double_defense() {
-        let save = MmSave {
-            double_defense: true,
-            ..Default::default()
-        };
         let ctx = MmGameContext::new(&save);
+        let inventory = ctx.build_inventory();
 
-        assert!(ctx.has_item("DOUBLE_DEFENSE", 1));
+        assert_eq!(inventory.get(logic_ids::MAGIC_METER), Some(&1));
+        assert_eq!(inventory.get(logic_ids::DOUBLE_MAGIC), Some(&1));
+        assert_eq!(inventory.get(logic_ids::DOUBLE_DEFENSE), Some(&1));
+        assert_eq!(inventory.get(logic_ids::ADULT_WALLET), Some(&1));
+        assert_eq!(inventory.get(logic_ids::QUIVER_30), Some(&1));
+        assert_eq!(inventory.get(logic_ids::QUIVER_40), Some(&1));
+        assert!(!inventory.contains_key(logic_ids::QUIVER_50));
+        assert_eq!(inventory.get(logic_ids::BOMB_BAG_20), Some(&1));
+        assert_eq!(inventory.get(logic_ids::BOMB_BAG_30), Some(&1));
+        assert!(!inventory.contains_key(logic_ids::BOMB_BAG_40));
     }
 
     #[test]
-    fn test_no_double_defense() {
-        let save = default_save();
-        let ctx = MmGameContext::new(&save);
+    fn test_build_inventory_all_masks() {
+        let mut save = make_save();
+        save.masks.transformation = MmTransformationMasks::all();
+        save.masks.masks_low = MmMasksLow::all();
+        save.masks.masks_high = MmMasksHigh::all();
 
-        assert!(!ctx.has_item("DOUBLE_DEFENSE", 1));
+        let ctx = MmGameContext::new(&save);
+        let inventory = ctx.build_inventory();
+
+        // Verify all masks are in inventory
+        assert!(inventory.contains_key(logic_ids::DEKU_MASK));
+        assert!(inventory.contains_key(logic_ids::GORON_MASK));
+        assert!(inventory.contains_key(logic_ids::ZORA_MASK));
+        assert!(inventory.contains_key(logic_ids::FIERCE_DEITY_MASK));
+        assert!(inventory.contains_key(logic_ids::POSTMAN_HAT));
+        assert!(inventory.contains_key(logic_ids::ALL_NIGHT_MASK));
+        assert!(inventory.contains_key(logic_ids::BLAST_MASK));
+        assert!(inventory.contains_key(logic_ids::BUNNY_HOOD));
+        assert!(inventory.contains_key(logic_ids::GIBDO_MASK));
+        assert!(inventory.contains_key(logic_ids::GARO_MASK));
+        assert!(inventory.contains_key(logic_ids::GIANT_MASK));
+    }
+
+    #[test]
+    fn test_build_inventory_all_songs() {
+        let mut save = make_save();
+        save.quest_items = MmQuestItems::SONG_TIME
+            | MmQuestItems::SONG_HEALING
+            | MmQuestItems::SONG_EPONA
+            | MmQuestItems::SONG_SOARING
+            | MmQuestItems::SONG_STORMS
+            | MmQuestItems::SONG_AWAKENING
+            | MmQuestItems::SONG_GORON
+            | MmQuestItems::SONG_ZORA
+            | MmQuestItems::SONG_EMPTINESS
+            | MmQuestItems::SONG_ORDER;
+
+        let ctx = MmGameContext::new(&save);
+        let inventory = ctx.build_inventory();
+
+        assert!(inventory.contains_key(logic_ids::SONG_OF_TIME));
+        assert!(inventory.contains_key(logic_ids::SONG_OF_HEALING));
+        assert!(inventory.contains_key(logic_ids::EPONAS_SONG));
+        assert!(inventory.contains_key(logic_ids::SONG_OF_SOARING));
+        assert!(inventory.contains_key(logic_ids::SONG_OF_STORMS));
+        assert!(inventory.contains_key(logic_ids::SONATA_OF_AWAKENING));
+        assert!(inventory.contains_key(logic_ids::GORON_LULLABY));
+        assert!(inventory.contains_key(logic_ids::NEW_WAVE_BOSSA_NOVA));
+        assert!(inventory.contains_key(logic_ids::ELEGY_OF_EMPTINESS));
+        assert!(inventory.contains_key(logic_ids::OATH_TO_ORDER));
+    }
+
+    // ========================================================================
+    // Logic IDs Module Tests
+    // ========================================================================
+
+    #[test]
+    fn test_logic_ids_exist() {
+        // Verify all logic IDs are non-empty strings
+        assert!(!logic_ids::OCARINA_OF_TIME.is_empty());
+        assert!(!logic_ids::DEKU_MASK.is_empty());
+        assert!(!logic_ids::SONG_OF_TIME.is_empty());
+        assert!(!logic_ids::HOOKSHOT.is_empty());
     }
 }
