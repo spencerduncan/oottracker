@@ -2797,22 +2797,22 @@ cells! {
     // ============================================================================
     MmOdolwaRemains: Simple {
         img: ImageInfo::mm("odolwa_remains"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_odolwa_remains())),
         toggle: Box::new(|_| ()),
     },
     MmGohtRemains: Simple {
         img: ImageInfo::mm("goht_remains"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_goht_remains())),
         toggle: Box::new(|_| ()),
     },
     MmGyorgRemains: Simple {
         img: ImageInfo::mm("gyorg_remains"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_gyorg_remains())),
         toggle: Box::new(|_| ()),
     },
     MmTwinmoldRemains: Simple {
         img: ImageInfo::mm("twinmold_remains"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_twinmold_remains())),
         toggle: Box::new(|_| ()),
     },
 
