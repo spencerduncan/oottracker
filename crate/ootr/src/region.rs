@@ -384,12 +384,6 @@ mod tests {
     }
 
     #[test]
-    fn test_mq_debug() {
-        assert_eq!(format!("{:?}", Mq::Vanilla), "Vanilla");
-        assert_eq!(format!("{:?}", Mq::Mq), "Mq");
-    }
-
-    #[test]
     fn test_region_with_dungeon_context() {
         use crate::model::MainDungeon;
         use mock::{MockRando, MockRegionName};

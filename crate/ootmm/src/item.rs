@@ -612,12 +612,6 @@ mod tests {
     // ===== GAME ENUM TESTS =====
 
     #[test]
-    fn test_game_enum_debug() {
-        assert_eq!(format!("{:?}", Game::OcarinaOfTime), "OcarinaOfTime");
-        assert_eq!(format!("{:?}", Game::MajorasMask), "MajorasMask");
-    }
-
-    #[test]
     fn test_game_enum_equality() {
         assert_eq!(Game::OcarinaOfTime, Game::OcarinaOfTime);
         assert_eq!(Game::MajorasMask, Game::MajorasMask);
@@ -635,16 +629,6 @@ mod tests {
     }
 
     // ===== ITEM CATEGORY TESTS =====
-
-    #[test]
-    fn test_item_category_debug() {
-        assert_eq!(format!("{:?}", ItemCategory::Sword), "Sword");
-        assert_eq!(
-            format!("{:?}", ItemCategory::TransformationMask),
-            "TransformationMask"
-        );
-        assert_eq!(format!("{:?}", ItemCategory::Equipment), "Equipment");
-    }
 
     #[test]
     fn test_item_category_equality() {

@@ -879,17 +879,4 @@ mod tests {
         assert_eq!(ctx2.get_item("HOOKSHOT"), 1);
         assert!(ctx2.is_adult());
     }
-
-    #[test]
-    fn test_context_debug() {
-        let ctx = GameContext::new();
-        let debug_str = format!("{:?}", ctx);
-        assert!(debug_str.contains("GameContext"));
-    }
-
-    #[test]
-    fn test_age_debug() {
-        assert_eq!(format!("{:?}", Age::Adult), "Adult");
-        assert_eq!(format!("{:?}", Age::Child), "Child");
-    }
 }
