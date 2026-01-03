@@ -2,7 +2,8 @@
 use crate::firebase;
 use {
     crate::{
-        game_detection::{ActiveGame, GameDetector, GameType},
+        game_detection::{ActiveGame, GameDetector, GameType, TransitionState},
+        mm_save::MmSave,
         proto::{self, Packet, TCP_PORT},
         ram::{self, Ram},
         websocket, ModelState,
@@ -305,11 +306,78 @@ pub struct RetroArchConnection {
     pub port: u16,
 }
 
+/// Number of consecutive frames needed for a transition to be considered stable
+const TRANSITION_STABILITY_FRAMES: u32 = 3;
+
+/// State for tracking OoTMM combo transitions
+#[derive(Debug, Clone, Default)]
+struct ComboTransitionTracker {
+    /// The last known MM save data (preserved when switching to OoT)
+    last_mm_save: Option<MmSave>,
+    /// The last known OoT RAM data (preserved when switching to MM)
+    last_oot_ram: Option<Ram>,
+    /// Number of consecutive frames the current game has been active
+    frames_stable: u32,
+    /// Whether we're currently in a transition period
+    in_transition: bool,
+    /// The transition direction (if transitioning)
+    transition_direction: Option<TransitionState>,
+}
+
+impl ComboTransitionTracker {
+    /// Create a new combo transition tracker
+    fn new() -> Self {
+        Self::default()
+    }
+
+    /// Check if the current game state is considered stable
+    fn is_stable(&self) -> bool {
+        self.frames_stable >= TRANSITION_STABILITY_FRAMES && !self.in_transition
+    }
+
+    /// Record that the active game has remained the same
+    fn record_stable_frame(&mut self) {
+        self.frames_stable = self.frames_stable.saturating_add(1);
+        if self.frames_stable >= TRANSITION_STABILITY_FRAMES {
+            self.in_transition = false;
+            self.transition_direction = None;
+        }
+    }
+
+    /// Record that a game transition has occurred
+    fn record_transition(&mut self, from: ActiveGame, to: ActiveGame) {
+        self.frames_stable = 0;
+        self.in_transition = true;
+        self.transition_direction = Some(match (from, to) {
+            (ActiveGame::OcarinaOfTime, ActiveGame::MajorasMask) => TransitionState::OotToMm,
+            (ActiveGame::MajorasMask, ActiveGame::OcarinaOfTime) => TransitionState::MmToOot,
+            _ => TransitionState::Stable,
+        });
+    }
+
+    /// Preserve OoT RAM data for later restoration
+    fn preserve_oot_state(&mut self, ram: &Ram) {
+        self.last_oot_ram = Some(ram.clone());
+    }
+
+    /// Preserve MM save data for later restoration
+    fn preserve_mm_state(&mut self, mm_save: &MmSave) {
+        self.last_mm_save = Some(mm_save.clone());
+    }
+
+    /// Get the preserved MM save data
+    fn get_preserved_mm_save(&self) -> Option<&MmSave> {
+        self.last_mm_save.as_ref()
+    }
+}
+
 /// State carried between tracking iterations for RetroArch connections
 struct RetroArchTrackingState {
     sock: UdpSocket,
     game_detector: GameDetector,
     last_active_game: Option<ActiveGame>,
+    /// Combo mode transition tracker
+    combo_tracker: ComboTransitionTracker,
 }
 
 impl Connection for RetroArchConnection {
@@ -337,25 +405,24 @@ impl Connection for RetroArchConnection {
                     sock,
                     game_detector: GameDetector::new(),
                     last_active_game: None,
+                    combo_tracker: ComboTransitionTracker::new(),
                 })
             }) as Pin<Box<dyn Future<Output = _> + Send>>,
             |state_fut| async move {
                 sleep(Duration::from_secs(1)).await;
                 let mut state: RetroArchTrackingState = state_fut.await?;
 
-                // Detect game type at the start of each iteration
-                let ram = retroarch_read_ram_with_detection(&state.sock, &mut state.game_detector)
-                    .await?;
+                // Read RAM with game type detection and combo transition handling
+                let ram = retroarch_read_ram_with_combo_transitions(
+                    &state.sock,
+                    &mut state.game_detector,
+                    &mut state.combo_tracker,
+                    state.last_active_game,
+                )
+                .await?;
 
-                // Check for game transitions in combo mode
-                let detection_result = state.game_detector.active_game();
-                if let Some(last_game) = state.last_active_game {
-                    if last_game != detection_result {
-                        // Game transition detected in combo mode
-                        // The game_detector already tracks this internally
-                    }
-                }
-                state.last_active_game = Some(detection_result);
+                // Update the last active game for next iteration
+                state.last_active_game = Some(state.game_detector.active_game());
 
                 Ok(Some((
                     Packet::RamInit(ram),
@@ -496,6 +563,171 @@ async fn retroarch_read_ram_with_detection(
             Ok(ram)
         }
     }
+}
+
+/// Read RAM with full combo transition handling.
+///
+/// This function extends `retroarch_read_ram_with_detection` with:
+/// - Transition detection via context address polling
+/// - State preservation across game switches
+/// - Transition stabilization to avoid reading inconsistent data
+/// - Always reading both games' data in combo mode to maintain continuity
+async fn retroarch_read_ram_with_combo_transitions(
+    sock: &UdpSocket,
+    detector: &mut GameDetector,
+    combo_tracker: &mut ComboTransitionTracker,
+    last_active_game: Option<ActiveGame>,
+) -> Result<Ram, Error> {
+    // First, detect what game is running
+    let detected_game_type = retroarch_detect_game_type(sock).await?;
+
+    // Update the detector's game type
+    if detected_game_type != GameType::StandaloneOoT
+        || detector.game_type() == GameType::StandaloneOoT
+    {
+        detector.set_game_type(detected_game_type);
+    }
+
+    // For non-combo modes, use the standard detection
+    if detected_game_type != GameType::OoTMMCombo {
+        return retroarch_read_ram_with_detection(sock, detector).await;
+    }
+
+    // === Combo mode: Poll context addresses to detect active game ===
+    let (oot_ctx_active, mm_ctx_active) = poll_combo_context_addresses(sock).await?;
+
+    // Determine which game is currently active based on context values
+    let current_active = if oot_ctx_active && !mm_ctx_active {
+        ActiveGame::OcarinaOfTime
+    } else if mm_ctx_active && !oot_ctx_active {
+        ActiveGame::MajorasMask
+    } else {
+        // Ambiguous state - use detector's last known state
+        detector.active_game()
+    };
+
+    // Update detector with current state (create detection buffer for it)
+    update_detector_with_context(detector, oot_ctx_active, mm_ctx_active);
+
+    // === Handle game transitions ===
+    if let Some(last_game) = last_active_game {
+        if last_game != current_active {
+            // Transition detected!
+            combo_tracker.record_transition(last_game, current_active);
+        } else {
+            // Same game as before, increment stability counter
+            combo_tracker.record_stable_frame();
+        }
+    } else {
+        // First frame, start counting stability
+        combo_tracker.record_stable_frame();
+    }
+
+    // === Read RAM ranges based on current state ===
+    // Always read OoT ranges first (base structure)
+    let oot_ranges = stream::iter(ram::OOT_RANGES.iter().copied().tuples())
+        .then(|(start, len)| async move { retroarch_read_memory_range(sock, start, len).await })
+        .try_collect::<Vec<_>>()
+        .await?;
+
+    let mut ram = Ram::from_range_bufs(oot_ranges)?;
+
+    // In combo mode, always try to read MM data to preserve state across transitions
+    match current_active {
+        ActiveGame::MajorasMask => {
+            // MM is active - read fresh MM data
+            let mm_ranges =
+                stream::iter(ram::MM_RANGES.iter().copied().tuples())
+                    .then(|(start, len)| async move {
+                        retroarch_read_memory_range(sock, start, len).await
+                    })
+                    .try_collect::<Vec<_>>()
+                    .await?;
+
+            let mm_save = ram::decode_mm_range_bufs(mm_ranges)?;
+
+            // Preserve the current OoT state for when we switch back
+            combo_tracker.preserve_oot_state(&ram);
+
+            // Preserve the new MM state
+            combo_tracker.preserve_mm_state(&mm_save);
+
+            ram.mm_save = Some(mm_save);
+        }
+        ActiveGame::OcarinaOfTime => {
+            // OoT is active - use preserved MM data if available
+            // This maintains MM state visibility while playing OoT
+            if let Some(preserved_mm) = combo_tracker.get_preserved_mm_save() {
+                ram.mm_save = Some(preserved_mm.clone());
+            } else if combo_tracker.is_stable() {
+                // No preserved MM data and stable in OoT - try reading MM anyway
+                // (This handles the initial state where we start in OoT)
+                match try_read_mm_data(sock).await {
+                    Ok(mm_save) => {
+                        combo_tracker.preserve_mm_state(&mm_save);
+                        ram.mm_save = Some(mm_save);
+                    }
+                    Err(_) => {
+                        // MM data not available, which is fine for standalone OoT portions
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(ram)
+}
+
+/// Poll the OoTMM combo context addresses to determine which game is active.
+///
+/// Returns (oot_active, mm_active) based on whether each context address
+/// contains a non-zero value.
+async fn poll_combo_context_addresses(sock: &UdpSocket) -> Result<(bool, bool), Error> {
+    let oot_ctx = retroarch_read_memory_range(sock, ram::OOT_COMBO_CONTEXT_ADDR, 4).await?;
+    let mm_ctx = retroarch_read_memory_range(sock, ram::MM_COMBO_CONTEXT_ADDR, 4).await?;
+
+    let oot_active = oot_ctx.iter().any(|&b| b != 0);
+    let mm_active = mm_ctx.iter().any(|&b| b != 0);
+
+    Ok((oot_active, mm_active))
+}
+
+/// Update the game detector based on polled context values.
+fn update_detector_with_context(
+    detector: &mut GameDetector,
+    oot_ctx_active: bool,
+    mm_ctx_active: bool,
+) {
+    // Create a minimal detection buffer with context values set appropriately
+    let mut detection_buffer = vec![0u8; crate::game_detection::RAM_SIZE];
+
+    let oot_ctx_offset = (crate::game_detection::OOTMM_OOT_CONTEXT_ADDR
+        - crate::game_detection::RDRAM_BASE) as usize;
+    let mm_ctx_offset =
+        (crate::game_detection::OOTMM_MM_CONTEXT_ADDR - crate::game_detection::RDRAM_BASE) as usize;
+
+    // Set context values based on which game is active
+    if oot_ctx_active && oot_ctx_offset + 4 <= detection_buffer.len() {
+        detection_buffer[oot_ctx_offset..oot_ctx_offset + 4]
+            .copy_from_slice(&[0x00, 0x01, 0x00, 0x00]);
+    }
+    if mm_ctx_active && mm_ctx_offset + 4 <= detection_buffer.len() {
+        detection_buffer[mm_ctx_offset..mm_ctx_offset + 4]
+            .copy_from_slice(&[0x00, 0x01, 0x00, 0x00]);
+    }
+
+    // Let the detector update its internal state
+    let _ = detector.detect_from_ram(&detection_buffer);
+}
+
+/// Attempt to read MM save data (used during OoT gameplay to check for initial MM data).
+async fn try_read_mm_data(sock: &UdpSocket) -> Result<MmSave, Error> {
+    let mm_ranges = stream::iter(ram::MM_RANGES.iter().copied().tuples())
+        .then(|(start, len)| async move { retroarch_read_memory_range(sock, start, len).await })
+        .try_collect::<Vec<_>>()
+        .await?;
+
+    Ok(ram::decode_mm_range_bufs(mm_ranges)?)
 }
 
 /// Detect the game type by reading memory signatures via RetroArch UDP API.
