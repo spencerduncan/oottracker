@@ -776,13 +776,26 @@ mod rando_trait_implementation {
         // Should have items from both games
         assert!(!items.is_empty(), "Item table should not be empty");
 
-        // Check for specific items
-        assert!(items.contains_key("MasterSword"), "Should have MasterSword");
-        assert!(items.contains_key("Hookshot"), "Should have Hookshot");
-        assert!(items.contains_key("DekuMask"), "Should have DekuMask");
-        assert!(
-            items.contains_key("OdolwaRemains"),
-            "Should have OdolwaRemains"
+        // Check for specific items and verify their values
+        assert_eq!(
+            items.get("MasterSword").map(|i| i.name()),
+            Some("MasterSword"),
+            "Should have MasterSword with correct value"
+        );
+        assert_eq!(
+            items.get("Hookshot").map(|i| i.name()),
+            Some("Hookshot"),
+            "Should have Hookshot with correct value"
+        );
+        assert_eq!(
+            items.get("DekuMask").map(|i| i.name()),
+            Some("DekuMask"),
+            "Should have DekuMask with correct value"
+        );
+        assert_eq!(
+            items.get("OdolwaRemains").map(|i| i.name()),
+            Some("OdolwaRemains"),
+            "Should have OdolwaRemains with correct value"
         );
     }
 
@@ -794,22 +807,26 @@ mod rando_trait_implementation {
         // Should contain major progression items
         assert!(!escaped.is_empty(), "Escaped items should not be empty");
 
-        // Key progression items should be escaped
-        assert!(
-            escaped.contains_key("Hookshot"),
-            "Hookshot should be escaped"
+        // Key progression items should be escaped with correct values
+        assert_eq!(
+            escaped.get("Hookshot").map(|i| i.name()),
+            Some("Hookshot"),
+            "Hookshot should be escaped with correct value"
         );
-        assert!(
-            escaped.contains_key("DekuMask"),
-            "DekuMask should be escaped"
+        assert_eq!(
+            escaped.get("DekuMask").map(|i| i.name()),
+            Some("DekuMask"),
+            "DekuMask should be escaped with correct value"
         );
-        assert!(
-            escaped.contains_key("ForestMedallion"),
-            "ForestMedallion should be escaped"
+        assert_eq!(
+            escaped.get("ForestMedallion").map(|i| i.name()),
+            Some("ForestMedallion"),
+            "ForestMedallion should be escaped with correct value"
         );
-        assert!(
-            escaped.contains_key("OdolwaRemains"),
-            "OdolwaRemains should be escaped"
+        assert_eq!(
+            escaped.get("OdolwaRemains").map(|i| i.name()),
+            Some("OdolwaRemains"),
+            "OdolwaRemains should be escaped with correct value"
         );
     }
 
