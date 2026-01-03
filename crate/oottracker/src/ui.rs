@@ -2956,37 +2956,37 @@ cells! {
     },
     MmBombs: Simple {
         img: ImageInfo::mm("bombs"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_bombs())),
         toggle: Box::new(|_| ()),
     },
     MmBombchu: Simple {
         img: ImageInfo::mm("bombchu"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_bombchu())),
         toggle: Box::new(|_| ()),
     },
     MmPowderKeg: Simple {
         img: ImageInfo::mm("powder_keg"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_powder_keg())),
         toggle: Box::new(|_| ()),
     },
     MmLensOfTruth: Simple {
         img: ImageInfo::mm("lens_of_truth"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_lens_of_truth())),
         toggle: Box::new(|_| ()),
     },
     MmPictographBox: Simple {
         img: ImageInfo::mm("pictograph_box"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_pictograph_box())),
         toggle: Box::new(|_| ()),
     },
     MmGreatFairySword: Simple {
         img: ImageInfo::mm("great_fairy_sword"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_great_fairy_sword())),
         toggle: Box::new(|_| ()),
     },
     MmMagicBean: Simple {
         img: ImageInfo::mm("magic_bean"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_magic_bean())),
         toggle: Box::new(|_| ()),
     },
 
@@ -3163,7 +3163,7 @@ cells! {
     },
     MmMagic: Simple {
         img: ImageInfo::mm("magic"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_magic())),
         toggle: Box::new(|_| ()),
     },
     MmDoubleDefense: Simple {
