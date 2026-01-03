@@ -48,6 +48,9 @@ optional = true
 [dependencies.ootr]
 path = "../ootr"
 
+[dependencies.ootmm]
+path = "../ootmm"
+
 [dependencies.ootr-static] # used in tests
 path = "../ootr-static"
 

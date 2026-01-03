@@ -3136,6 +3136,7 @@ dependencies = [
  "image 0.24.6",
  "itertools 0.10.5",
  "once_cell",
+ "ootmm",
  "ootr",
  "ootr-static",
  "oottracker-derive",

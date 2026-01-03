@@ -16,6 +16,7 @@
 #![forbid(unsafe_code)]
 
 pub use crate::{ctx::TrackerCtx, knowledge::Knowledge, ram::GameType, ram::Ram, save::Save};
+use ootmm as _;
 use {
     crate::{
         info_tables::InfTable55,
