@@ -5,7 +5,7 @@ authors = ["Fenhl <fenhl@fenhl.net>"]
 edition = "2021"
 
 [features]
-embed-images = ["once_cell"]
+embed-images = []
 firebase = ["eventsource-client"]
 rocket = ["dep:rocket", "dep:rocket-util"]
 
@@ -43,7 +43,6 @@ optional = true
 
 [dependencies.once_cell]
 version = "1"
-optional = true
 
 [dependencies.ootr]
 path = "../ootr"
