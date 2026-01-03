@@ -33,6 +33,7 @@ use {
 };
 
 use once_cell::sync::Lazy;
+use ootmm::CheckTracker;
 
 /// Global WorldDatabase initialized with embedded ootmm data.
 ///
@@ -115,6 +116,9 @@ pub struct ModelState {
     pub knowledge: Knowledge,
     pub tracker_ctx: TrackerCtx,
     pub ram: Ram,
+    /// Check tracker for MM/combo randomizer tracking.
+    /// Initialized when MM tracking is active (mm_save is Some).
+    pub check_tracker: Option<CheckTracker>,
 }
 
 impl ModelState {
@@ -214,6 +218,67 @@ impl ModelState {
                 .insert(reward, DungeonRewardLocation::Dungeon(dungeon));
         }
     }
+
+    /// Ensures the check tracker is initialized when MM tracking is active.
+    ///
+    /// This method should be called when the model state is updated to ensure
+    /// the check tracker is available when MM save data is present.
+    pub fn ensure_check_tracker(&mut self) {
+        if self.ram.mm_save.is_some() && self.check_tracker.is_none() {
+            self.check_tracker = Some(CheckTracker::default());
+        }
+    }
+
+    /// Marks a location as checked in the tracker.
+    ///
+    /// Does nothing if the check tracker is not initialized.
+    pub fn mark_check(&mut self, location: &str) {
+        if let Some(ref mut tracker) = self.check_tracker {
+            tracker.mark_checked(location);
+        }
+    }
+
+    /// Marks a location as unchecked in the tracker.
+    ///
+    /// Does nothing if the check tracker is not initialized.
+    pub fn unmark_check(&mut self, location: &str) {
+        if let Some(ref mut tracker) = self.check_tracker {
+            tracker.mark_unchecked(location);
+        }
+    }
+
+    /// Returns whether a location has been checked.
+    ///
+    /// Returns `false` if the check tracker is not initialized.
+    pub fn is_checked(&self, location: &str) -> bool {
+        self.check_tracker
+            .as_ref()
+            .is_some_and(|t| t.is_checked(location))
+    }
+
+    /// Returns the number of checked locations.
+    ///
+    /// Returns `0` if the check tracker is not initialized.
+    pub fn checked_count(&self) -> usize {
+        self.check_tracker
+            .as_ref()
+            .map(|t| t.checked_count())
+            .unwrap_or(0)
+    }
+
+    /// Clears all checked locations in the tracker.
+    ///
+    /// Does nothing if the check tracker is not initialized.
+    pub fn clear_checks(&mut self) {
+        if let Some(ref mut tracker) = self.check_tracker {
+            tracker.clear();
+        }
+    }
+
+    /// Returns whether MM tracking is currently active.
+    pub fn is_mm_tracking_active(&self) -> bool {
+        self.ram.mm_save.is_some()
+    }
 }
 
 impl AddAssign<ModelDelta> for ModelState {
@@ -222,12 +287,16 @@ impl AddAssign<ModelDelta> for ModelState {
             knowledge,
             tracker_ctx,
             ram,
+            check_tracker,
         } = rhs;
         self.knowledge = knowledge;
         if let Some(tracker_ctx) = tracker_ctx {
             self.tracker_ctx = tracker_ctx
         }
         self.ram += ram;
+        if let Some(check_tracker) = check_tracker {
+            self.check_tracker = Some(check_tracker);
+        }
     }
 }
 
@@ -239,11 +308,17 @@ impl Sub<&ModelState> for &ModelState {
             knowledge,
             tracker_ctx,
             ram,
+            check_tracker,
         } = self;
         ModelDelta {
             knowledge: knowledge.clone(), //TODO only include new knowledge?
             tracker_ctx: (*tracker_ctx != rhs.tracker_ctx).then(|| tracker_ctx.clone()),
             ram: ram - &rhs.ram,
+            check_tracker: if check_tracker != &rhs.check_tracker {
+                check_tracker.clone()
+            } else {
+                None
+            },
         }
     }
 }
@@ -254,6 +329,7 @@ pub struct ModelDelta {
     knowledge: Knowledge, //TODO use a separate knowledge delta format?\
     tracker_ctx: Option<TrackerCtx>,
     ram: ram::Delta,
+    check_tracker: Option<CheckTracker>,
 }
 
 pub fn version() -> Version {
