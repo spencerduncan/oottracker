@@ -852,4 +852,262 @@ mod tests {
             );
         }
     }
+
+    // ===== SEMANTIC EQUIVALENCE ROUNDTRIP TESTS =====
+    //
+    // These tests verify that roundtripped model types preserve semantic properties,
+    // not just structural equality. The types should behave identically after
+    // Display -> FromStr conversion.
+
+    /// Verifies that a Medallion preserves its Item conversion after roundtrip.
+    fn verify_medallion_semantic_roundtrip(medallion: Medallion) {
+        let display_str = medallion.to_string();
+        let parsed = Medallion::from_str(&display_str).unwrap();
+
+        // Structural check
+        assert_eq!(medallion, parsed);
+
+        // Semantic checks - verify Item conversion is preserved
+        let original_item: Item = medallion.into();
+        let roundtrip_item: Item = parsed.into();
+        assert_eq!(
+            original_item.name(),
+            roundtrip_item.name(),
+            "Item name mismatch after roundtrip for {:?}",
+            medallion
+        );
+
+        // Verify conversion back to Medallion works
+        let back_from_original = Medallion::try_from(original_item.clone());
+        let back_from_roundtrip = Medallion::try_from(roundtrip_item.clone());
+        assert_eq!(
+            back_from_original, back_from_roundtrip,
+            "Medallion conversion mismatch for {:?}",
+            medallion
+        );
+    }
+
+    /// Verifies that a Stone preserves its Item conversion after roundtrip.
+    fn verify_stone_semantic_roundtrip(stone: Stone) {
+        let display_str = stone.to_string();
+        let parsed = Stone::from_str(&display_str).unwrap();
+
+        // Structural check
+        assert_eq!(stone, parsed);
+
+        // Semantic checks - verify Item conversion is preserved
+        let original_item: Item = stone.into();
+        let roundtrip_item: Item = parsed.into();
+        assert_eq!(
+            original_item.name(),
+            roundtrip_item.name(),
+            "Item name mismatch after roundtrip for {:?}",
+            stone
+        );
+
+        // Verify conversion back to Stone works
+        let back_from_original = Stone::try_from(original_item.clone());
+        let back_from_roundtrip = Stone::try_from(roundtrip_item.clone());
+        assert_eq!(
+            back_from_original, back_from_roundtrip,
+            "Stone conversion mismatch for {:?}",
+            stone
+        );
+    }
+
+    /// Verifies that a DungeonReward preserves its Item conversion after roundtrip.
+    fn verify_dungeon_reward_semantic_roundtrip(reward: DungeonReward) {
+        let display_str = reward.to_string();
+        let parsed = DungeonReward::from_str(&display_str).unwrap();
+
+        // Structural check
+        assert_eq!(reward, parsed);
+
+        // Semantic checks - verify Item conversion is preserved
+        let original_item: Item = reward.into();
+        let roundtrip_item: Item = parsed.into();
+        assert_eq!(
+            original_item.name(),
+            roundtrip_item.name(),
+            "Item name mismatch after roundtrip for {:?}",
+            reward
+        );
+
+        // Verify conversion back to DungeonReward works
+        let back_from_original = DungeonReward::try_from(original_item.clone());
+        let back_from_roundtrip = DungeonReward::try_from(roundtrip_item.clone());
+        assert_eq!(
+            back_from_original, back_from_roundtrip,
+            "DungeonReward conversion mismatch for {:?}",
+            reward
+        );
+    }
+
+    #[test]
+    fn test_medallion_semantic_roundtrip_all() {
+        for medallion in enum_iterator::all::<Medallion>() {
+            verify_medallion_semantic_roundtrip(medallion);
+        }
+    }
+
+    #[test]
+    fn test_stone_semantic_roundtrip_all() {
+        for stone in enum_iterator::all::<Stone>() {
+            verify_stone_semantic_roundtrip(stone);
+        }
+    }
+
+    #[test]
+    fn test_dungeon_reward_semantic_roundtrip_all() {
+        for reward in enum_iterator::all::<DungeonReward>() {
+            verify_dungeon_reward_semantic_roundtrip(reward);
+        }
+    }
+
+    #[test]
+    fn test_main_dungeon_reward_location_semantic_roundtrip() {
+        // MainDungeon -> DungeonRewardLocation -> string -> back
+        for dungeon in enum_iterator::all::<MainDungeon>() {
+            let location = DungeonRewardLocation::Dungeon(dungeon);
+            let location_str = location.as_str();
+            let parsed = DungeonRewardLocation::from_str(location_str).unwrap();
+
+            assert_eq!(location, parsed);
+
+            // Verify the dungeon can still be extracted correctly
+            match parsed {
+                DungeonRewardLocation::Dungeon(d) => assert_eq!(dungeon, d),
+                DungeonRewardLocation::LinksPocket => {
+                    panic!("Expected Dungeon, got LinksPocket")
+                }
+            }
+        }
+    }
+
+    // ===== EDGE CASES AND NORMALIZATION TESTS =====
+
+    #[test]
+    fn test_dungeon_reward_location_links_pocket_semantic() {
+        let location = DungeonRewardLocation::LinksPocket;
+        let location_str = location.as_str();
+        let parsed = DungeonRewardLocation::from_str(location_str).unwrap();
+
+        assert_eq!(location, parsed);
+
+        // Verify it's recognized as LinksPocket, not a dungeon
+        assert!(matches!(parsed, DungeonRewardLocation::LinksPocket));
+    }
+
+    #[test]
+    fn test_main_dungeon_display_string_stability() {
+        // Verify that display strings are stable across multiple roundtrips
+        for dungeon in enum_iterator::all::<MainDungeon>() {
+            let str1 = dungeon.to_string();
+            let parsed1 = MainDungeon::from_str(&str1).unwrap();
+            let str2 = parsed1.to_string();
+            let parsed2 = MainDungeon::from_str(&str2).unwrap();
+            let str3 = parsed2.to_string();
+
+            // All strings should be identical
+            assert_eq!(
+                str1, str2,
+                "First roundtrip changed display for {:?}",
+                dungeon
+            );
+            assert_eq!(
+                str2, str3,
+                "Second roundtrip changed display for {:?}",
+                dungeon
+            );
+        }
+    }
+
+    #[test]
+    fn test_dungeon_reward_double_roundtrip() {
+        // Verify semantic equivalence after multiple roundtrips
+        for reward in enum_iterator::all::<DungeonReward>() {
+            let str1 = reward.to_string();
+            let rt1 = DungeonReward::from_str(&str1).unwrap();
+            let str2 = rt1.to_string();
+            let rt2 = DungeonReward::from_str(&str2).unwrap();
+
+            // Item conversions should be identical at all stages
+            let item_original: Item = reward.into();
+            let item_rt1: Item = rt1.into();
+            let item_rt2: Item = rt2.into();
+
+            assert_eq!(item_original.name(), item_rt1.name());
+            assert_eq!(item_original.name(), item_rt2.name());
+        }
+    }
+
+    #[test]
+    fn test_medallion_distinguishable_after_roundtrip() {
+        // Ensure all medallions remain distinguishable after roundtrip
+        let roundtripped: Vec<_> = enum_iterator::all::<Medallion>()
+            .map(|m| {
+                let s = m.to_string();
+                Medallion::from_str(&s).unwrap()
+            })
+            .collect();
+
+        // All should be unique
+        for (i, m1) in roundtripped.iter().enumerate() {
+            for (j, m2) in roundtripped.iter().enumerate() {
+                if i != j {
+                    assert_ne!(m1, m2, "Medallions at {} and {} should be different", i, j);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_stone_distinguishable_after_roundtrip() {
+        // Ensure all stones remain distinguishable after roundtrip
+        let roundtripped: Vec<_> = enum_iterator::all::<Stone>()
+            .map(|s| {
+                let str = s.to_string();
+                Stone::from_str(&str).unwrap()
+            })
+            .collect();
+
+        // All should be unique
+        for (i, s1) in roundtripped.iter().enumerate() {
+            for (j, s2) in roundtripped.iter().enumerate() {
+                if i != j {
+                    assert_ne!(s1, s2, "Stones at {} and {} should be different", i, j);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_dungeon_reward_type_preservation() {
+        // Verify that Medallion/Stone type is preserved through DungeonReward roundtrip
+        for medallion in enum_iterator::all::<Medallion>() {
+            let reward = DungeonReward::Medallion(medallion);
+            let str = reward.to_string();
+            let parsed = DungeonReward::from_str(&str).unwrap();
+
+            match parsed {
+                DungeonReward::Medallion(m) => assert_eq!(medallion, m),
+                DungeonReward::Stone(_) => {
+                    panic!("Expected Medallion, got Stone after roundtrip")
+                }
+            }
+        }
+
+        for stone in enum_iterator::all::<Stone>() {
+            let reward = DungeonReward::Stone(stone);
+            let str = reward.to_string();
+            let parsed = DungeonReward::from_str(&str).unwrap();
+
+            match parsed {
+                DungeonReward::Stone(s) => assert_eq!(stone, s),
+                DungeonReward::Medallion(_) => {
+                    panic!("Expected Stone, got Medallion after roundtrip")
+                }
+            }
+        }
+    }
 }
