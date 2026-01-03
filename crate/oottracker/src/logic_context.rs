@@ -1021,9 +1021,13 @@ impl EvalContext for MmGameContext<'_> {
 
     /// Get the current MM time as a numeric value.
     ///
-    /// Currently returns 0 as time tracking is not yet implemented.
+    /// MM time is stored as a u16 where 0x0000-0xFFFF represents the 3-day cycle.
+    /// EvalContext expects time in minutes since Day 1 at 6:00 AM (0-4319).
+    /// Convert the raw time to the expected format.
     fn mm_time(&self) -> u32 {
-        0
+        let raw_time = u32::from(self.save.time);
+        // Scale from 0-65535 to 0-4319
+        (raw_time * 4320) / 65536
     }
 }
 
@@ -1895,11 +1899,25 @@ mod tests {
     }
 
     #[test]
-    fn test_eval_context_mm_time_stub() {
-        let save = make_save();
-        let ctx = MmGameContext::new(&save);
+    fn test_eval_context_mm_time() {
+        let mut save = make_save();
 
-        assert_eq!(EvalContext::mm_time(&ctx), 0);
+        // Test with time = 0
+        save.time = 0x0000;
+        let ctx = MmGameContext::new(&save);
+        assert_eq!(ctx.mm_time(), 0);
+
+        // Test with max time (should be close to 4319)
+        save.time = 0xFFFF;
+        let ctx = MmGameContext::new(&save);
+        let time = ctx.mm_time();
+        assert!(time < 4320); // Max is 4319
+
+        // Test midpoint value
+        save.time = 0x8000;
+        let ctx = MmGameContext::new(&save);
+        let time = ctx.mm_time();
+        assert!(time > 2000 && time < 2200); // Should be around 2160 (halfway)
     }
 
     #[test]
@@ -1910,5 +1928,53 @@ mod tests {
         // With mm_time = 0 (default), is_day should be true
         assert!(EvalContext::is_day(&ctx));
         assert!(!EvalContext::is_night(&ctx));
+    }
+
+    #[test]
+    fn test_evalcontext_setting_returns_none() {
+        let save = make_save();
+        let ctx = MmGameContext::new(&save);
+
+        // setting() should return None for any setting (stub implementation)
+        assert_eq!(ctx.setting("any_setting"), None);
+        assert_eq!(ctx.setting("shuffle_songs"), None);
+        assert_eq!(ctx.setting("open_forest"), None);
+        assert_eq!(ctx.setting(""), None);
+        assert_eq!(ctx.setting("UPPERCASE_SETTING"), None);
+    }
+
+    #[test]
+    fn test_evalcontext_trick_returns_false() {
+        let save = make_save();
+        let ctx = MmGameContext::new(&save);
+
+        // trick() should return false for any trick (stub implementation)
+        assert!(!ctx.trick("any_trick"));
+        assert!(!ctx.trick("hover_boost"));
+        assert!(!ctx.trick("bomb_hover"));
+        assert!(!ctx.trick(""));
+        assert!(!ctx.trick("UPPERCASE_TRICK"));
+    }
+
+    #[test]
+    fn test_evalcontext_no_panic_on_unknown_settings_tricks() {
+        let save = make_save();
+        let ctx = MmGameContext::new(&save);
+
+        // Should not panic on any input
+        let _ = ctx.setting("!@#$%^&*()");
+        let _ = ctx.setting("very_long_setting_name_that_definitely_does_not_exist");
+        let _ = ctx.trick("!@#$%^&*()");
+        let _ = ctx.trick("very_long_trick_name_that_definitely_does_not_exist");
+    }
+
+    #[test]
+    fn test_evalcontext_event_returns_false() {
+        let save = make_save();
+        let ctx = MmGameContext::new(&save);
+
+        // event() should return false (stub implementation)
+        assert!(!ctx.event("any_event"));
+        assert!(!ctx.event("FOREST_TEMPLE_CLEAR"));
     }
 }
