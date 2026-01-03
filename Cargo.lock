@@ -3311,6 +3311,7 @@ dependencies = [
  "sqlx",
  "thiserror 1.0.44",
  "tokio",
+ "tracing",
  "warp",
  "wheel",
 ]
