@@ -165,11 +165,12 @@ mod parsing {
 }
 
 // ============================================================================
-// Mock context tests (for future evaluator integration)
+// Mock context tests (verifying evaluator integration)
 // ============================================================================
 
 mod context {
     use super::*;
+    use ootmm::expr::eval_str;
 
     #[test]
     fn test_mock_context_basic() {
@@ -178,7 +179,7 @@ mod context {
             .with_event("MIDO_MOVED")
             .with_setting("shuffle_scrubs");
 
-        // Verify context is set up correctly
+        // Verify context is set up correctly via EvalContext trait
         use ootmm::expr::EvalContext;
         assert!(ctx.is_adult());
         assert!(!ctx.is_child());
@@ -189,6 +190,28 @@ mod context {
         assert!(!ctx.event("OTHER_EVENT"));
         assert_eq!(ctx.setting("shuffle_scrubs"), Some(true));
         assert_eq!(ctx.setting("unknown_setting"), None);
+
+        // Verify the evaluator uses this context correctly
+        assert!(
+            eval_str("is_adult && has(HOOKSHOT)", &ctx).unwrap(),
+            "Adult with hookshot should pass"
+        );
+        assert!(
+            eval_str("has(HOOKSHOT) && has(BOW)", &ctx).unwrap(),
+            "Has both hookshot and bow"
+        );
+        assert!(
+            !eval_str("has(SLINGSHOT)", &ctx).unwrap(),
+            "Does not have slingshot"
+        );
+        assert!(
+            eval_str("event(MIDO_MOVED)", &ctx).unwrap(),
+            "MIDO_MOVED event is set"
+        );
+        assert!(
+            eval_str("setting(shuffle_scrubs)", &ctx).unwrap(),
+            "shuffle_scrubs setting is enabled"
+        );
     }
 
     #[test]
@@ -200,6 +223,30 @@ mod context {
         assert!(ctx.is_child());
         assert!(ctx.has_item("SLINGSHOT", 1));
         assert!(ctx.has_item("BOOMERANG", 1));
+
+        // Verify the evaluator handles child context correctly
+        assert!(
+            eval_str("is_child", &ctx).unwrap(),
+            "is_child should be true"
+        );
+        assert!(
+            !eval_str("is_adult", &ctx).unwrap(),
+            "is_adult should be false for child"
+        );
+        assert!(
+            eval_str("has(SLINGSHOT) && has(BOOMERANG)", &ctx).unwrap(),
+            "Child has both slingshot and boomerang"
+        );
+
+        // Test that child-specific logic works
+        assert!(
+            eval_str("is_child && has(SLINGSHOT)", &ctx).unwrap(),
+            "Child with slingshot should pass child-only check"
+        );
+        assert!(
+            !eval_str("is_adult && has(SLINGSHOT)", &ctx).unwrap(),
+            "Adult check should fail for child context"
+        );
     }
 
     #[test]
@@ -213,6 +260,85 @@ mod context {
         assert!(ctx.has_item("BOTTLE", 3));
         assert!(ctx.has_item("BOTTLE", 4));
         assert!(!ctx.has_item("BOTTLE", 5));
+
+        // Verify the evaluator correctly handles item counts
+        assert!(
+            eval_str("has(BOTTLE, 1)", &ctx).unwrap(),
+            "Should have at least 1 bottle"
+        );
+        assert!(
+            eval_str("has(BOTTLE, 4)", &ctx).unwrap(),
+            "Should have at least 4 bottles"
+        );
+        assert!(
+            !eval_str("has(BOTTLE, 5)", &ctx).unwrap(),
+            "Should not have 5 bottles"
+        );
+
+        // Test boundary conditions
+        assert!(
+            eval_str("has(BOTTLE, 4) && !has(BOTTLE, 5)", &ctx).unwrap(),
+            "Should have exactly 4 bottles (at least 4 but not 5)"
+        );
+    }
+
+    #[test]
+    fn test_context_with_complex_game_logic() {
+        // Set up a realistic Forest Temple access check scenario
+        let adult_with_hookshot = MockEvalContext::adult().with_item("HOOKSHOT");
+
+        let child_with_hookshot = MockEvalContext::child().with_item("HOOKSHOT");
+
+        let adult_without_hookshot = MockEvalContext::adult();
+
+        // Forest Temple requires adult with hookshot
+        let forest_temple_check = "is_adult && has(HOOKSHOT)";
+
+        assert!(
+            eval_str(forest_temple_check, &adult_with_hookshot).unwrap(),
+            "Adult with hookshot can access Forest Temple"
+        );
+        assert!(
+            !eval_str(forest_temple_check, &child_with_hookshot).unwrap(),
+            "Child cannot access Forest Temple even with hookshot"
+        );
+        assert!(
+            !eval_str(forest_temple_check, &adult_without_hookshot).unwrap(),
+            "Adult without hookshot cannot access Forest Temple"
+        );
+    }
+
+    #[test]
+    fn test_context_with_events_and_settings() {
+        let ctx = MockEvalContext::adult()
+            .with_event("WATER_TEMPLE_CLEAR")
+            .with_setting("skip_child_zelda");
+
+        // Test event-based logic
+        assert!(
+            eval_str("event(WATER_TEMPLE_CLEAR)", &ctx).unwrap(),
+            "Water Temple should be cleared"
+        );
+        assert!(
+            !eval_str("event(FIRE_TEMPLE_CLEAR)", &ctx).unwrap(),
+            "Fire Temple should not be cleared"
+        );
+
+        // Test setting-based logic
+        assert!(
+            eval_str("setting(skip_child_zelda)", &ctx).unwrap(),
+            "skip_child_zelda should be enabled"
+        );
+
+        // Test combined condition
+        assert!(
+            eval_str(
+                "event(WATER_TEMPLE_CLEAR) || event(FIRE_TEMPLE_CLEAR)",
+                &ctx
+            )
+            .unwrap(),
+            "At least one temple should be cleared"
+        );
     }
 }
 

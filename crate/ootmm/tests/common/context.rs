@@ -188,6 +188,11 @@ impl EvalContext for MockEvalContext {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ootmm::expr::eval_str;
+
+    // =========================================================================
+    // Mock storage verification tests (EvalContext trait implementation)
+    // =========================================================================
 
     #[test]
     fn test_default_context_is_empty() {
@@ -271,5 +276,160 @@ mod tests {
         ctx.set_child(true);
         assert!(ctx.is_child());
         assert!(!ctx.is_adult());
+    }
+
+    // =========================================================================
+    // System behavior verification tests
+    // These tests verify the evaluator actually uses the mock context correctly
+    // =========================================================================
+
+    #[test]
+    fn test_empty_context_evaluates_expressions_as_false() {
+        let ctx = MockEvalContext::new();
+
+        // Empty context should make all item/event/age checks false
+        assert!(!eval_str("has(HOOKSHOT)", &ctx).unwrap());
+        assert!(!eval_str("event(MIDO_MOVED)", &ctx).unwrap());
+        assert!(!eval_str("is_adult", &ctx).unwrap());
+        assert!(!eval_str("is_child", &ctx).unwrap());
+
+        // But true/false literals should still work
+        assert!(eval_str("true", &ctx).unwrap());
+        assert!(!eval_str("false", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_adult_context_affects_expression_evaluation() {
+        let ctx = MockEvalContext::adult();
+
+        // is_adult expression should evaluate to true
+        assert!(eval_str("is_adult", &ctx).unwrap());
+        assert!(!eval_str("is_child", &ctx).unwrap());
+
+        // Complex expressions using is_adult
+        assert!(eval_str("is_adult || has(HOOKSHOT)", &ctx).unwrap());
+        assert!(!eval_str("is_adult && has(HOOKSHOT)", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_child_context_affects_expression_evaluation() {
+        let ctx = MockEvalContext::child();
+
+        // is_child expression should evaluate to true
+        assert!(!eval_str("is_adult", &ctx).unwrap());
+        assert!(eval_str("is_child", &ctx).unwrap());
+
+        // Complex expressions using is_child
+        assert!(eval_str("is_child || has(SLINGSHOT)", &ctx).unwrap());
+        assert!(!eval_str("is_child && has(SLINGSHOT)", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_items_affect_has_expression() {
+        let ctx = MockEvalContext::adult()
+            .with_item("HOOKSHOT")
+            .with_item("BOW");
+
+        // Items should be recognized by has()
+        assert!(eval_str("has(HOOKSHOT)", &ctx).unwrap());
+        assert!(eval_str("has(BOW)", &ctx).unwrap());
+        assert!(!eval_str("has(BOMBS)", &ctx).unwrap());
+
+        // Complex expressions with items
+        assert!(eval_str("has(HOOKSHOT) && has(BOW)", &ctx).unwrap());
+        assert!(eval_str("has(HOOKSHOT) || has(BOMBS)", &ctx).unwrap());
+        assert!(!eval_str("has(HOOKSHOT) && has(BOMBS)", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_item_counts_affect_has_expression_with_count() {
+        let mut ctx = MockEvalContext::new();
+        ctx.add_item("BOTTLE", 3);
+
+        // has() with count should respect item quantities
+        assert!(eval_str("has(BOTTLE, 1)", &ctx).unwrap());
+        assert!(eval_str("has(BOTTLE, 2)", &ctx).unwrap());
+        assert!(eval_str("has(BOTTLE, 3)", &ctx).unwrap());
+        assert!(!eval_str("has(BOTTLE, 4)", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_events_affect_event_expression() {
+        let ctx = MockEvalContext::adult()
+            .with_event("MIDO_MOVED")
+            .with_event("WATER_TEMPLE_CLEAR");
+
+        // Events should be recognized by event()
+        assert!(eval_str("event(MIDO_MOVED)", &ctx).unwrap());
+        assert!(eval_str("event(WATER_TEMPLE_CLEAR)", &ctx).unwrap());
+        assert!(!eval_str("event(FIRE_TEMPLE_CLEAR)", &ctx).unwrap());
+
+        // Complex expressions with events
+        assert!(eval_str("event(MIDO_MOVED) && event(WATER_TEMPLE_CLEAR)", &ctx).unwrap());
+        assert!(eval_str("event(MIDO_MOVED) || event(FIRE_TEMPLE_CLEAR)", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_settings_affect_setting_expression() {
+        let ctx = MockEvalContext::adult().with_setting("shuffle_scrubs");
+
+        // Settings should be recognized by setting()
+        assert!(eval_str("setting(shuffle_scrubs)", &ctx).unwrap());
+        assert!(!eval_str("setting(shuffle_songs)", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_tricks_affect_trick_expression() {
+        let ctx = MockEvalContext::adult().with_trick("logic_lens_botw");
+
+        // Tricks should be recognized by trick()
+        assert!(eval_str("trick(logic_lens_botw)", &ctx).unwrap());
+        assert!(!eval_str("trick(logic_dc_jump)", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_combined_context_evaluates_complex_expression() {
+        // Set up a realistic game state
+        let ctx = MockEvalContext::adult()
+            .with_items(["HOOKSHOT", "BOW", "BOMBS"])
+            .with_event("MIDO_MOVED")
+            .with_setting("shuffle_scrubs");
+
+        // This complex expression should evaluate to true
+        let expr = "is_adult && has(HOOKSHOT) && event(MIDO_MOVED)";
+        assert!(
+            eval_str(expr, &ctx).unwrap(),
+            "Adult with hookshot and MIDO_MOVED event should satisfy the condition"
+        );
+
+        // Missing item should fail
+        let expr2 = "is_adult && has(LONGSHOT) && event(MIDO_MOVED)";
+        assert!(
+            !eval_str(expr2, &ctx).unwrap(),
+            "Adult without longshot should fail"
+        );
+
+        // Alternative paths should work
+        let expr3 = "has(HOOKSHOT) || has(LONGSHOT)";
+        assert!(
+            eval_str(expr3, &ctx).unwrap(),
+            "Having hookshot should satisfy hookshot OR longshot"
+        );
+    }
+
+    #[test]
+    fn test_age_mutation_changes_expression_results() {
+        let mut ctx = MockEvalContext::child().with_item("HOOKSHOT");
+
+        // Child with hookshot - is_adult check fails
+        assert!(!eval_str("is_adult && has(HOOKSHOT)", &ctx).unwrap());
+        assert!(eval_str("is_child && has(HOOKSHOT)", &ctx).unwrap());
+
+        // Mutate to adult
+        ctx.set_adult(true);
+
+        // Now is_adult check passes
+        assert!(eval_str("is_adult && has(HOOKSHOT)", &ctx).unwrap());
+        assert!(!eval_str("is_child && has(HOOKSHOT)", &ctx).unwrap());
     }
 }
