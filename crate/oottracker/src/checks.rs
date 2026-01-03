@@ -2,7 +2,7 @@ use {
     crate::{region::RegionLookupError, Check, ModelState},
     derivative::Derivative,
     derive_more::From,
-    ootr::{region::Mq, Rando},
+    ootr::{model::Medallion, region::Mq, Rando},
     std::{error::Error, fmt, io, sync::Arc},
 };
 
@@ -40,6 +40,95 @@ impl fmt::Display for CheckError {
 
 impl Error for CheckError {}
 
+/// Maps trial clear event names to their corresponding medallions.
+fn trial_clear_to_medallion(event: &str) -> Option<Medallion> {
+    match event {
+        "Spirit Trial Clear" => Some(Medallion::Spirit),
+        "Light Trial Clear" => Some(Medallion::Light),
+        "Fire Trial Clear" => Some(Medallion::Fire),
+        "Shadow Trial Clear" => Some(Medallion::Shadow),
+        "Water Trial Clear" => Some(Medallion::Water),
+        "Forest Trial Clear" => Some(Medallion::Forest),
+        _ => None,
+    }
+}
+
+/// Checks if a trial clear event is considered "cleared" based on settings knowledge.
+///
+/// Returns:
+/// - `Some(Some(true))` if the trial is known to be inactive (automatically cleared)
+/// - `Some(Some(false))` if the trial is known to be active and RAM shows not cleared
+/// - `Some(Some(true))` if the trial is known to be active and RAM shows cleared (visual confirmation)
+/// - `Some(None)` if the trial status is unknown and RAM shows not cleared
+/// - `None` if this is not a trial clear event
+fn check_trial_clear_with_settings(event: &str, model: &ModelState) -> Option<Option<bool>> {
+    let medallion = trial_clear_to_medallion(event)?;
+
+    // Check if we know whether this trial is active
+    match model.knowledge.active_trials.get(&medallion) {
+        Some(false) => {
+            // Trial is known to be inactive - consider it cleared
+            Some(Some(true))
+        }
+        Some(true) => {
+            // Trial is known to be active - trust RAM value (visual confirmation or actual state)
+            let ram_result = model
+                .ram
+                .save
+                .event_chk_inf
+                .checked(&Check::<ootr_static::Rando>::Event(event.to_string()));
+            Some(ram_result)
+        }
+        None => {
+            // Trial status unknown - check RAM, but be careful
+            let ram_result = model
+                .ram
+                .save
+                .event_chk_inf
+                .checked(&Check::<ootr_static::Rando>::Event(event.to_string()));
+            match ram_result {
+                Some(true) => {
+                    // RAM shows cleared - trust visual confirmation
+                    Some(Some(true))
+                }
+                Some(false) | None => {
+                    // RAM shows not cleared or unknown - we can't determine status
+                    // because we don't know if the trial is even active
+                    Some(None)
+                }
+            }
+        }
+    }
+}
+
+/// Checks if Kakariko Village Gate is open based on settings knowledge.
+///
+/// Returns:
+/// - `Some(Some(true))` if settings say kakariko is open
+/// - `Some(ram_value)` if settings say kakariko is closed (trust RAM/visual confirmation)
+/// - `None` if this is not the kakariko gate event
+fn check_kakariko_gate_with_settings(event: &str, model: &ModelState) -> Option<Option<bool>> {
+    if event != "Kakariko Village Gate Open" {
+        return None;
+    }
+
+    // Check the open_kakariko setting
+    if let Some(values) = model.knowledge.string_settings.get("open_kakariko") {
+        if values.contains("open") {
+            // Kakariko is set to open - gate is always open
+            return Some(Some(true));
+        }
+    }
+
+    // Either settings say closed, or we don't know - trust RAM value (visual confirmation)
+    let ram_result = model
+        .ram
+        .save
+        .inf_table
+        .checked(&Check::<ootr_static::Rando>::Event(event.to_string()));
+    Some(ram_result)
+}
+
 pub trait CheckExt {
     /// Check if this check has been completed.
     ///
@@ -52,6 +141,20 @@ pub trait CheckExt {
 impl<R: Rando> CheckExt for Check<R> {
     fn checked(&self, model: &ModelState) -> Result<Option<bool>, CheckError> {
         // event and location lists from Dev-R as of commit b670183e9aff520c20ac2ee65aa55e3740c5f4b4
+
+        // Settings-aware event checks: trial clears and kakariko gate
+        // These must be checked before standard RAM checks to apply settings knowledge
+        if let Check::Event(event) = self {
+            // Check trial clear events with settings awareness
+            if let Some(result) = check_trial_clear_with_settings(event, model) {
+                return Ok(result);
+            }
+            // Check kakariko gate with settings awareness
+            if let Some(result) = check_kakariko_gate_with_settings(event, model) {
+                return Ok(result);
+            }
+        }
+
         if let Some(checked) = model.ram.save.gold_skulltulas.checked(self) {
             return Ok(Some(checked));
         }

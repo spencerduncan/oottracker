@@ -46,16 +46,16 @@ flags_list! {
             SCARECROW_SONG = 0x1000,
         },
         10: {
-            event "Spirit Trial Clear" = 0x2000, //TODO only consider when known by settings knowledge or visual confirmation
+            event "Spirit Trial Clear" = 0x2000, // settings-aware: handled in checks.rs
             "Sheik at Colossus" = 0x1000,
             "Song from Ocarina of Time" = 0x0200,
         },
         11: {
-            event "Light Trial Clear" = 0x8000, //TODO only consider when known by settings knowledge or visual confirmation
-            event "Fire Trial Clear" = 0x4000, //TODO only consider when known by settings knowledge or visual confirmation
-            event "Shadow Trial Clear" = 0x2000, //TODO only consider when known by settings knowledge or visual confirmation
-            event "Water Trial Clear" = 0x1000, //TODO only consider when known by settings knowledge or visual confirmation
-            event "Forest Trial Clear" = 0x0800, //TODO only consider when known by settings knowledge or visual confirmation
+            event "Light Trial Clear" = 0x8000, // settings-aware: handled in checks.rs
+            event "Fire Trial Clear" = 0x4000, // settings-aware: handled in checks.rs
+            event "Shadow Trial Clear" = 0x2000, // settings-aware: handled in checks.rs
+            event "Water Trial Clear" = 0x1000, // settings-aware: handled in checks.rs
+            event "Forest Trial Clear" = 0x0800, // settings-aware: handled in checks.rs
         },
         12: {
             "ToT Light Arrows Cutscene" = 0x0010,
@@ -109,7 +109,7 @@ flags_list! {
 flags_list! {
     pub struct InfTable: [u8; 60] {
         15: {
-            event "Kakariko Village Gate Open" = 0x40, //TODO only consider when known by settings knowledge or visual confirmation
+            event "Kakariko Village Gate Open" = 0x40, // settings-aware: handled in checks.rs
         },
         32: {
             "GC Rolling Goron as Adult" = 0x02,
