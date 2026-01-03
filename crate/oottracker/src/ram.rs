@@ -21,7 +21,7 @@ use {
     tokio::io::{AsyncRead, AsyncReadExt as _, AsyncWrite, AsyncWriteExt as _},
 };
 
-use crate::mm_save;
+use crate::mm_save::{self, MmSave};
 
 pub const SIZE: usize = 0x80_0000;
 pub const TEXT_LEN: usize = 0xc0;
@@ -165,7 +165,7 @@ bitflags! {
 
 async_proto::bitflags!(Pad: u16);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(try_from = "Vec<Vec<u8>>", into = "Vec<Vec<u8>>")]
 pub struct Ram {
     pub save: Save,
@@ -179,6 +179,8 @@ pub struct Ram {
     pub pause_state: u16,
     pub pause_changing: bool,
     pub pause_screen_idx: u16,
+    /// Majora's Mask save data (populated when tracking MM or combo rando)
+    pub mm_save: Option<MmSave>,
 }
 
 impl Default for Ram {
@@ -195,6 +197,7 @@ impl Default for Ram {
             pause_state: 0,
             pause_changing: false,
             pause_screen_idx: 0,
+            mm_save: None,
         }
     }
 }
@@ -233,6 +236,7 @@ impl Ram {
             pause_state: BigEndian::read_u16(data.pause_state),
             pause_changing: BigEndian::read_u16(data.pause_changing) != 0,
             pause_screen_idx: BigEndian::read_u16(data.pause_screen_idx),
+            mm_save: None,
         })
     }
 
@@ -447,6 +451,7 @@ impl AddAssign<Delta> for Ram {
             current_scene_data,
             text_box_data,
             pause_data,
+            mm_save,
         } = rhs;
         self.save = &self.save + &save;
         self.input_p1_raw_pad = input_p1_raw_pad;
@@ -471,6 +476,9 @@ impl AddAssign<Delta> for Ram {
             self.pause_changing = pause_changing;
             self.pause_screen_idx = pause_screen_idx;
         }
+        if let Some(new_mm_save) = mm_save {
+            self.mm_save = new_mm_save;
+        }
     }
 }
 
@@ -490,6 +498,7 @@ impl Sub<&Ram> for &Ram {
             pause_state,
             pause_changing,
             pause_screen_idx,
+            ref mm_save,
         } = *self;
         Delta {
             save: save - &rhs.save,
@@ -523,18 +532,121 @@ impl Sub<&Ram> for &Ram {
             } else {
                 Some((pause_state, pause_changing, pause_screen_idx))
             },
+            mm_save: if mm_save == &rhs.mm_save {
+                None
+            } else {
+                Some(mm_save.clone())
+            },
         }
     }
 }
 
 /// The difference between two RAM states.
-#[derive(Debug, Clone, Protocol)]
+#[derive(Debug, Clone)]
 pub struct Delta {
     save: save::Delta,
     input_p1_raw_pad: Pad,
     current_scene_data: Option<(u8, u32, u32, u32)>,
     text_box_data: Option<(u16, [u8; TEXT_LEN])>,
     pause_data: Option<(u16, bool, u16)>,
+    /// Changed MM save data (None = no change, Some(value) = changed to value)
+    mm_save: Option<Option<MmSave>>,
+}
+
+impl Protocol for Delta {
+    fn read<'a, R: AsyncRead + Unpin + Send + 'a>(
+        stream: &'a mut R,
+    ) -> Pin<Box<dyn Future<Output = Result<Self, ReadError>> + Send + 'a>> {
+        Box::pin(async move {
+            let save = save::Delta::read(stream).await?;
+            let input_p1_raw_pad = Pad::read(stream).await?;
+            let current_scene_data = Option::<(u8, u32, u32, u32)>::read(stream).await?;
+            let text_box_data = Option::<(u16, [u8; TEXT_LEN])>::read(stream).await?;
+            let pause_data = Option::<(u16, bool, u16)>::read(stream).await?;
+            // mm_save is serialized as Option<Option<Vec<u8>>>
+            let mm_save_bytes = Option::<Option<Vec<u8>>>::read(stream).await?;
+            let mm_save = match mm_save_bytes {
+                None => None,
+                Some(None) => Some(None),
+                Some(Some(bytes)) => {
+                    let save = MmSave::from_save_data(&bytes).map_err(|e| {
+                        ReadError::Custom(format!("failed to decode MM save: {e:?}"))
+                    })?;
+                    Some(Some(save))
+                }
+            };
+            Ok(Delta {
+                save,
+                input_p1_raw_pad,
+                current_scene_data,
+                text_box_data,
+                pause_data,
+                mm_save,
+            })
+        })
+    }
+
+    fn write<'a, W: AsyncWrite + Unpin + Send + 'a>(
+        &'a self,
+        sink: &'a mut W,
+    ) -> Pin<Box<dyn Future<Output = Result<(), WriteError>> + Send + 'a>> {
+        Box::pin(async move {
+            self.save.write(sink).await?;
+            self.input_p1_raw_pad.write(sink).await?;
+            self.current_scene_data.write(sink).await?;
+            self.text_box_data.write(sink).await?;
+            self.pause_data.write(sink).await?;
+            // Serialize mm_save as Option<Option<Vec<u8>>>
+            let mm_save_bytes: Option<Option<Vec<u8>>> = match &self.mm_save {
+                None => None,
+                Some(None) => Some(None),
+                Some(Some(save)) => Some(Some(save.to_save_data())),
+            };
+            mm_save_bytes.write(sink).await?;
+            Ok(())
+        })
+    }
+
+    fn read_sync(stream: &mut impl Read) -> Result<Self, ReadError> {
+        let save = save::Delta::read_sync(stream)?;
+        let input_p1_raw_pad = Pad::read_sync(stream)?;
+        let current_scene_data = Option::<(u8, u32, u32, u32)>::read_sync(stream)?;
+        let text_box_data = Option::<(u16, [u8; TEXT_LEN])>::read_sync(stream)?;
+        let pause_data = Option::<(u16, bool, u16)>::read_sync(stream)?;
+        let mm_save_bytes = Option::<Option<Vec<u8>>>::read_sync(stream)?;
+        let mm_save = match mm_save_bytes {
+            None => None,
+            Some(None) => Some(None),
+            Some(Some(bytes)) => {
+                let save = MmSave::from_save_data(&bytes)
+                    .map_err(|e| ReadError::Custom(format!("failed to decode MM save: {e:?}")))?;
+                Some(Some(save))
+            }
+        };
+        Ok(Delta {
+            save,
+            input_p1_raw_pad,
+            current_scene_data,
+            text_box_data,
+            pause_data,
+            mm_save,
+        })
+    }
+
+    fn write_sync(&self, sink: &mut impl Write) -> Result<(), WriteError> {
+        self.save.write_sync(sink)?;
+        self.input_p1_raw_pad.write_sync(sink)?;
+        self.current_scene_data.write_sync(sink)?;
+        self.text_box_data.write_sync(sink)?;
+        self.pause_data.write_sync(sink)?;
+        let mm_save_bytes: Option<Option<Vec<u8>>> = match &self.mm_save {
+            None => None,
+            Some(None) => Some(None),
+            Some(Some(save)) => Some(Some(save.to_save_data())),
+        };
+        mm_save_bytes.write_sync(sink)?;
+        Ok(())
+    }
 }
 
 impl From<Ram> for Vec<Vec<u8>> {
@@ -548,5 +660,116 @@ impl TryFrom<Vec<Vec<u8>>> for Ram {
 
     fn try_from(ranges: Vec<Vec<u8>>) -> Result<Self, DecodeError> {
         Self::from_range_bufs(ranges)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ram_default_has_no_mm_save() {
+        let ram = Ram::default();
+        assert!(ram.mm_save.is_none());
+    }
+
+    #[test]
+    fn test_ram_with_mm_save() {
+        let mut ram = Ram::default();
+        let mm_save = MmSave::default();
+        ram.mm_save = Some(mm_save);
+        assert!(ram.mm_save.is_some());
+    }
+
+    #[test]
+    fn test_delta_no_mm_save_change() {
+        let ram1 = Ram::default();
+        let ram2 = Ram::default();
+        let delta = &ram1 - &ram2;
+        assert!(delta.mm_save.is_none());
+    }
+
+    #[test]
+    fn test_delta_mm_save_change_from_none_to_some() {
+        let ram1 = Ram::default();
+        let ram2 = Ram {
+            mm_save: Some(MmSave::default()),
+            ..Default::default()
+        };
+
+        let delta = &ram2 - &ram1;
+        assert!(delta.mm_save.is_some());
+        assert!(delta.mm_save.as_ref().unwrap().is_some());
+    }
+
+    #[test]
+    fn test_delta_mm_save_change_from_some_to_none() {
+        let ram1 = Ram {
+            mm_save: Some(MmSave::default()),
+            ..Default::default()
+        };
+        let ram2 = Ram::default();
+
+        let delta = &ram2 - &ram1;
+        assert!(delta.mm_save.is_some());
+        assert!(delta.mm_save.as_ref().unwrap().is_none());
+    }
+
+    #[test]
+    fn test_add_assign_delta_with_mm_save() {
+        let mut ram = Ram::default();
+        assert!(ram.mm_save.is_none());
+
+        // Create new state with mm_save
+        let new_ram = Ram {
+            mm_save: Some(MmSave::default()),
+            ..Default::default()
+        };
+
+        // Create delta by subtraction
+        let delta = &new_ram - &ram;
+
+        // Apply delta
+        ram += delta;
+        assert!(ram.mm_save.is_some());
+    }
+
+    #[test]
+    fn test_add_assign_delta_clears_mm_save() {
+        let mut ram = Ram {
+            mm_save: Some(MmSave::default()),
+            ..Default::default()
+        };
+        assert!(ram.mm_save.is_some());
+
+        // Create new state without mm_save
+        let new_ram = Ram::default();
+
+        // Create delta by subtraction
+        let delta = &new_ram - &ram;
+
+        // Apply delta
+        ram += delta;
+        assert!(ram.mm_save.is_none());
+    }
+
+    #[test]
+    fn test_add_assign_delta_no_mm_save_change() {
+        let ram = Ram {
+            mm_save: Some(MmSave::default()),
+            ..Default::default()
+        };
+
+        // Create identical state
+        let new_ram = ram.clone();
+
+        // Delta should have no mm_save change
+        let delta = &new_ram - &ram;
+        assert!(delta.mm_save.is_none());
+
+        // Apply delta (should not change mm_save)
+        let mut ram = ram;
+        ram += delta;
+        assert!(ram.mm_save.is_some());
     }
 }
