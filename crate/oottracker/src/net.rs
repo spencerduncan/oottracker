@@ -2,6 +2,7 @@
 use crate::firebase;
 use {
     crate::{
+        game_detection::{ActiveGame, GameDetector, GameType},
         proto::{self, Packet, TCP_PORT},
         ram::{self, Ram},
         websocket, ModelState,
@@ -304,6 +305,13 @@ pub struct RetroArchConnection {
     pub port: u16,
 }
 
+/// State carried between tracking iterations for RetroArch connections
+struct RetroArchTrackingState {
+    sock: UdpSocket,
+    game_detector: GameDetector,
+    last_active_game: Option<ActiveGame>,
+}
+
 impl Connection for RetroArchConnection {
     fn hash(&self) -> u64 {
         let mut state = DefaultHasher::default();
@@ -325,23 +333,33 @@ impl Connection for RetroArchConnection {
             Box::pin(async move {
                 let sock = UdpSocket::bind((Ipv4Addr::UNSPECIFIED, 0)).await?;
                 sock.connect((Ipv4Addr::LOCALHOST, port)).await?;
-                Ok::<_, Error>(sock)
+                Ok::<_, Error>(RetroArchTrackingState {
+                    sock,
+                    game_detector: GameDetector::new(),
+                    last_active_game: None,
+                })
             }) as Pin<Box<dyn Future<Output = _> + Send>>,
-            |sock| async move {
+            |state_fut| async move {
                 sleep(Duration::from_secs(1)).await;
-                let sock = sock.await?;
-                let mut ram = retroarch_read_ram(&sock).await?;
+                let mut state: RetroArchTrackingState = state_fut.await?;
 
-                // Also read MM RAM and parse it (best-effort, don't fail if MM read fails)
-                if let Ok(mm_raw) = retroarch_read_mm_ram(&sock).await {
-                    if let Ok(mm_save) = ram::decode_mm_range_bufs(vec![mm_raw]) {
-                        ram.mm_save = Some(mm_save);
+                // Detect game type at the start of each iteration
+                let ram = retroarch_read_ram_with_detection(&state.sock, &mut state.game_detector)
+                    .await?;
+
+                // Check for game transitions in combo mode
+                let detection_result = state.game_detector.active_game();
+                if let Some(last_game) = state.last_active_game {
+                    if last_game != detection_result {
+                        // Game transition detected in combo mode
+                        // The game_detector already tracks this internally
                     }
                 }
+                state.last_active_game = Some(detection_result);
 
                 Ok(Some((
                     Packet::RamInit(ram),
-                    Box::pin(async move { Ok(sock) }) as Pin<Box<dyn Future<Output = _> + Send>>,
+                    Box::pin(async move { Ok(state) }) as Pin<Box<dyn Future<Output = _> + Send>>,
                 )))
             },
         ))
@@ -355,6 +373,7 @@ impl Connection for RetroArchConnection {
 /// The RetroArch UDP API does not seem to be documented,
 /// but there is a Python implementation at
 /// <https://github.com/eadmaster/console_hiscore/blob/master/tools/retroarchpythonapi.py>
+#[allow(dead_code)]
 async fn retroarch_read_ram(sock: &UdpSocket) -> Result<Ram, Error> {
     let ranges = stream::iter(ram::RANGES.iter().copied().tuples())
         .then(|(start, len)| async move { retroarch_read_memory_range(sock, start, len).await })
@@ -363,15 +382,163 @@ async fn retroarch_read_ram(sock: &UdpSocket) -> Result<Ram, Error> {
     Ok(Ram::from_range_bufs(ranges)?)
 }
 
-/// Read MM memory ranges via RetroArch UDP API
-/// Returns raw bytes for MM SaveContext
-async fn retroarch_read_mm_ram(sock: &UdpSocket) -> Result<Vec<u8>, Error> {
-    let ranges = stream::iter(ram::MM_RANGES.iter().copied().tuples())
-        .then(|(start, len)| async move { retroarch_read_memory_range(sock, start, len).await })
-        .try_collect::<Vec<_>>()
-        .await?;
-    // For MM, we just return the first range which is the full save context
-    Ok(ranges.into_iter().next().unwrap_or_default())
+/// Read RAM with game type detection.
+///
+/// This function detects the current game type (OoT, MM, or OoTMM combo) and reads
+/// the appropriate RAM ranges based on the detected game. It also handles game
+/// transitions in combo mode by detecting which game is currently active.
+async fn retroarch_read_ram_with_detection(
+    sock: &UdpSocket,
+    detector: &mut GameDetector,
+) -> Result<Ram, Error> {
+    // First, detect what game is running by reading detection memory regions
+    let detected_game_type = retroarch_detect_game_type(sock).await?;
+
+    // Update the detector's game type if we detected something specific
+    if detected_game_type != GameType::StandaloneOoT
+        || detector.game_type() == GameType::StandaloneOoT
+    {
+        detector.set_game_type(detected_game_type);
+    }
+
+    // For combo mode, we need to read additional memory to detect active game
+    if detected_game_type == GameType::OoTMMCombo {
+        // Create a minimal RAM buffer for detection (we need context addresses)
+        let mut detection_buffer = vec![0u8; crate::game_detection::RAM_SIZE];
+        let oot_ctx_offset = (crate::game_detection::OOTMM_OOT_CONTEXT_ADDR
+            - crate::game_detection::RDRAM_BASE) as usize;
+        let mm_ctx_offset = (crate::game_detection::OOTMM_MM_CONTEXT_ADDR
+            - crate::game_detection::RDRAM_BASE) as usize;
+
+        // Read the combo context addresses directly
+        let oot_ctx = retroarch_read_memory_range(sock, oot_ctx_offset as u32, 4).await?;
+        let mm_ctx = retroarch_read_memory_range(sock, mm_ctx_offset as u32, 4).await?;
+
+        // Fill in the detection buffer at the appropriate offsets
+        if oot_ctx_offset + 4 <= detection_buffer.len() {
+            detection_buffer[oot_ctx_offset..oot_ctx_offset + 4].copy_from_slice(&oot_ctx);
+        }
+        if mm_ctx_offset + 4 <= detection_buffer.len() {
+            detection_buffer[mm_ctx_offset..mm_ctx_offset + 4].copy_from_slice(&mm_ctx);
+        }
+
+        // Detect which game is active in combo mode
+        let _ = detector.detect_from_ram(&detection_buffer);
+    }
+
+    // Based on detected game type and active game, read the appropriate RAM ranges
+    match detected_game_type {
+        GameType::StandaloneOoT => {
+            // Read OoT RAM ranges
+            let ranges =
+                stream::iter(ram::OOT_RANGES.iter().copied().tuples())
+                    .then(|(start, len)| async move {
+                        retroarch_read_memory_range(sock, start, len).await
+                    })
+                    .try_collect::<Vec<_>>()
+                    .await?;
+            Ok(Ram::from_range_bufs(ranges)?)
+        }
+        GameType::StandaloneMM => {
+            // Read MM RAM ranges and create a Ram with mm_save populated
+            let mm_ranges =
+                stream::iter(ram::MM_RANGES.iter().copied().tuples())
+                    .then(|(start, len)| async move {
+                        retroarch_read_memory_range(sock, start, len).await
+                    })
+                    .try_collect::<Vec<_>>()
+                    .await?;
+
+            let mm_save = ram::decode_mm_range_bufs(mm_ranges)?;
+
+            // For standalone MM, we still need to create a valid Ram struct
+            // Read OoT ranges as well for the base structure (they may be zeroed/invalid)
+            let oot_ranges =
+                stream::iter(ram::OOT_RANGES.iter().copied().tuples())
+                    .then(|(start, len)| async move {
+                        retroarch_read_memory_range(sock, start, len).await
+                    })
+                    .try_collect::<Vec<_>>()
+                    .await?;
+
+            let mut ram = Ram::from_range_bufs(oot_ranges)?;
+            ram.mm_save = Some(mm_save);
+            Ok(ram)
+        }
+        GameType::OoTMMCombo => {
+            // In combo mode, read both OoT and MM ranges
+            let active_game = detector.active_game();
+
+            // Always read OoT ranges for the base structure
+            let oot_ranges =
+                stream::iter(ram::OOT_RANGES.iter().copied().tuples())
+                    .then(|(start, len)| async move {
+                        retroarch_read_memory_range(sock, start, len).await
+                    })
+                    .try_collect::<Vec<_>>()
+                    .await?;
+
+            let mut ram = Ram::from_range_bufs(oot_ranges)?;
+
+            // If MM is active or we're in combo mode, also read MM ranges
+            if active_game == ActiveGame::MajorasMask {
+                let mm_ranges = stream::iter(ram::MM_RANGES.iter().copied().tuples())
+                    .then(|(start, len)| async move {
+                        retroarch_read_memory_range(sock, start, len).await
+                    })
+                    .try_collect::<Vec<_>>()
+                    .await?;
+
+                let mm_save = ram::decode_mm_range_bufs(mm_ranges)?;
+                ram.mm_save = Some(mm_save);
+            }
+
+            Ok(ram)
+        }
+    }
+}
+
+/// Detect the game type by reading memory signatures via RetroArch UDP API.
+///
+/// This checks for:
+/// - OoT "ZELDAZ" magic at save context
+/// - MM save context signatures
+/// - OoTMM combo context addresses
+async fn retroarch_detect_game_type(sock: &UdpSocket) -> Result<GameType, Error> {
+    // Check for OoT "ZELDAZ" magic at save context offset 0x1c
+    let oot_magic = retroarch_read_memory_range(sock, crate::save::ADDR + 0x1c, 6).await?;
+
+    if &oot_magic == b"ZELDAZ" {
+        // Found OoT magic - check if it's combo mode
+        let oot_combo_ctx =
+            retroarch_read_memory_range(sock, ram::OOT_COMBO_CONTEXT_ADDR, 4).await?;
+        let mm_combo_ctx = retroarch_read_memory_range(sock, ram::MM_COMBO_CONTEXT_ADDR, 4).await?;
+
+        // If either combo context is non-zero, this is combo mode
+        if oot_combo_ctx.iter().any(|&b| b != 0) || mm_combo_ctx.iter().any(|&b| b != 0) {
+            return Ok(GameType::OoTMMCombo);
+        }
+
+        return Ok(GameType::StandaloneOoT);
+    }
+
+    // Check for MM by looking at MM save context location
+    let mm_check = retroarch_read_memory_range(sock, ram::MM_SAVE_ADDR, 4).await?;
+    if mm_check.iter().any(|&b| b != 0) {
+        // Check for combo context to be sure it's not combo mode
+        let oot_combo_ctx =
+            retroarch_read_memory_range(sock, ram::OOT_COMBO_CONTEXT_ADDR, 4).await?;
+        let mm_combo_ctx = retroarch_read_memory_range(sock, ram::MM_COMBO_CONTEXT_ADDR, 4).await?;
+
+        if oot_combo_ctx.iter().any(|&b| b != 0) || mm_combo_ctx.iter().any(|&b| b != 0) {
+            return Ok(GameType::OoTMMCombo);
+        }
+
+        return Ok(GameType::StandaloneMM);
+    }
+
+    // Default to OoT if we can't determine the game type
+    Ok(GameType::StandaloneOoT)
 }
 
 /// Read a single memory range via RetroArch UDP API
@@ -426,30 +593,4 @@ async fn retroarch_read_memory_range(
         aligned_len -= count;
     }
     Ok(ram_buf[offset_in_word as usize..(offset_in_word + len) as usize].to_owned())
-}
-
-/// Detect game type via RetroArch UDP API by checking memory signatures
-#[allow(dead_code)]
-async fn retroarch_detect_game(sock: &UdpSocket) -> Result<ram::GameType, Error> {
-    // Check for OoT "ZELDAZ" magic at save context offset 0x1c
-    let oot_magic = retroarch_read_memory_range(sock, crate::save::ADDR + 0x1c, 6).await?;
-    if oot_magic == b"ZELDAZ" {
-        // Check for combo context to distinguish between standalone OoT and combo
-        let combo_check = retroarch_read_memory_range(sock, ram::OOT_COMBO_CONTEXT_ADDR, 4).await?;
-        if combo_check.iter().any(|&b| b != 0) {
-            return Ok(ram::GameType::Combo);
-        }
-        return Ok(ram::GameType::OcarinaOfTime);
-    }
-
-    // Check for MM by reading a signature byte at the MM save context location
-    // MM has a different memory layout - check if MM save context appears valid
-    let mm_check = retroarch_read_memory_range(sock, ram::MM_SAVE_ADDR, 4).await?;
-    if mm_check.iter().any(|&b| b != 0) {
-        // Additional validation could be added here
-        // For now, if we have non-zero data at MM save location and no OoT magic, assume MM
-        return Ok(ram::GameType::MajorasMask);
-    }
-
-    Ok(ram::GameType::Unknown)
 }
