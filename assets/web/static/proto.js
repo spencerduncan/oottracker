@@ -209,10 +209,9 @@ function updateCell(cellID, data, offset) {
         default:
             throw 'unexpected CellOverlay variant';
     }
-    if (elt.hasAttribute('href')) {
-        elt.addEventListener('click', function(event) { event.preventDefault(); sendClick(cellID, false); return false; }, false);
+    if (elt.tagName === 'FORM') {
+        elt.addEventListener('submit', function(event) { event.preventDefault(); sendClick(cellID, false); return false; }, false);
         elt.addEventListener('contextmenu', function(event) { event.preventDefault(); sendClick(cellID, true); return false; }, false);
-        elt.removeAttribute('href');
     }
     return offset;
 }
