@@ -152,12 +152,14 @@ impl<'a, C: EvalContext> Evaluator<'a, C> {
     /// Special identifiers are handled directly:
     /// - `is_adult`: true if the player is Adult Link
     /// - `is_child`: true if the player is Child Link
+    /// - `is_human`: always true (player can always be in human form in MM tracker)
     /// - `true`: always true
     /// - `false`: always false
     fn eval_ident(&self, name: &str) -> Result<bool, EvalError> {
         match name {
             "is_adult" => Ok(self.ctx.is_adult()),
             "is_child" => Ok(self.ctx.is_child()),
+            "is_human" => Ok(true),
             "true" => Ok(true),
             "false" => Ok(false),
             _ => {
@@ -413,6 +415,17 @@ mod tests {
 
         let ctx = MockContext::new().with_adult_age();
         assert!(!eval_str("is_child", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_eval_is_human() {
+        // is_human always returns true for MM tracker purposes
+        let ctx = MockContext::new();
+        assert!(eval_str("is_human", &ctx).unwrap());
+
+        // Should work in combination with other conditions
+        let ctx = MockContext::new().with_item("HOOKSHOT", 1);
+        assert!(eval_str("is_human && has(HOOKSHOT)", &ctx).unwrap());
     }
 
     #[test]
