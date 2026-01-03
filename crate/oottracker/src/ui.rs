@@ -2916,7 +2916,7 @@ cells! {
     // ============================================================================
     MmBomberNotebook: Simple {
         img: ImageInfo::mm("bomber_notebook"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_bombers_notebook())),
         toggle: Box::new(|_| ()),
     },
 
@@ -2925,32 +2925,32 @@ cells! {
     // ============================================================================
     MmOcarina: Simple {
         img: ImageInfo::mm("ocarina"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_ocarina())),
         toggle: Box::new(|_| ()),
     },
     MmHerosBow: Simple {
         img: ImageInfo::mm("heros_bow"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_heros_bow())),
         toggle: Box::new(|_| ()),
     },
     MmFireArrow: Simple {
         img: ImageInfo::mm("fire_arrow"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_fire_arrow())),
         toggle: Box::new(|_| ()),
     },
     MmIceArrow: Simple {
         img: ImageInfo::mm("ice_arrow"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_ice_arrow())),
         toggle: Box::new(|_| ()),
     },
     MmLightArrow: Simple {
         img: ImageInfo::mm("light_arrow"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_light_arrow())),
         toggle: Box::new(|_| ()),
     },
     MmHookshot: Simple {
         img: ImageInfo::mm("hookshot"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_hookshot())),
         toggle: Box::new(|_| ()),
     },
     MmBombs: Simple {
