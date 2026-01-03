@@ -314,8 +314,6 @@ const TRANSITION_STABILITY_FRAMES: u32 = 3;
 struct ComboTransitionTracker {
     /// The last known MM save data (preserved when switching to OoT)
     last_mm_save: Option<MmSave>,
-    /// The last known OoT RAM data (preserved when switching to MM)
-    last_oot_ram: Option<Ram>,
     /// Number of consecutive frames the current game has been active
     frames_stable: u32,
     /// Whether we're currently in a transition period
@@ -353,11 +351,6 @@ impl ComboTransitionTracker {
             (ActiveGame::MajorasMask, ActiveGame::OcarinaOfTime) => TransitionState::MmToOot,
             _ => TransitionState::Stable,
         });
-    }
-
-    /// Preserve OoT RAM data for later restoration
-    fn preserve_oot_state(&mut self, ram: &Ram) {
-        self.last_oot_ram = Some(ram.clone());
     }
 
     /// Preserve MM save data for later restoration
@@ -645,9 +638,6 @@ async fn retroarch_read_ram_with_combo_transitions(
                     .await?;
 
             let mm_save = ram::decode_mm_range_bufs(mm_ranges)?;
-
-            // Preserve the current OoT state for when we switch back
-            combo_tracker.preserve_oot_state(&ram);
 
             // Preserve the new MM state
             combo_tracker.preserve_mm_state(&mm_save);

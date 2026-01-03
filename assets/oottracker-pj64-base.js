@@ -1,7 +1,7 @@
 // The constants above are generated from Rust code in crate/oottracker-utils/src/release.rs. If they're missing, you have the wrong file.
 // Generated constants include: TCP_PORT, SAVE_ADDR, SAVE_SIZE, RAM_RANGES, MM_SAVE_ADDR, MM_SAVE_SIZE, MM_RAM_RANGES, OOT_COMBO_CONTEXT_ADDR, MM_COMBO_CONTEXT_ADDR
 
-const VERSION = 5; // do not rename this variable, the build script checks against it
+const VERSION = 6; // do not rename this variable, the build script checks against it
 
 // Game type detection
 var GAME_TYPE_UNKNOWN = 0;
@@ -439,7 +439,6 @@ sock.connect({host: "127.0.0.1", port: TCP_PORT}, function() {
                 // Send OoT RAM data
                 sendOotRamData(sock, rawRam);
 
-<<<<<<< HEAD
                 // For combo mode, also read and send MM data
                 if (detectedGame === GAME_TYPE_COMBO) {
                     var mmResult = readMmRamRanges(rawMmRam);
@@ -449,21 +448,6 @@ sock.connect({host: "127.0.0.1", port: TCP_PORT}, function() {
                     if (rawMmRam !== null) {
                         sendMmRamData(sock, rawMmRam);
                     }
-=======
-                // For combo mode, also read MM data (for persistent items/state)
-                if (detectedGame === GAME_TYPE_COMBO && typeof MM_RAM_RANGES !== 'undefined') {
-                    if (rawMmRam === null) {
-                        rawMmRam = [];
-                        for (var i = 0; i < MM_RAM_RANGES.length; i++) {
-                            rawMmRam.push(mem.getblock(ADDR_ANY_RDRAM.start + MM_RAM_RANGES[i][0], MM_RAM_RANGES[i][1]));
-                        }
-                    } else {
-                        for (var i = 0; i < MM_RAM_RANGES.length; i++) {
-                            rawMmRam[i] = mem.getblock(ADDR_ANY_RDRAM.start + MM_RAM_RANGES[i][0], MM_RAM_RANGES[i][1]);
-                        }
-                    }
-                    // TODO: Send MM data when protocol supports combo mode
->>>>>>> 6b6a82b (feat: Implement OoTMM combo detection for Project64)
                 }
             }
         });
