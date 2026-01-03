@@ -1,6 +1,9 @@
 use {
     futures::future::{pending, Either},
-    oottracker::{websocket::MwItem, ModelState, Save},
+    oottracker::{
+        websocket::{MwItem, RoomToken},
+        ModelState, Save,
+    },
     std::{
         collections::{HashSet, VecDeque},
         num::NonZeroU8,
@@ -37,10 +40,15 @@ pub(crate) struct MwState {
     )>,
     pub(crate) autotracker_delay: Duration,
     pub(crate) incoming_queue: mpsc::UnboundedSender<AutoUpdate>,
+    /// Optional token for write authorization. If set, clients must provide this token to modify the room.
+    pub(crate) token: Option<RoomToken>,
 }
 
 impl MwState {
-    pub(crate) fn new(worlds: Vec<(Option<Save>, Vec<MwItem>)>) -> Arc<RwLock<Self>> {
+    pub(crate) fn new(
+        worlds: Vec<(Option<Save>, Vec<MwItem>)>,
+        token: Option<RoomToken>,
+    ) -> Arc<RwLock<Self>> {
         let (incoming_queue, mut rx) = mpsc::unbounded_channel();
         let this = Arc::new(RwLock::new(Self {
             worlds: worlds
@@ -62,6 +70,7 @@ impl MwState {
                 .collect(),
             autotracker_delay: Duration::default(),
             incoming_queue,
+            token,
         }));
         let this_clone = Arc::clone(&this);
         tokio::spawn(async move {
@@ -87,6 +96,17 @@ impl MwState {
             }
         });
         this
+    }
+
+    /// Check if the provided token authorizes write access to this room.
+    /// Returns true if:
+    /// - The room has no token set (open access)
+    /// - The provided token matches the room's token
+    pub(crate) fn check_auth(&self, provided_token: &Option<RoomToken>) -> bool {
+        match &self.token {
+            None => true, // No token required
+            Some(room_token) => provided_token.as_ref().is_some_and(|t| t == room_token),
+        }
     }
 
     pub(crate) fn world(

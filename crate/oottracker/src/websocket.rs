@@ -9,6 +9,21 @@ use {
     std::{fmt, num::NonZeroU8},
 };
 
+/// A token used to authorize write operations on a room.
+/// If a room has a token set, clients must provide the matching token to perform write operations.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Protocol)]
+pub struct RoomToken(pub String);
+
+impl RoomToken {
+    pub fn new(token: impl Into<String>) -> Self {
+        Self(token.into())
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Protocol)]
 pub struct MwItem {
     pub source: NonZeroU8,
@@ -46,6 +61,8 @@ pub enum ClientMessage {
         layout: TrackerLayout,
         cell_id: u8,
         right: bool,
+        /// Token required if the room has authorization enabled.
+        token: Option<RoomToken>,
     },
     SubscribeRaw {
         room: String,
@@ -53,18 +70,26 @@ pub enum ClientMessage {
     SetRaw {
         room: String,
         state: ModelState,
+        /// Token required if the room has authorization enabled.
+        token: Option<RoomToken>,
     },
     MwCreateRoom {
         room: String,
         worlds: Vec<(Option<Save>, Vec<MwItem>)>,
+        /// Optional token to protect the room. If set, write operations require this token.
+        token: Option<RoomToken>,
     },
     MwDeleteRoom {
         room: String,
+        /// Token required if the room has authorization enabled.
+        token: Option<RoomToken>,
     },
     MwResetPlayer {
         room: String,
         world: NonZeroU8,
         save: Save,
+        /// Token required if the room has authorization enabled.
+        token: Option<RoomToken>,
     },
     /// No longer supported. Use `MwQueueItem` instead.
     #[deprecated]
@@ -79,6 +104,8 @@ pub enum ClientMessage {
         layout: TrackerLayout,
         cell_id: u8,
         right: bool,
+        /// Token required if the room has authorization enabled.
+        token: Option<RoomToken>,
     },
     SubscribeMw {
         room: String,
@@ -97,15 +124,27 @@ pub enum ClientMessage {
         key: u32,
         kind: u16,
         target_world: NonZeroU8,
+        /// Token required if the room has authorization enabled.
+        token: Option<RoomToken>,
     },
 }
 
 #[derive(Protocol)]
 pub enum ServerMessage {
     Ping,
-    Error { debug: String, display: String },
+    Error {
+        debug: String,
+        display: String,
+    },
+    /// Authorization failed - the client did not provide a valid token for this operation.
+    Unauthorized {
+        room: String,
+    },
     Init(Vec<CellRender>),
-    Update { cell_id: u8, new_cell: CellRender },
+    Update {
+        cell_id: u8,
+        new_cell: CellRender,
+    },
     InitRaw(ModelState),
     UpdateRaw(ModelDelta),
 }

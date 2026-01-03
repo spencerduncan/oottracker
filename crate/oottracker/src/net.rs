@@ -176,6 +176,15 @@ impl Connection for WebConnection {
                     Ok(websocket::ServerMessage::Error { debug, display }) => {
                         Some((Err(Error::Websocket { debug, display }), stream))
                     }
+                    Ok(websocket::ServerMessage::Unauthorized { room }) => Some((
+                        Err(Error::Websocket {
+                            debug: format!("unauthorized for room {room:?}"),
+                            display: format!(
+                                "unauthorized: invalid or missing token for room '{room}'"
+                            ),
+                        }),
+                        stream,
+                    )),
                     Ok(websocket::ServerMessage::Init(_))
                     | Ok(websocket::ServerMessage::Update { .. }) => {
                         Some((Err(Error::UnexpectedWebsocketMessage), stream))
@@ -203,9 +212,13 @@ impl Connection for WebConnection {
         let state = model.clone();
         let sink = Arc::clone(&self.sink);
         Box::pin(async move {
-            websocket::ClientMessage::SetRaw { room, state }
-                .write_ws(&mut *sink.lock().await)
-                .await?;
+            websocket::ClientMessage::SetRaw {
+                room,
+                state,
+                token: None, // No authentication token provided for legacy clients
+            }
+            .write_ws(&mut *sink.lock().await)
+            .await?;
             Ok(())
         })
     }

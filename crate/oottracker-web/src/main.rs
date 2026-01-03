@@ -18,7 +18,7 @@ use {
         stream::TryStreamExt as _,
     },
     lazy_regex::regex_is_match,
-    oottracker::{Knowledge, ModelState, Ram, TrackerCtx},
+    oottracker::{websocket::RoomToken, Knowledge, ModelState, Ram, TrackerCtx},
     rocket::http::Status,
     sqlx::{postgres::PgConnectOptions, types::Json, PgPool},
     std::{
@@ -46,18 +46,20 @@ struct RoomState {
     rx: Receiver<()>,
     last_saved: Instant,
     model: ModelState,
+    /// Optional token for write authorization. If set, clients must provide this token to modify the room.
+    token: Option<RoomToken>,
 }
 
 impl RoomState {
     pub(crate) fn new(name: &str) -> Result<Self, Error> {
         if regex_is_match!("^[0-9a-z]+(?:-[0-9a-z]+)*$", name) {
-            Ok(Self::from_model(name, ModelState::default()))
+            Ok(Self::from_model(name, ModelState::default(), None))
         } else {
             Err(Error::RoomName)
         }
     }
 
-    fn from_model(name: &str, model: ModelState) -> Self {
+    fn from_model(name: &str, model: ModelState, token: Option<RoomToken>) -> Self {
         let (tx, rx) = channel(());
         Self {
             tx,
@@ -65,6 +67,18 @@ impl RoomState {
             model,
             name: name.to_owned(),
             last_saved: Instant::now(),
+            token,
+        }
+    }
+
+    /// Check if the provided token authorizes write access to this room.
+    /// Returns true if:
+    /// - The room has no token set (open access)
+    /// - The provided token matches the room's token
+    pub(crate) fn check_auth(&self, provided_token: &Option<RoomToken>) -> bool {
+        match &self.token {
+            None => true, // No token required
+            Some(room_token) => provided_token.as_ref().is_some_and(|t| t == room_token),
         }
     }
 
@@ -129,6 +143,8 @@ enum Error {
     RoomName,
     Sql(sqlx::Error),
     Task(tokio::task::JoinError),
+    /// Authorization failed - invalid or missing token for room operation.
+    Unauthorized(String),
     Write(WriteError),
 }
 
@@ -143,6 +159,10 @@ impl fmt::Display for Error {
             Self::RoomName => write!(f, "invalid room name"),
             Self::Sql(e) => write!(f, "database error: {e}"),
             Self::Task(e) => write!(f, "task error: {e}"),
+            Self::Unauthorized(room) => write!(
+                f,
+                "unauthorized: invalid or missing token for room '{room}'"
+            ),
             Self::Write(e) => write!(f, "write error: {e}"),
         }
     }
@@ -159,6 +179,7 @@ impl<'r> rocket::response::Responder<'r, 'static> for Error {
             Self::RoomName => Err(Status::NotFound),
             Self::Sql(_) => Err(Status::InternalServerError),
             Self::Task(_) => Err(Status::InternalServerError),
+            Self::Unauthorized(_) => Err(Status::Unauthorized),
             Self::Write(_) => Err(Status::InternalServerError),
         }
     }
@@ -186,6 +207,7 @@ async fn main() -> Result<(), Error> {
                     ram: Ram::from_range_bufs(room.ram)?,
                     tracker_ctx: TrackerCtx::default(),
                 },
+                None, // Rooms loaded from database don't have tokens (backwards compatible)
             );
             rooms.insert(room.name, state);
         }
