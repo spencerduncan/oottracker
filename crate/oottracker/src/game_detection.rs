@@ -173,9 +173,10 @@ pub mod mm_scenes {
 // ============================================================================
 
 /// The type of game/ROM being tracked.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum GameType {
     /// Standalone Ocarina of Time ROM
+    #[default]
     StandaloneOoT,
     /// Standalone Majora's Mask ROM
     StandaloneMM,
@@ -215,16 +216,11 @@ impl fmt::Display for GameType {
     }
 }
 
-impl Default for GameType {
-    fn default() -> Self {
-        Self::StandaloneOoT
-    }
-}
-
 /// The currently active game in an OoTMM combo ROM.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ActiveGame {
     /// Ocarina of Time is currently active
+    #[default]
     OcarinaOfTime,
     /// Majora's Mask is currently active
     MajorasMask,
@@ -251,16 +247,11 @@ impl fmt::Display for ActiveGame {
     }
 }
 
-impl Default for ActiveGame {
-    fn default() -> Self {
-        Self::OcarinaOfTime
-    }
-}
-
 /// Game transition state for OoTMM.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum TransitionState {
     /// No transition in progress, game is stable
+    #[default]
     Stable,
     /// Transitioning from OoT to MM
     OotToMm,
@@ -290,12 +281,6 @@ impl TransitionState {
             Self::OotToMm => Some(ActiveGame::MajorasMask),
             Self::MmToOot => Some(ActiveGame::OcarinaOfTime),
         }
-    }
-}
-
-impl Default for TransitionState {
-    fn default() -> Self {
-        Self::Stable
     }
 }
 

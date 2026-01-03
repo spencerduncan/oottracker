@@ -1167,6 +1167,142 @@ impl MmSave {
 
         buf
     }
+
+    // ========================================================================
+    // Transformation Mask Accessors
+    // ========================================================================
+
+    /// Returns true if the player has the Deku Mask
+    pub fn has_deku_mask(&self) -> bool {
+        self.masks
+            .transformation
+            .contains(MmTransformationMasks::DEKU)
+    }
+
+    /// Returns true if the player has the Goron Mask
+    pub fn has_goron_mask(&self) -> bool {
+        self.masks
+            .transformation
+            .contains(MmTransformationMasks::GORON)
+    }
+
+    /// Returns true if the player has the Zora Mask
+    pub fn has_zora_mask(&self) -> bool {
+        self.masks
+            .transformation
+            .contains(MmTransformationMasks::ZORA)
+    }
+
+    /// Returns true if the player has the Fierce Deity Mask
+    pub fn has_fierce_deity_mask(&self) -> bool {
+        self.masks
+            .transformation
+            .contains(MmTransformationMasks::FIERCE_DEITY)
+    }
+
+    // ========================================================================
+    // Collectible Mask Accessors
+    // ========================================================================
+
+    /// Returns true if the player has the Postman's Hat
+    pub fn has_postman_hat(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::POSTMAN)
+    }
+
+    /// Returns true if the player has the All-Night Mask
+    pub fn has_all_night_mask(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::ALL_NIGHT)
+    }
+
+    /// Returns true if the player has the Blast Mask
+    pub fn has_blast_mask(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::BLAST)
+    }
+
+    /// Returns true if the player has the Stone Mask
+    pub fn has_stone_mask(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::STONE)
+    }
+
+    /// Returns true if the player has the Great Fairy Mask
+    pub fn has_great_fairy_mask(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::GREAT_FAIRY)
+    }
+
+    /// Returns true if the player has the Keaton Mask
+    pub fn has_keaton_mask(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::KEATON)
+    }
+
+    /// Returns true if the player has the Bremen Mask
+    pub fn has_bremen_mask(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::BREMEN)
+    }
+
+    /// Returns true if the player has the Bunny Hood
+    pub fn has_bunny_hood(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::BUNNY)
+    }
+
+    /// Returns true if the player has Don Gero's Mask
+    pub fn has_don_gero_mask(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::DON_GERO)
+    }
+
+    /// Returns true if the player has the Mask of Scents
+    pub fn has_mask_of_scents(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::SCENTS)
+    }
+
+    /// Returns true if the player has Romani's Mask
+    pub fn has_romani_mask(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::ROMANI)
+    }
+
+    /// Returns true if the player has the Circus Leader's Mask (Troupe Leader's Mask)
+    pub fn has_circus_leader_mask(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::CIRCUS_LEADER)
+    }
+
+    /// Returns true if the player has Kafei's Mask
+    pub fn has_kafei_mask(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::KAFEI)
+    }
+
+    /// Returns true if the player has the Couple's Mask
+    pub fn has_couples_mask(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::COUPLES)
+    }
+
+    /// Returns true if the player has the Mask of Truth
+    pub fn has_mask_of_truth(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::TRUTH)
+    }
+
+    /// Returns true if the player has Kamaro's Mask
+    pub fn has_kamaro_mask(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::KAMARO)
+    }
+
+    /// Returns true if the player has the Gibdo Mask
+    pub fn has_gibdo_mask(&self) -> bool {
+        self.masks.masks_high.contains(MmMasksHigh::GIBDO)
+    }
+
+    /// Returns true if the player has the Garo's Mask
+    pub fn has_garo_mask(&self) -> bool {
+        self.masks.masks_high.contains(MmMasksHigh::GARO)
+    }
+
+    /// Returns true if the player has the Captain's Hat
+    pub fn has_captain_hat(&self) -> bool {
+        self.masks.masks_high.contains(MmMasksHigh::CAPTAIN)
+    }
+
+    /// Returns true if the player has the Giant's Mask
+    pub fn has_giant_mask(&self) -> bool {
+        self.masks.masks_high.contains(MmMasksHigh::GIANT)
+    }
 }
 
 // ============================================================================
@@ -1869,5 +2005,397 @@ mod tests {
 
         let err = MmDecodeError::Index(42);
         assert!(matches!(err, MmDecodeError::Index(42)));
+    }
+
+    // ========================================================================
+    // Mask Accessor Tests
+    // ========================================================================
+
+    #[test]
+    fn test_transformation_mask_accessors_default() {
+        let save = MmSave::default();
+
+        // All transformation masks should be false by default
+        assert!(!save.has_deku_mask());
+        assert!(!save.has_goron_mask());
+        assert!(!save.has_zora_mask());
+        assert!(!save.has_fierce_deity_mask());
+    }
+
+    #[test]
+    fn test_has_deku_mask() {
+        let mut save = MmSave::default();
+        assert!(!save.has_deku_mask());
+
+        save.masks
+            .transformation
+            .insert(MmTransformationMasks::DEKU);
+        assert!(save.has_deku_mask());
+
+        // Other masks should remain unaffected
+        assert!(!save.has_goron_mask());
+        assert!(!save.has_zora_mask());
+        assert!(!save.has_fierce_deity_mask());
+    }
+
+    #[test]
+    fn test_has_goron_mask() {
+        let mut save = MmSave::default();
+        assert!(!save.has_goron_mask());
+
+        save.masks
+            .transformation
+            .insert(MmTransformationMasks::GORON);
+        assert!(save.has_goron_mask());
+
+        // Other masks should remain unaffected
+        assert!(!save.has_deku_mask());
+        assert!(!save.has_zora_mask());
+        assert!(!save.has_fierce_deity_mask());
+    }
+
+    #[test]
+    fn test_has_zora_mask() {
+        let mut save = MmSave::default();
+        assert!(!save.has_zora_mask());
+
+        save.masks
+            .transformation
+            .insert(MmTransformationMasks::ZORA);
+        assert!(save.has_zora_mask());
+
+        // Other masks should remain unaffected
+        assert!(!save.has_deku_mask());
+        assert!(!save.has_goron_mask());
+        assert!(!save.has_fierce_deity_mask());
+    }
+
+    #[test]
+    fn test_has_fierce_deity_mask() {
+        let mut save = MmSave::default();
+        assert!(!save.has_fierce_deity_mask());
+
+        save.masks
+            .transformation
+            .insert(MmTransformationMasks::FIERCE_DEITY);
+        assert!(save.has_fierce_deity_mask());
+
+        // Other masks should remain unaffected
+        assert!(!save.has_deku_mask());
+        assert!(!save.has_goron_mask());
+        assert!(!save.has_zora_mask());
+    }
+
+    #[test]
+    fn test_all_transformation_masks() {
+        let mut save = MmSave::default();
+
+        // Set all transformation masks
+        save.masks.transformation = MmTransformationMasks::DEKU
+            | MmTransformationMasks::GORON
+            | MmTransformationMasks::ZORA
+            | MmTransformationMasks::FIERCE_DEITY;
+
+        assert!(save.has_deku_mask());
+        assert!(save.has_goron_mask());
+        assert!(save.has_zora_mask());
+        assert!(save.has_fierce_deity_mask());
+    }
+
+    #[test]
+    fn test_collectible_mask_accessors_default() {
+        let save = MmSave::default();
+
+        // All collectible masks should be false by default
+        assert!(!save.has_postman_hat());
+        assert!(!save.has_all_night_mask());
+        assert!(!save.has_blast_mask());
+        assert!(!save.has_stone_mask());
+        assert!(!save.has_great_fairy_mask());
+        assert!(!save.has_keaton_mask());
+        assert!(!save.has_bremen_mask());
+        assert!(!save.has_bunny_hood());
+        assert!(!save.has_don_gero_mask());
+        assert!(!save.has_mask_of_scents());
+        assert!(!save.has_romani_mask());
+        assert!(!save.has_circus_leader_mask());
+        assert!(!save.has_kafei_mask());
+        assert!(!save.has_couples_mask());
+        assert!(!save.has_mask_of_truth());
+        assert!(!save.has_kamaro_mask());
+        assert!(!save.has_gibdo_mask());
+        assert!(!save.has_garo_mask());
+        assert!(!save.has_captain_hat());
+        assert!(!save.has_giant_mask());
+    }
+
+    #[test]
+    fn test_has_postman_hat() {
+        let mut save = MmSave::default();
+        assert!(!save.has_postman_hat());
+
+        save.masks.masks_low.insert(MmMasksLow::POSTMAN);
+        assert!(save.has_postman_hat());
+    }
+
+    #[test]
+    fn test_has_all_night_mask() {
+        let mut save = MmSave::default();
+        assert!(!save.has_all_night_mask());
+
+        save.masks.masks_low.insert(MmMasksLow::ALL_NIGHT);
+        assert!(save.has_all_night_mask());
+    }
+
+    #[test]
+    fn test_has_blast_mask() {
+        let mut save = MmSave::default();
+        assert!(!save.has_blast_mask());
+
+        save.masks.masks_low.insert(MmMasksLow::BLAST);
+        assert!(save.has_blast_mask());
+    }
+
+    #[test]
+    fn test_has_stone_mask() {
+        let mut save = MmSave::default();
+        assert!(!save.has_stone_mask());
+
+        save.masks.masks_low.insert(MmMasksLow::STONE);
+        assert!(save.has_stone_mask());
+    }
+
+    #[test]
+    fn test_has_great_fairy_mask() {
+        let mut save = MmSave::default();
+        assert!(!save.has_great_fairy_mask());
+
+        save.masks.masks_low.insert(MmMasksLow::GREAT_FAIRY);
+        assert!(save.has_great_fairy_mask());
+    }
+
+    #[test]
+    fn test_has_keaton_mask() {
+        let mut save = MmSave::default();
+        assert!(!save.has_keaton_mask());
+
+        save.masks.masks_low.insert(MmMasksLow::KEATON);
+        assert!(save.has_keaton_mask());
+    }
+
+    #[test]
+    fn test_has_bremen_mask() {
+        let mut save = MmSave::default();
+        assert!(!save.has_bremen_mask());
+
+        save.masks.masks_low.insert(MmMasksLow::BREMEN);
+        assert!(save.has_bremen_mask());
+    }
+
+    #[test]
+    fn test_has_bunny_hood() {
+        let mut save = MmSave::default();
+        assert!(!save.has_bunny_hood());
+
+        save.masks.masks_low.insert(MmMasksLow::BUNNY);
+        assert!(save.has_bunny_hood());
+    }
+
+    #[test]
+    fn test_has_don_gero_mask() {
+        let mut save = MmSave::default();
+        assert!(!save.has_don_gero_mask());
+
+        save.masks.masks_low.insert(MmMasksLow::DON_GERO);
+        assert!(save.has_don_gero_mask());
+    }
+
+    #[test]
+    fn test_has_mask_of_scents() {
+        let mut save = MmSave::default();
+        assert!(!save.has_mask_of_scents());
+
+        save.masks.masks_low.insert(MmMasksLow::SCENTS);
+        assert!(save.has_mask_of_scents());
+    }
+
+    #[test]
+    fn test_has_romani_mask() {
+        let mut save = MmSave::default();
+        assert!(!save.has_romani_mask());
+
+        save.masks.masks_low.insert(MmMasksLow::ROMANI);
+        assert!(save.has_romani_mask());
+    }
+
+    #[test]
+    fn test_has_circus_leader_mask() {
+        let mut save = MmSave::default();
+        assert!(!save.has_circus_leader_mask());
+
+        save.masks.masks_low.insert(MmMasksLow::CIRCUS_LEADER);
+        assert!(save.has_circus_leader_mask());
+    }
+
+    #[test]
+    fn test_has_kafei_mask() {
+        let mut save = MmSave::default();
+        assert!(!save.has_kafei_mask());
+
+        save.masks.masks_low.insert(MmMasksLow::KAFEI);
+        assert!(save.has_kafei_mask());
+    }
+
+    #[test]
+    fn test_has_couples_mask() {
+        let mut save = MmSave::default();
+        assert!(!save.has_couples_mask());
+
+        save.masks.masks_low.insert(MmMasksLow::COUPLES);
+        assert!(save.has_couples_mask());
+    }
+
+    #[test]
+    fn test_has_mask_of_truth() {
+        let mut save = MmSave::default();
+        assert!(!save.has_mask_of_truth());
+
+        save.masks.masks_low.insert(MmMasksLow::TRUTH);
+        assert!(save.has_mask_of_truth());
+    }
+
+    #[test]
+    fn test_has_kamaro_mask() {
+        let mut save = MmSave::default();
+        assert!(!save.has_kamaro_mask());
+
+        save.masks.masks_low.insert(MmMasksLow::KAMARO);
+        assert!(save.has_kamaro_mask());
+    }
+
+    #[test]
+    fn test_has_gibdo_mask() {
+        let mut save = MmSave::default();
+        assert!(!save.has_gibdo_mask());
+
+        save.masks.masks_high.insert(MmMasksHigh::GIBDO);
+        assert!(save.has_gibdo_mask());
+    }
+
+    #[test]
+    fn test_has_garo_mask() {
+        let mut save = MmSave::default();
+        assert!(!save.has_garo_mask());
+
+        save.masks.masks_high.insert(MmMasksHigh::GARO);
+        assert!(save.has_garo_mask());
+    }
+
+    #[test]
+    fn test_has_captain_hat() {
+        let mut save = MmSave::default();
+        assert!(!save.has_captain_hat());
+
+        save.masks.masks_high.insert(MmMasksHigh::CAPTAIN);
+        assert!(save.has_captain_hat());
+    }
+
+    #[test]
+    fn test_has_giant_mask() {
+        let mut save = MmSave::default();
+        assert!(!save.has_giant_mask());
+
+        save.masks.masks_high.insert(MmMasksHigh::GIANT);
+        assert!(save.has_giant_mask());
+    }
+
+    #[test]
+    fn test_all_masks_low() {
+        let mut save = MmSave::default();
+
+        // Set all masks_low flags
+        save.masks.masks_low = MmMasksLow::POSTMAN
+            | MmMasksLow::ALL_NIGHT
+            | MmMasksLow::BLAST
+            | MmMasksLow::STONE
+            | MmMasksLow::GREAT_FAIRY
+            | MmMasksLow::KEATON
+            | MmMasksLow::BREMEN
+            | MmMasksLow::BUNNY
+            | MmMasksLow::DON_GERO
+            | MmMasksLow::SCENTS
+            | MmMasksLow::ROMANI
+            | MmMasksLow::CIRCUS_LEADER
+            | MmMasksLow::KAFEI
+            | MmMasksLow::COUPLES
+            | MmMasksLow::TRUTH
+            | MmMasksLow::KAMARO;
+
+        assert!(save.has_postman_hat());
+        assert!(save.has_all_night_mask());
+        assert!(save.has_blast_mask());
+        assert!(save.has_stone_mask());
+        assert!(save.has_great_fairy_mask());
+        assert!(save.has_keaton_mask());
+        assert!(save.has_bremen_mask());
+        assert!(save.has_bunny_hood());
+        assert!(save.has_don_gero_mask());
+        assert!(save.has_mask_of_scents());
+        assert!(save.has_romani_mask());
+        assert!(save.has_circus_leader_mask());
+        assert!(save.has_kafei_mask());
+        assert!(save.has_couples_mask());
+        assert!(save.has_mask_of_truth());
+        assert!(save.has_kamaro_mask());
+    }
+
+    #[test]
+    fn test_all_masks_high() {
+        let mut save = MmSave::default();
+
+        // Set all masks_high flags
+        save.masks.masks_high =
+            MmMasksHigh::GIBDO | MmMasksHigh::GARO | MmMasksHigh::CAPTAIN | MmMasksHigh::GIANT;
+
+        assert!(save.has_gibdo_mask());
+        assert!(save.has_garo_mask());
+        assert!(save.has_captain_hat());
+        assert!(save.has_giant_mask());
+    }
+
+    #[test]
+    fn test_mask_accessors_with_sample_data() {
+        let stub = MmSaveStub::with_sample_data();
+        let save = stub.get_save();
+
+        // Sample data has: DEKU, GORON, ZORA (transformation)
+        assert!(save.has_deku_mask());
+        assert!(save.has_goron_mask());
+        assert!(save.has_zora_mask());
+        assert!(!save.has_fierce_deity_mask());
+
+        // Sample data has: BUNNY, STONE, GREAT_FAIRY, BREMEN (collectible)
+        assert!(save.has_bunny_hood());
+        assert!(save.has_stone_mask());
+        assert!(save.has_great_fairy_mask());
+        assert!(save.has_bremen_mask());
+
+        // These should not be set in sample data
+        assert!(!save.has_postman_hat());
+        assert!(!save.has_all_night_mask());
+        assert!(!save.has_blast_mask());
+        assert!(!save.has_keaton_mask());
+        assert!(!save.has_don_gero_mask());
+        assert!(!save.has_mask_of_scents());
+        assert!(!save.has_romani_mask());
+        assert!(!save.has_circus_leader_mask());
+        assert!(!save.has_kafei_mask());
+        assert!(!save.has_couples_mask());
+        assert!(!save.has_mask_of_truth());
+        assert!(!save.has_kamaro_mask());
+        assert!(!save.has_gibdo_mask());
+        assert!(!save.has_garo_mask());
+        assert!(!save.has_captain_hat());
+        assert!(!save.has_giant_mask());
     }
 }
