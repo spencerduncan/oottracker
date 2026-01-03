@@ -638,13 +638,7 @@ mod statistics {
             }
         }
 
-        // Print coverage statistics
-        println!("Expression fixture coverage:");
-        println!("  Total test cases: {}", suite.test_cases.len());
-        println!("  Simple identifiers: {}", simple_idents);
-        println!("  Function calls: {}", function_calls);
-        println!("  Compound expressions: {}", compound_expressions);
-        println!("  Error cases: {}", error_cases);
+        let total = suite.test_cases.len();
 
         // Verify exact counts from ootmm_real.yaml fixture (87 total test cases)
         assert_eq!(
@@ -663,6 +657,14 @@ mod statistics {
             error_cases, 9,
             "ootmm_real.yaml fixture has 9 error case tests"
         );
+
+        // Verify all categories sum correctly
+        let categorized = simple_idents + function_calls + compound_expressions + error_cases;
+        assert_eq!(
+            categorized, total,
+            "All test cases should be categorized: {} categorized vs {} total",
+            categorized, total
+        );
     }
 
     #[test]
@@ -675,18 +677,48 @@ mod statistics {
         };
         db.load_from_file(&path).unwrap();
 
-        println!("World database statistics:");
-        println!("  Total regions: {}", db.region_count());
-        println!("  Total locations: {}", db.location_count());
-        println!("  Total events: {}", db.event_count());
-        println!("  Total exits: {}", db.exit_count());
+        // Verify structural counts
+        assert!(
+            db.region_count() >= 10,
+            "Should have at least 10 regions, got {}",
+            db.region_count()
+        );
+        assert!(
+            db.location_count() >= 20,
+            "Should have at least 20 locations, got {}",
+            db.location_count()
+        );
+        assert!(
+            db.event_count() >= 5,
+            "Should have at least 5 events, got {}",
+            db.event_count()
+        );
+        assert!(
+            db.exit_count() >= 10,
+            "Should have at least 10 exits, got {}",
+            db.exit_count()
+        );
 
+        // Verify game distribution
         let oot_count = db.regions_for_game(Game::Oot).count();
         let mm_count = db.regions_for_game(Game::Mm).count();
-        println!("  OoT regions: {}", oot_count);
-        println!("  MM regions: {}", mm_count);
+        assert!(
+            oot_count >= 3,
+            "Should have at least 3 OoT regions, got {}",
+            oot_count
+        );
+        assert!(
+            mm_count >= 3,
+            "Should have at least 3 MM regions, got {}",
+            mm_count
+        );
+        assert_eq!(
+            oot_count + mm_count,
+            db.region_count(),
+            "All regions should be assigned to OoT or MM"
+        );
 
-        // Count logic expressions
+        // Verify logic expression coverage
         let loc_with_logic = db.locations().filter(|(l, _)| l.logic.is_some()).count();
         let exit_with_logic = db.exits().filter(|(e, _)| e.logic.is_some()).count();
         let event_with_logic = db.events().filter(|(e, _)| e.logic.is_some()).count();
@@ -705,6 +737,14 @@ mod statistics {
         assert_eq!(
             loc_with_logic, 48,
             "Sample world fixture has 48 locations with logic"
+        );
+        assert_eq!(
+            exit_with_logic, 54,
+            "Sample world fixture has 54 exits with logic"
+        );
+        assert_eq!(
+            event_with_logic, 6,
+            "Sample world fixture has 6 events with logic"
         );
     }
 }

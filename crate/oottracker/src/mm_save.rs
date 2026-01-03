@@ -2081,25 +2081,36 @@ mod tests {
     #[test]
     fn test_roundtrip_save_data() {
         // Create a save with some data
-        let mut original = MmSave::default();
-        original.player_form = PlayerForm::Goron;
-        original.health_capacity = 0x0140;
-        original.health = 0x0100;
-        original.magic = MmMagicCapacity::Double;
-        original.double_defense = true;
-        original.rupees = 500;
-        original.sword = MmSword::GildedSword;
-        original.shield = MmShield::MirrorShield;
-        original.quest_items = MmQuestItems::REMAINS_ODOLWA | MmQuestItems::SONG_TIME;
-        original.upgrades = MmUpgrades::ADULTS_WALLET;
-        original.dungeon_items.woodfall = MmDungeonItems::MAP | MmDungeonItems::COMPASS;
-        original.small_keys.woodfall = 2;
-        original.stray_fairies.woodfall = 15;
-        original.skull_tokens_swamp = 20;
-        original.skull_tokens_ocean = 10;
-        original.day = 2;
-        original.time = 0x8000;
-        original.is_night = true;
+        let original = MmSave {
+            player_form: PlayerForm::Goron,
+            health_capacity: 0x0140,
+            health: 0x0100,
+            magic: MmMagicCapacity::Double,
+            double_defense: true,
+            rupees: 500,
+            sword: MmSword::GildedSword,
+            shield: MmShield::MirrorShield,
+            quest_items: MmQuestItems::REMAINS_ODOLWA | MmQuestItems::SONG_TIME,
+            upgrades: MmUpgrades::ADULTS_WALLET,
+            dungeon_items: MmAllDungeonItems {
+                woodfall: MmDungeonItems::MAP | MmDungeonItems::COMPASS,
+                ..Default::default()
+            },
+            small_keys: MmSmallKeys {
+                woodfall: 2,
+                ..Default::default()
+            },
+            stray_fairies: MmStrayFairies {
+                woodfall: 15,
+                ..Default::default()
+            },
+            skull_tokens_swamp: 20,
+            skull_tokens_ocean: 10,
+            day: 2,
+            time: 0x8000,
+            is_night: true,
+            ..Default::default()
+        };
 
         // Serialize and deserialize
         let bytes = original.to_save_data();
