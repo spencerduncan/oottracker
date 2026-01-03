@@ -1031,6 +1031,7 @@ impl TrackerCellKind {
                     } else {
                         CellOverlay::None
                     },
+                    accessibility: None,
                 }
             }
             Song { song, check, .. } => CellRender {

@@ -1713,6 +1713,53 @@ impl MmSaveData for MmSaveStub {
     }
 }
 
+// ============================================================================
+// Protocol Implementation for MmSave
+// ============================================================================
+
+impl async_proto::Protocol for MmSave {
+    fn read<'a, R: tokio::io::AsyncRead + Unpin + Send + 'a>(
+        stream: &'a mut R,
+    ) -> std::pin::Pin<
+        Box<dyn std::future::Future<Output = Result<Self, async_proto::ReadError>> + Send + 'a>,
+    > {
+        Box::pin(async move {
+            use tokio::io::AsyncReadExt;
+            let mut buf = vec![0u8; MM_SIZE];
+            stream.read_exact(&mut buf).await?;
+            MmSave::from_save_data(&buf)
+                .map_err(|e| async_proto::ReadError::Custom(format!("MM decode error: {:?}", e)))
+        })
+    }
+
+    fn write<'a, W: tokio::io::AsyncWrite + Unpin + Send + 'a>(
+        &'a self,
+        sink: &'a mut W,
+    ) -> std::pin::Pin<
+        Box<dyn std::future::Future<Output = Result<(), async_proto::WriteError>> + Send + 'a>,
+    > {
+        Box::pin(async move {
+            use tokio::io::AsyncWriteExt;
+            let data = self.to_save_data();
+            sink.write_all(&data).await?;
+            Ok(())
+        })
+    }
+
+    fn read_sync(stream: &mut impl std::io::Read) -> Result<Self, async_proto::ReadError> {
+        let mut buf = vec![0u8; MM_SIZE];
+        stream.read_exact(&mut buf)?;
+        MmSave::from_save_data(&buf)
+            .map_err(|e| async_proto::ReadError::Custom(format!("MM decode error: {:?}", e)))
+    }
+
+    fn write_sync(&self, sink: &mut impl std::io::Write) -> Result<(), async_proto::WriteError> {
+        let data = self.to_save_data();
+        sink.write_all(&data)?;
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
