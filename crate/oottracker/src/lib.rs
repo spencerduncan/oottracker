@@ -16,6 +16,7 @@
 #![forbid(unsafe_code)]
 
 pub use crate::{ctx::TrackerCtx, knowledge::Knowledge, ram::GameType, ram::Ram, save::Save};
+pub use ootmm::WorldDatabase;
 use {
     crate::{
         info_tables::InfTable55,
@@ -31,6 +32,60 @@ use {
     std::ops::{AddAssign, Sub},
 };
 
+use once_cell::sync::Lazy;
+
+/// Global WorldDatabase initialized with embedded ootmm data.
+///
+/// This singleton is lazily initialized on first access and contains
+/// all the world regions, locations, and logic from the embedded YAML files.
+static WORLD_DATABASE: Lazy<WorldDatabase> =
+    Lazy::new(|| ootmm::create_world_database().expect("Failed to load embedded world database"));
+
+/// Returns a reference to the global WorldDatabase.
+///
+/// The database is lazily initialized on first access with all embedded
+/// world data from the ootmm crate.
+///
+/// # Example
+///
+/// ```
+/// use oottracker::world_database;
+///
+/// let db = world_database();
+/// assert!(db.has_region("kokiri_forest"));
+/// ```
+///
+/// # Panics
+///
+/// Panics if the embedded world data fails to parse. This should never
+/// happen in a correctly built binary, as the embedded YAML is validated
+/// at test time.
+pub fn world_database() -> &'static WorldDatabase {
+    &WORLD_DATABASE
+}
+
+/// Initializes the WorldDatabase eagerly.
+///
+/// This function can be called at application startup to ensure the
+/// WorldDatabase is loaded before it's needed, avoiding any latency
+/// on first access during gameplay.
+///
+/// # Example
+///
+/// ```
+/// use oottracker::init_world_database;
+///
+/// // Call at startup to pre-load the database
+/// init_world_database();
+/// ```
+///
+/// # Panics
+///
+/// Panics if the embedded world data fails to parse.
+pub fn init_world_database() {
+    Lazy::force(&WORLD_DATABASE);
+}
+
 pub mod checks;
 pub mod ctx;
 #[cfg(feature = "firebase")]
@@ -40,7 +95,6 @@ pub mod github;
 pub mod info_tables;
 mod item_ids;
 pub mod knowledge;
-pub mod logic_context;
 pub mod mm_save;
 pub mod mm_scene;
 pub mod net;
@@ -207,4 +261,72 @@ pub fn version() -> Version {
         Version::parse(env!("CARGO_PKG_VERSION")).expect("failed to parse current version");
     assert_eq!(version, oottracker_derive::version!());
     version
+}
+
+#[cfg(test)]
+mod world_database_tests {
+    use super::*;
+
+    #[test]
+    fn test_world_database_loads_successfully() {
+        let db = world_database();
+        // Verify database is loaded and has content
+        assert!(db.region_count() > 0, "WorldDatabase should have regions");
+    }
+
+    #[test]
+    fn test_world_database_has_oot_regions() {
+        let db = world_database();
+        assert!(db.has_region("kokiri_forest"), "Should have Kokiri Forest");
+        assert!(db.has_region("lost_woods"), "Should have Lost Woods");
+    }
+
+    #[test]
+    fn test_world_database_has_mm_regions() {
+        let db = world_database();
+        assert!(
+            db.has_region("clock_town_south"),
+            "Should have Clock Town South"
+        );
+        assert!(db.has_region("termina_field"), "Should have Termina Field");
+    }
+
+    #[test]
+    fn test_world_database_has_locations() {
+        let db = world_database();
+        // Check OoT location
+        assert!(
+            db.get_location("kf_midos_chest_top_left").is_some(),
+            "Should have Mido's chest location"
+        );
+        // Check MM location
+        assert!(
+            db.get_location("ct_bank_reward_1").is_some(),
+            "Should have Clock Town Bank location"
+        );
+    }
+
+    #[test]
+    fn test_world_database_returns_same_instance() {
+        let db1 = world_database();
+        let db2 = world_database();
+        // Both calls should return reference to the same static instance
+        assert!(std::ptr::eq(db1, db2), "Should return same instance");
+    }
+
+    #[test]
+    fn test_init_world_database() {
+        // Should not panic
+        init_world_database();
+        // After init, database should be loaded
+        let db = world_database();
+        assert!(db.region_count() > 0);
+    }
+
+    #[test]
+    fn test_world_database_region_count() {
+        let db = world_database();
+        // Embedded data has 4 regions: kokiri_forest, lost_woods (OoT) + clock_town_south, termina_field (MM)
+        assert_eq!(db.region_count(), 4, "Should have 4 embedded regions");
+    }
 }
