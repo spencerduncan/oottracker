@@ -379,7 +379,7 @@ async fn retroarch_read_memory_range(
     let offset_in_word = start & 0x3;
     let mut aligned_start = (start - offset_in_word) as usize;
     let mut aligned_len = len + offset_in_word;
-    if aligned_len % 0x3 != 0 {
+    if !aligned_len.is_multiple_of(0x3) {
         aligned_len += 4 - (aligned_len & 0x3)
     }
     let mut packet_buf = [0; 4096];

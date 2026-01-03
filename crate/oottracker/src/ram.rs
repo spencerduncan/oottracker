@@ -119,6 +119,8 @@ pub enum DecodeError {
     Ranges,
     #[from]
     Save(save::DecodeError),
+    #[from]
+    MmSave(mm_save::MmDecodeError),
     Size(usize),
     #[from]
     TextSize(TryFromSliceError),
@@ -548,5 +550,434 @@ impl TryFrom<Vec<Vec<u8>>> for Ram {
 
     fn try_from(ranges: Vec<Vec<u8>>) -> Result<Self, DecodeError> {
         Self::from_range_bufs(ranges)
+    }
+}
+
+// ============================================================================
+// MM RAM Decoding
+// ============================================================================
+
+/// Decodes Majora's Mask RAM data into an `MmSave` structure.
+///
+/// This function can accept data in multiple formats:
+/// - Full N64 RAM dump (8MB): Extracts MM save context from `MM_SAVE_ADDR`
+/// - Pre-extracted MM ranges: Exactly `mm_save::MM_SIZE` bytes of save context
+/// - Range buffer format: Vector of ranges matching `MM_RANGES`
+///
+/// # Arguments
+/// * `data` - Raw RAM data bytes
+///
+/// # Returns
+/// * `Ok(MmSave)` - Successfully decoded MM save state
+/// * `Err(DecodeError)` - If the data is invalid or wrong size
+///
+/// # Examples
+/// ```ignore
+/// // From full RAM dump
+/// let ram_data = read_n64_ram(); // 8MB dump
+/// let mm_save = decode_mm_ranges(&ram_data)?;
+///
+/// // From pre-extracted save context
+/// let save_ctx = &ram_data[MM_SAVE_ADDR as usize..][..mm_save::MM_SIZE];
+/// let mm_save = decode_mm_ranges(save_ctx)?;
+/// ```
+pub fn decode_mm_ranges(data: &[u8]) -> Result<mm_save::MmSave, DecodeError> {
+    // Case 1: Exact MM save context size
+    if data.len() == mm_save::MM_SIZE {
+        return Ok(mm_save::MmSave::from_save_data(data)?);
+    }
+
+    // Case 2: Full N64 RAM dump (8MB)
+    if data.len() == SIZE {
+        let start = MM_SAVE_ADDR as usize;
+        let end = start + mm_save::MM_SIZE;
+        let save_data = data.get(start..end).ok_or(DecodeError::IndexRange {
+            start: MM_SAVE_ADDR,
+            end: MM_SAVE_ADDR + mm_save::MM_SIZE as u32,
+        })?;
+        return Ok(mm_save::MmSave::from_save_data(save_data)?);
+    }
+
+    // Case 3: Data larger than MM_SIZE but not full RAM - try extracting from start
+    // This handles cases where only partial RAM was captured but includes the save area
+    if data.len() > mm_save::MM_SIZE {
+        // Try to use the first MM_SIZE bytes as the save context
+        let save_data = &data[..mm_save::MM_SIZE];
+        return Ok(mm_save::MmSave::from_save_data(save_data)?);
+    }
+
+    // Data is too small to contain MM save context
+    Err(DecodeError::Size(data.len()))
+}
+
+/// Decodes MM RAM from pre-extracted range buffers.
+///
+/// This is the equivalent of `Ram::from_range_bufs` for Majora's Mask.
+/// It expects ranges matching the `MM_RANGES` array layout.
+///
+/// # Arguments
+/// * `ranges` - Iterator of byte vectors, one for each range in `MM_RANGES`
+///
+/// # Returns
+/// * `Ok(MmSave)` - Successfully decoded MM save state
+/// * `Err(DecodeError)` - If the ranges are invalid
+pub fn decode_mm_range_bufs(
+    ranges: impl IntoIterator<Item = Vec<u8>>,
+) -> Result<mm_save::MmSave, DecodeError> {
+    let ranges: Vec<_> = ranges.into_iter().collect();
+
+    // MM_RANGES currently only has one range (the save context)
+    if ranges.len() != MM_NUM_RANGES {
+        return Err(DecodeError::Ranges);
+    }
+
+    // First (and only) range should be the MM save context
+    let save_data = ranges.into_iter().next().ok_or(DecodeError::Ranges)?;
+
+    if save_data.len() != mm_save::MM_SIZE {
+        return Err(DecodeError::Size(save_data.len()));
+    }
+
+    Ok(mm_save::MmSave::from_save_data(&save_data)?)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ========================================================================
+    // decode_mm_ranges Tests
+    // ========================================================================
+
+    /// Creates sample MM save data with specific values set for testing
+    fn create_sample_mm_save_data() -> Vec<u8> {
+        let mut data = vec![0u8; mm_save::MM_SIZE];
+
+        // Set player form to Goron (1) at offset 0x0020
+        data[0x0020] = 1;
+
+        // Set health capacity to 0x0140 (5 hearts) at offset 0x002C
+        data[0x002C] = 0x01;
+        data[0x002D] = 0x40;
+
+        // Set current health to 0x0100 (4 hearts) at offset 0x002E
+        data[0x002E] = 0x01;
+        data[0x002F] = 0x00;
+
+        // Set magic level to 2 (double magic) at offset 0x0032
+        data[0x0032] = 2;
+
+        // Set rupees to 500 (0x01F4) at offset 0x0034
+        data[0x0034] = 0x01;
+        data[0x0035] = 0xF4;
+
+        // Set sword to Gilded (3) and shield to Mirror (2) at offset 0x0044
+        data[0x0044] = 0x03 | (0x02 << 4);
+
+        // Set double defense at offset 0x003B
+        data[0x003B] = 1;
+
+        // Set quest items: Odolwa remains + Song of Time at offset 0x00A4
+        // REMAINS_ODOLWA = 1 << 0, SONG_TIME = 1 << 12 = 0x1001
+        let quest_bits: u32 = 0x00001001;
+        data[0x00A4..0x00A8].copy_from_slice(&quest_bits.to_be_bytes());
+
+        // Set stray fairies at offset 0x00D0
+        data[0x00D0] = 1; // Clock Town
+        data[0x00D1] = 15; // Woodfall
+        data[0x00D2] = 10; // Snowhead
+        data[0x00D3] = 5; // Great Bay
+        data[0x00D4] = 0; // Stone Tower
+
+        // Set skulltula tokens at offset 0x00D8 and 0x00DA
+        data[0x00D8] = 0x00;
+        data[0x00D9] = 0x14; // Swamp: 20
+        data[0x00DA] = 0x00;
+        data[0x00DB] = 0x0A; // Ocean: 10
+
+        // Set day to 2 at offset 0x0048
+        data[0x0048..0x004C].copy_from_slice(&2u32.to_be_bytes());
+
+        // Set time to 0x8000 at offset 0x004C
+        data[0x004C..0x004E].copy_from_slice(&0x8000u16.to_be_bytes());
+
+        // Set is_night to true at offset 0x0050
+        data[0x0050] = 1;
+
+        data
+    }
+
+    #[test]
+    fn test_decode_mm_ranges_exact_size() {
+        let data = create_sample_mm_save_data();
+        let result = decode_mm_ranges(&data);
+
+        assert!(result.is_ok());
+        let save = result.unwrap();
+
+        assert_eq!(save.player_form, mm_save::PlayerForm::Goron);
+        assert_eq!(save.health_capacity, 0x0140);
+        assert_eq!(save.health, 0x0100);
+        assert_eq!(save.magic, mm_save::MmMagicCapacity::Double);
+        assert_eq!(save.rupees, 500);
+        assert_eq!(save.sword, mm_save::MmSword::GildedSword);
+        assert_eq!(save.shield, mm_save::MmShield::MirrorShield);
+        assert!(save.double_defense);
+    }
+
+    #[test]
+    fn test_decode_mm_ranges_quest_items() {
+        let data = create_sample_mm_save_data();
+        let save = decode_mm_ranges(&data).unwrap();
+
+        assert!(save
+            .quest_items
+            .contains(mm_save::MmQuestItems::REMAINS_ODOLWA));
+        assert!(!save
+            .quest_items
+            .contains(mm_save::MmQuestItems::REMAINS_GOHT));
+        assert!(save.quest_items.contains(mm_save::MmQuestItems::SONG_TIME));
+        assert_eq!(save.quest_items.num_remains(), 1);
+    }
+
+    #[test]
+    fn test_decode_mm_ranges_stray_fairies() {
+        let data = create_sample_mm_save_data();
+        let save = decode_mm_ranges(&data).unwrap();
+
+        assert_eq!(save.stray_fairies.clock_town, 1);
+        assert_eq!(save.stray_fairies.woodfall, 15);
+        assert_eq!(save.stray_fairies.snowhead, 10);
+        assert_eq!(save.stray_fairies.great_bay, 5);
+        assert_eq!(save.stray_fairies.stone_tower, 0);
+        assert_eq!(save.stray_fairies.dungeon_total(), 30);
+    }
+
+    #[test]
+    fn test_decode_mm_ranges_skulltulas() {
+        let data = create_sample_mm_save_data();
+        let save = decode_mm_ranges(&data).unwrap();
+
+        assert_eq!(save.skull_tokens_swamp, 20);
+        assert_eq!(save.skull_tokens_ocean, 10);
+    }
+
+    #[test]
+    fn test_decode_mm_ranges_time_state() {
+        let data = create_sample_mm_save_data();
+        let save = decode_mm_ranges(&data).unwrap();
+
+        assert_eq!(save.day, 2);
+        assert_eq!(save.time, 0x8000);
+        assert!(save.is_night);
+    }
+
+    #[test]
+    fn test_decode_mm_ranges_from_full_ram() {
+        // Create full 8MB RAM dump with MM save context at correct offset
+        let mut full_ram = vec![0u8; SIZE];
+        let save_data = create_sample_mm_save_data();
+
+        // Copy save data to MM_SAVE_ADDR offset
+        let start = MM_SAVE_ADDR as usize;
+        full_ram[start..start + mm_save::MM_SIZE].copy_from_slice(&save_data);
+
+        let result = decode_mm_ranges(&full_ram);
+        assert!(result.is_ok());
+
+        let save = result.unwrap();
+        assert_eq!(save.player_form, mm_save::PlayerForm::Goron);
+        assert_eq!(save.health_capacity, 0x0140);
+        assert_eq!(save.rupees, 500);
+    }
+
+    #[test]
+    fn test_decode_mm_ranges_larger_than_mm_size() {
+        // Data larger than MM_SIZE but not full RAM
+        let mut data = vec![0u8; mm_save::MM_SIZE + 1000];
+
+        // Set some values in the first MM_SIZE bytes
+        data[0x0034] = 0x00;
+        data[0x0035] = 0x64; // Rupees: 100
+
+        let result = decode_mm_ranges(&data);
+        assert!(result.is_ok());
+
+        let save = result.unwrap();
+        assert_eq!(save.rupees, 100);
+    }
+
+    #[test]
+    fn test_decode_mm_ranges_too_small() {
+        let data = vec![0u8; 100]; // Way too small
+        let result = decode_mm_ranges(&data);
+
+        assert!(matches!(result, Err(DecodeError::Size(100))));
+    }
+
+    #[test]
+    fn test_decode_mm_ranges_empty() {
+        let data: Vec<u8> = vec![];
+        let result = decode_mm_ranges(&data);
+
+        assert!(matches!(result, Err(DecodeError::Size(0))));
+    }
+
+    #[test]
+    fn test_decode_mm_ranges_zeroed_data() {
+        // All zeros should parse without errors (default state)
+        let data = vec![0u8; mm_save::MM_SIZE];
+        let result = decode_mm_ranges(&data);
+
+        assert!(result.is_ok());
+        let save = result.unwrap();
+
+        // Check default values
+        assert_eq!(save.player_form, mm_save::PlayerForm::FierceDeity); // 0 maps to FierceDeity
+        assert_eq!(save.health_capacity, 0);
+        assert_eq!(save.health, 0);
+        assert_eq!(save.rupees, 0);
+        assert_eq!(save.day, 0);
+    }
+
+    // ========================================================================
+    // decode_mm_range_bufs Tests
+    // ========================================================================
+
+    #[test]
+    fn test_decode_mm_range_bufs_success() {
+        let save_data = create_sample_mm_save_data();
+        let ranges = vec![save_data];
+
+        let result = decode_mm_range_bufs(ranges);
+        assert!(result.is_ok());
+
+        let save = result.unwrap();
+        assert_eq!(save.player_form, mm_save::PlayerForm::Goron);
+        assert_eq!(save.rupees, 500);
+    }
+
+    #[test]
+    fn test_decode_mm_range_bufs_wrong_range_count() {
+        // Empty ranges
+        let ranges: Vec<Vec<u8>> = vec![];
+        let result = decode_mm_range_bufs(ranges);
+        assert!(matches!(result, Err(DecodeError::Ranges)));
+
+        // Too many ranges
+        let ranges = vec![vec![0u8; mm_save::MM_SIZE], vec![0u8; 100]];
+        let result = decode_mm_range_bufs(ranges);
+        assert!(matches!(result, Err(DecodeError::Ranges)));
+    }
+
+    #[test]
+    fn test_decode_mm_range_bufs_wrong_size() {
+        let ranges = vec![vec![0u8; 100]]; // Wrong size
+        let result = decode_mm_range_bufs(ranges);
+        assert!(matches!(result, Err(DecodeError::Size(100))));
+    }
+
+    // ========================================================================
+    // Integration with MM_RANGES constants
+    // ========================================================================
+
+    #[test]
+    fn test_mm_ranges_constants() {
+        // Verify MM_RANGES has expected values
+        assert_eq!(MM_NUM_RANGES, 1);
+        assert_eq!(MM_RANGES[0], MM_SAVE_ADDR);
+        assert_eq!(MM_RANGES[1], mm_save::MM_SIZE as u32);
+    }
+
+    #[test]
+    fn test_mm_save_addr_value() {
+        // Verify MM_SAVE_ADDR matches the expected address
+        assert_eq!(MM_SAVE_ADDR, 0x1ef670);
+    }
+
+    #[test]
+    fn test_mm_size_constant() {
+        // Verify MM_SIZE matches expected value
+        assert_eq!(mm_save::MM_SIZE, 0x48d0);
+    }
+
+    // ========================================================================
+    // Endianness Tests (N64 is big-endian)
+    // ========================================================================
+
+    #[test]
+    fn test_big_endian_u16_parsing() {
+        let mut data = vec![0u8; mm_save::MM_SIZE];
+
+        // Set rupees to 0x1234 using big-endian
+        data[0x0034] = 0x12; // High byte
+        data[0x0035] = 0x34; // Low byte
+
+        let save = decode_mm_ranges(&data).unwrap();
+        assert_eq!(save.rupees, 0x1234);
+    }
+
+    #[test]
+    fn test_big_endian_u32_parsing() {
+        let mut data = vec![0u8; mm_save::MM_SIZE];
+
+        // Set quest items using big-endian with known valid bits:
+        // REMAINS_ODOLWA | REMAINS_GOHT | SONG_TIME = 0x1003
+        let quest_bits: u32 = 0x00001003;
+        data[0x00A4..0x00A8].copy_from_slice(&quest_bits.to_be_bytes());
+
+        let save = decode_mm_ranges(&data).unwrap();
+        assert_eq!(save.quest_items.bits(), 0x00001003);
+    }
+
+    // ========================================================================
+    // Roundtrip Tests
+    // ========================================================================
+
+    #[test]
+    fn test_decode_encode_roundtrip() {
+        let original_data = create_sample_mm_save_data();
+        let save = decode_mm_ranges(&original_data).unwrap();
+
+        // Encode back to bytes
+        let encoded = save.to_save_data();
+
+        // Decode again
+        let save2 = decode_mm_ranges(&encoded).unwrap();
+
+        // Key fields should match
+        assert_eq!(save.player_form, save2.player_form);
+        assert_eq!(save.health_capacity, save2.health_capacity);
+        assert_eq!(save.health, save2.health);
+        assert_eq!(save.magic, save2.magic);
+        assert_eq!(save.rupees, save2.rupees);
+        assert_eq!(save.sword, save2.sword);
+        assert_eq!(save.shield, save2.shield);
+        assert_eq!(save.double_defense, save2.double_defense);
+        assert_eq!(save.quest_items, save2.quest_items);
+        assert_eq!(save.stray_fairies, save2.stray_fairies);
+        assert_eq!(save.skull_tokens_swamp, save2.skull_tokens_swamp);
+        assert_eq!(save.skull_tokens_ocean, save2.skull_tokens_ocean);
+        assert_eq!(save.day, save2.day);
+        assert_eq!(save.time, save2.time);
+        assert_eq!(save.is_night, save2.is_night);
+    }
+
+    // ========================================================================
+    // DecodeError Tests
+    // ========================================================================
+
+    #[test]
+    fn test_decode_error_display() {
+        let err = DecodeError::Size(100);
+        let msg = format!("{}", err);
+        assert!(msg.contains("error decoding RAM"));
+    }
+
+    #[test]
+    fn test_decode_error_from_mm_decode_error() {
+        let mm_err = mm_save::MmDecodeError::Size(50);
+        let err: DecodeError = mm_err.into();
+        assert!(matches!(err, DecodeError::MmSave(_)));
     }
 }
