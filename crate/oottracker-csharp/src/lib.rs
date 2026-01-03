@@ -398,6 +398,7 @@ pub unsafe extern "C" fn cell_image(
         img,
         style,
         overlay,
+        ..
     } = cell.kind().render(state);
     StringHandle::from_string(
         match (style, overlay) {
@@ -738,6 +739,7 @@ pub unsafe extern "C" fn model_new(
         knowledge: *knowledge.into_box(),
         ram: (*save.into_box()).into(),
         tracker_ctx: TrackerCtx::default(),
+        check_tracker: None,
     })
 }
 
@@ -857,7 +859,7 @@ pub unsafe extern "C" fn model_set_ram(model: *mut ModelState, ram: *const Ram) 
     let model = &mut *model;
     let ram = &*ram;
     if ram.save.game_mode == GameMode::Gameplay {
-        model.ram = *ram
+        model.ram = ram.clone()
     }
     model.update_knowledge();
 }
