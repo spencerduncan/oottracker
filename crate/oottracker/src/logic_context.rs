@@ -7,6 +7,7 @@
 //! corresponding logic identifiers.
 
 use crate::mm_save::{MmBottle, MmMagicCapacity, MmSave, MmShield, MmSword, MmUpgrades};
+use ootmm::expr::EvalContext;
 use std::collections::HashMap;
 
 /// Logic identifiers for MM items.
@@ -971,6 +972,60 @@ impl<'a> MmGameContext<'a> {
     }
 }
 
+// ============================================================================
+// EvalContext Implementation
+// ============================================================================
+
+impl EvalContext for MmGameContext<'_> {
+    fn has_item(&self, item: &str, count: u32) -> bool {
+        self.item_count(item) >= count
+    }
+
+    fn event(&self, _name: &str) -> bool {
+        // TODO: Implement event tracking from game state
+        // For now, return false (no events tracked)
+        false
+    }
+
+    fn setting(&self, _name: &str) -> Option<bool> {
+        // TODO: Load from randomizer settings file
+        // For now, return None (setting not configured)
+        None
+    }
+
+    fn trick(&self, _name: &str) -> bool {
+        // TODO: Load from randomizer settings file
+        // For now, return false (no tricks enabled)
+        false
+    }
+
+    fn is_adult(&self) -> bool {
+        // In MM, Link is always a child (unless using transformation masks)
+        false
+    }
+
+    fn is_child(&self) -> bool {
+        // In MM, Link is always a child
+        true
+    }
+
+    fn mm_time(&self) -> u32 {
+        // MM time is stored as a u16 where 0x0000-0xFFFF represents the 3-day cycle.
+        // EvalContext expects time in minutes since Day 1 at 6:00 AM (0-4319).
+        // Convert the raw time to the expected format.
+        //
+        // The MM time register maps roughly as:
+        // - 0x4000 = 6:00 AM (start of day)
+        // - 0xC000 = 6:00 PM (start of night)
+        //
+        // For now, we'll do a simple linear mapping:
+        // time_minutes = (raw_time / 65536) * 4320
+        let raw_time = u32::from(self.save.time);
+        // Scale from 0-65535 to 0-4319
+        (raw_time * 4320) / 65536
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1744,5 +1799,98 @@ mod tests {
         assert!(!logic_ids::DEKU_MASK.is_empty());
         assert!(!logic_ids::SONG_OF_TIME.is_empty());
         assert!(!logic_ids::HOOKSHOT.is_empty());
+    }
+
+    // ========================================================================
+    // EvalContext Implementation Tests
+    // ========================================================================
+
+    #[test]
+    fn test_evalcontext_setting_returns_none() {
+        let save = make_save();
+        let ctx = MmGameContext::new(&save);
+
+        // setting() should return None for any setting (stub implementation)
+        assert_eq!(ctx.setting("any_setting"), None);
+        assert_eq!(ctx.setting("shuffle_songs"), None);
+        assert_eq!(ctx.setting("open_forest"), None);
+        assert_eq!(ctx.setting(""), None);
+        assert_eq!(ctx.setting("UPPERCASE_SETTING"), None);
+    }
+
+    #[test]
+    fn test_evalcontext_trick_returns_false() {
+        let save = make_save();
+        let ctx = MmGameContext::new(&save);
+
+        // trick() should return false for any trick (stub implementation)
+        assert!(!ctx.trick("any_trick"));
+        assert!(!ctx.trick("hover_boost"));
+        assert!(!ctx.trick("bomb_hover"));
+        assert!(!ctx.trick(""));
+        assert!(!ctx.trick("UPPERCASE_TRICK"));
+    }
+
+    #[test]
+    fn test_evalcontext_no_panic_on_unknown_settings_tricks() {
+        let save = make_save();
+        let ctx = MmGameContext::new(&save);
+
+        // Should not panic on any input
+        let _ = ctx.setting("!@#$%^&*()");
+        let _ = ctx.setting("very_long_setting_name_that_definitely_does_not_exist");
+        let _ = ctx.trick("!@#$%^&*()");
+        let _ = ctx.trick("very_long_trick_name_that_definitely_does_not_exist");
+    }
+
+    #[test]
+    fn test_evalcontext_has_item() {
+        let save = make_save_with_items();
+        let ctx = MmGameContext::new(&save);
+
+        // EvalContext::has_item should delegate to item_count
+        assert!(EvalContext::has_item(&ctx, "HOOKSHOT", 1));
+        assert!(!EvalContext::has_item(&ctx, "HOOKSHOT", 2)); // Only have 1
+        assert!(!EvalContext::has_item(&ctx, "FIRE_ARROW", 1)); // Don't have
+    }
+
+    #[test]
+    fn test_evalcontext_event_returns_false() {
+        let save = make_save();
+        let ctx = MmGameContext::new(&save);
+
+        // event() should return false (stub implementation)
+        assert!(!ctx.event("any_event"));
+        assert!(!ctx.event("FOREST_TEMPLE_CLEAR"));
+    }
+
+    #[test]
+    fn test_evalcontext_is_child() {
+        let save = make_save();
+        let ctx = MmGameContext::new(&save);
+
+        // In MM, Link is always a child
+        assert!(ctx.is_child());
+        assert!(!ctx.is_adult());
+    }
+
+    #[test]
+    fn test_evalcontext_mm_time() {
+        let mut save = make_save();
+        let ctx = MmGameContext::new(&save);
+
+        // Default time should produce a valid result
+        let time = ctx.mm_time();
+        assert!(time < 4320); // Max is 4319
+
+        // Test with specific time values
+        save.time = 0x0000;
+        let ctx = MmGameContext::new(&save);
+        assert_eq!(ctx.mm_time(), 0);
+
+        save.time = 0xFFFF;
+        let ctx = MmGameContext::new(&save);
+        // Should be close to 4319 (max value)
+        assert!(ctx.mm_time() < 4320);
     }
 }

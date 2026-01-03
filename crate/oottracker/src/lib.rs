@@ -96,6 +96,7 @@ pub mod github;
 pub mod info_tables;
 mod item_ids;
 pub mod knowledge;
+pub mod logic_context;
 pub mod mm_save;
 pub mod mm_scene;
 pub mod net;
