@@ -4,7 +4,7 @@ This guide explains how to set up BizHawk with an OoT/MM randomizer ROM to use w
 
 ## Prerequisites
 
-1. **BizHawk Emulator** (v2.9+ recommended)
+1. **BizHawk Emulator** (v2.9+ required)
    - Download from: https://github.com/TASEmulators/BizHawk/releases
    - Extract to a folder (e.g., `C:\BizHawk` or `~/BizHawk`)
 
@@ -31,22 +31,62 @@ This guide explains how to set up BizHawk with an OoT/MM randomizer ROM to use w
 3. Configure settings
 4. Generate and download
 
-## Step 2: Install the OotAutoTracker BizHawk Plugin
+## Step 2: Build the OotAutoTracker BizHawk Plugin
 
-1. Build the tracker (or download a release):
+### Requirements
+- [Rust toolchain](https://rustup.rs/) (for building the native library)
+- [.NET SDK 6.0+](https://dotnet.microsoft.com/download) (for building the C# plugin)
+- BizHawk 2.9+ (for reference DLLs during compilation)
+
+### Quick Setup (Recommended)
+
+Use the setup script to configure your development environment:
+
+```bash
+# Run the setup script with your BizHawk installation path
+./scripts/setup-bizhawk-dev.sh /path/to/BizHawk
+
+# Example paths:
+./scripts/setup-bizhawk-dev.sh ~/Games/BizHawk-2.9.1
+./scripts/setup-bizhawk-dev.sh /opt/BizHawk
+./scripts/setup-bizhawk-dev.sh "C:\BizHawk"  # Windows (use quotes)
+```
+
+The script will:
+- Validate your BizHawk installation
+- Create a symlink for the build process
+- Check for required tools (.NET SDK, Rust)
+
+### Build the Plugin
+
+```bash
+# 1. Build the Rust FFI library (produces oottracker.dll)
+cargo build --release -p oottracker-csharp
+
+# 2. Build the BizHawk plugin (compiles C# wrapper)
+cargo build --release -p oottracker-bizhawk
+```
+
+After building, the plugin files are automatically placed in your BizHawk's ExternalTools folder (via the symlink).
+
+### Manual Setup (Alternative)
+
+If you prefer not to use the script:
+
+1. Create a symlink from your BizHawk installation:
    ```bash
-   cd oottracker
-   cargo build --release -p oottracker-bizhawk
+   ln -s /path/to/BizHawk crate/oottracker-bizhawk/OotAutoTracker/BizHawk
    ```
 
-2. Copy the plugin files to BizHawk:
-   - Copy `crate/oottracker-bizhawk/OotAutoTracker/` folder to:
-     - Windows: `<BizHawk>/ExternalTools/OotAutoTracker/`
-     - Linux: `~/.config/BizHawk/ExternalTools/OotAutoTracker/`
+2. Build as shown above.
 
-3. The folder should contain:
-   - `OotAutoTracker.dll`
-   - `oottracker.dll` (native library)
+### Output Files
+
+After a successful build:
+- `OotAutoTracker.dll` - The C# BizHawk plugin
+- `oottracker.dll` - The Rust native library
+
+Both are placed in `<BizHawk>/ExternalTools/` (via the symlink).
 
 ## Step 3: Run the Tracker GUI
 
@@ -68,7 +108,9 @@ This guide explains how to set up BizHawk with an OoT/MM randomizer ROM to use w
 2. **Open the External Tool**:
    - Tools → External Tools → OotAutoTracker
 
-3. **The tracker should auto-connect** to the GUI/web interface on port 24801
+3. **The plugin connects to the tracker** on port 24801
+   - The tracker GUI/web runs on port 24800
+   - The BizHawk plugin connects on port 24801
 
 4. **Verify connection**:
    - The tracker GUI should show items updating as you collect them in-game
@@ -77,13 +119,23 @@ This guide explains how to set up BizHawk with an OoT/MM randomizer ROM to use w
 ## Troubleshooting
 
 ### Plugin not appearing in BizHawk
-- Ensure the DLL files are in the correct ExternalTools folder
-- Check BizHawk's Tools → External Tools menu
+- Ensure both DLL files are in the ExternalTools folder
+- Check that you built with `--release` flag
 - Restart BizHawk after adding the plugin
+- Verify BizHawk version is 2.9+
+
+### Build fails: "BizHawk DLLs not found"
+- Run the setup script first: `./scripts/setup-bizhawk-dev.sh /path/to/BizHawk`
+- Or manually create the symlink as shown above
+- Ensure your BizHawk installation has the `dll/` subdirectory
+
+### Build fails: "dotnet not found"
+- Install .NET SDK 6.0 or later from https://dotnet.microsoft.com/download
+- Verify with: `dotnet --version`
 
 ### Tracker not connecting
 - Ensure the tracker GUI/web is running BEFORE opening the BizHawk plugin
-- Check that port 24801 is not blocked by firewall
+- Check that ports 24800 and 24801 are not blocked by firewall
 - Try restarting both the tracker and BizHawk
 
 ### Wrong game detected
@@ -93,7 +145,7 @@ This guide explains how to set up BizHawk with an OoT/MM randomizer ROM to use w
 
 ### Items not tracking
 - Verify the ROM is a randomizer ROM (not vanilla)
-- Check that you're using BizHawk's N64 core (not another emulator core)
+- Check that you're using BizHawk's N64 core (Mupen64Plus)
 - Try saving and reloading the game state
 
 ## Layout Options
@@ -105,12 +157,14 @@ The tracker supports multiple layouts:
 
 Select your layout in the tracker GUI settings.
 
-## Memory Addresses
+## Memory Addresses (Developer Reference)
 
 For developers/debugging, key memory ranges:
 - OoT Save: `0x11a5d0` (size: `0x1450`)
 - MM Save: `0x1ef670` (size: `0x48d0`)
 - Combo Context: `0x801c6fa0` (determines active game)
+
+**Note**: These addresses are for specific ROM versions and may vary.
 
 ## Links
 
