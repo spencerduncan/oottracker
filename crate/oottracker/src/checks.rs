@@ -128,35 +128,138 @@ impl<R: Rando> CheckExt for Check<R> {
             },
             Check::Event(event) => match &event[..] {
                 // Overworld
-                "Showed Mido Sword & Shield" => None, //TODO
-                "Bonooru" => None, //TODO
-                "Carpenter Rescue" => None, //TODO
-                "GF Gate Open" => None, //TODO
-                "Sell Big Poe" => None, //TODO
-                "Skull Mask" => None, //TODO
-                "Mask of Truth" => None, //TODO
-                "Drain Well" => None, //TODO
+                // Note: Events marked with `event` prefix in flags_list! macros are handled
+                // by the early returns above (event_chk_inf.checked, inf_table.checked, scene_flags.checked).
+                // The match arms below handle events that require custom logic.
+
+                "Bonooru" => Some(model.ram.save.scarecrow_song_child),
+                "Carpenter Rescue" => Some(
+                    model.ram.scene_flags().thieves_hideout.collectible.contains(
+                        crate::scene::ThievesHideoutCollectible::GF_SOUTH_F_2_CARPENTER
+                            | crate::scene::ThievesHideoutCollectible::GF_SOUTH_F_1_CARPENTER
+                            | crate::scene::ThievesHideoutCollectible::GF_NORTH_F_1_CARPENTER
+                            | crate::scene::ThievesHideoutCollectible::GF_NORTH_F_2_CARPENTER
+                    )
+                ),
+                "Sell Big Poe" => Some(model.ram.save.big_poes >= 1),
+                "Skull Mask" => Some(matches!(
+                    model.ram.save.inv.child_trade_item,
+                    crate::save::ChildTradeItem::SkullMask
+                        | crate::save::ChildTradeItem::SpookyMask
+                        | crate::save::ChildTradeItem::BunnyHood
+                        | crate::save::ChildTradeItem::GoronMask
+                        | crate::save::ChildTradeItem::ZoraMask
+                        | crate::save::ChildTradeItem::GerudoMask
+                        | crate::save::ChildTradeItem::MaskOfTruth
+                        | crate::save::ChildTradeItem::SoldOut
+                )),
+                "Mask of Truth" => Some(matches!(
+                    model.ram.save.inv.child_trade_item,
+                    crate::save::ChildTradeItem::MaskOfTruth
+                        | crate::save::ChildTradeItem::SoldOut
+                )),
                 "GC Woods Warp Open" => Some(
                     model.ram.scene_flags().goron_city.switches.intersects(
                         crate::scene::GoronCitySwitches::LW_LEFT_BOULDER
-                        | crate::scene::GoronCitySwitches::LW_MIDDLE_BOULDER
-                        | crate::scene::GoronCitySwitches::LW_RIGHT_BOULDER
+                            | crate::scene::GoronCitySwitches::LW_MIDDLE_BOULDER
+                            | crate::scene::GoronCitySwitches::LW_RIGHT_BOULDER
                     )
                 ),
-                "Epona" => None, //TODO
-                "Links Cow" => None, //TODO
-                "Odd Mushroom Access" => None, //TODO
-                "Poachers Saw Access" => None, //TODO
-                "Eyedrops Access" => None, //TODO
-                "Broken Sword Access" => None, //TODO
-                "Cojiro Access" => None, //TODO
-                "Wake Up Adult Talon" => None, //TODO
-                "Odd Potion Access" => None, //TODO
-                "Dampes Windmill Access" => None, //TODO
-                "Prescription Access" => None, //TODO
-                "Stop GC Rolling Goron as Adult" => None, //TODO
-                "King Zora Thawed" => None, //TODO
-                "Eyeball Frog Access" => None, //TODO
+                "Epona" => Some(
+                    model.ram.save.quest_items.contains(crate::save::QuestItems::EPONAS_SONG)
+                        && model.ram.save.is_adult
+                ),
+                "Links Cow" => None, //TODO: Requires beating Malon's obstacle course with good time, flag location unknown
+                // Adult trade quest progression events
+                "Odd Mushroom Access" => Some(matches!(
+                    model.ram.save.inv.adult_trade_item,
+                    crate::save::AdultTradeItem::OddMushroom
+                        | crate::save::AdultTradeItem::OddPotion
+                        | crate::save::AdultTradeItem::PoachersSaw
+                        | crate::save::AdultTradeItem::BrokenSword
+                        | crate::save::AdultTradeItem::Prescription
+                        | crate::save::AdultTradeItem::EyeballFrog
+                        | crate::save::AdultTradeItem::Eyedrops
+                        | crate::save::AdultTradeItem::ClaimCheck
+                )),
+                "Poachers Saw Access" => Some(matches!(
+                    model.ram.save.inv.adult_trade_item,
+                    crate::save::AdultTradeItem::PoachersSaw
+                        | crate::save::AdultTradeItem::BrokenSword
+                        | crate::save::AdultTradeItem::Prescription
+                        | crate::save::AdultTradeItem::EyeballFrog
+                        | crate::save::AdultTradeItem::Eyedrops
+                        | crate::save::AdultTradeItem::ClaimCheck
+                )),
+                "Eyedrops Access" => Some(matches!(
+                    model.ram.save.inv.adult_trade_item,
+                    crate::save::AdultTradeItem::Eyedrops | crate::save::AdultTradeItem::ClaimCheck
+                )),
+                "Broken Sword Access" => Some(matches!(
+                    model.ram.save.inv.adult_trade_item,
+                    crate::save::AdultTradeItem::BrokenSword
+                        | crate::save::AdultTradeItem::Prescription
+                        | crate::save::AdultTradeItem::EyeballFrog
+                        | crate::save::AdultTradeItem::Eyedrops
+                        | crate::save::AdultTradeItem::ClaimCheck
+                )),
+                "Cojiro Access" => Some(matches!(
+                    model.ram.save.inv.adult_trade_item,
+                    crate::save::AdultTradeItem::Cojiro
+                        | crate::save::AdultTradeItem::OddMushroom
+                        | crate::save::AdultTradeItem::OddPotion
+                        | crate::save::AdultTradeItem::PoachersSaw
+                        | crate::save::AdultTradeItem::BrokenSword
+                        | crate::save::AdultTradeItem::Prescription
+                        | crate::save::AdultTradeItem::EyeballFrog
+                        | crate::save::AdultTradeItem::Eyedrops
+                        | crate::save::AdultTradeItem::ClaimCheck
+                )),
+                "Wake Up Adult Talon" => Some(matches!(
+                    model.ram.save.inv.adult_trade_item,
+                    crate::save::AdultTradeItem::PocketCucco
+                        | crate::save::AdultTradeItem::Cojiro
+                        | crate::save::AdultTradeItem::OddMushroom
+                        | crate::save::AdultTradeItem::OddPotion
+                        | crate::save::AdultTradeItem::PoachersSaw
+                        | crate::save::AdultTradeItem::BrokenSword
+                        | crate::save::AdultTradeItem::Prescription
+                        | crate::save::AdultTradeItem::EyeballFrog
+                        | crate::save::AdultTradeItem::Eyedrops
+                        | crate::save::AdultTradeItem::ClaimCheck
+                )),
+                "Odd Potion Access" => Some(matches!(
+                    model.ram.save.inv.adult_trade_item,
+                    crate::save::AdultTradeItem::OddPotion
+                        | crate::save::AdultTradeItem::PoachersSaw
+                        | crate::save::AdultTradeItem::BrokenSword
+                        | crate::save::AdultTradeItem::Prescription
+                        | crate::save::AdultTradeItem::EyeballFrog
+                        | crate::save::AdultTradeItem::Eyedrops
+                        | crate::save::AdultTradeItem::ClaimCheck
+                )),
+                "Dampes Windmill Access" => None, //TODO: Requires completing Dampe's race, need to find flag
+                "Prescription Access" => Some(matches!(
+                    model.ram.save.inv.adult_trade_item,
+                    crate::save::AdultTradeItem::Prescription
+                        | crate::save::AdultTradeItem::EyeballFrog
+                        | crate::save::AdultTradeItem::Eyedrops
+                        | crate::save::AdultTradeItem::ClaimCheck
+                )),
+                "Stop GC Rolling Goron as Adult" => Some(
+                    model
+                        .ram
+                        .save
+                        .inf_table
+                        .32
+                        .contains(crate::info_tables::InfTable32::GC_ROLLING_GORON_AS_ADULT)
+                ),
+                "Eyeball Frog Access" => Some(matches!(
+                    model.ram.save.inv.adult_trade_item,
+                    crate::save::AdultTradeItem::EyeballFrog
+                        | crate::save::AdultTradeItem::Eyedrops
+                        | crate::save::AdultTradeItem::ClaimCheck
+                )),
 
                 // Forest Temple
                 "Forest Temple Jo and Beth" => Some(

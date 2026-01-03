@@ -118,7 +118,7 @@ flags_list! {
             "GC Rolling Goron as Child" = 0x40,
         },
         38: {
-            "ZD King Zora Thawed" = 0x02,
+            event "King Zora Thawed" = 0x02,
         },
         51: {
             "LW Deku Scrub Near Bridge" = 0x04,
