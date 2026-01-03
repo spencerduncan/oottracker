@@ -45,7 +45,7 @@ use {
         net::{self, Connection},
         proto::Packet,
         save::*,
-        ui::{self, *},
+        ui::{self, LayoutPreference, *},
         ModelState,
     },
     semver::Version,
@@ -193,6 +193,7 @@ enum Message<R: Rando> {
     ResetUpdateState,
     RightClick,
     SetAutoUpdateCheck(bool),
+    SetLayoutPreference(LayoutPreference),
     SetMedOrder(ElementOrder),
     SetPasscode(String),
     SetConnection(Arc<dyn Connection>),
@@ -219,6 +220,7 @@ impl<R: Rando> fmt::Display for Message<R> {
 #[derive(Debug, Default)]
 struct MenuState {
     dismiss_btn: button::State,
+    layout_preference: pick_list::State<LayoutPreference>,
     med_order: pick_list::State<ElementOrder>,
     warp_song_order: pick_list::State<ElementOrder>,
     connection_kind: pick_list::State<ConnectionKind>,
@@ -342,16 +344,44 @@ struct State<R: Rando + 'static> {
 
 impl<R: Rando + 'static> State<R> {
     fn layout(&self) -> TrackerLayout {
-        if self
-            .connection
+        // Determine base layout based on layout preference
+        let layout_pref = self
+            .config
             .as_ref()
-            .is_none_or(|connection| connection.can_change_state())
-        {
-            TrackerLayout::from(&self.config)
-        } else if let Some(ref config) = self.config {
-            TrackerLayout::new_auto(config)
-        } else {
-            TrackerLayout::default_auto()
+            .map(|cfg| cfg.layout_preference)
+            .unwrap_or_default();
+
+        match layout_pref {
+            LayoutPreference::Oot => {
+                // Original OoT layout logic
+                if self
+                    .connection
+                    .as_ref()
+                    .is_none_or(|connection| connection.can_change_state())
+                {
+                    TrackerLayout::from(&self.config)
+                } else if let Some(ref config) = self.config {
+                    TrackerLayout::new_auto(config)
+                } else {
+                    TrackerLayout::default_auto()
+                }
+            }
+            LayoutPreference::Mm => TrackerLayout::MmDefault,
+            LayoutPreference::Combo => {
+                // For combo mode, use OoT layout for now
+                // TODO: Implement true combo layout that shows both OoT and MM items
+                if self
+                    .connection
+                    .as_ref()
+                    .is_none_or(|connection| connection.can_change_state())
+                {
+                    TrackerLayout::from(&self.config)
+                } else if let Some(ref config) = self.config {
+                    TrackerLayout::new_auto(config)
+                } else {
+                    TrackerLayout::default_auto()
+                }
+            }
         }
     }
 
@@ -693,6 +723,13 @@ impl Application for State<ootr_static::Rando> {
                     connection_params.set_kind(kind);
                 }
             }
+            Message::SetLayoutPreference(layout_preference) => {
+                self.config
+                    .as_mut()
+                    .expect("config not yet loaded")
+                    .layout_preference = layout_preference;
+                return self.save_config();
+            }
             Message::SetMedOrder(med_order) => {
                 self.config
                     .as_mut()
@@ -802,6 +839,13 @@ impl Application for State<ootr_static::Rando> {
                         .width(Length::Fill)
                         .horizontal_alignment(alignment::Horizontal::Center),
                 )
+                .push(Text::new("Tracker layout:"))
+                .push(PickList::new(
+                    &mut menu_state.layout_preference,
+                    all().collect_vec(),
+                    self.config.as_ref().map(|cfg| cfg.layout_preference),
+                    Message::SetLayoutPreference,
+                ))
                 .push(Text::new("Medallion order:"))
                 .push(PickList::new(
                     &mut menu_state.med_order,
