@@ -20,10 +20,20 @@ mod expression_parser_edge_cases {
         // 5 levels of AND nesting
         let expr = parse("a && b && c && d && e && f").unwrap();
         // Should be left-associative: ((((a && b) && c) && d) && e) && f
-        match expr {
-            Expr::And(_, _) => {}
-            _ => panic!("expected And at top level"),
-        }
+        let expected = Expr::and(
+            Expr::and(
+                Expr::and(
+                    Expr::and(
+                        Expr::and(Expr::Ident("a".into()), Expr::Ident("b".into())),
+                        Expr::Ident("c".into()),
+                    ),
+                    Expr::Ident("d".into()),
+                ),
+                Expr::Ident("e".into()),
+            ),
+            Expr::Ident("f".into()),
+        );
+        assert_eq!(expr, expected, "left-associative AND chain structure");
     }
 
     #[test]
@@ -31,10 +41,20 @@ mod expression_parser_edge_cases {
         // 5 levels of OR nesting
         let expr = parse("a || b || c || d || e || f").unwrap();
         // Should be left-associative: ((((a || b) || c) || d) || e) || f
-        match expr {
-            Expr::Or(_, _) => {}
-            _ => panic!("expected Or at top level"),
-        }
+        let expected = Expr::or(
+            Expr::or(
+                Expr::or(
+                    Expr::or(
+                        Expr::or(Expr::Ident("a".into()), Expr::Ident("b".into())),
+                        Expr::Ident("c".into()),
+                    ),
+                    Expr::Ident("d".into()),
+                ),
+                Expr::Ident("e".into()),
+            ),
+            Expr::Ident("f".into()),
+        );
+        assert_eq!(expr, expected, "left-associative OR chain structure");
     }
 
     #[test]
@@ -43,14 +63,28 @@ mod expression_parser_edge_cases {
         let expr = parse("a && b || c && d || e && f").unwrap();
         // Due to precedence: (a && b) || (c && d) || (e && f)
         // Then left-assoc OR: ((a && b) || (c && d)) || (e && f)
-        assert!(matches!(expr, Expr::Or(_, _)));
+        let expected = Expr::or(
+            Expr::or(
+                Expr::and(Expr::Ident("a".into()), Expr::Ident("b".into())),
+                Expr::and(Expr::Ident("c".into()), Expr::Ident("d".into())),
+            ),
+            Expr::and(Expr::Ident("e".into()), Expr::Ident("f".into())),
+        );
+        assert_eq!(expr, expected, "mixed AND/OR precedence structure");
     }
 
     #[test]
     fn test_parentheses_override_all_precedence() {
         // Parentheses should override natural precedence
         let expr = parse("((a || b) && (c || d)) && (e || f)").unwrap();
-        assert!(matches!(expr, Expr::And(_, _)));
+        let expected = Expr::and(
+            Expr::and(
+                Expr::or(Expr::Ident("a".into()), Expr::Ident("b".into())),
+                Expr::or(Expr::Ident("c".into()), Expr::Ident("d".into())),
+            ),
+            Expr::or(Expr::Ident("e".into()), Expr::Ident("f".into())),
+        );
+        assert_eq!(expr, expected, "parentheses override precedence");
     }
 
     #[test]
@@ -66,14 +100,29 @@ mod expression_parser_edge_cases {
     #[test]
     fn test_not_with_nested_and_or() {
         let expr = parse("!(a && b) || !(c || d)").unwrap();
-        // Top level should be OR
-        assert!(matches!(expr, Expr::Or(_, _)));
+        // Structure: Or(Not(And(a, b)), Not(Or(c, d)))
+        let expected = Expr::or(
+            Expr::not(Expr::and(Expr::Ident("a".into()), Expr::Ident("b".into()))),
+            Expr::not(Expr::or(Expr::Ident("c".into()), Expr::Ident("d".into()))),
+        );
+        assert_eq!(expr, expected, "NOT with nested AND/OR structure");
     }
 
     #[test]
     fn test_function_in_nested_expression() {
         let expr = parse("has(A) && (has(B) || has(C)) && has(D)").unwrap();
-        assert!(matches!(expr, Expr::And(_, _)));
+        // Structure: And(And(has(A), Or(has(B), has(C))), has(D))
+        let expected = Expr::and(
+            Expr::and(
+                Expr::call("has", vec![Expr::Ident("A".into())]),
+                Expr::or(
+                    Expr::call("has", vec![Expr::Ident("B".into())]),
+                    Expr::call("has", vec![Expr::Ident("C".into())]),
+                ),
+            ),
+            Expr::call("has", vec![Expr::Ident("D".into())]),
+        );
+        assert_eq!(expr, expected, "function calls in nested expression");
     }
 
     // --- Operator Precedence Edge Cases ---
@@ -82,8 +131,12 @@ mod expression_parser_edge_cases {
     fn test_precedence_not_binds_tightest() {
         // !a && b || c should be ((!a) && b) || c
         let expr = parse("!a && b || c").unwrap();
-        // Top level should be OR (lowest precedence)
-        assert!(matches!(expr, Expr::Or(_, _)));
+        // Structure: Or(And(Not(a), b), c)
+        let expected = Expr::or(
+            Expr::and(Expr::not(Expr::Ident("a".into())), Expr::Ident("b".into())),
+            Expr::Ident("c".into()),
+        );
+        assert_eq!(expr, expected, "NOT binds tightest");
     }
 
     #[test]
@@ -91,14 +144,28 @@ mod expression_parser_edge_cases {
         // a || b && c || d && e should parse as a || (b && c) || (d && e)
         let expr = parse("a || b && c || d && e").unwrap();
         // Left-associative: (a || (b && c)) || (d && e)
-        assert!(matches!(expr, Expr::Or(_, _)));
+        let expected = Expr::or(
+            Expr::or(
+                Expr::Ident("a".into()),
+                Expr::and(Expr::Ident("b".into()), Expr::Ident("c".into())),
+            ),
+            Expr::and(Expr::Ident("d".into()), Expr::Ident("e".into())),
+        );
+        assert_eq!(expr, expected, "AND over OR precedence");
     }
 
     #[test]
     fn test_precedence_with_functions() {
         // has(X) || has(Y) && has(Z) should be has(X) || (has(Y) && has(Z))
         let expr = parse("has(X) || has(Y) && has(Z)").unwrap();
-        assert!(matches!(expr, Expr::Or(_, _)));
+        let expected = Expr::or(
+            Expr::call("has", vec![Expr::Ident("X".into())]),
+            Expr::and(
+                Expr::call("has", vec![Expr::Ident("Y".into())]),
+                Expr::call("has", vec![Expr::Ident("Z".into())]),
+            ),
+        );
+        assert_eq!(expr, expected, "precedence with function calls");
     }
 
     // --- Count/Setting Expression Tests ---
@@ -145,8 +212,15 @@ mod expression_parser_edge_cases {
     #[test]
     fn test_count_in_complex_expression() {
         let expr = parse("count(KEY, 3) && setting(shuffle_keys) || has(MASTER_KEY)").unwrap();
-        // Top level OR
-        assert!(matches!(expr, Expr::Or(_, _)));
+        // Structure: Or(And(count(KEY, 3), setting(shuffle_keys)), has(MASTER_KEY))
+        let expected = Expr::or(
+            Expr::and(
+                Expr::call("count", vec![Expr::Ident("KEY".into()), Expr::Number(3)]),
+                Expr::call("setting", vec![Expr::Ident("shuffle_keys".into())]),
+            ),
+            Expr::call("has", vec![Expr::Ident("MASTER_KEY".into())]),
+        );
+        assert_eq!(expr, expected, "count in complex expression");
     }
 
     #[test]
@@ -172,19 +246,39 @@ mod expression_parser_edge_cases {
     #[test]
     fn test_expression_with_underscore_identifiers() {
         let expr = parse("is_adult && has_hookshot && can_use_bow").unwrap();
-        assert!(matches!(expr, Expr::And(_, _)));
+        // Left-associative AND chain
+        let expected = Expr::and(
+            Expr::and(
+                Expr::Ident("is_adult".into()),
+                Expr::Ident("has_hookshot".into()),
+            ),
+            Expr::Ident("can_use_bow".into()),
+        );
+        assert_eq!(expr, expected, "underscore identifiers");
     }
 
     #[test]
     fn test_expression_with_numbers_in_identifiers() {
         let expr = parse("room1_clear && room2_clear").unwrap();
-        assert!(matches!(expr, Expr::And(_, _)));
+        let expected = Expr::and(
+            Expr::Ident("room1_clear".into()),
+            Expr::Ident("room2_clear".into()),
+        );
+        assert_eq!(expr, expected, "identifiers with numbers");
     }
 
     #[test]
     fn test_expression_boolean_literals_in_logic() {
         let expr = parse("true && has(ITEM) || false").unwrap();
-        assert!(matches!(expr, Expr::Or(_, _)));
+        // Structure: Or(And(true, has(ITEM)), false)
+        let expected = Expr::or(
+            Expr::and(
+                Expr::Bool(true),
+                Expr::call("has", vec![Expr::Ident("ITEM".into())]),
+            ),
+            Expr::Bool(false),
+        );
+        assert_eq!(expr, expected, "boolean literals in logic");
     }
 
     #[test]
@@ -213,7 +307,25 @@ mod expression_parser_edge_cases {
              (is_child && has(BOOMERANG) && setting(boomerang_access))",
         )
         .unwrap();
-        assert!(matches!(expr, Expr::Or(_, _)));
+        // Structure: Or(And(is_adult, Or(has(HOOKSHOT), has(LONGSHOT))),
+        //               And(And(is_child, has(BOOMERANG)), setting(boomerang_access)))
+        let expected = Expr::or(
+            Expr::and(
+                Expr::Ident("is_adult".into()),
+                Expr::or(
+                    Expr::call("has", vec![Expr::Ident("HOOKSHOT".into())]),
+                    Expr::call("has", vec![Expr::Ident("LONGSHOT".into())]),
+                ),
+            ),
+            Expr::and(
+                Expr::and(
+                    Expr::Ident("is_child".into()),
+                    Expr::call("has", vec![Expr::Ident("BOOMERANG".into())]),
+                ),
+                Expr::call("setting", vec![Expr::Ident("boomerang_access".into())]),
+            ),
+        );
+        assert_eq!(expr, expected, "realistic OoTMM logic expression");
     }
 
     #[test]
@@ -223,7 +335,25 @@ mod expression_parser_edge_cases {
              (has(LIGHT_MEDALLION) || count(MEDALLION, 6))",
         )
         .unwrap();
-        assert!(matches!(expr, Expr::And(_, _)));
+        // Structure: And(And(count(GOLD_SKULLTULA, 50), setting(bridge_condition)),
+        //                Or(has(LIGHT_MEDALLION), count(MEDALLION, 6)))
+        let expected = Expr::and(
+            Expr::and(
+                Expr::call(
+                    "count",
+                    vec![Expr::Ident("GOLD_SKULLTULA".into()), Expr::Number(50)],
+                ),
+                Expr::call("setting", vec![Expr::Ident("bridge_condition".into())]),
+            ),
+            Expr::or(
+                Expr::call("has", vec![Expr::Ident("LIGHT_MEDALLION".into())]),
+                Expr::call(
+                    "count",
+                    vec![Expr::Ident("MEDALLION".into()), Expr::Number(6)],
+                ),
+            ),
+        );
+        assert_eq!(expr, expected, "complex count/setting combination");
     }
 }
 

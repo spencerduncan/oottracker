@@ -121,16 +121,46 @@ mod parsing {
     #[test]
     fn test_deeply_nested_expression() {
         // Test parser handles deep nesting without stack overflow
-        let expr = "((((a && b) || c) && d) || e)";
-        let result = parse(expr);
-        assert!(result.is_ok(), "deeply nested expression should parse");
+        let expr_str = "((((a && b) || c) && d) || e)";
+        let expr = parse(expr_str).expect("deeply nested expression should parse");
+
+        // Verify the complete AST structure
+        // (((a && b) || c) && d) || e
+        // Structure: Or(And(Or(And(a, b), c), d), e)
+        let expected = Expr::or(
+            Expr::and(
+                Expr::or(
+                    Expr::and(Expr::Ident("a".into()), Expr::Ident("b".into())),
+                    Expr::Ident("c".into()),
+                ),
+                Expr::Ident("d".into()),
+            ),
+            Expr::Ident("e".into()),
+        );
+        assert_eq!(expr, expected, "AST structure should match");
     }
 
     #[test]
     fn test_many_function_calls() {
-        let expr = "has(A) && has(B) && has(C) && has(D) && has(E)";
-        let result = parse(expr);
-        assert!(result.is_ok(), "many function calls should parse");
+        let expr_str = "has(A) && has(B) && has(C) && has(D) && has(E)";
+        let expr = parse(expr_str).expect("many function calls should parse");
+
+        // Verify AST structure: left-associative chain of ANDs
+        // ((((has(A) && has(B)) && has(C)) && has(D)) && has(E))
+        let expected = Expr::and(
+            Expr::and(
+                Expr::and(
+                    Expr::and(
+                        Expr::call("has", vec![Expr::Ident("A".into())]),
+                        Expr::call("has", vec![Expr::Ident("B".into())]),
+                    ),
+                    Expr::call("has", vec![Expr::Ident("C".into())]),
+                ),
+                Expr::call("has", vec![Expr::Ident("D".into())]),
+            ),
+            Expr::call("has", vec![Expr::Ident("E".into())]),
+        );
+        assert_eq!(expr, expected, "AST structure should match");
     }
 }
 
