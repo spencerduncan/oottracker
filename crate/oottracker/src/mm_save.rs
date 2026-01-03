@@ -1303,6 +1303,158 @@ impl MmSave {
     pub fn has_giant_mask(&self) -> bool {
         self.masks.masks_high.contains(MmMasksHigh::GIANT)
     }
+
+    // ========================================================================
+    // Equipment Accessor Methods
+    // ========================================================================
+
+    /// Check if player has the Ocarina of Time
+    pub fn has_ocarina(&self) -> bool {
+        self.inventory.ocarina
+    }
+
+    /// Check if player has the Hero's Bow
+    pub fn has_heros_bow(&self) -> bool {
+        self.inventory.bow
+    }
+
+    /// Check if player has Fire Arrows
+    pub fn has_fire_arrow(&self) -> bool {
+        self.inventory.fire_arrows
+    }
+
+    /// Check if player has Ice Arrows
+    pub fn has_ice_arrow(&self) -> bool {
+        self.inventory.ice_arrows
+    }
+
+    /// Check if player has Light Arrows
+    pub fn has_light_arrow(&self) -> bool {
+        self.inventory.light_arrows
+    }
+
+    /// Check if player has the Hookshot
+    pub fn has_hookshot(&self) -> bool {
+        self.inventory.hookshot
+    }
+
+    /// Check if player has Bombs
+    pub fn has_bombs(&self) -> bool {
+        self.inventory.bombs
+    }
+
+    /// Check if player has Bombchus
+    pub fn has_bombchu(&self) -> bool {
+        self.inventory.bombchus
+    }
+
+    /// Check if player has Powder Kegs
+    pub fn has_powder_keg(&self) -> bool {
+        self.inventory.powder_keg
+    }
+
+    /// Check if player has the Lens of Truth
+    pub fn has_lens_of_truth(&self) -> bool {
+        self.inventory.lens
+    }
+
+    /// Check if player has the Pictograph Box
+    pub fn has_pictograph_box(&self) -> bool {
+        self.inventory.pictograph_box
+    }
+
+    /// Check if player has the Great Fairy's Sword
+    pub fn has_great_fairy_sword(&self) -> bool {
+        self.inventory.great_fairy_sword
+    }
+
+    /// Check if player has Magic Beans
+    pub fn has_magic_bean(&self) -> bool {
+        self.inventory.magic_beans
+    }
+
+    /// Check if player has magic (single or double)
+    pub fn has_magic(&self) -> bool {
+        self.magic != MmMagicCapacity::None
+    }
+
+    // ========================================================================
+    // Song Accessor Methods
+    // ========================================================================
+
+    /// Check if player has Song of Time
+    pub fn has_song_of_time(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::SONG_TIME)
+    }
+
+    /// Check if player has Song of Healing
+    pub fn has_song_of_healing(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::SONG_HEALING)
+    }
+
+    /// Check if player has Epona's Song
+    pub fn has_eponas_song(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::SONG_EPONA)
+    }
+
+    /// Check if player has Song of Soaring
+    pub fn has_song_of_soaring(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::SONG_SOARING)
+    }
+
+    /// Check if player has Song of Storms
+    pub fn has_song_of_storms(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::SONG_STORMS)
+    }
+
+    /// Check if player has Sonata of Awakening
+    pub fn has_sonata_of_awakening(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::SONG_AWAKENING)
+    }
+
+    /// Check if player has Goron Lullaby
+    pub fn has_goron_lullaby(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::SONG_GORON)
+    }
+
+    /// Check if player has New Wave Bossa Nova
+    pub fn has_new_wave_bossa_nova(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::SONG_ZORA)
+    }
+
+    /// Check if player has Elegy of Emptiness
+    pub fn has_elegy_of_emptiness(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::SONG_EMPTINESS)
+    }
+
+    /// Check if player has Oath to Order
+    pub fn has_oath_to_order(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::SONG_ORDER)
+    }
+
+    // ========================================================================
+    // Boss Remains Accessor Methods
+    // ========================================================================
+
+    /// Check if player has Odolwa's Remains
+    pub fn has_odolwa_remains(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::REMAINS_ODOLWA)
+    }
+
+    /// Check if player has Goht's Remains
+    pub fn has_goht_remains(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::REMAINS_GOHT)
+    }
+
+    /// Check if player has Gyorg's Remains
+    pub fn has_gyorg_remains(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::REMAINS_GYORG)
+    }
+
+    /// Check if player has Twinmold's Remains
+    pub fn has_twinmold_remains(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::REMAINS_TWINMOLD)
+    }
 }
 
 // ============================================================================
@@ -2397,5 +2549,287 @@ mod tests {
         assert!(!save.has_garo_mask());
         assert!(!save.has_captain_hat());
         assert!(!save.has_giant_mask());
+    }
+
+    // ========================================================================
+    // Inventory Accessor Tests
+    // ========================================================================
+
+    #[test]
+    fn test_equipment_accessors_default() {
+        let save = MmSave::default();
+
+        // All equipment should be false by default
+        assert!(!save.has_ocarina());
+        assert!(!save.has_heros_bow());
+        assert!(!save.has_fire_arrow());
+        assert!(!save.has_ice_arrow());
+        assert!(!save.has_light_arrow());
+        assert!(!save.has_hookshot());
+        assert!(!save.has_bombs());
+        assert!(!save.has_bombchu());
+        assert!(!save.has_powder_keg());
+        assert!(!save.has_lens_of_truth());
+        assert!(!save.has_pictograph_box());
+        assert!(!save.has_great_fairy_sword());
+        assert!(!save.has_magic_bean());
+        assert!(!save.has_magic());
+    }
+
+    #[test]
+    fn test_equipment_accessors_with_items() {
+        let mut save = MmSave::default();
+
+        // Set some equipment
+        save.inventory.ocarina = true;
+        save.inventory.bow = true;
+        save.inventory.fire_arrows = true;
+        save.inventory.hookshot = true;
+        save.inventory.bombs = true;
+        save.inventory.lens = true;
+        save.inventory.great_fairy_sword = true;
+        save.magic = MmMagicCapacity::Double;
+
+        // Check accessors return true for items we have
+        assert!(save.has_ocarina());
+        assert!(save.has_heros_bow());
+        assert!(save.has_fire_arrow());
+        assert!(save.has_hookshot());
+        assert!(save.has_bombs());
+        assert!(save.has_lens_of_truth());
+        assert!(save.has_great_fairy_sword());
+        assert!(save.has_magic());
+
+        // Check accessors return false for items we don't have
+        assert!(!save.has_ice_arrow());
+        assert!(!save.has_light_arrow());
+        assert!(!save.has_bombchu());
+        assert!(!save.has_powder_keg());
+        assert!(!save.has_pictograph_box());
+        assert!(!save.has_magic_bean());
+    }
+
+    #[test]
+    fn test_magic_accessor_single_magic() {
+        let mut save = MmSave::default();
+        save.magic = MmMagicCapacity::Single;
+        assert!(save.has_magic());
+    }
+
+    #[test]
+    fn test_magic_accessor_double_magic() {
+        let mut save = MmSave::default();
+        save.magic = MmMagicCapacity::Double;
+        assert!(save.has_magic());
+    }
+
+    #[test]
+    fn test_song_accessors_default() {
+        let save = MmSave::default();
+
+        // All songs should be false by default
+        assert!(!save.has_song_of_time());
+        assert!(!save.has_song_of_healing());
+        assert!(!save.has_eponas_song());
+        assert!(!save.has_song_of_soaring());
+        assert!(!save.has_song_of_storms());
+        assert!(!save.has_sonata_of_awakening());
+        assert!(!save.has_goron_lullaby());
+        assert!(!save.has_new_wave_bossa_nova());
+        assert!(!save.has_elegy_of_emptiness());
+        assert!(!save.has_oath_to_order());
+    }
+
+    #[test]
+    fn test_song_accessors_with_songs() {
+        let mut save = MmSave::default();
+
+        // Set some songs
+        save.quest_items = MmQuestItems::SONG_TIME
+            | MmQuestItems::SONG_HEALING
+            | MmQuestItems::SONG_EPONA
+            | MmQuestItems::SONG_SOARING
+            | MmQuestItems::SONG_AWAKENING
+            | MmQuestItems::SONG_ORDER;
+
+        // Check accessors return true for songs we have
+        assert!(save.has_song_of_time());
+        assert!(save.has_song_of_healing());
+        assert!(save.has_eponas_song());
+        assert!(save.has_song_of_soaring());
+        assert!(save.has_sonata_of_awakening());
+        assert!(save.has_oath_to_order());
+
+        // Check accessors return false for songs we don't have
+        assert!(!save.has_song_of_storms());
+        assert!(!save.has_goron_lullaby());
+        assert!(!save.has_new_wave_bossa_nova());
+        assert!(!save.has_elegy_of_emptiness());
+    }
+
+    #[test]
+    fn test_song_accessors_all_songs() {
+        let mut save = MmSave::default();
+
+        // Set all songs
+        save.quest_items = MmQuestItems::SONG_TIME
+            | MmQuestItems::SONG_HEALING
+            | MmQuestItems::SONG_EPONA
+            | MmQuestItems::SONG_SOARING
+            | MmQuestItems::SONG_STORMS
+            | MmQuestItems::SONG_AWAKENING
+            | MmQuestItems::SONG_GORON
+            | MmQuestItems::SONG_ZORA
+            | MmQuestItems::SONG_EMPTINESS
+            | MmQuestItems::SONG_ORDER;
+
+        // All song accessors should return true
+        assert!(save.has_song_of_time());
+        assert!(save.has_song_of_healing());
+        assert!(save.has_eponas_song());
+        assert!(save.has_song_of_soaring());
+        assert!(save.has_song_of_storms());
+        assert!(save.has_sonata_of_awakening());
+        assert!(save.has_goron_lullaby());
+        assert!(save.has_new_wave_bossa_nova());
+        assert!(save.has_elegy_of_emptiness());
+        assert!(save.has_oath_to_order());
+    }
+
+    #[test]
+    fn test_boss_remains_accessors_default() {
+        let save = MmSave::default();
+
+        // All remains should be false by default
+        assert!(!save.has_odolwa_remains());
+        assert!(!save.has_goht_remains());
+        assert!(!save.has_gyorg_remains());
+        assert!(!save.has_twinmold_remains());
+    }
+
+    #[test]
+    fn test_boss_remains_accessors_with_remains() {
+        let mut save = MmSave::default();
+
+        // Set some boss remains
+        save.quest_items = MmQuestItems::REMAINS_ODOLWA | MmQuestItems::REMAINS_GOHT;
+
+        // Check accessors return true for remains we have
+        assert!(save.has_odolwa_remains());
+        assert!(save.has_goht_remains());
+
+        // Check accessors return false for remains we don't have
+        assert!(!save.has_gyorg_remains());
+        assert!(!save.has_twinmold_remains());
+    }
+
+    #[test]
+    fn test_boss_remains_accessors_all_remains() {
+        let mut save = MmSave::default();
+
+        // Set all boss remains
+        save.quest_items = MmQuestItems::REMAINS_ODOLWA
+            | MmQuestItems::REMAINS_GOHT
+            | MmQuestItems::REMAINS_GYORG
+            | MmQuestItems::REMAINS_TWINMOLD;
+
+        // All remains accessors should return true
+        assert!(save.has_odolwa_remains());
+        assert!(save.has_goht_remains());
+        assert!(save.has_gyorg_remains());
+        assert!(save.has_twinmold_remains());
+    }
+
+    #[test]
+    fn test_accessors_with_sample_data() {
+        let stub = MmSaveStub::with_sample_data();
+        let save = stub.get_save();
+
+        // Check equipment from sample data
+        assert!(save.has_ocarina());
+        assert!(save.has_heros_bow());
+        assert!(save.has_hookshot());
+        assert!(save.has_bombs());
+        assert!(save.has_lens_of_truth());
+        assert!(save.has_magic());
+
+        // Check songs from sample data
+        assert!(save.has_song_of_time());
+        assert!(save.has_song_of_healing());
+        assert!(save.has_eponas_song());
+        assert!(save.has_song_of_soaring());
+        assert!(save.has_sonata_of_awakening());
+
+        // Check boss remains from sample data
+        assert!(save.has_odolwa_remains());
+        assert!(save.has_goht_remains());
+        assert!(!save.has_gyorg_remains());
+        assert!(!save.has_twinmold_remains());
+    }
+
+    #[test]
+    fn test_equipment_accessors_from_parsed_data() {
+        use offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+
+        // Set inventory items at their slot positions
+        // Ocarina is slot 0, Bow is slot 1, Hookshot is slot 15
+        data[INVENTORY] = mm_item_ids::OCARINA;
+        data[INVENTORY + 1] = mm_item_ids::BOW;
+        data[INVENTORY + 2] = mm_item_ids::FIRE_ARROW;
+        data[INVENTORY + 15] = mm_item_ids::HOOKSHOT;
+
+        // Set magic level
+        data[MAGIC_LEVEL] = 2; // Double magic
+
+        let save = MmSave::from_save_data(&data).unwrap();
+
+        assert!(save.has_ocarina());
+        assert!(save.has_heros_bow());
+        assert!(save.has_fire_arrow());
+        assert!(save.has_hookshot());
+        assert!(save.has_magic());
+
+        // Items not set should be false
+        assert!(!save.has_ice_arrow());
+        assert!(!save.has_bombs());
+    }
+
+    #[test]
+    fn test_song_accessors_from_parsed_data() {
+        use offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+
+        // Set quest items with Song of Time (bit 12) and Song of Healing (bit 13)
+        let quest_bits: u32 = MmQuestItems::SONG_TIME.bits() | MmQuestItems::SONG_HEALING.bits();
+        data[QUEST_ITEMS..QUEST_ITEMS + 4].copy_from_slice(&quest_bits.to_be_bytes());
+
+        let save = MmSave::from_save_data(&data).unwrap();
+
+        assert!(save.has_song_of_time());
+        assert!(save.has_song_of_healing());
+        assert!(!save.has_eponas_song());
+        assert!(!save.has_song_of_soaring());
+    }
+
+    #[test]
+    fn test_boss_remains_accessors_from_parsed_data() {
+        use offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+
+        // Set quest items with Odolwa and Gyorg remains
+        let quest_bits: u32 =
+            MmQuestItems::REMAINS_ODOLWA.bits() | MmQuestItems::REMAINS_GYORG.bits();
+        data[QUEST_ITEMS..QUEST_ITEMS + 4].copy_from_slice(&quest_bits.to_be_bytes());
+
+        let save = MmSave::from_save_data(&data).unwrap();
+
+        assert!(save.has_odolwa_remains());
+        assert!(!save.has_goht_remains());
+        assert!(save.has_gyorg_remains());
+        assert!(!save.has_twinmold_remains());
     }
 }
