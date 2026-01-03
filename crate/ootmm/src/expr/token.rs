@@ -1,5 +1,4 @@
 //! Token types for the expression lexer.
-//! TODO: Implement full token handling (Issue #10)
 
 /// Token types produced by the lexer.
 #[derive(Debug, Clone, PartialEq)]
