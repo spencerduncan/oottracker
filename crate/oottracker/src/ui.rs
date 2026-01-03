@@ -3374,6 +3374,8 @@ pub enum TrackerLayout {
     MmStrayFairies,
     MmSongs,
     MmEquipment,
+    // Combo layout for OoTMM randomizer
+    Combo,
 }
 
 pub struct CellLayout {
@@ -4135,6 +4137,116 @@ impl TrackerLayout {
                     ]
                 )
             }
+
+            Self::Combo => {
+                // Combo layout for OoTMM randomizer
+                // Shows important items from both OoT and MM in a unified view
+                // Layout: 12 columns wide to accommodate both games' items
+                //
+                // Row 1: OoT Medallions (6) + MM Boss Remains (4) + OoT Stones (2 placeholder)
+                // Row 2: OoT Stone locations/stones (3) + MM Transformation Masks (4) + Core shared items
+                // Row 3: OoT Core equipment
+                // Row 4: OoT Songs (6) + MM Songs (6)
+                // Row 5: MM Equipment + OoT Trade/Progressive items
+                // Row 6: Additional items from both games
+
+                columns!(
+                    12,
+                    [
+                        // Row 1: OoT Dungeon Rewards + MM Boss Remains
+                        ForestMedallion,
+                        FireMedallion,
+                        WaterMedallion,
+                        ShadowMedallion,
+                        SpiritMedallion,
+                        LightMedallion,
+                        MmOdolwaRemains,
+                        MmGohtRemains,
+                        MmGyorgRemains,
+                        MmTwinmoldRemains,
+                        KokiriEmerald,
+                        GoronRuby,
+                        // Row 2: OoT Stone + MM Transformation Masks + Shared Equipment
+                        ZoraSapphire,
+                        Skulltula,
+                        Bottle,
+                        Scale,
+                        MmDekuMask,
+                        MmGoronMask,
+                        MmZoraMask,
+                        MmFierceDeityMask,
+                        MmBottle,
+                        MmWallet,
+                        MmMagic,
+                        MmDoubleDefense,
+                        // Row 3: OoT Core Equipment
+                        Slingshot,
+                        Bombs,
+                        Boomerang,
+                        Strength,
+                        MagicLens,
+                        Spells,
+                        Hookshot,
+                        Bow,
+                        Arrows,
+                        Hammer,
+                        Boots,
+                        MirrorShield,
+                        // Row 4: OoT Songs + MM Songs
+                        ZeldasLullaby,
+                        EponasSong,
+                        SariasSong,
+                        SunsSong,
+                        SongOfTime,
+                        SongOfStorms,
+                        MmSongOfTime,
+                        MmSongOfHealing,
+                        MmEponasSong,
+                        MmSongOfSoaring,
+                        MmSongOfStorms,
+                        MmSonataOfAwakening,
+                        // Row 5: OoT Warp Songs + MM Dungeon Songs
+                        Minuet,
+                        Bolero,
+                        Serenade,
+                        Requiem,
+                        Nocturne,
+                        Prelude,
+                        MmGoronLullaby,
+                        MmNewWaveBossaNova,
+                        MmElegyOfEmptiness,
+                        MmOathToOrder,
+                        MmBomberNotebook,
+                        Triforce,
+                        // Row 6: MM Equipment + OoT Trade Items
+                        MmOcarina,
+                        MmHerosBow,
+                        MmFireArrow,
+                        MmIceArrow,
+                        MmLightArrow,
+                        MmHookshot,
+                        MmBombs,
+                        MmBombchu,
+                        MmPowderKeg,
+                        MmLensOfTruth,
+                        MmSword,
+                        MmShield,
+                        // Row 7: OoT Remaining Items + MM Remaining Items
+                        ChildTrade,
+                        Ocarina,
+                        Beans,
+                        SwordCard,
+                        Tunics,
+                        AdultTradeNoChicken,
+                        MmGreatFairySword,
+                        MmPictographBox,
+                        MmMagicBean,
+                        MmStrayFairyClockTown,
+                        MmGiantMask,
+                        MmMaskOfTruth,
+                    ]
+                )
+            }
         }
     }
 }
@@ -4183,6 +4295,7 @@ impl fmt::Display for TrackerLayout {
             Self::MmStrayFairies => write!(f, "mm-stray-fairies"),
             Self::MmSongs => write!(f, "mm-songs"),
             Self::MmEquipment => write!(f, "mm-equipment"),
+            Self::Combo => write!(f, "combo"),
         }
     }
 }
@@ -4211,6 +4324,7 @@ impl<'a> FromParam<'a> for TrackerLayout {
             "mm-stray-fairies" => Self::MmStrayFairies,
             "mm-songs" => Self::MmSongs,
             "mm-equipment" => Self::MmEquipment,
+            "combo" => Self::Combo,
             _ => return Err(()),
         })
     }
