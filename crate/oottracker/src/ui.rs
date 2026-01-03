@@ -49,6 +49,212 @@ type SmallKeysSetter = Box<dyn Fn(&mut crate::save::SmallKeys, u8)>;
 
 const VERSION: u8 = 0;
 
+/// Accessibility status for a location/check.
+///
+/// This enum represents whether a location can be reached with the player's
+/// current items and game state.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Protocol, Deserialize, Serialize)]
+pub enum AccessibilityStatus {
+    /// The location is accessible with current items.
+    Accessible,
+    /// The location is not accessible with current items.
+    Inaccessible,
+    /// The location has already been checked/collected.
+    Checked,
+    /// The accessibility status cannot be determined.
+    #[default]
+    Unknown,
+}
+
+impl AccessibilityStatus {
+    /// Returns the CSS class name for this accessibility status.
+    #[cfg(feature = "rocket")]
+    pub fn css_class(&self) -> &'static str {
+        match self {
+            Self::Accessible => "accessible",
+            Self::Inaccessible => "inaccessible",
+            Self::Checked => "checked",
+            Self::Unknown => "unknown",
+        }
+    }
+
+    /// Returns an icon character representing the accessibility status.
+    pub fn icon(&self) -> &'static str {
+        match self {
+            Self::Accessible => "✓",
+            Self::Inaccessible => "✗",
+            Self::Checked => "●",
+            Self::Unknown => "?",
+        }
+    }
+
+    /// Returns a human-readable description of the status.
+    pub fn description(&self) -> &'static str {
+        match self {
+            Self::Accessible => "Accessible",
+            Self::Inaccessible => "Not yet accessible",
+            Self::Checked => "Already checked",
+            Self::Unknown => "Unknown",
+        }
+    }
+}
+
+/// Summary of location accessibility counts.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Protocol, Deserialize, Serialize)]
+pub struct AccessibilitySummary {
+    /// Number of accessible locations.
+    pub accessible: u32,
+    /// Number of inaccessible locations.
+    pub inaccessible: u32,
+    /// Number of already checked locations.
+    pub checked: u32,
+    /// Number of locations with unknown status.
+    pub unknown: u32,
+}
+
+impl AccessibilitySummary {
+    /// Creates a new empty summary.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Returns the total number of locations.
+    pub fn total(&self) -> u32 {
+        self.accessible + self.inaccessible + self.checked + self.unknown
+    }
+
+    /// Adds a location with the given status to the summary.
+    pub fn add(&mut self, status: AccessibilityStatus) {
+        match status {
+            AccessibilityStatus::Accessible => self.accessible += 1,
+            AccessibilityStatus::Inaccessible => self.inaccessible += 1,
+            AccessibilityStatus::Checked => self.checked += 1,
+            AccessibilityStatus::Unknown => self.unknown += 1,
+        }
+    }
+}
+
+impl fmt::Display for AccessibilitySummary {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "✓{} / ✗{} / ●{} / ?{}",
+            self.accessible, self.inaccessible, self.checked, self.unknown
+        )
+    }
+}
+
+#[cfg(feature = "rocket")]
+impl ToHtml for AccessibilitySummary {
+    fn to_html(&self) -> RawHtml<String> {
+        html! {
+            div(class = "accessibility-summary") {
+                span(class = "accessible", title = "Accessible") : format!("✓{}", self.accessible);
+                span(class = "separator") : " / ";
+                span(class = "inaccessible", title = "Not yet accessible") : format!("✗{}", self.inaccessible);
+                span(class = "separator") : " / ";
+                span(class = "checked", title = "Already checked") : format!("●{}", self.checked);
+            }
+        }
+    }
+}
+
+impl From<crate::checks::CheckStatus> for AccessibilityStatus {
+    fn from(status: crate::checks::CheckStatus) -> Self {
+        match status {
+            crate::checks::CheckStatus::Checked => Self::Checked,
+            crate::checks::CheckStatus::Reachable => Self::Accessible,
+            crate::checks::CheckStatus::NotYetReachable => Self::Inaccessible,
+        }
+    }
+}
+
+/// Represents a single location with its accessibility information.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LocationAccessibility {
+    /// The name of the location.
+    pub name: String,
+    /// The accessibility status of the location.
+    pub status: AccessibilityStatus,
+}
+
+impl LocationAccessibility {
+    /// Creates a new location accessibility entry.
+    pub fn new(name: impl Into<String>, status: AccessibilityStatus) -> Self {
+        Self {
+            name: name.into(),
+            status,
+        }
+    }
+}
+
+#[cfg(feature = "rocket")]
+impl ToHtml for LocationAccessibility {
+    fn to_html(&self) -> RawHtml<String> {
+        html! {
+            div(class = format!("location {}", self.status.css_class())) {
+                span(class = "status-icon") : self.status.icon();
+                span(class = "location-name") : &self.name;
+            }
+        }
+    }
+}
+
+/// A list of locations with their accessibility status for display.
+#[derive(Debug, Clone, Default)]
+pub struct LocationAccessibilityList {
+    /// The locations with their accessibility status.
+    pub locations: Vec<LocationAccessibility>,
+    /// Summary counts.
+    pub summary: AccessibilitySummary,
+}
+
+impl LocationAccessibilityList {
+    /// Creates a new empty list.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Adds a location to the list.
+    pub fn add(&mut self, name: impl Into<String>, status: AccessibilityStatus) {
+        self.locations
+            .push(LocationAccessibility::new(name, status));
+        self.summary.add(status);
+    }
+
+    /// Returns only the accessible locations.
+    pub fn accessible(&self) -> impl Iterator<Item = &LocationAccessibility> {
+        self.locations
+            .iter()
+            .filter(|loc| loc.status == AccessibilityStatus::Accessible)
+    }
+
+    /// Returns only the inaccessible locations.
+    pub fn inaccessible(&self) -> impl Iterator<Item = &LocationAccessibility> {
+        self.locations
+            .iter()
+            .filter(|loc| loc.status == AccessibilityStatus::Inaccessible)
+    }
+}
+
+#[cfg(feature = "rocket")]
+impl ToHtml for LocationAccessibilityList {
+    fn to_html(&self) -> RawHtml<String> {
+        html! {
+            div(class = "location-accessibility-list") {
+                div(class = "summary") {
+                    : &self.summary;
+                }
+                div(class = "locations") {
+                    @for loc in &self.locations {
+                        : loc;
+                    }
+                }
+            }
+        }
+    }
+}
+
 #[derive(Debug, FromArc, Clone)]
 pub enum Error {
     #[from_arc]
@@ -333,6 +539,7 @@ impl TrackerCellKind {
                             count: state.ram.save.triforce_pieces(),
                             count_img: ImageInfo::new("force"),
                         },
+                        accessibility: None,
                     }
                 } else if state.ram.save.big_poes > 0 {
                     //TODO show dimmed Triforce icon if it's known that it's TH
@@ -343,12 +550,14 @@ impl TrackerCellKind {
                             count: state.ram.save.big_poes,
                             count_img: ImageInfo::extra("poes"),
                         },
+                        accessibility: None,
                     }
                 } else {
                     CellRender {
                         img: ImageInfo::extra("big_poe"),
                         style: CellStyle::Dimmed,
                         overlay: CellOverlay::None,
+                        accessibility: None,
                     }
                 }
             }
@@ -360,6 +569,7 @@ impl TrackerCellKind {
                     CellStyle::Dimmed
                 },
                 overlay: CellOverlay::None,
+                accessibility: None,
             },
             Composite {
                 left_img,
@@ -383,6 +593,7 @@ impl TrackerCellKind {
                         CellStyle::Normal
                     },
                     overlay: CellOverlay::None,
+                    accessibility: None,
                 }
             }
             CompositeKeys { boss, small } => {
@@ -413,6 +624,7 @@ impl TrackerCellKind {
                     } else {
                         CellOverlay::None
                     },
+                    accessibility: None,
                 }
             }
             Count {
@@ -437,6 +649,7 @@ impl TrackerCellKind {
                     img: dimmed_img.clone(),
                     style,
                     overlay,
+                    accessibility: None,
                 }
             }
             FortressMq => {
@@ -456,6 +669,7 @@ impl TrackerCellKind {
                             LocationStyle::Normal
                         }, //TODO dim if unknown?
                     },
+                    accessibility: None,
                 }
             }
             FreeReward => {
@@ -493,7 +707,7 @@ impl TrackerCellKind {
                             Some(DungeonReward::Stone(Stone::ZoraSapphire)) => {
                                 Cow::Borrowed("zora_sapphire")
                             }
-                            None => Cow::Borrowed("blank"), //TODO “unknown dungeon reward” image?
+                            None => Cow::Borrowed("blank"), //TODO "unknown dungeon reward" image?
                         },
                     },
                     style: CellStyle::Normal,
@@ -501,6 +715,7 @@ impl TrackerCellKind {
                         loc: ImageInfo::new("free_text"),
                         style: LocationStyle::Normal,
                     },
+                    accessibility: None,
                 }
             }
             GoBk => CellRender {
@@ -515,6 +730,7 @@ impl TrackerCellKind {
                     CellStyle::Normal
                 },
                 overlay: CellOverlay::None, //TODO overlay with finish time?
+                accessibility: None,
             },
             MagicLens => CellRender {
                 img: if state.ram.save.magic == MagicCapacity::Large {
@@ -532,6 +748,7 @@ impl TrackerCellKind {
                 } else {
                     CellOverlay::None
                 },
+                accessibility: None,
             },
             Medallion(med) => CellRender {
                 img: ImageInfo::new(format!("{}_medallion", med.element().to_ascii_lowercase())),
@@ -541,6 +758,7 @@ impl TrackerCellKind {
                     CellStyle::Dimmed
                 },
                 overlay: CellOverlay::None,
+                accessibility: None,
             },
             MedallionLocation(med) => {
                 let location = state
@@ -578,6 +796,7 @@ impl TrackerCellKind {
                         CellStyle::Dimmed
                     },
                     overlay: CellOverlay::None,
+                    accessibility: None,
                 }
             }
             MedallionWithLocation(med) => {
@@ -630,6 +849,7 @@ impl TrackerCellKind {
                             LocationStyle::Dimmed
                         },
                     },
+                    accessibility: None,
                 }
             }
             Mq(dungeon) => {
@@ -671,7 +891,7 @@ impl TrackerCellKind {
                             Some(DungeonReward::Stone(Stone::ZoraSapphire)) => {
                                 Cow::Borrowed("zora_sapphire")
                             }
-                            None => Cow::Borrowed("blank"), //TODO “unknown dungeon reward” image? (only for dungeons that have rewards)
+                            None => Cow::Borrowed("blank"), //TODO "unknown dungeon reward" image? (only for dungeons that have rewards)
                         },
                     },
                     style: if reward.is_some_and(|&reward| state.ram.save.quest_items.has(reward)) {
@@ -707,6 +927,7 @@ impl TrackerCellKind {
                             LocationStyle::Normal
                         },
                     },
+                    accessibility: None,
                 }
             }
             OptionalOverlay {
@@ -734,6 +955,7 @@ impl TrackerCellKind {
                     } else {
                         CellOverlay::None
                     },
+                    accessibility: None,
                 }
             }
             Sequence { img, .. } => {
@@ -746,6 +968,7 @@ impl TrackerCellKind {
                         CellStyle::Dimmed
                     },
                     overlay: CellOverlay::None,
+                    accessibility: None,
                 }
             }
             Simple { img, active, .. } => CellRender {
@@ -756,6 +979,7 @@ impl TrackerCellKind {
                     CellStyle::Dimmed
                 },
                 overlay: CellOverlay::None,
+                accessibility: None,
             },
             TrackerCellKind::SmallKeys { get, .. } => {
                 let num_small_keys = get(&state.ram.save.small_keys);
@@ -774,6 +998,7 @@ impl TrackerCellKind {
                     } else {
                         CellOverlay::None
                     },
+                    accessibility: None,
                 }
             }
             Song { song, check, .. } => CellRender {
@@ -807,6 +1032,7 @@ impl TrackerCellKind {
                 } else {
                     CellOverlay::None
                 },
+                accessibility: None,
             },
             SongCheck { check, .. } => CellRender {
                 img: ImageInfo::extra("blank"),
@@ -821,6 +1047,7 @@ impl TrackerCellKind {
                 } else {
                     CellOverlay::None
                 },
+                accessibility: None,
             },
             Spells => CellRender {
                 img: match (
@@ -847,6 +1074,7 @@ impl TrackerCellKind {
                     CellStyle::Normal
                 },
                 overlay: CellOverlay::None,
+                accessibility: None,
             },
             Stone(stone) => CellRender {
                 img: ImageInfo::new(match *stone {
@@ -860,6 +1088,7 @@ impl TrackerCellKind {
                     CellStyle::Dimmed
                 },
                 overlay: CellOverlay::None,
+                accessibility: None,
             },
             StoneLocation(stone) => {
                 let location = state
@@ -897,6 +1126,7 @@ impl TrackerCellKind {
                         CellStyle::Dimmed
                     },
                     overlay: CellOverlay::None,
+                    accessibility: None,
                 }
             }
             StoneWithLocation(stone) => {
@@ -950,6 +1180,7 @@ impl TrackerCellKind {
                             LocationStyle::Dimmed
                         },
                     },
+                    accessibility: None,
                 }
             }
         }
@@ -3857,13 +4088,50 @@ pub struct CellRender {
     pub img: ImageInfo,
     pub style: CellStyle,
     pub overlay: CellOverlay,
+    /// Optional accessibility status for the cell.
+    /// When set, adds a visual border indicator showing if the location is accessible.
+    pub accessibility: Option<AccessibilityStatus>,
+}
+
+impl CellRender {
+    /// Creates a new CellRender without accessibility information.
+    pub fn new(img: ImageInfo, style: CellStyle, overlay: CellOverlay) -> Self {
+        Self {
+            img,
+            style,
+            overlay,
+            accessibility: None,
+        }
+    }
+
+    /// Sets the accessibility status for this cell.
+    pub fn with_accessibility(mut self, status: AccessibilityStatus) -> Self {
+        self.accessibility = Some(status);
+        self
+    }
+
+    /// Returns the combined CSS classes for style and accessibility.
+    #[cfg(feature = "rocket")]
+    fn combined_css_classes(&self) -> String {
+        let style_class = self.style.css_class();
+        match self.accessibility {
+            Some(status) => {
+                if style_class.is_empty() {
+                    format!("accessibility-{}", status.css_class())
+                } else {
+                    format!("{} accessibility-{}", style_class, status.css_class())
+                }
+            }
+            None => style_class.to_string(),
+        }
+    }
 }
 
 #[cfg(feature = "rocket")]
 impl ToHtml for CellRender {
     fn to_html(&self) -> RawHtml<String> {
         html! {
-            img(class = self.style.css_class(), src = format!("/static/img/{}.png", self.img.to_string('/', ImageDirContext::Normal)));
+            img(class = self.combined_css_classes(), src = format!("/static/img/{}.png", self.img.to_string('/', ImageDirContext::Normal)));
             @match self.overlay {
                 CellOverlay::None => ;
                 CellOverlay::Count { count, .. } => span(class = "count") : count;
