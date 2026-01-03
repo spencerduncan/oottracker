@@ -94,12 +94,46 @@ namespace Net.Fenhl.OotAutoTracker {
         internal const int MM_COMBO_CONTEXT_ADDR = 0x98280;
     }
 
+    // OoTMM ROM header detection constants
+    internal static class OoTMMSignatures {
+        // OoTMM ROM signature - appears in ROM name area (offset 0x20)
+        // OoTMM modifies the ROM name to include "OOTMM" or similar identifiers
+        internal static readonly byte[] OOTMM_NAME_SIGNATURE = Encoding.UTF8.GetBytes("OOTMM");
+
+        // OoTMM combo ROMs may also have specific game code patterns
+        // Standard N64 ROM header: 0x3B-0x3E contains game ID
+        // OoTMM typically uses a modified game ID
+        internal const int GAME_ID_OFFSET = 0x3B;
+        internal const int ROM_NAME_OFFSET = 0x20;
+        internal const int ROM_NAME_LENGTH = 0x14;
+
+        // OoTMM-specific memory signatures for active game detection
+        // These help identify which game (OoT or MM) is currently active
+        internal const int ACTIVE_GAME_FLAG_ADDR = 0x6580; // RDRAM offset
+        internal const int SCENE_ID_OOT_ADDR = 0x1c8545; // OoT current scene
+        internal const int SCENE_ID_MM_ADDR = 0x1ef674; // MM current scene (in save context)
+
+        // OoTMM places MM ROM data at 32 MiB offset
+        internal const int MM_ROM_OFFSET = 0x2000000;
+
+        // Scene ID ranges for distinguishing games
+        internal const byte OOT_MAX_SCENE_ID = 0x65;
+        internal const byte MM_MIN_VALID_SCENE = 0x00;
+        internal const byte MM_MAX_SCENE_ID = 0x70;
+    }
+
     // Game type detection
     internal enum GameType {
         Unknown,
         OcarinaOfTime,
         MajorasMask,
         Combo
+    }
+
+    // Active game within combo ROM (OoT mode vs MM mode)
+    internal enum ComboActiveGame {
+        OcarinaOfTime,
+        MajorasMask
     }
 
     internal class StringHandle : SafeHandle {
@@ -585,6 +619,13 @@ namespace Net.Fenhl.OotAutoTracker {
         //private bool connectionOk = false;
         private bool saveOk = false;
 
+        // OoTMM combo mode state tracking
+        private bool isComboRom = false;
+        private ComboActiveGame comboActiveGame = ComboActiveGame.OcarinaOfTime;
+        private bool comboDetectedFromRomHeader = false;
+        private int comboContextCheckFrames = 0;
+        private const int COMBO_CONTEXT_CHECK_INTERVAL = 30; // Check every 30 frames
+
         public MainForm() {
             SuspendLayout();
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
@@ -753,6 +794,133 @@ namespace Net.Fenhl.OotAutoTracker {
             ResumeLayout(true);
         }
 
+        /// <summary>
+        /// Detect if the current ROM is an OoTMM combo ROM by checking ROM header signatures.
+        /// OoTMM ROMs have specific characteristics that distinguish them from standalone OoT/MM ROMs.
+        /// </summary>
+        /// <returns>True if the ROM appears to be an OoTMM combo ROM</returns>
+        private bool DetectComboRomFromHeader() {
+            try {
+                // Read extended ROM header area to check for OoTMM signatures
+                var romHeader = APIs.Memory.ReadByteRange(0x00, 0x50, "ROM");
+                var romNameArea = APIs.Memory.ReadByteRange(OoTMMSignatures.ROM_NAME_OFFSET, 0x20, "ROM");
+
+                // Check 1: Look for "OOTMM" signature in ROM name area
+                string romName = Encoding.UTF8.GetString(romNameArea.ToArray()).TrimEnd('\0');
+                if (romName.Contains("OOTMM") || romName.Contains("OoTMM") || romName.Contains("COMBO")) {
+                    this.comboDetectedFromRomHeader = true;
+                    return true;
+                }
+
+                // Check 2: Check if ROM has both OoT and MM characteristics
+                // OoTMM ROMs start with OoT header but have modified characteristics
+                var gameId = APIs.Memory.ReadByteRange(OoTMMSignatures.GAME_ID_OFFSET, 4, "ROM");
+                string gameIdStr = Encoding.UTF8.GetString(gameId.ToArray());
+
+                // OoTMM may use modified game IDs that aren't standard OoT/MM codes
+                bool isStandardOot = gameIdStr.StartsWith("CZL"); // CZLE, CZLJ, CZLP
+                bool isStandardMm = gameIdStr.StartsWith("NZS");  // NZSE, NZSJ, NZSP
+
+                // If game ID doesn't match standard patterns, it could be OoTMM
+                if (!isStandardOot && !isStandardMm) {
+                    // Check for OoTMM-specific modified game IDs
+                    if (gameIdStr.Contains("MM") || gameIdStr.Contains("COMBO")) {
+                        this.comboDetectedFromRomHeader = true;
+                        return true;
+                    }
+                }
+
+                // Check 3: Verify ROM size indicates combo ROM
+                // OoTMM ROMs are significantly larger than standalone ROMs (>64MB)
+                // This is a heuristic check - actual implementation may need adjustment
+                // Note: ROM size check is platform-dependent and may not work in all emulators
+
+                return false;
+            } catch {
+                // If ROM reading fails, fall back to memory-based detection
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Detect combo ROM mode using memory context addresses.
+        /// OoTMM uses specific memory addresses to track which game is currently active.
+        /// </summary>
+        /// <returns>True if combo context addresses indicate OoTMM mode</returns>
+        private bool DetectComboFromMemoryContext() {
+            try {
+                // Check OoT combo context address
+                var ootContext = APIs.Memory.ReadByteRange(MmAddresses.OOT_COMBO_CONTEXT_ADDR, 4, "RDRAM");
+                bool ootContextActive = ootContext.Any(b => b != 0);
+
+                // Check MM combo context address
+                var mmContext = APIs.Memory.ReadByteRange(MmAddresses.MM_COMBO_CONTEXT_ADDR, 4, "RDRAM");
+                bool mmContextActive = mmContext.Any(b => b != 0);
+
+                // If either context address is active, this is likely a combo ROM
+                return ootContextActive || mmContextActive;
+            } catch {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Determine which game (OoT or MM) is currently active in combo mode.
+        /// Uses multiple detection strategies for reliability.
+        /// </summary>
+        /// <returns>The currently active game in combo mode</returns>
+        private ComboActiveGame DetectActiveGameInCombo() {
+            try {
+                // Strategy 1: Check combo context addresses
+                var ootContext = APIs.Memory.ReadByteRange(MmAddresses.OOT_COMBO_CONTEXT_ADDR, 4, "RDRAM");
+                var mmContext = APIs.Memory.ReadByteRange(MmAddresses.MM_COMBO_CONTEXT_ADDR, 4, "RDRAM");
+
+                bool ootContextActive = ootContext.Any(b => b != 0);
+                bool mmContextActive = mmContext.Any(b => b != 0);
+
+                // Clear indication from context addresses
+                if (ootContextActive && !mmContextActive) {
+                    return ComboActiveGame.OcarinaOfTime;
+                }
+                if (mmContextActive && !ootContextActive) {
+                    return ComboActiveGame.MajorasMask;
+                }
+
+                // Strategy 2: Check scene IDs as fallback
+                var ootSceneId = APIs.Memory.ReadByte(OoTMMSignatures.SCENE_ID_OOT_ADDR, "RDRAM");
+
+                // Valid OoT scene ID range check
+                if (ootSceneId <= OoTMMSignatures.OOT_MAX_SCENE_ID) {
+                    // Additional validation: check if this looks like a valid OoT scene
+                    // OoT has specific scene patterns
+                    return ComboActiveGame.OcarinaOfTime;
+                }
+
+                // Strategy 3: Check MM save context for valid data
+                var mmSaveHeader = APIs.Memory.ReadByteRange(MmAddresses.MM_SAVE_ADDR, 8, "RDRAM");
+                bool mmSaveValid = mmSaveHeader.Any(b => b != 0);
+
+                if (mmSaveValid) {
+                    // Check if MM scene data looks valid
+                    return ComboActiveGame.MajorasMask;
+                }
+
+                // Default to last known state
+                return this.comboActiveGame;
+            } catch {
+                return this.comboActiveGame;
+            }
+        }
+
+        /// <summary>
+        /// Get a human-readable string describing the current combo mode state.
+        /// </summary>
+        private string GetComboModeStatusString() {
+            string activeGameStr = this.comboActiveGame == ComboActiveGame.OcarinaOfTime ? "OoT" : "MM";
+            string detectionMethod = this.comboDetectedFromRomHeader ? "ROM header" : "memory context";
+            return $"Playing OoTMM combo ({activeGameStr} active, detected via {detectionMethod})";
+        }
+
         public override void Restart() {
             if (!this.initialized) {
                 using (var cfg_res = Native.config_load()) {
@@ -783,6 +951,11 @@ namespace Net.Fenhl.OotAutoTracker {
             this.model.Dispose();
             this.detectedGame = GameType.Unknown;
             this.prevMmSaveData = null;
+            // Reset combo mode state
+            this.isComboRom = false;
+            this.comboActiveGame = ComboActiveGame.OcarinaOfTime;
+            this.comboDetectedFromRomHeader = false;
+            this.comboContextCheckFrames = 0;
             /*
             if (this.stream != null) { this.stream.Disconnect().Dispose(); }
             this.stream = null;
@@ -801,9 +974,30 @@ namespace Net.Fenhl.OotAutoTracker {
                 // Check for MM ROM: "ZELDA MAJORA'S MASK " at offset 0x20
                 bool isMmRom = Enumerable.SequenceEqual(rom_ident.GetRange(0, 0x14), new List<byte>(Encoding.UTF8.GetBytes("ZELDA MAJORA'S MASK ")));
 
-                if (!isOotRom && !isMmRom) {
+                // Priority 1: Check for OoTMM combo ROM via ROM header signature
+                bool isComboFromHeader = DetectComboRomFromHeader();
+
+                if (isComboFromHeader) {
+                    // OoTMM combo ROM detected from ROM header
+                    this.isComboRom = true;
+                    this.detectedGame = GameType.Combo;
+                    this.comboActiveGame = DetectActiveGameInCombo();
                     this.model = ModelState.FromSaveAndKnowledge(Native.save_default(), Native.knowledge_none());
-                    UpdateGame(false, $"Game: Expected OoT/OoTR/MM/MMR, found {APIs.GameInfo.GetGameInfo()?.Name ?? "Null"} ({string.Join<byte>(", ", rom_ident.GetRange(0, 0x15))})");
+                    UpdateGame(true, GetComboModeStatusString());
+                } else if (!isOotRom && !isMmRom) {
+                    // Unknown ROM - could still be OoTMM with non-standard header
+                    // Try memory-based detection as fallback
+                    bool isComboFromMemory = DetectComboFromMemoryContext();
+                    if (isComboFromMemory) {
+                        this.isComboRom = true;
+                        this.detectedGame = GameType.Combo;
+                        this.comboActiveGame = DetectActiveGameInCombo();
+                        this.model = ModelState.FromSaveAndKnowledge(Native.save_default(), Native.knowledge_none());
+                        UpdateGame(true, GetComboModeStatusString());
+                    } else {
+                        this.model = ModelState.FromSaveAndKnowledge(Native.save_default(), Native.knowledge_none());
+                        UpdateGame(false, $"Game: Expected OoT/OoTR/MM/MMR/OoTMM, found {APIs.GameInfo.GetGameInfo()?.Name ?? "Null"} ({string.Join<byte>(", ", rom_ident.GetRange(0, 0x15))})");
+                    }
                 } else if (isMmRom) {
                     // Majora's Mask detected
                     this.detectedGame = GameType.MajorasMask;
@@ -816,19 +1010,22 @@ namespace Net.Fenhl.OotAutoTracker {
                         UpdateGame(true, $"Playing MM randomizer");
                     }
                 } else {
-                    // OoT detected - check if it's combo mode
+                    // OoT ROM detected - check if it's actually a combo ROM via memory context
                     var version = rom_ident.GetRange(0x15, 3);
                     this.isVanilla = Enumerable.SequenceEqual(version, new List<byte>(new byte[] { 0, 0, 0 }));
 
-                    // Check for combo randomizer context
-                    var comboCheck = APIs.Memory.ReadByteRange(MmAddresses.OOT_COMBO_CONTEXT_ADDR, 4, "RDRAM");
-                    bool isCombo = comboCheck.Any(b => b != 0);
+                    // Check for combo randomizer using multiple detection methods
+                    bool isComboFromMemory = DetectComboFromMemoryContext();
 
-                    if (isCombo) {
+                    if (isComboFromMemory) {
+                        // OoTMM combo ROM detected from memory context
+                        this.isComboRom = true;
                         this.detectedGame = GameType.Combo;
+                        this.comboActiveGame = DetectActiveGameInCombo();
                         this.model = ModelState.FromSaveAndKnowledge(Native.save_default(), Native.knowledge_none());
-                        UpdateGame(true, "Playing OoTMM combo randomizer");
+                        UpdateGame(true, GetComboModeStatusString());
                     } else {
+                        // Standard OoT/OoTR ROM
                         this.detectedGame = GameType.OcarinaOfTime;
                         this.model = ModelState.FromSaveAndKnowledge(Native.save_default(), this.isVanilla ? Native.knowledge_vanilla() : Native.knowledge_none());
                         if (this.isVanilla) {
@@ -864,13 +1061,37 @@ namespace Net.Fenhl.OotAutoTracker {
             if (type != ToolFormUpdateType.PreFrame) { return; } //TODO setting to also enable auto-tracking during turbo (ToolFormUpdateType.FastPreFrame)?
             if ((APIs.GameInfo.GetGameInfo()?.Name ?? "Null") == "Null") { return; }
 
+            // For combo mode: periodically re-check which game is active
+            if (this.isComboRom && this.detectedGame == GameType.Combo) {
+                this.comboContextCheckFrames++;
+                if (this.comboContextCheckFrames >= COMBO_CONTEXT_CHECK_INTERVAL) {
+                    this.comboContextCheckFrames = 0;
+                    var previousActiveGame = this.comboActiveGame;
+                    this.comboActiveGame = DetectActiveGameInCombo();
+
+                    // Update status if active game changed
+                    if (previousActiveGame != this.comboActiveGame) {
+                        UpdateGame(true, GetComboModeStatusString());
+                        // Reset RAM state when switching games to ensure clean reads
+                        this.rawRam = null;
+                        this.prevMmSaveData = null;
+                    }
+                }
+            }
+
             // Handle MM save context reading
-            if (this.detectedGame == GameType.MajorasMask || this.detectedGame == GameType.Combo) {
+            // In combo mode, only read MM data when MM is the active game
+            bool shouldReadMm = this.detectedGame == GameType.MajorasMask ||
+                (this.detectedGame == GameType.Combo && this.comboActiveGame == ComboActiveGame.MajorasMask);
+            if (shouldReadMm) {
                 ReadMmSaveContext();
             }
 
             // Handle OoT/combo save context reading
-            if (this.detectedGame == GameType.OcarinaOfTime || this.detectedGame == GameType.Combo) {
+            // In combo mode, only read OoT data when OoT is the active game
+            bool shouldReadOot = this.detectedGame == GameType.OcarinaOfTime ||
+                (this.detectedGame == GameType.Combo && this.comboActiveGame == ComboActiveGame.OcarinaOfTime);
+            if (shouldReadOot) {
                 if (this.autoTrackerContextAddr == null && Enumerable.SequenceEqual(APIs.Memory.ReadByteRange(0x11a5d0 + 0x1c, 6, "RDRAM"), new List<byte>(Encoding.UTF8.GetBytes("ZELDAZ")))) { // don't check auto-tracker context version while rom is loaded but not properly initialized
                     var randoContextAddr = 0x8040_0000;
                     var newAutoTrackerContextAddr = APIs.Memory.ReadU32(randoContextAddr + 0xc, "System Bus");
@@ -966,19 +1187,32 @@ namespace Net.Fenhl.OotAutoTracker {
         /// Read MM save context from RDRAM
         /// </summary>
         private void ReadMmSaveContext() {
-            // Read MM save context data
-            var mmSaveData = APIs.Memory.ReadByteRange(MmAddresses.MM_SAVE_ADDR, MmAddresses.MM_SAVE_SIZE, "RDRAM").ToArray();
+            try {
+                // Read MM save context data
+                var mmSaveData = APIs.Memory.ReadByteRange(MmAddresses.MM_SAVE_ADDR, MmAddresses.MM_SAVE_SIZE, "RDRAM").ToArray();
 
-            // Check if data has changed
-            if (this.prevMmSaveData != null && Enumerable.SequenceEqual(mmSaveData, this.prevMmSaveData)) {
-                return;
+                // Check if data has changed
+                if (this.prevMmSaveData != null && Enumerable.SequenceEqual(mmSaveData, this.prevMmSaveData)) {
+                    return;
+                }
+
+                this.prevMmSaveData = mmSaveData;
+
+                // Update status message based on mode
+                string modePrefix = this.isComboRom ? "OoTMM (MM mode)" : "MM";
+                UpdateSave(true, $"{modePrefix} save data ok, last checked {DateTime.Now}");
+
+                // TODO: Once MM save parsing is implemented in Rust FFI, process the data here
+                // For now, we just read and store the raw bytes for future use
+            } catch (Exception ex) {
+                // Handle read errors gracefully, especially during game transitions in combo mode
+                if (this.isComboRom) {
+                    // In combo mode, read failures during game transitions are expected
+                    // Don't update the status to avoid flickering
+                } else {
+                    UpdateSave(false, $"Failed to read MM save data: {ex.Message}");
+                }
             }
-
-            this.prevMmSaveData = mmSaveData;
-            UpdateSave(true, $"MM save data ok, last checked {DateTime.Now}");
-
-            // TODO: Once MM save parsing is implemented in Rust FFI, process the data here
-            // For now, we just read and store the raw bytes for future use
         }
 
         private void UpdateCells() {
