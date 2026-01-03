@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+async-proto = "0.16"
 ootr = { path = "../ootr" }
 serde = { version = "1", features = ["derive"] }
 serde_yaml = "0.9"

@@ -36,6 +36,9 @@
 
 use std::collections::{HashMap, HashSet};
 
+use async_proto::Protocol;
+use serde::{Deserialize, Serialize};
+
 use crate::expr::{eval_str, EvalContext, EvalError};
 use crate::region::Game;
 use crate::world_database::WorldDatabase;
@@ -287,7 +290,7 @@ pub struct AccessibleCheck<'a> {
 ///
 /// The `CheckTracker` maintains a set of completed location IDs and provides
 /// methods to check and query location accessibility based on game state.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Protocol, Deserialize, Serialize)]
 pub struct CheckTracker {
     /// Set of completed location IDs.
     checked: HashSet<String>,
