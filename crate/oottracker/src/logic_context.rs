@@ -998,6 +998,35 @@ impl<'a> MmGameContext<'a> {
             .map(|f| f.cleared_room != 0)
             .unwrap_or(false)
     }
+
+    // ========================================================================
+    // Scene Flag Helpers (Dungeon Clear Events)
+    // ========================================================================
+
+    /// Check if a dungeon was cleared (permanent flag).
+    ///
+    /// Checks the permanent scene flags for the given scene ID.
+    /// Returns true if the `cleared_floors` field is non-zero.
+    fn check_dungeon_clear_permanent(&self, scene_id: usize) -> bool {
+        self.save
+            .permanent_scene_flags
+            .get(scene_id)
+            .map(|f| f.cleared_floors != 0)
+            .unwrap_or(false)
+    }
+
+    /// Check if a dungeon was cleared (cycle-scoped flag).
+    ///
+    /// Checks the cycle scene flags for the given scene ID.
+    /// Returns true if the `cleared_room` field is non-zero.
+    /// Note: Uses cleared_room since cycle flags don't have cleared_floors.
+    fn check_dungeon_clear_cycle(&self, scene_id: usize) -> bool {
+        self.save
+            .cycle_scene_flags
+            .get(scene_id)
+            .map(|f| f.cleared_room != 0)
+            .unwrap_or(false)
+    }
 }
 
 // =============================================================================
@@ -1014,7 +1043,7 @@ impl EvalContext for MmGameContext<'_> {
 
     /// Check if a game event has occurred.
     ///
-    /// Checks memory flags for game events like boss defeats.
+    /// Checks memory flags for game events like boss defeats and dungeon clears.
     /// Event names are case-insensitive.
     ///
     /// # Supported Events
@@ -1032,6 +1061,20 @@ impl EvalContext for MmGameContext<'_> {
     /// - `GOHT_DEFEATED_CYCLE`
     /// - `GYORG_DEFEATED_CYCLE`
     /// - `TWINMOLD_DEFEATED_CYCLE`
+    ///
+    /// ## Dungeon Clears (Permanent)
+    /// These persist across Song of Time resets:
+    /// - `WOODFALL_TEMPLE_CLEAR` - Woodfall Temple completed
+    /// - `SNOWHEAD_TEMPLE_CLEAR` - Snowhead Temple completed
+    /// - `GREAT_BAY_TEMPLE_CLEAR` - Great Bay Temple completed
+    /// - `STONE_TOWER_TEMPLE_CLEAR` - Stone Tower Temple completed
+    ///
+    /// ## Dungeon Clears (Cycle-Scoped)
+    /// These reset with Song of Time:
+    /// - `WOODFALL_TEMPLE_CLEAR_CYCLE`
+    /// - `SNOWHEAD_TEMPLE_CLEAR_CYCLE`
+    /// - `GREAT_BAY_TEMPLE_CLEAR_CYCLE`
+    /// - `STONE_TOWER_TEMPLE_CLEAR_CYCLE`
     fn event(&self, name: &str) -> bool {
         match name.to_uppercase().as_str() {
             // Boss defeats (permanent)
@@ -1045,6 +1088,18 @@ impl EvalContext for MmGameContext<'_> {
             "GOHT_DEFEATED_CYCLE" => self.check_boss_defeated_cycle(0x24),
             "GYORG_DEFEATED_CYCLE" => self.check_boss_defeated_cycle(0x4F),
             "TWINMOLD_DEFEATED_CYCLE" => self.check_boss_defeated_cycle(0x36),
+
+            // Dungeon clears (permanent)
+            "WOODFALL_TEMPLE_CLEAR" => self.check_dungeon_clear_permanent(0x1A),
+            "SNOWHEAD_TEMPLE_CLEAR" => self.check_dungeon_clear_permanent(0x24),
+            "GREAT_BAY_TEMPLE_CLEAR" => self.check_dungeon_clear_permanent(0x4F),
+            "STONE_TOWER_TEMPLE_CLEAR" => self.check_dungeon_clear_permanent(0x36),
+
+            // Dungeon clears (cycle-scoped)
+            "WOODFALL_TEMPLE_CLEAR_CYCLE" => self.check_dungeon_clear_cycle(0x1A),
+            "SNOWHEAD_TEMPLE_CLEAR_CYCLE" => self.check_dungeon_clear_cycle(0x24),
+            "GREAT_BAY_TEMPLE_CLEAR_CYCLE" => self.check_dungeon_clear_cycle(0x4F),
+            "STONE_TOWER_TEMPLE_CLEAR_CYCLE" => self.check_dungeon_clear_cycle(0x36),
 
             _ => false,
         }
@@ -2259,5 +2314,200 @@ mod tests {
         // Out of bounds should return false, not panic
         assert!(!ctx.check_boss_defeated_permanent(1000));
         assert!(!ctx.check_boss_defeated_cycle(1000));
+    }
+
+    // ========================================================================
+    // Event Tests (Dungeon Clears)
+    // ========================================================================
+
+    /// Create a permanent scene flag with cleared_floors set.
+    fn make_perm_flag_dungeon_cleared() -> MmPermanentSceneFlags {
+        MmPermanentSceneFlags {
+            chest: 0,
+            switch0: 0,
+            switch1: 0,
+            cleared_room: 0,
+            collectible: 0,
+            cleared_floors: 1,
+            rooms: 0,
+        }
+    }
+
+    #[test]
+    fn test_event_woodfall_temple_clear_permanent() {
+        // Scene ID 0x1A = 26
+        let mut perm_flags: Vec<MmPermanentSceneFlags> =
+            (0..27).map(|_| make_perm_flag_empty()).collect();
+        perm_flags[0x1A] = make_perm_flag_dungeon_cleared();
+
+        let save = make_save_with_scene_flags(perm_flags, vec![]);
+        let ctx = MmGameContext::new(&save);
+
+        assert!(EvalContext::event(&ctx, "WOODFALL_TEMPLE_CLEAR"));
+        assert!(!EvalContext::event(&ctx, "SNOWHEAD_TEMPLE_CLEAR"));
+    }
+
+    #[test]
+    fn test_event_snowhead_temple_clear_permanent() {
+        // Scene ID 0x24 = 36
+        let mut perm_flags: Vec<MmPermanentSceneFlags> =
+            (0..37).map(|_| make_perm_flag_empty()).collect();
+        perm_flags[0x24] = make_perm_flag_dungeon_cleared();
+
+        let save = make_save_with_scene_flags(perm_flags, vec![]);
+        let ctx = MmGameContext::new(&save);
+
+        assert!(EvalContext::event(&ctx, "SNOWHEAD_TEMPLE_CLEAR"));
+        assert!(!EvalContext::event(&ctx, "WOODFALL_TEMPLE_CLEAR"));
+    }
+
+    #[test]
+    fn test_event_great_bay_temple_clear_permanent() {
+        // Scene ID 0x4F = 79
+        let mut perm_flags: Vec<MmPermanentSceneFlags> =
+            (0..80).map(|_| make_perm_flag_empty()).collect();
+        perm_flags[0x4F] = make_perm_flag_dungeon_cleared();
+
+        let save = make_save_with_scene_flags(perm_flags, vec![]);
+        let ctx = MmGameContext::new(&save);
+
+        assert!(EvalContext::event(&ctx, "GREAT_BAY_TEMPLE_CLEAR"));
+    }
+
+    #[test]
+    fn test_event_stone_tower_temple_clear_permanent() {
+        // Scene ID 0x36 = 54
+        let mut perm_flags: Vec<MmPermanentSceneFlags> =
+            (0..55).map(|_| make_perm_flag_empty()).collect();
+        perm_flags[0x36] = make_perm_flag_dungeon_cleared();
+
+        let save = make_save_with_scene_flags(perm_flags, vec![]);
+        let ctx = MmGameContext::new(&save);
+
+        assert!(EvalContext::event(&ctx, "STONE_TOWER_TEMPLE_CLEAR"));
+    }
+
+    #[test]
+    fn test_event_all_cycle_dungeon_clears() {
+        // Create enough flags for all dungeons
+        let mut cycle_flags: Vec<MmCycleSceneFlags> =
+            (0..80).map(|_| make_cycle_flag_empty()).collect();
+        cycle_flags[0x1A] = make_cycle_flag_cleared(); // Woodfall
+        cycle_flags[0x24] = make_cycle_flag_cleared(); // Snowhead
+        cycle_flags[0x4F] = make_cycle_flag_cleared(); // Great Bay
+        cycle_flags[0x36] = make_cycle_flag_cleared(); // Stone Tower
+
+        let save = make_save_with_scene_flags(vec![], cycle_flags);
+        let ctx = MmGameContext::new(&save);
+
+        assert!(EvalContext::event(&ctx, "WOODFALL_TEMPLE_CLEAR_CYCLE"));
+        assert!(EvalContext::event(&ctx, "SNOWHEAD_TEMPLE_CLEAR_CYCLE"));
+        assert!(EvalContext::event(&ctx, "GREAT_BAY_TEMPLE_CLEAR_CYCLE"));
+        assert!(EvalContext::event(&ctx, "STONE_TOWER_TEMPLE_CLEAR_CYCLE"));
+    }
+
+    #[test]
+    fn test_event_dungeon_clear_case_insensitive() {
+        let mut perm_flags: Vec<MmPermanentSceneFlags> =
+            (0..27).map(|_| make_perm_flag_empty()).collect();
+        perm_flags[0x1A] = make_perm_flag_dungeon_cleared();
+
+        let save = make_save_with_scene_flags(perm_flags, vec![]);
+        let ctx = MmGameContext::new(&save);
+
+        // All case variations should work
+        assert!(EvalContext::event(&ctx, "WOODFALL_TEMPLE_CLEAR"));
+        assert!(EvalContext::event(&ctx, "woodfall_temple_clear"));
+        assert!(EvalContext::event(&ctx, "Woodfall_Temple_Clear"));
+        assert!(EvalContext::event(&ctx, "WoOdFaLl_TeMpLe_ClEaR"));
+    }
+
+    #[test]
+    fn test_event_dungeon_clear_empty_flags_returns_false() {
+        // Empty flags should return false for all dungeon clear events
+        let save = make_save();
+        let ctx = MmGameContext::new(&save);
+
+        assert!(!EvalContext::event(&ctx, "WOODFALL_TEMPLE_CLEAR"));
+        assert!(!EvalContext::event(&ctx, "SNOWHEAD_TEMPLE_CLEAR"));
+        assert!(!EvalContext::event(&ctx, "GREAT_BAY_TEMPLE_CLEAR"));
+        assert!(!EvalContext::event(&ctx, "STONE_TOWER_TEMPLE_CLEAR"));
+        assert!(!EvalContext::event(&ctx, "WOODFALL_TEMPLE_CLEAR_CYCLE"));
+        assert!(!EvalContext::event(&ctx, "SNOWHEAD_TEMPLE_CLEAR_CYCLE"));
+        assert!(!EvalContext::event(&ctx, "GREAT_BAY_TEMPLE_CLEAR_CYCLE"));
+        assert!(!EvalContext::event(&ctx, "STONE_TOWER_TEMPLE_CLEAR_CYCLE"));
+    }
+
+    #[test]
+    fn test_event_dungeon_clear_permanent_vs_cycle_independence() {
+        // Permanent flag set (cleared_floors), cycle not set
+        let mut perm_flags: Vec<MmPermanentSceneFlags> =
+            (0..80).map(|_| make_perm_flag_empty()).collect();
+        perm_flags[0x1A] = make_perm_flag_dungeon_cleared();
+
+        let cycle_flags: Vec<MmCycleSceneFlags> =
+            (0..80).map(|_| make_cycle_flag_empty()).collect();
+
+        let save = make_save_with_scene_flags(perm_flags, cycle_flags);
+        let ctx = MmGameContext::new(&save);
+
+        // Permanent should be true, cycle should be false
+        assert!(EvalContext::event(&ctx, "WOODFALL_TEMPLE_CLEAR"));
+        assert!(!EvalContext::event(&ctx, "WOODFALL_TEMPLE_CLEAR_CYCLE"));
+    }
+
+    #[test]
+    fn test_check_dungeon_clear_permanent_helper() {
+        let mut perm_flags: Vec<MmPermanentSceneFlags> =
+            (0..80).map(|_| make_perm_flag_empty()).collect();
+        perm_flags[0x1A] = make_perm_flag_dungeon_cleared();
+
+        let save = make_save_with_scene_flags(perm_flags, vec![]);
+        let ctx = MmGameContext::new(&save);
+
+        assert!(ctx.check_dungeon_clear_permanent(0x1A));
+        assert!(!ctx.check_dungeon_clear_permanent(0x24));
+        assert!(!ctx.check_dungeon_clear_permanent(0x4F));
+        assert!(!ctx.check_dungeon_clear_permanent(0x36));
+    }
+
+    #[test]
+    fn test_check_dungeon_clear_cycle_helper() {
+        let mut cycle_flags: Vec<MmCycleSceneFlags> =
+            (0..80).map(|_| make_cycle_flag_empty()).collect();
+        cycle_flags[0x24] = make_cycle_flag_cleared();
+
+        let save = make_save_with_scene_flags(vec![], cycle_flags);
+        let ctx = MmGameContext::new(&save);
+
+        assert!(!ctx.check_dungeon_clear_cycle(0x1A));
+        assert!(ctx.check_dungeon_clear_cycle(0x24));
+        assert!(!ctx.check_dungeon_clear_cycle(0x4F));
+        assert!(!ctx.check_dungeon_clear_cycle(0x36));
+    }
+
+    #[test]
+    fn test_check_dungeon_clear_out_of_bounds() {
+        let save = make_save();
+        let ctx = MmGameContext::new(&save);
+
+        // Out of bounds should return false, not panic
+        assert!(!ctx.check_dungeon_clear_permanent(1000));
+        assert!(!ctx.check_dungeon_clear_cycle(1000));
+    }
+
+    #[test]
+    fn test_boss_defeated_vs_dungeon_clear_independence() {
+        // Set only cleared_room (boss defeat), not cleared_floors (dungeon clear)
+        let mut perm_flags: Vec<MmPermanentSceneFlags> =
+            (0..80).map(|_| make_perm_flag_empty()).collect();
+        perm_flags[0x1A] = make_perm_flag_cleared(); // Only cleared_room set
+
+        let save = make_save_with_scene_flags(perm_flags, vec![]);
+        let ctx = MmGameContext::new(&save);
+
+        // Boss defeat should be true, dungeon clear should be false
+        assert!(EvalContext::event(&ctx, "ODOLWA_DEFEATED"));
+        assert!(!EvalContext::event(&ctx, "WOODFALL_TEMPLE_CLEAR"));
     }
 }
