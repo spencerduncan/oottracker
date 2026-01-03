@@ -7,8 +7,14 @@ use crate::expr::lexer::{LexError, Lexer};
 use crate::expr::{Expr, Token};
 use thiserror::Error;
 
+/// Maximum recursion depth allowed when parsing expressions.
+/// This prevents stack overflow from deeply nested expressions.
+pub const MAX_EXPR_DEPTH: usize = 100;
+
 #[derive(Debug, Error)]
 pub enum ParseError {
+    #[error("expression too deeply nested (max depth: {0})")]
+    TooDeep(usize),
     #[error("unexpected token: {0:?}")]
     UnexpectedToken(Token),
     #[error("unexpected end of input")]
@@ -34,7 +40,7 @@ impl<'a> Parser<'a> {
 
     /// Parse the entire expression.
     pub fn parse(&mut self) -> Result<Expr, ParseError> {
-        let expr = self.parse_or()?;
+        let expr = self.parse_or(0)?;
 
         // Ensure we've consumed all input
         if self.current != Token::Eof {
@@ -65,12 +71,16 @@ impl<'a> Parser<'a> {
 
     /// Parse OR expressions (lowest precedence).
     /// or_expr = and_expr ("||" and_expr)*
-    fn parse_or(&mut self) -> Result<Expr, ParseError> {
-        let mut left = self.parse_and()?;
+    fn parse_or(&mut self, depth: usize) -> Result<Expr, ParseError> {
+        if depth > MAX_EXPR_DEPTH {
+            return Err(ParseError::TooDeep(MAX_EXPR_DEPTH));
+        }
+
+        let mut left = self.parse_and(depth)?;
 
         while self.current == Token::Or {
             self.advance()?;
-            let right = self.parse_and()?;
+            let right = self.parse_and(depth)?;
             left = Expr::or(left, right);
         }
 
@@ -79,12 +89,12 @@ impl<'a> Parser<'a> {
 
     /// Parse AND expressions.
     /// and_expr = unary_expr ("&&" unary_expr)*
-    fn parse_and(&mut self) -> Result<Expr, ParseError> {
-        let mut left = self.parse_unary()?;
+    fn parse_and(&mut self, depth: usize) -> Result<Expr, ParseError> {
+        let mut left = self.parse_unary(depth)?;
 
         while self.current == Token::And {
             self.advance()?;
-            let right = self.parse_unary()?;
+            let right = self.parse_unary(depth)?;
             left = Expr::and(left, right);
         }
 
@@ -93,19 +103,23 @@ impl<'a> Parser<'a> {
 
     /// Parse unary expressions (NOT).
     /// unary_expr = "!" unary_expr | primary
-    fn parse_unary(&mut self) -> Result<Expr, ParseError> {
+    fn parse_unary(&mut self, depth: usize) -> Result<Expr, ParseError> {
+        if depth > MAX_EXPR_DEPTH {
+            return Err(ParseError::TooDeep(MAX_EXPR_DEPTH));
+        }
+
         if self.current == Token::Not {
             self.advance()?;
-            let expr = self.parse_unary()?;
+            let expr = self.parse_unary(depth + 1)?;
             return Ok(Expr::not(expr));
         }
 
-        self.parse_primary()
+        self.parse_primary(depth)
     }
 
     /// Parse primary expressions (highest precedence).
     /// primary = "true" | "false" | number | string | ident | call | "(" expr ")"
-    fn parse_primary(&mut self) -> Result<Expr, ParseError> {
+    fn parse_primary(&mut self, depth: usize) -> Result<Expr, ParseError> {
         match self.current.clone() {
             Token::True => {
                 self.advance()?;
@@ -127,14 +141,14 @@ impl<'a> Parser<'a> {
                 self.advance()?;
                 // Check if this is a function call
                 if self.current == Token::LParen {
-                    self.parse_call(name)
+                    self.parse_call(name, depth)
                 } else {
                     Ok(Expr::Ident(name))
                 }
             }
             Token::LParen => {
                 self.advance()?;
-                let expr = self.parse_or()?;
+                let expr = self.parse_or(depth + 1)?;
                 self.expect(Token::RParen)?;
                 Ok(expr)
             }
@@ -144,7 +158,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Parse a function call: name(arg1, arg2, ...)
-    fn parse_call(&mut self, name: String) -> Result<Expr, ParseError> {
+    fn parse_call(&mut self, name: String, depth: usize) -> Result<Expr, ParseError> {
         self.expect(Token::LParen)?;
 
         let mut args = Vec::new();
@@ -152,12 +166,12 @@ impl<'a> Parser<'a> {
         // Handle empty argument list
         if self.current != Token::RParen {
             // Parse first argument
-            args.push(self.parse_or()?);
+            args.push(self.parse_or(depth + 1)?);
 
             // Parse remaining arguments
             while self.current == Token::Comma {
                 self.advance()?;
-                args.push(self.parse_or()?);
+                args.push(self.parse_or(depth + 1)?);
             }
         }
 
@@ -721,5 +735,82 @@ mod tests {
         // Lexer error should be wrapped in ParseError::LexError
         let result = parse("a @ b");
         assert!(matches!(result, Err(ParseError::LexError(_))));
+    }
+
+    // --- Depth limit tests ---
+
+    #[test]
+    fn test_parse_depth_limit_nested_parens() {
+        // Create an expression with depth > MAX_EXPR_DEPTH using nested parentheses
+        let open_parens = "(".repeat(MAX_EXPR_DEPTH + 10);
+        let close_parens = ")".repeat(MAX_EXPR_DEPTH + 10);
+        let deep_expr = format!("{}a{}", open_parens, close_parens);
+
+        let result = parse(&deep_expr);
+        assert!(matches!(result, Err(ParseError::TooDeep(_))));
+    }
+
+    #[test]
+    fn test_parse_depth_limit_nested_not() {
+        // Create an expression with depth > MAX_EXPR_DEPTH using chained NOT operators
+        let nots = "!".repeat(MAX_EXPR_DEPTH + 10);
+        let deep_expr = format!("{}a", nots);
+
+        let result = parse(&deep_expr);
+        assert!(matches!(result, Err(ParseError::TooDeep(_))));
+    }
+
+    #[test]
+    fn test_parse_depth_limit_nested_calls() {
+        // Create deeply nested function calls: f(f(f(...f(a)...)))
+        let mut expr = "a".to_string();
+        for _ in 0..(MAX_EXPR_DEPTH + 10) {
+            expr = format!("f({})", expr);
+        }
+
+        let result = parse(&expr);
+        assert!(matches!(result, Err(ParseError::TooDeep(_))));
+    }
+
+    #[test]
+    fn test_parse_depth_at_limit_succeeds() {
+        // An expression at exactly MAX_EXPR_DEPTH should succeed
+        // Using depth - 1 nested parens since depth starts at 0
+        let open_parens = "(".repeat(MAX_EXPR_DEPTH);
+        let close_parens = ")".repeat(MAX_EXPR_DEPTH);
+        let expr = format!("{}a{}", open_parens, close_parens);
+
+        let result = parse(&expr);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_parse_depth_limit_error_message() {
+        let nots = "!".repeat(MAX_EXPR_DEPTH + 10);
+        let deep_expr = format!("{}a", nots);
+
+        let result = parse(&deep_expr);
+        match result {
+            Err(ParseError::TooDeep(depth)) => {
+                assert_eq!(depth, MAX_EXPR_DEPTH);
+            }
+            _ => panic!("expected TooDeep error"),
+        }
+    }
+
+    #[test]
+    fn test_parse_depth_mixed_nesting() {
+        // Mix parentheses and NOT operators to exceed depth
+        let mut expr = "a".to_string();
+        for i in 0..(MAX_EXPR_DEPTH + 10) {
+            if i % 2 == 0 {
+                expr = format!("({})", expr);
+            } else {
+                expr = format!("!{}", expr);
+            }
+        }
+
+        let result = parse(&expr);
+        assert!(matches!(result, Err(ParseError::TooDeep(_))));
     }
 }
