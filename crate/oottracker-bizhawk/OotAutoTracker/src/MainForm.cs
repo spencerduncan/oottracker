@@ -968,15 +968,15 @@ namespace Net.Fenhl.OotAutoTracker {
             if (this.prevSave != null) { this.prevSave.Dispose(); }
             this.prevSave = null;
             UpdateSave(false, "Save: waiting for game");
-            if ((APIs.GameInfo.GetGameInfo()?.Name ?? "Null") == "Null") {
+            if ((APIs.Emulation.GetGameInfo()?.Name ?? "Null") == "Null") {
                 this.model = ModelState.FromSaveAndKnowledge(Native.save_default(), Native.knowledge_none());
                 UpdateGame(false, "Not playing anything");
             } else {
                 var rom_ident = APIs.Memory.ReadByteRange(0x20, 0x18, "ROM");
                 // Check for OoT ROM: "THE LEGEND OF ZELDA \0"
-                bool isOotRom = Enumerable.SequenceEqual(rom_ident.GetRange(0, 0x15), new List<byte>(Encoding.UTF8.GetBytes("THE LEGEND OF ZELDA \0")));
+                bool isOotRom = Enumerable.SequenceEqual(rom_ident.Skip(0).Take(0x15).ToList(), new List<byte>(Encoding.UTF8.GetBytes("THE LEGEND OF ZELDA \0")));
                 // Check for MM ROM: "ZELDA MAJORA'S MASK " at offset 0x20
-                bool isMmRom = Enumerable.SequenceEqual(rom_ident.GetRange(0, 0x14), new List<byte>(Encoding.UTF8.GetBytes("ZELDA MAJORA'S MASK ")));
+                bool isMmRom = Enumerable.SequenceEqual(rom_ident.Skip(0).Take(0x14).ToList(), new List<byte>(Encoding.UTF8.GetBytes("ZELDA MAJORA'S MASK ")));
 
                 // Priority 1: Check for OoTMM combo ROM via ROM header signature
                 bool isComboFromHeader = DetectComboRomFromHeader();
@@ -1000,12 +1000,12 @@ namespace Net.Fenhl.OotAutoTracker {
                         UpdateGame(true, GetComboModeStatusString());
                     } else {
                         this.model = ModelState.FromSaveAndKnowledge(Native.save_default(), Native.knowledge_none());
-                        UpdateGame(false, $"Game: Expected OoT/OoTR/MM/MMR/OoTMM, found {APIs.GameInfo.GetGameInfo()?.Name ?? "Null"} ({string.Join<byte>(", ", rom_ident.GetRange(0, 0x15))})");
+                        UpdateGame(false, $"Game: Expected OoT/OoTR/MM/MMR/OoTMM, found {APIs.Emulation.GetGameInfo()?.Name ?? "Null"} ({string.Join<byte>(", ", rom_ident.Skip(0).Take(0x15).ToList())})");
                     }
                 } else if (isMmRom) {
                     // Majora's Mask detected
                     this.detectedGame = GameType.MajorasMask;
-                    var version = rom_ident.GetRange(0x14, 4);
+                    var version = rom_ident.Skip(0x14).Take(4).ToList();
                     this.isVanilla = Enumerable.SequenceEqual(version, new List<byte>(new byte[] { 0, 0, 0, 0 }));
                     this.model = ModelState.FromSaveAndKnowledge(Native.save_default(), Native.knowledge_none());
                     if (this.isVanilla) {
@@ -1015,7 +1015,7 @@ namespace Net.Fenhl.OotAutoTracker {
                     }
                 } else {
                     // OoT ROM detected - check if it's actually a combo ROM via memory context
-                    var version = rom_ident.GetRange(0x15, 3);
+                    var version = rom_ident.Skip(0x15).Take(3).ToList();
                     this.isVanilla = Enumerable.SequenceEqual(version, new List<byte>(new byte[] { 0, 0, 0 }));
 
                     // Check for combo randomizer using multiple detection methods
@@ -1063,7 +1063,7 @@ namespace Net.Fenhl.OotAutoTracker {
 
         public override void UpdateValues(ToolFormUpdateType type) {
             if (type != ToolFormUpdateType.PreFrame) { return; } //TODO setting to also enable auto-tracking during turbo (ToolFormUpdateType.FastPreFrame)?
-            if ((APIs.GameInfo.GetGameInfo()?.Name ?? "Null") == "Null") { return; }
+            if ((APIs.Emulation.GetGameInfo()?.Name ?? "Null") == "Null") { return; }
 
             // For combo mode: periodically re-check which game is active
             if (this.isComboRom && this.detectedGame == GameType.Combo) {
