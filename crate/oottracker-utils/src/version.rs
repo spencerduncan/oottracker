@@ -1,3 +1,4 @@
+#[cfg(windows)]
 use {
     graphql_client::GraphQLQuery,
     itertools::Itertools as _,
@@ -8,8 +9,10 @@ use {
     tokio::process::Command,
 };
 
+#[cfg(windows)]
 pub const INFO_PLIST_PATH: &str = "assets/macos/OoT Tracker.app/Contents/Info.plist";
 
+#[cfg(windows)]
 #[derive(Deserialize, Serialize)]
 pub struct Plist {
     #[serde(rename = "CFBundleShortVersionString")]
@@ -20,6 +23,7 @@ pub struct Plist {
     _rest: Json, //HACK see https://github.com/ebarnard/rust-plist/issues/54#issuecomment-653756460
 }
 
+#[cfg(windows)]
 #[derive(Debug, thiserror::Error)]
 pub enum BizHawkError {
     #[error(transparent)]
@@ -44,6 +48,7 @@ pub enum BizHawkError {
 )]
 struct BizHawkVersionQuery;
 
+#[cfg(windows)]
 pub async fn bizhawk_latest(client: &reqwest::Client) -> Result<Version, BizHawkError> {
     let remote_version_string = client
         .post("https://api.github.com/graphql")
@@ -73,6 +78,7 @@ pub async fn bizhawk_latest(client: &reqwest::Client) -> Result<Version, BizHawk
     Ok(Version::new(major?, minor?, patch?))
 }
 
+#[cfg(windows)]
 pub async fn check_cli_version(package: &str, version: &Version) {
     let cli_output = String::from_utf8(
         Command::new("cargo")
@@ -106,6 +112,7 @@ pub async fn check_cli_version(package: &str, version: &Version) {
     );
 }
 
+#[cfg(windows)]
 pub async fn version() -> Version {
     let version =
         Version::parse(env!("CARGO_PKG_VERSION")).expect("failed to parse current version");

@@ -8,6 +8,7 @@
 )]
 #![forbid(unsafe_code)]
 
+#[cfg(any(windows, target_os = "macos"))]
 use {
     ::tokio::{fs, io, process::Command},
     async_proto::Protocol,
@@ -57,6 +58,7 @@ use {
 #[cfg(windows)]
 const MACOS_ADDR: &str = "192.168.178.63";
 
+#[cfg(any(windows, target_os = "macos"))]
 #[derive(Debug, Error)]
 enum Error {
     #[cfg(windows)]
@@ -473,6 +475,7 @@ impl Task<Result<(), Error>> for BuildGui {
     }
 }
 
+#[cfg(any(windows, target_os = "macos"))]
 #[derive(Protocol)]
 enum MacMessage {
     Progress { label: String, percent: Percent },
@@ -1215,4 +1218,10 @@ async fn main(args: Args) -> Result<(), Error> {
         line.replace("[done] release published").await?;
     }
     Ok(())
+}
+
+#[cfg(not(any(windows, target_os = "macos")))]
+fn main() {
+    eprintln!("oottracker-release is only supported on Windows and macOS");
+    std::process::exit(1);
 }

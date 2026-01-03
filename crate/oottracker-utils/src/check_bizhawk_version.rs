@@ -8,6 +8,7 @@
 )]
 #![forbid(unsafe_code)]
 
+#[cfg(windows)]
 use {
     oottracker_utils::version,
     semver::Version,
@@ -15,6 +16,7 @@ use {
     tokio::fs,
 };
 
+#[cfg(windows)]
 #[derive(Debug, thiserror::Error)]
 enum Error {
     #[error(transparent)]
@@ -31,6 +33,7 @@ enum Error {
     BizHawkVersionRegression,
 }
 
+#[cfg(windows)]
 #[wheel::main]
 async fn main() -> Result<(), Error> {
     let mut headers = reqwest::header::HeaderMap::new();
@@ -67,4 +70,10 @@ async fn main() -> Result<(), Error> {
         Equal => Ok(()),
         Greater => Err(Error::BizHawkVersionRegression),
     }
+}
+
+#[cfg(not(windows))]
+fn main() {
+    eprintln!("oottracker-check-bizhawk-version is only supported on Windows");
+    std::process::exit(1);
 }
