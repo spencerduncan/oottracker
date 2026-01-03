@@ -12,6 +12,7 @@ use {
     sqlx::PgPool,
     std::{env, sync::Arc, time::Duration},
     tokio::{sync::Mutex, time::sleep},
+    tracing::{error, warn},
     warp::{
         reject::Rejection,
         reply::Reply,
@@ -67,13 +68,13 @@ async fn client_session(
     tokio::spawn(async move {
         loop {
             sleep(Duration::from_secs(30)).await;
-            if ServerMessage::Ping
+            if let Err(e) = ServerMessage::Ping
                 .write_warp(&mut *ping_sink.lock().await)
                 .await
-                .is_err()
             {
+                warn!("WebSocket ping failed, closing connection: {e}");
                 break;
-            } //TODO better error handling
+            }
         }
     });
     loop {
@@ -87,23 +88,31 @@ async fn client_session(
                 let restreams = Restreams::clone(&restreams);
                 let sink = WsSink::clone(&sink);
                 tokio::spawn(async move {
+                    let restream_name = restream.clone();
+                    let runner_name = runner.clone();
                     let (mut old_cells, mut rx) = {
                         let restreams = restreams.read().await;
                         let restream = match restreams.get(&restream) {
                             Some(restream) => restream,
                             None => {
-                                let _ = ServerMessage::from_error("no such restream")
+                                if let Err(e) = ServerMessage::from_error("no such restream")
                                     .write_warp(&mut *sink.lock().await)
-                                    .await; //TODO better error handling
+                                    .await
+                                {
+                                    error!(restream = %restream_name, "Failed to send 'no such restream' error to client: {e}");
+                                }
                                 return;
                             }
                         };
                         let (rx, runner) = match restream.runner(&runner) {
                             Some((_, rx, runner)) => (rx, runner),
                             None => {
-                                let _ = ServerMessage::from_error("no such runner")
+                                if let Err(e) = ServerMessage::from_error("no such runner")
                                     .write_warp(&mut *sink.lock().await)
-                                    .await; //TODO better error handling
+                                    .await
+                                {
+                                    error!(runner = %runner_name, "Failed to send 'no such runner' error to client: {e}");
+                                }
                                 return;
                             }
                         };
@@ -112,34 +121,46 @@ async fn client_session(
                             .into_iter()
                             .map(|cell| cell.id.kind().render(&runner))
                             .collect::<Vec<_>>();
-                        if ServerMessage::Init(cells.clone())
+                        if let Err(e) = ServerMessage::Init(cells.clone())
                             .write_warp(&mut *sink.lock().await)
                             .await
-                            .is_err()
                         {
+                            warn!(restream = %restream_name, runner = %runner_name, "Failed to send Init message to client: {e}");
                             return;
-                        } //TODO better error handling
+                        }
                         (cells, rx.clone())
                     };
-                    while let Ok(()) = rx.changed().await {
-                        //TODO better error handling
+                    loop {
+                        match rx.changed().await {
+                            Ok(()) => {}
+                            Err(e) => {
+                                warn!(restream = %restream_name, runner = %runner_name, "Restream watch channel closed: {e}");
+                                break;
+                            }
+                        }
                         let new_cells = {
                             let restreams = restreams.read().await;
                             let restream = match restreams.get(&restream) {
                                 Some(restream) => restream,
                                 None => {
-                                    let _ = ServerMessage::from_error("no such restream")
+                                    if let Err(e) = ServerMessage::from_error("no such restream")
                                         .write_warp(&mut *sink.lock().await)
-                                        .await; //TODO better error handling
+                                        .await
+                                    {
+                                        error!(restream = %restream_name, "Failed to send 'no such restream' error to client: {e}");
+                                    }
                                     return;
                                 }
                             };
                             let runner = match restream.runner(&runner) {
                                 Some((_, _, runner)) => runner,
                                 None => {
-                                    let _ = ServerMessage::from_error("no such runner")
+                                    if let Err(e) = ServerMessage::from_error("no such runner")
                                         .write_warp(&mut *sink.lock().await)
-                                        .await; //TODO better error handling
+                                        .await
+                                    {
+                                        error!(runner = %runner_name, "Failed to send 'no such runner' error to client: {e}");
+                                    }
                                     return;
                                 }
                             };
@@ -153,16 +174,16 @@ async fn client_session(
                             old_cells.iter().zip(&new_cells).enumerate()
                         {
                             if old_cell != new_cell {
-                                if (ServerMessage::Update {
+                                if let Err(e) = (ServerMessage::Update {
                                     cell_id: i.try_into().expect("too many cells"),
                                     new_cell: new_cell.clone(),
                                 })
                                 .write_warp(&mut *sink.lock().await)
                                 .await
-                                .is_err()
                                 {
+                                    warn!(restream = %restream_name, runner = %runner_name, "Failed to send Update message to client: {e}");
                                     return;
-                                } //TODO better error handling
+                                }
                             }
                         }
                         old_cells = new_cells;
@@ -178,32 +199,44 @@ async fn client_session(
                 let restreams = Restreams::clone(&restreams);
                 let sink = WsSink::clone(&sink);
                 tokio::spawn(async move {
+                    let restream_name = restream.clone();
+                    let runner1_name = runner1.clone();
+                    let runner2_name = runner2.clone();
                     let (mut old_cells, mut rx) = {
                         let restreams = restreams.read().await;
                         let restream = match restreams.get(&restream) {
                             Some(restream) => restream,
                             None => {
-                                let _ = ServerMessage::from_error("no such restream")
+                                if let Err(e) = ServerMessage::from_error("no such restream")
                                     .write_warp(&mut *sink.lock().await)
-                                    .await; //TODO better error handling
+                                    .await
+                                {
+                                    error!(restream = %restream_name, "Failed to send 'no such restream' error to client: {e}");
+                                }
                                 return;
                             }
                         };
                         let (rx, runner1) = match restream.runner(&runner1) {
                             Some((_, rx, runner)) => (rx, runner),
                             None => {
-                                let _ = ServerMessage::from_error("no such runner")
+                                if let Err(e) = ServerMessage::from_error("no such runner")
                                     .write_warp(&mut *sink.lock().await)
-                                    .await; //TODO better error handling
+                                    .await
+                                {
+                                    error!(runner = %runner1_name, "Failed to send 'no such runner' error to client: {e}");
+                                }
                                 return;
                             }
                         };
                         let runner2 = match restream.runner(&runner2) {
                             Some((_, _, runner)) => runner,
                             None => {
-                                let _ = ServerMessage::from_error("no such runner")
+                                if let Err(e) = ServerMessage::from_error("no such runner")
                                     .write_warp(&mut *sink.lock().await)
-                                    .await; //TODO better error handling
+                                    .await
+                                {
+                                    error!(runner = %runner2_name, "Failed to send 'no such runner' error to client: {e}");
+                                }
                                 return;
                             }
                         };
@@ -212,43 +245,58 @@ async fn client_session(
                             .into_iter()
                             .map(|reward| render_double_cell(runner1, runner2, reward))
                             .collect::<Vec<_>>();
-                        if ServerMessage::Init(cells.clone())
+                        if let Err(e) = ServerMessage::Init(cells.clone())
                             .write_warp(&mut *sink.lock().await)
                             .await
-                            .is_err()
                         {
+                            warn!(restream = %restream_name, "Failed to send Init message to client: {e}");
                             return;
-                        } //TODO better error handling
+                        }
                         (cells, rx.clone())
                     };
-                    while let Ok(()) = rx.changed().await {
-                        //TODO better error handling
+                    loop {
+                        match rx.changed().await {
+                            Ok(()) => {}
+                            Err(e) => {
+                                warn!(restream = %restream_name, "Double restream watch channel closed: {e}");
+                                break;
+                            }
+                        }
                         let new_cells = {
                             let restreams = restreams.read().await;
                             let restream = match restreams.get(&restream) {
                                 Some(restream) => restream,
                                 None => {
-                                    let _ = ServerMessage::from_error("no such restream")
+                                    if let Err(e) = ServerMessage::from_error("no such restream")
                                         .write_warp(&mut *sink.lock().await)
-                                        .await; //TODO better error handling
+                                        .await
+                                    {
+                                        error!(restream = %restream_name, "Failed to send 'no such restream' error to client: {e}");
+                                    }
                                     return;
                                 }
                             };
                             let runner1 = match restream.runner(&runner1) {
                                 Some((_, _, runner)) => runner,
                                 None => {
-                                    let _ = ServerMessage::from_error("no such runner")
+                                    if let Err(e) = ServerMessage::from_error("no such runner")
                                         .write_warp(&mut *sink.lock().await)
-                                        .await; //TODO better error handling
+                                        .await
+                                    {
+                                        error!(runner = %runner1_name, "Failed to send 'no such runner' error to client: {e}");
+                                    }
                                     return;
                                 }
                             };
                             let runner2 = match restream.runner(&runner2) {
                                 Some((_, _, runner)) => runner,
                                 None => {
-                                    let _ = ServerMessage::from_error("no such runner")
+                                    if let Err(e) = ServerMessage::from_error("no such runner")
                                         .write_warp(&mut *sink.lock().await)
-                                        .await; //TODO better error handling
+                                        .await
+                                    {
+                                        error!(runner = %runner2_name, "Failed to send 'no such runner' error to client: {e}");
+                                    }
                                     return;
                                 }
                             };
@@ -262,16 +310,16 @@ async fn client_session(
                             old_cells.iter().zip(&new_cells).enumerate()
                         {
                             if old_cell != new_cell {
-                                if (ServerMessage::Update {
+                                if let Err(e) = (ServerMessage::Update {
                                     cell_id: i.try_into().expect("too many cells"),
                                     new_cell: new_cell.clone(),
                                 })
                                 .write_warp(&mut *sink.lock().await)
                                 .await
-                                .is_err()
                                 {
+                                    warn!(restream = %restream_name, "Failed to send Update message to client: {e}");
                                     return;
-                                } //TODO better error handling
+                                }
                             }
                         }
                         old_cells = new_cells;
@@ -285,31 +333,42 @@ async fn client_session(
                 cell_id,
                 right,
             } => {
+                let restream_name = restream.clone();
+                let runner_name = runner.clone();
                 let mut restreams = restreams.write().await;
                 let restream = match restreams.get_mut(&restream) {
                     Some(restream) => restream,
                     None => {
-                        let _ = ServerMessage::from_error("no such restream")
+                        if let Err(e) = ServerMessage::from_error("no such restream")
                             .write_warp(&mut *sink.lock().await)
-                            .await; //TODO better error handling
+                            .await
+                        {
+                            error!(restream = %restream_name, "Failed to send 'no such restream' error to client: {e}");
+                        }
                         return Ok(());
                     }
                 };
                 let (tx, runner) = match restream.runner_mut(&runner) {
                     Some((tx, _, runner)) => (tx, runner),
                     None => {
-                        let _ = ServerMessage::from_error("no such runner")
+                        if let Err(e) = ServerMessage::from_error("no such runner")
                             .write_warp(&mut *sink.lock().await)
-                            .await; //TODO better error handling
+                            .await
+                        {
+                            error!(runner = %runner_name, "Failed to send 'no such runner' error to client: {e}");
+                        }
                         return Ok(());
                     }
                 };
                 let cell = match layout.cells().get(usize::from(cell_id)) {
                     Some(cell) => cell.id,
                     None => {
-                        let _ = ServerMessage::from_error("no such cell")
+                        if let Err(e) = ServerMessage::from_error("no such cell")
                             .write_warp(&mut *sink.lock().await)
-                            .await; //TODO better error handling
+                            .await
+                        {
+                            error!(cell_id = %cell_id, "Failed to send 'no such cell' error to client: {e}");
+                        }
                         return Ok(());
                     }
                 };
@@ -325,69 +384,109 @@ async fn client_session(
                 let rooms = Rooms::clone(&rooms);
                 let sink = WsSink::clone(&sink);
                 tokio::spawn(async move {
-                    let (mut old_model, mut rx) = get_room(&rooms, room.clone(), |room| {
-                        (room.model.clone(), room.rx.clone())
-                    })
-                    .await?;
-                    ServerMessage::InitRaw(old_model.clone())
-                        .write_warp(&mut *sink.lock().await)
+                    let room_name = room.clone();
+                    let result: Result<(), Error> = async {
+                        let (mut old_model, mut rx) = get_room(&rooms, room.clone(), |room| {
+                            (room.model.clone(), room.rx.clone())
+                        })
                         .await?;
-                    while let Ok(()) = rx.changed().await {
-                        let new_model =
-                            get_room(&rooms, room.clone(), |room| room.model.clone()).await?;
-                        if old_model != new_model {
-                            (ServerMessage::UpdateRaw(&new_model - &old_model))
-                                .write_warp(&mut *sink.lock().await)
-                                .await?;
+                        ServerMessage::InitRaw(old_model.clone())
+                            .write_warp(&mut *sink.lock().await)
+                            .await?;
+                        loop {
+                            match rx.changed().await {
+                                Ok(()) => {}
+                                Err(e) => {
+                                    warn!(room = %room_name, "Room watch channel closed: {e}");
+                                    break;
+                                }
+                            }
+                            let new_model =
+                                get_room(&rooms, room.clone(), |room| room.model.clone()).await?;
+                            if old_model != new_model {
+                                (ServerMessage::UpdateRaw(&new_model - &old_model))
+                                    .write_warp(&mut *sink.lock().await)
+                                    .await?;
+                            }
+                            old_model = new_model;
                         }
-                        old_model = new_model;
+                        Ok(())
                     }
-                    Ok::<_, Error>(())
-                }); //TODO send errors from task to client
+                    .await;
+                    if let Err(e) = result {
+                        error!(room = %room_name, "SubscribeRaw task error: {e}");
+                        if let Err(send_err) = ServerMessage::from_error(&e)
+                            .write_warp(&mut *sink.lock().await)
+                            .await
+                        {
+                            error!(room = %room_name, "Failed to send error to client: {send_err}");
+                        }
+                    }
+                });
             }
             ClientMessage::SubscribeRoom { room, layout } => {
                 let rooms = Rooms::clone(&rooms);
                 let sink = WsSink::clone(&sink);
                 tokio::spawn(async move {
-                    let (mut old_cells, mut rx) = get_room(&rooms, room.clone(), |room| {
-                        (
-                            layout
-                                .cells()
-                                .into_iter()
-                                .map(|cell| cell.id.kind().render(&room.model))
-                                .collect::<Vec<_>>(),
-                            room.rx.clone(),
-                        )
-                    })
-                    .await?;
-                    ServerMessage::Init(old_cells.clone())
-                        .write_warp(&mut *sink.lock().await)
-                        .await?;
-                    while let Ok(()) = rx.changed().await {
-                        let new_cells = get_room(&rooms, room.clone(), |room| {
-                            layout
-                                .cells()
-                                .into_iter()
-                                .map(|cell| cell.id.kind().render(&room.model))
-                                .collect::<Vec<_>>()
+                    let room_name = room.clone();
+                    let result: Result<(), Error> = async {
+                        let (mut old_cells, mut rx) = get_room(&rooms, room.clone(), |room| {
+                            (
+                                layout
+                                    .cells()
+                                    .into_iter()
+                                    .map(|cell| cell.id.kind().render(&room.model))
+                                    .collect::<Vec<_>>(),
+                                room.rx.clone(),
+                            )
                         })
                         .await?;
-                        for (i, (old_cell, new_cell)) in
-                            old_cells.iter().zip(&new_cells).enumerate()
-                        {
-                            if old_cell != new_cell {
-                                (ServerMessage::Update {
-                                    cell_id: i.try_into().expect("too many cells"),
-                                    new_cell: new_cell.clone(),
-                                })
-                                .write_warp(&mut *sink.lock().await)
-                                .await?;
+                        ServerMessage::Init(old_cells.clone())
+                            .write_warp(&mut *sink.lock().await)
+                            .await?;
+                        loop {
+                            match rx.changed().await {
+                                Ok(()) => {}
+                                Err(e) => {
+                                    warn!(room = %room_name, "Room watch channel closed: {e}");
+                                    break;
+                                }
                             }
+                            let new_cells = get_room(&rooms, room.clone(), |room| {
+                                layout
+                                    .cells()
+                                    .into_iter()
+                                    .map(|cell| cell.id.kind().render(&room.model))
+                                    .collect::<Vec<_>>()
+                            })
+                            .await?;
+                            for (i, (old_cell, new_cell)) in
+                                old_cells.iter().zip(&new_cells).enumerate()
+                            {
+                                if old_cell != new_cell {
+                                    (ServerMessage::Update {
+                                        cell_id: i.try_into().expect("too many cells"),
+                                        new_cell: new_cell.clone(),
+                                    })
+                                    .write_warp(&mut *sink.lock().await)
+                                    .await?;
+                                }
+                            }
+                            old_cells = new_cells;
                         }
-                        old_cells = new_cells;
+                        Ok(())
                     }
-                    Ok::<_, Error>(())
-                }); //TODO send errors from task to client
+                    .await;
+                    if let Err(e) = result {
+                        error!(room = %room_name, "SubscribeRoom task error: {e}");
+                        if let Err(send_err) = ServerMessage::from_error(&e)
+                            .write_warp(&mut *sink.lock().await)
+                            .await
+                        {
+                            error!(room = %room_name, "Failed to send error to client: {send_err}");
+                        }
+                    }
+                });
             }
             ClientMessage::SetRaw { room, state, token } => {
                 // Check authorization before allowing state modification
@@ -395,9 +494,12 @@ async fn client_session(
                     let rooms_guard = rooms.lock().await;
                     if let Some(room_state) = rooms_guard.get(&room) {
                         if !room_state.check_auth(&token) {
-                            let _ = ServerMessage::Unauthorized { room: room.clone() }
+                            if let Err(e) = (ServerMessage::Unauthorized { room: room.clone() })
                                 .write_warp(&mut *sink.lock().await)
-                                .await;
+                                .await
+                            {
+                                warn!(room = %room, "Failed to send Unauthorized message to client: {e}");
+                            }
                             continue;
                         }
                     }
@@ -421,9 +523,12 @@ async fn client_session(
                     let rooms_guard = rooms.lock().await;
                     if let Some(room_state) = rooms_guard.get(&room) {
                         if !room_state.check_auth(&token) {
-                            let _ = ServerMessage::Unauthorized { room: room.clone() }
+                            if let Err(e) = (ServerMessage::Unauthorized { room: room.clone() })
                                 .write_warp(&mut *sink.lock().await)
-                                .await;
+                                .await
+                            {
+                                warn!(room = %room, "Failed to send Unauthorized message to client: {e}");
+                            }
                             continue;
                         }
                     }
@@ -431,9 +536,12 @@ async fn client_session(
                 let cell = match layout.cells().get(usize::from(cell_id)) {
                     Some(cell) => cell.id,
                     None => {
-                        let _ = ServerMessage::from_error("no such cell")
+                        if let Err(e) = ServerMessage::from_error("no such cell")
                             .write_warp(&mut *sink.lock().await)
-                            .await; //TODO better error handling
+                            .await
+                        {
+                            error!(room = %room, cell_id = %cell_id, "Failed to send 'no such cell' error to client: {e}");
+                        }
                         return Ok(());
                     }
                 };
@@ -463,9 +571,12 @@ async fn client_session(
                     if let Some(mw_room) = mw_rooms_guard.get(&room) {
                         let mw_room_guard = mw_room.read().await;
                         if !mw_room_guard.check_auth(&token) {
-                            let _ = ServerMessage::Unauthorized { room: room.clone() }
+                            if let Err(e) = (ServerMessage::Unauthorized { room: room.clone() })
                                 .write_warp(&mut *sink.lock().await)
-                                .await;
+                                .await
+                            {
+                                warn!(room = %room, "Failed to send Unauthorized message to client: {e}");
+                            }
                             continue;
                         }
                     } else {
@@ -486,27 +597,39 @@ async fn client_session(
                     // Check authorization before allowing player reset
                     let mw_room_guard = mw_room.read().await;
                     if !mw_room_guard.check_auth(&token) {
-                        let _ = ServerMessage::Unauthorized { room: room.clone() }
+                        if let Err(e) = (ServerMessage::Unauthorized { room: room.clone() })
                             .write_warp(&mut *sink.lock().await)
-                            .await;
+                            .await
+                        {
+                            warn!(room = %room, "Failed to send Unauthorized message to client: {e}");
+                        }
                         continue;
                     }
-                    let _ = mw_room_guard
+                    if let Err(e) = mw_room_guard
                         .incoming_queue
-                        .send(AutoUpdate::Reset { world, save });
+                        .send(AutoUpdate::Reset { world, save })
+                    {
+                        warn!(room = %room, world = %world, "Failed to send reset to multiworld queue: {e}");
+                    }
                 } else {
-                    let _ = ServerMessage::from_error("no such multiworld room")
+                    if let Err(e) = ServerMessage::from_error("no such multiworld room")
                         .write_warp(&mut *sink.lock().await)
-                        .await; //TODO better error handling
+                        .await
+                    {
+                        error!(room = %room, "Failed to send 'no such multiworld room' error to client: {e}");
+                    }
                 }
             }
             #[allow(deprecated)]
             ClientMessage::MwGetItem { .. } => {
-                let _ = ServerMessage::from_error(
+                if let Err(e) = ServerMessage::from_error(
                     "MwGetItem command is no longer supported, use MwQueueItem instead",
                 )
                 .write_warp(&mut *sink.lock().await)
-                .await; //TODO better error handling
+                .await
+                {
+                    warn!("Failed to send deprecated MwGetItem error to client: {e}");
+                }
             }
             ClientMessage::ClickMw {
                 room,
@@ -520,35 +643,47 @@ async fn client_session(
                 let mw_room = match mw_rooms_guard.get(&room) {
                     Some(mw_room) => mw_room,
                     None => {
-                        let _ = ServerMessage::from_error("no such multiworld room")
+                        if let Err(e) = ServerMessage::from_error("no such multiworld room")
                             .write_warp(&mut *sink.lock().await)
-                            .await; //TODO better error handling
+                            .await
+                        {
+                            error!(room = %room, "Failed to send 'no such multiworld room' error to client: {e}");
+                        }
                         return Ok(());
                     }
                 };
                 let mut mw_room_guard = mw_room.write().await;
                 // Check authorization before allowing state modification
                 if !mw_room_guard.check_auth(&token) {
-                    let _ = ServerMessage::Unauthorized { room: room.clone() }
+                    if let Err(e) = (ServerMessage::Unauthorized { room: room.clone() })
                         .write_warp(&mut *sink.lock().await)
-                        .await;
+                        .await
+                    {
+                        warn!(room = %room, "Failed to send Unauthorized message to client: {e}");
+                    }
                     continue;
                 }
                 let (tx, model) = match mw_room_guard.world_mut(world) {
                     Some((tx, _, model, _, _)) => (tx, model),
                     None => {
-                        let _ = ServerMessage::from_error("no such world")
+                        if let Err(e) = ServerMessage::from_error("no such world")
                             .write_warp(&mut *sink.lock().await)
-                            .await; //TODO better error handling
+                            .await
+                        {
+                            error!(room = %room, world = %world, "Failed to send 'no such world' error to client: {e}");
+                        }
                         return Ok(());
                     }
                 };
                 let cell = match layout.cells().get(usize::from(cell_id)) {
                     Some(cell) => cell.id,
                     None => {
-                        let _ = ServerMessage::from_error("no such cell")
+                        if let Err(e) = ServerMessage::from_error("no such cell")
                             .write_warp(&mut *sink.lock().await)
-                            .await; //TODO better error handling
+                            .await
+                        {
+                            error!(room = %room, cell_id = %cell_id, "Failed to send 'no such cell' error to client: {e}");
+                        }
                         return Ok(());
                     }
                 };
@@ -568,14 +703,18 @@ async fn client_session(
                 let mw_rooms = MwRooms::clone(&mw_rooms);
                 let sink = WsSink::clone(&sink);
                 tokio::spawn(async move {
+                    let room_name = room.clone();
                     let (mut old_cells, mut rx) = {
                         let mw_rooms = mw_rooms.read().await;
                         let mw_room = match mw_rooms.get(&room) {
                             Some(mw_room) => mw_room,
                             None => {
-                                let _ = ServerMessage::from_error("no such multiworld room")
+                                if let Err(e) = ServerMessage::from_error("no such multiworld room")
                                     .write_warp(&mut *sink.lock().await)
-                                    .await; //TODO better error handling
+                                    .await
+                                {
+                                    error!(room = %room_name, "Failed to send 'no such multiworld room' error to client: {e}");
+                                }
                                 return;
                             }
                         };
@@ -583,9 +722,12 @@ async fn client_session(
                         let (rx, model) = match mw_room.world(world) {
                             Some((_, rx, model, _, _)) => (rx, model),
                             None => {
-                                let _ = ServerMessage::from_error("no such world")
+                                if let Err(e) = ServerMessage::from_error("no such world")
                                     .write_warp(&mut *sink.lock().await)
-                                    .await; //TODO better error handling
+                                    .await
+                                {
+                                    error!(room = %room_name, world = %world, "Failed to send 'no such world' error to client: {e}");
+                                }
                                 return;
                             }
                         };
@@ -594,25 +736,35 @@ async fn client_session(
                             .into_iter()
                             .map(|cell| cell.id.kind().render(&model))
                             .collect::<Vec<_>>();
-                        if ServerMessage::Init(cells.clone())
+                        if let Err(e) = ServerMessage::Init(cells.clone())
                             .write_warp(&mut *sink.lock().await)
                             .await
-                            .is_err()
                         {
+                            warn!(room = %room_name, world = %world, "Failed to send Init message to client: {e}");
                             return;
-                        } //TODO better error handling
+                        }
                         (cells, rx.clone())
                     };
-                    while let Ok(()) = rx.changed().await {
-                        //TODO better error handling
+                    loop {
+                        match rx.changed().await {
+                            Ok(()) => {}
+                            Err(e) => {
+                                warn!(room = %room_name, world = %world, "Multiworld watch channel closed: {e}");
+                                break;
+                            }
+                        }
                         let new_cells = {
                             let mw_rooms = mw_rooms.read().await;
                             let mw_room = match mw_rooms.get(&room) {
                                 Some(mw_room) => mw_room,
                                 None => {
-                                    let _ = ServerMessage::from_error("no such multiworld room")
-                                        .write_warp(&mut *sink.lock().await)
-                                        .await; //TODO better error handling
+                                    if let Err(e) =
+                                        ServerMessage::from_error("no such multiworld room")
+                                            .write_warp(&mut *sink.lock().await)
+                                            .await
+                                    {
+                                        error!(room = %room_name, "Failed to send 'no such multiworld room' error to client: {e}");
+                                    }
                                     return;
                                 }
                             };
@@ -620,9 +772,12 @@ async fn client_session(
                             let model = match mw_room.world(world) {
                                 Some((_, _, model, _, _)) => model,
                                 None => {
-                                    let _ = ServerMessage::from_error("no such world")
+                                    if let Err(e) = ServerMessage::from_error("no such world")
                                         .write_warp(&mut *sink.lock().await)
-                                        .await; //TODO better error handling
+                                        .await
+                                    {
+                                        error!(room = %room_name, world = %world, "Failed to send 'no such world' error to client: {e}");
+                                    }
                                     return;
                                 }
                             };
@@ -636,16 +791,16 @@ async fn client_session(
                             old_cells.iter().zip(&new_cells).enumerate()
                         {
                             if old_cell != new_cell {
-                                if (ServerMessage::Update {
+                                if let Err(e) = (ServerMessage::Update {
                                     cell_id: i.try_into().expect("too many cells"),
                                     new_cell: new_cell.clone(),
                                 })
                                 .write_warp(&mut *sink.lock().await)
                                 .await
-                                .is_err()
                                 {
+                                    warn!(room = %room_name, world = %world, "Failed to send Update message to client: {e}");
                                     return;
-                                } //TODO better error handling
+                                }
                             }
                         }
                         old_cells = new_cells;
@@ -654,11 +809,14 @@ async fn client_session(
             }
             #[allow(deprecated)]
             ClientMessage::MwGetItemAll { .. } => {
-                let _ = ServerMessage::from_error(
+                if let Err(e) = ServerMessage::from_error(
                     "MwGetItemAll command is no longer supported, use MwQueueItem instead",
                 )
                 .write_warp(&mut *sink.lock().await)
-                .await; //TODO better error handling
+                .await
+                {
+                    warn!("Failed to send deprecated MwGetItemAll error to client: {e}");
+                }
             }
             ClientMessage::MwQueueItem {
                 room,
@@ -673,23 +831,31 @@ async fn client_session(
                     let mw_room_guard = mw_room.read().await;
                     // Check authorization before allowing item queue
                     if !mw_room_guard.check_auth(&token) {
-                        let _ = ServerMessage::Unauthorized { room: room.clone() }
+                        if let Err(e) = (ServerMessage::Unauthorized { room: room.clone() })
                             .write_warp(&mut *sink.lock().await)
-                            .await;
+                            .await
+                        {
+                            warn!(room = %room, "Failed to send Unauthorized message to client: {e}");
+                        }
                         continue;
                     }
-                    let _ = mw_room_guard.incoming_queue.send(AutoUpdate::Queue {
+                    if let Err(e) = mw_room_guard.incoming_queue.send(AutoUpdate::Queue {
                         item: MwItem {
                             source: source_world,
                             key,
                             kind,
                         },
                         target_world,
-                    });
+                    }) {
+                        warn!(room = %room, target_world = %target_world, "Failed to send item to multiworld queue: {e}");
+                    }
                 } else {
-                    let _ = ServerMessage::from_error("no such multiworld room")
+                    if let Err(e) = ServerMessage::from_error("no such multiworld room")
                         .write_warp(&mut *sink.lock().await)
-                        .await; //TODO better error handling
+                        .await
+                    {
+                        error!(room = %room, "Failed to send 'no such multiworld room' error to client: {e}");
+                    }
                 }
             }
         }
@@ -715,9 +881,13 @@ async fn client_connection(
     )
     .await
     {
-        let _ = ServerMessage::from_error(e)
+        error!("WebSocket client session error: {e}");
+        if let Err(send_err) = ServerMessage::from_error(e)
             .write_warp(&mut *ws_sink.lock().await)
-            .await;
+            .await
+        {
+            warn!("Failed to send session error to client: {send_err}");
+        }
     }
 }
 
