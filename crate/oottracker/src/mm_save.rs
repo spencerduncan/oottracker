@@ -1170,6 +1170,343 @@ impl MmSave {
 }
 
 // ============================================================================
+// MmSave Inventory Accessor Methods
+// ============================================================================
+
+impl MmSave {
+    // ========================================================================
+    // Equipment Accessors
+    // ========================================================================
+
+    /// Check if the player has the Ocarina of Time
+    pub fn has_ocarina(&self) -> bool {
+        self.inventory.ocarina
+    }
+
+    /// Check if the player has the Hero's Bow
+    pub fn has_heros_bow(&self) -> bool {
+        self.inventory.bow
+    }
+
+    /// Check if the player has Fire Arrows
+    pub fn has_fire_arrow(&self) -> bool {
+        self.inventory.fire_arrows
+    }
+
+    /// Check if the player has Ice Arrows
+    pub fn has_ice_arrow(&self) -> bool {
+        self.inventory.ice_arrows
+    }
+
+    /// Check if the player has Light Arrows
+    pub fn has_light_arrow(&self) -> bool {
+        self.inventory.light_arrows
+    }
+
+    /// Check if the player has Bombs
+    pub fn has_bombs(&self) -> bool {
+        self.inventory.bombs
+    }
+
+    /// Check if the player has Bombchus
+    pub fn has_bombchus(&self) -> bool {
+        self.inventory.bombchus
+    }
+
+    /// Check if the player has Deku Sticks
+    pub fn has_deku_sticks(&self) -> bool {
+        self.inventory.deku_sticks
+    }
+
+    /// Check if the player has Deku Nuts
+    pub fn has_deku_nuts(&self) -> bool {
+        self.inventory.deku_nuts
+    }
+
+    /// Check if the player has Magic Beans
+    pub fn has_magic_beans(&self) -> bool {
+        self.inventory.magic_beans
+    }
+
+    /// Check if the player has Powder Kegs
+    pub fn has_powder_keg(&self) -> bool {
+        self.inventory.powder_keg
+    }
+
+    /// Check if the player has the Pictograph Box
+    pub fn has_pictograph_box(&self) -> bool {
+        self.inventory.pictograph_box
+    }
+
+    /// Check if the player has the Lens of Truth
+    pub fn has_lens_of_truth(&self) -> bool {
+        self.inventory.lens
+    }
+
+    /// Check if the player has the Hookshot
+    pub fn has_hookshot(&self) -> bool {
+        self.inventory.hookshot
+    }
+
+    /// Check if the player has the Great Fairy's Sword
+    pub fn has_great_fairy_sword(&self) -> bool {
+        self.inventory.great_fairy_sword
+    }
+
+    /// Get the number of bottles the player has (any content)
+    pub fn bottle_count(&self) -> u8 {
+        self.inventory
+            .bottles
+            .iter()
+            .filter(|b| **b != MmBottle::None)
+            .count() as u8
+    }
+
+    /// Check if the player has at least one bottle
+    pub fn has_bottle(&self) -> bool {
+        self.bottle_count() > 0
+    }
+
+    /// Check if the player has an empty bottle
+    pub fn has_empty_bottle(&self) -> bool {
+        self.inventory.bottles.contains(&MmBottle::Empty)
+    }
+
+    // ========================================================================
+    // Song Accessors
+    // ========================================================================
+
+    /// Check if the player has the Song of Time
+    pub fn has_song_of_time(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::SONG_TIME)
+    }
+
+    /// Check if the player has the Song of Healing
+    pub fn has_song_of_healing(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::SONG_HEALING)
+    }
+
+    /// Check if the player has Epona's Song
+    pub fn has_eponas_song(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::SONG_EPONA)
+    }
+
+    /// Check if the player has the Song of Soaring
+    pub fn has_song_of_soaring(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::SONG_SOARING)
+    }
+
+    /// Check if the player has the Song of Storms
+    pub fn has_song_of_storms(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::SONG_STORMS)
+    }
+
+    /// Check if the player has the Sonata of Awakening
+    pub fn has_sonata_of_awakening(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::SONG_AWAKENING)
+    }
+
+    /// Check if the player has the Goron Lullaby
+    pub fn has_goron_lullaby(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::SONG_GORON)
+    }
+
+    /// Check if the player has the Goron Lullaby Intro
+    pub fn has_goron_lullaby_intro(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::SONG_LULLABY_INTRO)
+    }
+
+    /// Check if the player has the New Wave Bossa Nova
+    pub fn has_new_wave_bossa_nova(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::SONG_ZORA)
+    }
+
+    /// Check if the player has the Elegy of Emptiness
+    pub fn has_elegy_of_emptiness(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::SONG_EMPTINESS)
+    }
+
+    /// Check if the player has the Oath to Order
+    pub fn has_oath_to_order(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::SONG_ORDER)
+    }
+
+    // ========================================================================
+    // Boss Remains Accessors
+    // ========================================================================
+
+    /// Check if the player has Odolwa's Remains
+    pub fn has_odolwas_remains(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::REMAINS_ODOLWA)
+    }
+
+    /// Check if the player has Goht's Remains
+    pub fn has_gohts_remains(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::REMAINS_GOHT)
+    }
+
+    /// Check if the player has Gyorg's Remains
+    pub fn has_gyorgs_remains(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::REMAINS_GYORG)
+    }
+
+    /// Check if the player has Twinmold's Remains
+    pub fn has_twinmolds_remains(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::REMAINS_TWINMOLD)
+    }
+
+    /// Check if the player has all four boss remains
+    pub fn has_all_remains(&self) -> bool {
+        self.quest_items.num_remains() == 4
+    }
+
+    // ========================================================================
+    // Mask Accessors (Transformation)
+    // ========================================================================
+
+    /// Check if the player has the Deku Mask
+    pub fn has_deku_mask(&self) -> bool {
+        self.masks
+            .transformation
+            .contains(MmTransformationMasks::DEKU)
+    }
+
+    /// Check if the player has the Goron Mask
+    pub fn has_goron_mask(&self) -> bool {
+        self.masks
+            .transformation
+            .contains(MmTransformationMasks::GORON)
+    }
+
+    /// Check if the player has the Zora Mask
+    pub fn has_zora_mask(&self) -> bool {
+        self.masks
+            .transformation
+            .contains(MmTransformationMasks::ZORA)
+    }
+
+    /// Check if the player has the Fierce Deity Mask
+    pub fn has_fierce_deity_mask(&self) -> bool {
+        self.masks
+            .transformation
+            .contains(MmTransformationMasks::FIERCE_DEITY)
+    }
+
+    // ========================================================================
+    // Mask Accessors (Regular Masks)
+    // ========================================================================
+
+    /// Check if the player has the Postman's Hat
+    pub fn has_postmans_hat(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::POSTMAN)
+    }
+
+    /// Check if the player has the All-Night Mask
+    pub fn has_all_night_mask(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::ALL_NIGHT)
+    }
+
+    /// Check if the player has the Blast Mask
+    pub fn has_blast_mask(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::BLAST)
+    }
+
+    /// Check if the player has the Stone Mask
+    pub fn has_stone_mask(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::STONE)
+    }
+
+    /// Check if the player has the Great Fairy Mask
+    pub fn has_great_fairy_mask(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::GREAT_FAIRY)
+    }
+
+    /// Check if the player has the Keaton Mask
+    pub fn has_keaton_mask(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::KEATON)
+    }
+
+    /// Check if the player has the Bremen Mask
+    pub fn has_bremen_mask(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::BREMEN)
+    }
+
+    /// Check if the player has the Bunny Hood
+    pub fn has_bunny_hood(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::BUNNY)
+    }
+
+    /// Check if the player has the Don Gero's Mask
+    pub fn has_don_geros_mask(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::DON_GERO)
+    }
+
+    /// Check if the player has the Mask of Scents
+    pub fn has_mask_of_scents(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::SCENTS)
+    }
+
+    /// Check if the player has Romani's Mask
+    pub fn has_romanis_mask(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::ROMANI)
+    }
+
+    /// Check if the player has the Circus Leader's Mask
+    pub fn has_circus_leaders_mask(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::CIRCUS_LEADER)
+    }
+
+    /// Check if the player has Kafei's Mask
+    pub fn has_kafeis_mask(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::KAFEI)
+    }
+
+    /// Check if the player has the Couple's Mask
+    pub fn has_couples_mask(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::COUPLES)
+    }
+
+    /// Check if the player has the Mask of Truth
+    pub fn has_mask_of_truth(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::TRUTH)
+    }
+
+    /// Check if the player has Kamaro's Mask
+    pub fn has_kamaros_mask(&self) -> bool {
+        self.masks.masks_low.contains(MmMasksLow::KAMARO)
+    }
+
+    /// Check if the player has the Gibdo Mask
+    pub fn has_gibdo_mask(&self) -> bool {
+        self.masks.masks_high.contains(MmMasksHigh::GIBDO)
+    }
+
+    /// Check if the player has the Garo's Mask
+    pub fn has_garos_mask(&self) -> bool {
+        self.masks.masks_high.contains(MmMasksHigh::GARO)
+    }
+
+    /// Check if the player has the Captain's Hat
+    pub fn has_captains_hat(&self) -> bool {
+        self.masks.masks_high.contains(MmMasksHigh::CAPTAIN)
+    }
+
+    /// Check if the player has the Giant's Mask
+    pub fn has_giants_mask(&self) -> bool {
+        self.masks.masks_high.contains(MmMasksHigh::GIANT)
+    }
+
+    // ========================================================================
+    // Other Quest Item Accessors
+    // ========================================================================
+
+    /// Check if the player has the Bomber's Notebook
+    pub fn has_bombers_notebook(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::NOTEBOOK)
+    }
+}
+
+// ============================================================================
 // Real Memory Reader Implementation
 // ============================================================================
 
@@ -1869,5 +2206,362 @@ mod tests {
 
         let err = MmDecodeError::Index(42);
         assert!(matches!(err, MmDecodeError::Index(42)));
+    }
+
+    // ========================================================================
+    // Accessor Method Tests
+    // ========================================================================
+
+    #[test]
+    fn test_equipment_accessors_default() {
+        let save = MmSave::default();
+
+        // All equipment should be false by default
+        assert!(!save.has_ocarina());
+        assert!(!save.has_heros_bow());
+        assert!(!save.has_fire_arrow());
+        assert!(!save.has_ice_arrow());
+        assert!(!save.has_light_arrow());
+        assert!(!save.has_bombs());
+        assert!(!save.has_bombchus());
+        assert!(!save.has_deku_sticks());
+        assert!(!save.has_deku_nuts());
+        assert!(!save.has_magic_beans());
+        assert!(!save.has_powder_keg());
+        assert!(!save.has_pictograph_box());
+        assert!(!save.has_lens_of_truth());
+        assert!(!save.has_hookshot());
+        assert!(!save.has_great_fairy_sword());
+    }
+
+    #[test]
+    fn test_equipment_accessors_with_items() {
+        let mut save = MmSave::default();
+
+        save.inventory.ocarina = true;
+        save.inventory.bow = true;
+        save.inventory.fire_arrows = true;
+        save.inventory.hookshot = true;
+        save.inventory.lens = true;
+        save.inventory.bombs = true;
+
+        assert!(save.has_ocarina());
+        assert!(save.has_heros_bow());
+        assert!(save.has_fire_arrow());
+        assert!(save.has_hookshot());
+        assert!(save.has_lens_of_truth());
+        assert!(save.has_bombs());
+
+        // Items not set should still be false
+        assert!(!save.has_ice_arrow());
+        assert!(!save.has_light_arrow());
+        assert!(!save.has_great_fairy_sword());
+    }
+
+    #[test]
+    fn test_bottle_accessors() {
+        let mut save = MmSave::default();
+
+        // No bottles by default
+        assert_eq!(save.bottle_count(), 0);
+        assert!(!save.has_bottle());
+        assert!(!save.has_empty_bottle());
+
+        // Add one empty bottle
+        save.inventory.bottles[0] = MmBottle::Empty;
+        assert_eq!(save.bottle_count(), 1);
+        assert!(save.has_bottle());
+        assert!(save.has_empty_bottle());
+
+        // Add bottles with contents
+        save.inventory.bottles[1] = MmBottle::RedPotion;
+        save.inventory.bottles[2] = MmBottle::ChateauRomani;
+        assert_eq!(save.bottle_count(), 3);
+        assert!(save.has_bottle());
+        assert!(save.has_empty_bottle());
+
+        // Replace empty bottle with contents
+        save.inventory.bottles[0] = MmBottle::Fairy;
+        assert_eq!(save.bottle_count(), 3);
+        assert!(save.has_bottle());
+        assert!(!save.has_empty_bottle());
+    }
+
+    #[test]
+    fn test_song_accessors_default() {
+        let save = MmSave::default();
+
+        // All songs should be false by default
+        assert!(!save.has_song_of_time());
+        assert!(!save.has_song_of_healing());
+        assert!(!save.has_eponas_song());
+        assert!(!save.has_song_of_soaring());
+        assert!(!save.has_song_of_storms());
+        assert!(!save.has_sonata_of_awakening());
+        assert!(!save.has_goron_lullaby());
+        assert!(!save.has_goron_lullaby_intro());
+        assert!(!save.has_new_wave_bossa_nova());
+        assert!(!save.has_elegy_of_emptiness());
+        assert!(!save.has_oath_to_order());
+    }
+
+    #[test]
+    fn test_song_accessors_with_songs() {
+        let mut save = MmSave::default();
+
+        save.quest_items = MmQuestItems::SONG_TIME
+            | MmQuestItems::SONG_HEALING
+            | MmQuestItems::SONG_EPONA
+            | MmQuestItems::SONG_SOARING
+            | MmQuestItems::SONG_AWAKENING;
+
+        assert!(save.has_song_of_time());
+        assert!(save.has_song_of_healing());
+        assert!(save.has_eponas_song());
+        assert!(save.has_song_of_soaring());
+        assert!(save.has_sonata_of_awakening());
+
+        // Songs not set should still be false
+        assert!(!save.has_song_of_storms());
+        assert!(!save.has_goron_lullaby());
+        assert!(!save.has_new_wave_bossa_nova());
+        assert!(!save.has_elegy_of_emptiness());
+        assert!(!save.has_oath_to_order());
+    }
+
+    #[test]
+    fn test_goron_lullaby_variants() {
+        let mut save = MmSave::default();
+
+        // Test Lullaby Intro separately from full Lullaby
+        save.quest_items = MmQuestItems::SONG_LULLABY_INTRO;
+        assert!(save.has_goron_lullaby_intro());
+        assert!(!save.has_goron_lullaby());
+
+        // Test full Lullaby
+        save.quest_items = MmQuestItems::SONG_GORON;
+        assert!(save.has_goron_lullaby());
+        assert!(!save.has_goron_lullaby_intro());
+
+        // Test both (could happen in save editing)
+        save.quest_items = MmQuestItems::SONG_LULLABY_INTRO | MmQuestItems::SONG_GORON;
+        assert!(save.has_goron_lullaby_intro());
+        assert!(save.has_goron_lullaby());
+    }
+
+    #[test]
+    fn test_boss_remains_accessors_default() {
+        let save = MmSave::default();
+
+        assert!(!save.has_odolwas_remains());
+        assert!(!save.has_gohts_remains());
+        assert!(!save.has_gyorgs_remains());
+        assert!(!save.has_twinmolds_remains());
+        assert!(!save.has_all_remains());
+    }
+
+    #[test]
+    fn test_boss_remains_accessors_partial() {
+        let mut save = MmSave::default();
+
+        save.quest_items = MmQuestItems::REMAINS_ODOLWA | MmQuestItems::REMAINS_GOHT;
+
+        assert!(save.has_odolwas_remains());
+        assert!(save.has_gohts_remains());
+        assert!(!save.has_gyorgs_remains());
+        assert!(!save.has_twinmolds_remains());
+        assert!(!save.has_all_remains());
+    }
+
+    #[test]
+    fn test_boss_remains_accessors_all() {
+        let mut save = MmSave::default();
+
+        save.quest_items = MmQuestItems::REMAINS_ODOLWA
+            | MmQuestItems::REMAINS_GOHT
+            | MmQuestItems::REMAINS_GYORG
+            | MmQuestItems::REMAINS_TWINMOLD;
+
+        assert!(save.has_odolwas_remains());
+        assert!(save.has_gohts_remains());
+        assert!(save.has_gyorgs_remains());
+        assert!(save.has_twinmolds_remains());
+        assert!(save.has_all_remains());
+    }
+
+    #[test]
+    fn test_transformation_mask_accessors_default() {
+        let save = MmSave::default();
+
+        assert!(!save.has_deku_mask());
+        assert!(!save.has_goron_mask());
+        assert!(!save.has_zora_mask());
+        assert!(!save.has_fierce_deity_mask());
+    }
+
+    #[test]
+    fn test_transformation_mask_accessors_with_masks() {
+        let mut save = MmSave::default();
+
+        save.masks.transformation = MmTransformationMasks::DEKU
+            | MmTransformationMasks::GORON
+            | MmTransformationMasks::ZORA;
+
+        assert!(save.has_deku_mask());
+        assert!(save.has_goron_mask());
+        assert!(save.has_zora_mask());
+        assert!(!save.has_fierce_deity_mask());
+    }
+
+    #[test]
+    fn test_regular_mask_accessors_default() {
+        let save = MmSave::default();
+
+        // Test all regular masks are false by default
+        assert!(!save.has_postmans_hat());
+        assert!(!save.has_all_night_mask());
+        assert!(!save.has_blast_mask());
+        assert!(!save.has_stone_mask());
+        assert!(!save.has_great_fairy_mask());
+        assert!(!save.has_keaton_mask());
+        assert!(!save.has_bremen_mask());
+        assert!(!save.has_bunny_hood());
+        assert!(!save.has_don_geros_mask());
+        assert!(!save.has_mask_of_scents());
+        assert!(!save.has_romanis_mask());
+        assert!(!save.has_circus_leaders_mask());
+        assert!(!save.has_kafeis_mask());
+        assert!(!save.has_couples_mask());
+        assert!(!save.has_mask_of_truth());
+        assert!(!save.has_kamaros_mask());
+        assert!(!save.has_gibdo_mask());
+        assert!(!save.has_garos_mask());
+        assert!(!save.has_captains_hat());
+        assert!(!save.has_giants_mask());
+    }
+
+    #[test]
+    fn test_regular_mask_accessors_low_masks() {
+        let mut save = MmSave::default();
+
+        save.masks.masks_low = MmMasksLow::BUNNY
+            | MmMasksLow::STONE
+            | MmMasksLow::GREAT_FAIRY
+            | MmMasksLow::BREMEN
+            | MmMasksLow::KAFEI
+            | MmMasksLow::COUPLES;
+
+        assert!(save.has_bunny_hood());
+        assert!(save.has_stone_mask());
+        assert!(save.has_great_fairy_mask());
+        assert!(save.has_bremen_mask());
+        assert!(save.has_kafeis_mask());
+        assert!(save.has_couples_mask());
+
+        // Masks not set should be false
+        assert!(!save.has_postmans_hat());
+        assert!(!save.has_all_night_mask());
+        assert!(!save.has_keaton_mask());
+    }
+
+    #[test]
+    fn test_regular_mask_accessors_high_masks() {
+        let mut save = MmSave::default();
+
+        save.masks.masks_high =
+            MmMasksHigh::GIBDO | MmMasksHigh::GARO | MmMasksHigh::CAPTAIN | MmMasksHigh::GIANT;
+
+        assert!(save.has_gibdo_mask());
+        assert!(save.has_garos_mask());
+        assert!(save.has_captains_hat());
+        assert!(save.has_giants_mask());
+    }
+
+    #[test]
+    fn test_bombers_notebook_accessor() {
+        let mut save = MmSave::default();
+
+        assert!(!save.has_bombers_notebook());
+
+        save.quest_items = MmQuestItems::NOTEBOOK;
+        assert!(save.has_bombers_notebook());
+    }
+
+    #[test]
+    fn test_accessors_with_sample_data() {
+        let stub = MmSaveStub::with_sample_data();
+        let save = stub.get_save();
+
+        // Test equipment from sample data
+        assert!(save.has_ocarina());
+        assert!(save.has_heros_bow());
+        assert!(save.has_hookshot());
+        assert!(save.has_bombs());
+        assert!(save.has_lens_of_truth());
+
+        // Test bottles from sample data
+        assert_eq!(save.bottle_count(), 3);
+        assert!(save.has_bottle());
+        assert!(save.has_empty_bottle());
+
+        // Test songs from sample data
+        assert!(save.has_song_of_healing());
+        assert!(save.has_song_of_time());
+        assert!(save.has_song_of_soaring());
+        assert!(save.has_eponas_song());
+        assert!(save.has_sonata_of_awakening());
+
+        // Test boss remains from sample data
+        assert!(save.has_odolwas_remains());
+        assert!(save.has_gohts_remains());
+        assert!(!save.has_gyorgs_remains());
+        assert!(!save.has_all_remains());
+
+        // Test transformation masks from sample data
+        assert!(save.has_deku_mask());
+        assert!(save.has_goron_mask());
+        assert!(save.has_zora_mask());
+        assert!(!save.has_fierce_deity_mask());
+
+        // Test regular masks from sample data
+        assert!(save.has_bunny_hood());
+        assert!(save.has_stone_mask());
+        assert!(save.has_great_fairy_mask());
+        assert!(save.has_bremen_mask());
+
+        // Test notebook from sample data
+        assert!(save.has_bombers_notebook());
+    }
+
+    #[test]
+    fn test_accessors_combined_quest_items() {
+        let mut save = MmSave::default();
+
+        // Set a mix of remains, songs, and notebook
+        save.quest_items = MmQuestItems::REMAINS_ODOLWA
+            | MmQuestItems::REMAINS_GYORG
+            | MmQuestItems::SONG_TIME
+            | MmQuestItems::SONG_HEALING
+            | MmQuestItems::SONG_SOARING
+            | MmQuestItems::SONG_GORON
+            | MmQuestItems::NOTEBOOK;
+
+        // Verify remains
+        assert!(save.has_odolwas_remains());
+        assert!(!save.has_gohts_remains());
+        assert!(save.has_gyorgs_remains());
+        assert!(!save.has_twinmolds_remains());
+        assert!(!save.has_all_remains());
+        assert_eq!(save.quest_items.num_remains(), 2);
+
+        // Verify songs
+        assert!(save.has_song_of_time());
+        assert!(save.has_song_of_healing());
+        assert!(save.has_song_of_soaring());
+        assert!(save.has_goron_lullaby());
+        assert!(!save.has_eponas_song());
+
+        // Verify notebook
+        assert!(save.has_bombers_notebook());
     }
 }
