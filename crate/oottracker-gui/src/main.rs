@@ -87,6 +87,7 @@ fn cell_image(cell: &TrackerCellId, state: &ModelState) -> Image {
         img,
         style,
         overlay,
+        accessibility: _, // Logic accessibility not used in GUI rendering
     } = kind.render(state);
     match (style, overlay) {
         (CellStyle::Normal, CellOverlay::None) => img.embedded::<Image>(ImageDirContext::Normal),
@@ -638,6 +639,10 @@ impl Application for State<ootr_static::Rando> {
                     }
                     Packet::ModelDelta(delta) => {
                         self.model += delta;
+                        self.model.update_knowledge();
+                    }
+                    Packet::MmRamInit(mm_save) => {
+                        self.model.ram.mm_save = Some(mm_save);
                         self.model.update_knowledge();
                     }
                 }

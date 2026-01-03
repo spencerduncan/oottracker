@@ -1,5 +1,7 @@
 use {
-    crate::{knowledge, mm_save::MmSave, ram::Ram, save, ui::TrackerCellId, ModelDelta, ModelState},
+    crate::{
+        knowledge, mm_save::MmSave, ram::Ram, save, ui::TrackerCellId, ModelDelta, ModelState,
+    },
     async_proto::Protocol,
     async_stream::try_stream,
     futures::{pin_mut, prelude::*},

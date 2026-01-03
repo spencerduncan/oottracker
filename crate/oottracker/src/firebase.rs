@@ -425,7 +425,8 @@ pub trait App: fmt::Debug + Send + Sync + 'static {
             | FreeReward
             | MagicLens
             | MedallionWithLocation(_)
-            | StoneWithLocation(_) => {
+            | StoneWithLocation(_)
+            | MmSmallKeys { .. } => {
                 return Err(Error::NotImplemented(
                     "cell type not supported for set_cell",
                 ))
@@ -1058,7 +1059,8 @@ fn render_cell(cell_kind: TrackerCellKind, state: &ModelState) -> Result<Json, E
         | GoBk
         | MagicLens
         | MedallionWithLocation(_)
-        | StoneWithLocation(_) => {
+        | StoneWithLocation(_)
+        | MmSmallKeys { .. } => {
             return Err(Error::NotImplemented(
                 "cell type not supported for render_cell",
             ))
