@@ -912,8 +912,8 @@ mod rando_trait_implementation {
         let rando = OotmmRando::new().unwrap();
         let db = rando.world_database();
 
-        // Should have access to the world database
-        assert!(db.region_count() > 0, "World database should have regions");
+        // Embedded world data has 4 regions (2 OoT + 2 MM from data/world/*.yaml)
+        assert_eq!(db.region_count(), 4, "Embedded world data has 4 regions");
     }
 }
 

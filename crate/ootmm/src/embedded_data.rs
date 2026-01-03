@@ -170,7 +170,8 @@ mod tests {
     #[test]
     fn test_create_world_database() {
         let db = create_world_database().expect("Failed to create world database");
-        assert!(db.region_count() > 0);
+        // Embedded data has 4 regions: kokiri_forest, lost_woods (OoT) + clock_town_south, termina_field (MM)
+        assert_eq!(db.region_count(), 4, "Embedded data has 4 regions");
         assert!(db.has_region("kokiri_forest"));
         assert!(db.has_region("clock_town_south"));
     }

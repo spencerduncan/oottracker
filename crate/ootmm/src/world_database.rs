@@ -597,7 +597,8 @@ regions:
         let mut db = WorldDatabase::new();
         db.load_from_str(sample_yaml()).unwrap();
 
-        assert!(db.region_count() > 0);
+        // sample_yaml() defines 3 regions: kokiri_forest, lost_woods, deku_tree
+        assert_eq!(db.region_count(), 3, "sample_yaml has 3 regions");
         db.clear();
         assert_eq!(db.region_count(), 0);
         assert_eq!(db.location_count(), 0);
