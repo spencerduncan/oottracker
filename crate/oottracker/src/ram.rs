@@ -119,6 +119,8 @@ pub enum DecodeError {
     Ranges,
     #[from]
     Save(save::DecodeError),
+    #[from]
+    MmSave(mm_save::MmDecodeError),
     Size(usize),
     #[from]
     TextSize(TryFromSliceError),
@@ -663,6 +665,116 @@ impl TryFrom<Vec<Vec<u8>>> for Ram {
     }
 }
 
+// ============================================================================
+// MM RAM Decoding Functions
+// ============================================================================
+
+/// Decodes Majora's Mask save data from a full RAM dump.
+///
+/// # Arguments
+/// * `ram_data` - Full N64 RAM dump (must be at least `SIZE` bytes, or at least
+///   contain the MM save region at `MM_SAVE_ADDR`)
+///
+/// # Returns
+/// * `Ok(MmSave)` - Successfully decoded MM save data
+/// * `Err(DecodeError)` - If the data is too small or parsing fails
+///
+/// # Example
+/// ```ignore
+/// let ram_dump = read_ram_from_emulator();
+/// let mm_save = decode_mm_ranges(&ram_dump)?;
+/// println!("Player has {} rupees", mm_save.rupees);
+/// ```
+pub fn decode_mm_ranges(ram_data: &[u8]) -> Result<MmSave, DecodeError> {
+    let start = MM_SAVE_ADDR as usize;
+    let end = start + mm_save::MM_SIZE;
+
+    // Validate we have enough data
+    if ram_data.len() < end {
+        return Err(DecodeError::IndexRange {
+            start: start as u32,
+            end: end as u32,
+        });
+    }
+
+    // Extract the save data slice and parse it
+    let save_data = &ram_data[start..end];
+    MmSave::from_save_data(save_data).map_err(DecodeError::from)
+}
+
+/// Decodes Majora's Mask save data from pre-extracted range buffers.
+///
+/// This function expects the data to already be extracted from the MM_RANGES
+/// addresses. Currently MM only has one range (the SaveContext), so this
+/// expects exactly one buffer of `MM_SIZE` bytes.
+///
+/// # Arguments
+/// * `ranges` - Iterator yielding the memory range buffers (currently just one)
+///
+/// # Returns
+/// * `Ok(MmSave)` - Successfully decoded MM save data
+/// * `Err(DecodeError)` - If the ranges are invalid or parsing fails
+pub fn decode_mm_range_bufs(
+    ranges: impl IntoIterator<Item = Vec<u8>>,
+) -> Result<MmSave, DecodeError> {
+    let mut iter = ranges.into_iter();
+
+    // Get the first (and only) range - the SaveContext
+    let save_data = iter.next().ok_or(DecodeError::Ranges)?;
+
+    // Validate size
+    if save_data.len() != mm_save::MM_SIZE {
+        return Err(DecodeError::Size(save_data.len()));
+    }
+
+    // Parse the save data
+    MmSave::from_save_data(&save_data).map_err(DecodeError::from)
+}
+
+/// Decodes Majora's Mask save data from pre-extracted range slices.
+///
+/// Similar to `decode_mm_range_bufs` but works with borrowed slices.
+///
+/// # Arguments
+/// * `ranges` - Iterator yielding references to memory range slices
+///
+/// # Returns
+/// * `Ok(MmSave)` - Successfully decoded MM save data
+/// * `Err(DecodeError)` - If the ranges are invalid or parsing fails
+pub fn decode_mm_ranges_from_slices<'a, R, I>(ranges: I) -> Result<MmSave, DecodeError>
+where
+    R: Borrow<[u8]> + ?Sized + 'a,
+    I: IntoIterator<Item = &'a R>,
+{
+    let mut iter = ranges.into_iter();
+
+    // Get the first (and only) range - the SaveContext
+    let save_data: &[u8] = iter.next().ok_or(DecodeError::Ranges)?.borrow();
+
+    // Validate size
+    if save_data.len() != mm_save::MM_SIZE {
+        return Err(DecodeError::Size(save_data.len()));
+    }
+
+    // Parse the save data
+    MmSave::from_save_data(save_data).map_err(DecodeError::from)
+}
+
+/// Decodes Majora's Mask save data directly from a save data buffer.
+///
+/// This is a convenience wrapper around `MmSave::from_save_data` that uses
+/// the common `DecodeError` type.
+///
+/// # Arguments
+/// * `save_data` - Raw save data bytes (must be exactly `MM_SIZE` bytes)
+///
+/// # Returns
+/// * `Ok(MmSave)` - Successfully decoded MM save data
+/// * `Err(DecodeError)` - If parsing fails
+pub fn decode_mm_save_data(save_data: &[u8]) -> Result<MmSave, DecodeError> {
+    MmSave::from_save_data(save_data).map_err(DecodeError::from)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -771,5 +883,234 @@ mod tests {
         let mut ram = ram;
         ram += delta;
         assert!(ram.mm_save.is_some());
+    }
+
+    // ========================================================================
+    // MM Decode Tests
+    // ========================================================================
+
+    #[test]
+    fn test_decode_mm_ranges_from_full_ram() {
+        // Create a simulated RAM dump with MM save data at the correct offset
+        let mut ram = vec![0u8; SIZE];
+
+        // Set some test data at the MM save offset
+        let save_start = MM_SAVE_ADDR as usize;
+
+        // Set rupees to 500 (0x01F4) at offset 0x34 from save start
+        ram[save_start + 0x34] = 0x01;
+        ram[save_start + 0x35] = 0xF4;
+
+        // Set health capacity to 5 hearts (0x0140) at offset 0x2C
+        ram[save_start + 0x2C] = 0x01;
+        ram[save_start + 0x2D] = 0x40;
+
+        // Set player form to Goron (1) at offset 0x20
+        ram[save_start + 0x20] = 0x01;
+
+        let save = decode_mm_ranges(&ram).expect("Failed to decode MM ranges");
+
+        assert_eq!(save.rupees, 500);
+        assert_eq!(save.health_capacity, 0x0140);
+        assert_eq!(save.player_form, mm_save::PlayerForm::Goron);
+    }
+
+    #[test]
+    fn test_decode_mm_ranges_too_small() {
+        // Create a RAM dump that's too small
+        let small_ram = vec![0u8; MM_SAVE_ADDR as usize + 100]; // Not enough for full save
+
+        let result = decode_mm_ranges(&small_ram);
+        assert!(matches!(result, Err(DecodeError::IndexRange { .. })));
+    }
+
+    #[test]
+    fn test_decode_mm_range_bufs() {
+        // Create save data buffer
+        let mut save_data = vec![0u8; mm_save::MM_SIZE];
+
+        // Set day to 2 at offset 0x48
+        save_data[0x48..0x4C].copy_from_slice(&2u32.to_be_bytes());
+
+        // Set sword to Gilded (3) and shield to Mirror (2) at offset 0x44
+        save_data[0x44] = 0x03 | (0x02 << 4);
+
+        let save = decode_mm_range_bufs(vec![save_data]).expect("Failed to decode MM range bufs");
+
+        assert_eq!(save.day, 2);
+        assert_eq!(save.sword, mm_save::MmSword::GildedSword);
+        assert_eq!(save.shield, mm_save::MmShield::MirrorShield);
+    }
+
+    #[test]
+    fn test_decode_mm_range_bufs_empty() {
+        let result = decode_mm_range_bufs(Vec::<Vec<u8>>::new());
+        assert!(matches!(result, Err(DecodeError::Ranges)));
+    }
+
+    #[test]
+    fn test_decode_mm_range_bufs_wrong_size() {
+        let wrong_size_data = vec![0u8; 100];
+        let result = decode_mm_range_bufs(vec![wrong_size_data]);
+        assert!(matches!(result, Err(DecodeError::Size(100))));
+    }
+
+    #[test]
+    fn test_decode_mm_ranges_from_slices() {
+        let mut save_data = vec![0u8; mm_save::MM_SIZE];
+
+        // Set stray fairies: Woodfall = 15, Snowhead = 8 at offset 0xD0
+        save_data[0xD0] = 1; // Clock Town
+        save_data[0xD1] = 15; // Woodfall
+        save_data[0xD2] = 8; // Snowhead
+
+        let ranges: Vec<&[u8]> = vec![&save_data];
+        let save = decode_mm_ranges_from_slices(ranges).expect("Failed to decode from slices");
+
+        assert_eq!(save.stray_fairies.clock_town, 1);
+        assert_eq!(save.stray_fairies.woodfall, 15);
+        assert_eq!(save.stray_fairies.snowhead, 8);
+    }
+
+    #[test]
+    fn test_decode_mm_save_data_direct() {
+        let mut save_data = vec![0u8; mm_save::MM_SIZE];
+
+        // Set quest items: Odolwa remains (bit 0) + Song of Time (bit 12)
+        let quest_bits: u32 = 0x00001001;
+        save_data[0xA4..0xA8].copy_from_slice(&quest_bits.to_be_bytes());
+
+        let save = decode_mm_save_data(&save_data).expect("Failed to decode save data");
+
+        assert!(save
+            .quest_items
+            .contains(mm_save::MmQuestItems::REMAINS_ODOLWA));
+        assert!(save.quest_items.contains(mm_save::MmQuestItems::SONG_TIME));
+        assert!(!save
+            .quest_items
+            .contains(mm_save::MmQuestItems::REMAINS_GOHT));
+    }
+
+    #[test]
+    fn test_decode_mm_ranges_inventory() {
+        let mut ram = vec![0u8; SIZE];
+        let save_start = MM_SAVE_ADDR as usize;
+
+        // Set inventory items at offset 0x70
+        // Ocarina = 0x00, Bow = 0x01, Hookshot = 0x0F
+        ram[save_start + 0x70] = 0x00; // Ocarina in slot 0
+        ram[save_start + 0x71] = 0x01; // Bow in slot 1
+        ram[save_start + 0x7F] = 0x0F; // Hookshot in slot 15
+
+        let save = decode_mm_ranges(&ram).expect("Failed to decode");
+
+        assert!(save.inventory.ocarina);
+        assert!(save.inventory.bow);
+        assert!(save.inventory.hookshot);
+        assert!(!save.inventory.bombs); // Not set
+    }
+
+    #[test]
+    fn test_decode_mm_ranges_masks() {
+        let mut ram = vec![0u8; SIZE];
+        let save_start = MM_SAVE_ADDR as usize;
+
+        // Set masks at offset 0x88
+        // Deku = 0x37, Goron = 0x3D, Bunny = 0x3A
+        ram[save_start + 0x88] = 0x37; // Deku mask in slot 0
+        ram[save_start + 0x89] = 0x3D; // Goron mask in slot 1
+        ram[save_start + 0x8A] = 0x3A; // Bunny mask in slot 2
+
+        let save = decode_mm_ranges(&ram).expect("Failed to decode");
+
+        assert!(save
+            .masks
+            .transformation
+            .contains(mm_save::MmTransformationMasks::DEKU));
+        assert!(save
+            .masks
+            .transformation
+            .contains(mm_save::MmTransformationMasks::GORON));
+        assert!(save.masks.masks_low.contains(mm_save::MmMasksLow::BUNNY));
+        assert!(!save
+            .masks
+            .transformation
+            .contains(mm_save::MmTransformationMasks::ZORA));
+    }
+
+    #[test]
+    fn test_decode_mm_ranges_dungeon_items() {
+        let mut ram = vec![0u8; SIZE];
+        let save_start = MM_SAVE_ADDR as usize;
+
+        // Set dungeon items at offset 0xA8
+        // Woodfall: Map + Compass + Boss Key (0x07)
+        ram[save_start + 0xA8] = 0x07;
+        // Snowhead: Map only (0x04)
+        ram[save_start + 0xA9] = 0x04;
+
+        // Set small keys at offset 0xBC
+        ram[save_start + 0xBC] = 2; // Woodfall: 2 keys
+        ram[save_start + 0xBD] = 3; // Snowhead: 3 keys
+
+        let save = decode_mm_ranges(&ram).expect("Failed to decode");
+
+        assert!(save
+            .dungeon_items
+            .woodfall
+            .contains(mm_save::MmDungeonItems::MAP));
+        assert!(save
+            .dungeon_items
+            .woodfall
+            .contains(mm_save::MmDungeonItems::COMPASS));
+        assert!(save
+            .dungeon_items
+            .woodfall
+            .contains(mm_save::MmDungeonItems::BOSS_KEY));
+        assert!(save
+            .dungeon_items
+            .snowhead
+            .contains(mm_save::MmDungeonItems::MAP));
+        assert!(!save
+            .dungeon_items
+            .snowhead
+            .contains(mm_save::MmDungeonItems::BOSS_KEY));
+
+        assert_eq!(save.small_keys.woodfall, 2);
+        assert_eq!(save.small_keys.snowhead, 3);
+    }
+
+    #[test]
+    fn test_decode_mm_ranges_skulltulas() {
+        let mut ram = vec![0u8; SIZE];
+        let save_start = MM_SAVE_ADDR as usize;
+
+        // Set skulltula counts at offset 0xD8 (swamp) and 0xDA (ocean)
+        ram[save_start + 0xD8] = 0x00;
+        ram[save_start + 0xD9] = 0x1E; // 30 swamp
+        ram[save_start + 0xDA] = 0x00;
+        ram[save_start + 0xDB] = 0x14; // 20 ocean
+
+        let save = decode_mm_ranges(&ram).expect("Failed to decode");
+
+        assert_eq!(save.skull_tokens_swamp, 30);
+        assert_eq!(save.skull_tokens_ocean, 20);
+    }
+
+    #[test]
+    fn test_decode_error_from_mm_decode_error() {
+        // Test that MmDecodeError converts to DecodeError properly
+        let mm_err = mm_save::MmDecodeError::Size(100);
+        let decode_err: DecodeError = mm_err.into();
+        assert!(matches!(decode_err, DecodeError::MmSave(_)));
+    }
+
+    #[test]
+    fn test_mm_ranges_constants() {
+        // Verify the MM ranges are set up correctly
+        assert_eq!(MM_NUM_RANGES, 1);
+        assert_eq!(MM_RANGES.len(), 2);
+        assert_eq!(MM_RANGES[0], MM_SAVE_ADDR);
+        assert_eq!(MM_RANGES[1], mm_save::MM_SIZE as u32);
     }
 }
