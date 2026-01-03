@@ -389,7 +389,20 @@ async fn client_session(
                     Ok::<_, Error>(())
                 }); //TODO send errors from task to client
             }
-            ClientMessage::SetRaw { room, state } => {
+            ClientMessage::SetRaw { room, state, token } => {
+                // Check authorization before allowing state modification
+                {
+                    let rooms_guard = rooms.lock().await;
+                    if let Some(room_state) = rooms_guard.get(&room) {
+                        if !room_state.check_auth(&token) {
+                            let _ = ServerMessage::Unauthorized { room: room.clone() }
+                                .write_warp(&mut *sink.lock().await)
+                                .await;
+                            continue;
+                        }
+                    }
+                    // If room doesn't exist, it will be created (no auth needed for new rooms)
+                }
                 edit_room(pool, &rooms, room, |room| {
                     room.model = state;
                     Ok(())
@@ -401,7 +414,20 @@ async fn client_session(
                 layout,
                 cell_id,
                 right,
+                token,
             } => {
+                // Check authorization before allowing state modification
+                {
+                    let rooms_guard = rooms.lock().await;
+                    if let Some(room_state) = rooms_guard.get(&room) {
+                        if !room_state.check_auth(&token) {
+                            let _ = ServerMessage::Unauthorized { room: room.clone() }
+                                .write_warp(&mut *sink.lock().await)
+                                .await;
+                            continue;
+                        }
+                    }
+                }
                 let cell = match layout.cells().get(usize::from(cell_id)) {
                     Some(cell) => cell.id,
                     None => {
@@ -420,17 +446,52 @@ async fn client_session(
                     Ok(())
                 }).await?;
             }
-            ClientMessage::MwCreateRoom { room, worlds } => {
-                mw_rooms.write().await.insert(room, MwState::new(worlds));
+            ClientMessage::MwCreateRoom {
+                room,
+                worlds,
+                token,
+            } => {
+                mw_rooms
+                    .write()
+                    .await
+                    .insert(room, MwState::new(worlds, token));
             }
-            ClientMessage::MwDeleteRoom { room } => {
+            ClientMessage::MwDeleteRoom { room, token } => {
+                // Check authorization before allowing room deletion
+                {
+                    let mw_rooms_guard = mw_rooms.read().await;
+                    if let Some(mw_room) = mw_rooms_guard.get(&room) {
+                        let mw_room_guard = mw_room.read().await;
+                        if !mw_room_guard.check_auth(&token) {
+                            let _ = ServerMessage::Unauthorized { room: room.clone() }
+                                .write_warp(&mut *sink.lock().await)
+                                .await;
+                            continue;
+                        }
+                    } else {
+                        // Room doesn't exist, nothing to delete
+                        continue;
+                    }
+                }
                 mw_rooms.write().await.remove(&room);
             }
-            ClientMessage::MwResetPlayer { room, world, save } => {
-                if let Some(room) = mw_rooms.read().await.get(&room) {
-                    let _ = room
-                        .read()
-                        .await
+            ClientMessage::MwResetPlayer {
+                room,
+                world,
+                save,
+                token,
+            } => {
+                let mw_rooms_guard = mw_rooms.read().await;
+                if let Some(mw_room) = mw_rooms_guard.get(&room) {
+                    // Check authorization before allowing player reset
+                    let mw_room_guard = mw_room.read().await;
+                    if !mw_room_guard.check_auth(&token) {
+                        let _ = ServerMessage::Unauthorized { room: room.clone() }
+                            .write_warp(&mut *sink.lock().await)
+                            .await;
+                        continue;
+                    }
+                    let _ = mw_room_guard
                         .incoming_queue
                         .send(AutoUpdate::Reset { world, save });
                 } else {
@@ -453,9 +514,10 @@ async fn client_session(
                 layout,
                 cell_id,
                 right,
+                token,
             } => {
-                let mw_rooms = mw_rooms.read().await;
-                let mw_room = match mw_rooms.get(&room) {
+                let mw_rooms_guard = mw_rooms.read().await;
+                let mw_room = match mw_rooms_guard.get(&room) {
                     Some(mw_room) => mw_room,
                     None => {
                         let _ = ServerMessage::from_error("no such multiworld room")
@@ -464,8 +526,15 @@ async fn client_session(
                         return Ok(());
                     }
                 };
-                let mut mw_room = mw_room.write().await;
-                let (tx, model) = match mw_room.world_mut(world) {
+                let mut mw_room_guard = mw_room.write().await;
+                // Check authorization before allowing state modification
+                if !mw_room_guard.check_auth(&token) {
+                    let _ = ServerMessage::Unauthorized { room: room.clone() }
+                        .write_warp(&mut *sink.lock().await)
+                        .await;
+                    continue;
+                }
+                let (tx, model) = match mw_room_guard.world_mut(world) {
                     Some((tx, _, model, _, _)) => (tx, model),
                     None => {
                         let _ = ServerMessage::from_error("no such world")
@@ -597,9 +666,19 @@ async fn client_session(
                 key,
                 kind,
                 target_world,
+                token,
             } => {
-                if let Some(room) = mw_rooms.read().await.get(&room) {
-                    let _ = room.read().await.incoming_queue.send(AutoUpdate::Queue {
+                let mw_rooms_guard = mw_rooms.read().await;
+                if let Some(mw_room) = mw_rooms_guard.get(&room) {
+                    let mw_room_guard = mw_room.read().await;
+                    // Check authorization before allowing item queue
+                    if !mw_room_guard.check_auth(&token) {
+                        let _ = ServerMessage::Unauthorized { room: room.clone() }
+                            .write_warp(&mut *sink.lock().await)
+                            .await;
+                        continue;
+                    }
+                    let _ = mw_room_guard.incoming_queue.send(AutoUpdate::Queue {
                         item: MwItem {
                             source: source_world,
                             key,
