@@ -417,6 +417,11 @@ impl MmUpgrades {
         *self & MmUpgrades::WALLET_MASK
     }
 
+    pub fn set_wallet(&mut self, wallet: MmUpgrades) {
+        self.remove(MmUpgrades::WALLET_MASK);
+        self.insert(wallet & MmUpgrades::WALLET_MASK);
+    }
+
     pub fn bomb_bag(&self) -> MmUpgrades {
         *self & MmUpgrades::BOMB_BAG_MASK
     }
