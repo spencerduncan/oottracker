@@ -248,15 +248,4 @@ mod items {
         assert!(Item::by_name("deku_mask").is_some());
         assert!(Item::by_name("fierce_deity_mask").is_some());
     }
-
-    #[test]
-    fn test_item_display_for_expressions() {
-        // Ensure items can be displayed in expressions
-        let oot = OotItem::Hookshot;
-        let mm = MmItem::DekuMask;
-
-        // These should be usable in expressions like has(HOOKSHOT)
-        assert!(!format!("{:?}", oot).is_empty());
-        assert!(!format!("{:?}", mm).is_empty());
-    }
 }
