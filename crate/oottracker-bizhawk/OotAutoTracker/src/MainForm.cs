@@ -476,8 +476,12 @@ namespace Net.Fenhl.OotAutoTracker {
 
         internal void SetAutoTrackerContext(IMemoryApi memoryApi, long addr, int length) {
             IntPtr data = Marshal.AllocHGlobal(length);
-            Marshal.Copy(memoryApi.ReadByteRange(addr, length, "System Bus").ToArray(), 0, data, length);
-            Native.model_set_tracker_ctx(this, length, data);
+            try {
+                Marshal.Copy(memoryApi.ReadByteRange(addr, length, "System Bus").ToArray(), 0, data, length);
+                Native.model_set_tracker_ctx(this, length, data);
+            } finally {
+                Marshal.FreeHGlobal(data);
+            }
         }
     }
 
