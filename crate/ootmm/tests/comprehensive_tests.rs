@@ -759,6 +759,7 @@ mod item_mapping_comprehensive {
 
 mod rando_trait_implementation {
     use ootmm::rando::{OotmmRando, OotmmRegionName};
+    use ootr::item::Item as OotrItem;
     use ootr::Rando;
     use std::collections::HashSet;
 
@@ -776,13 +777,26 @@ mod rando_trait_implementation {
         // Should have items from both games
         assert!(!items.is_empty(), "Item table should not be empty");
 
-        // Check for specific items
-        assert!(items.contains_key("MasterSword"), "Should have MasterSword");
-        assert!(items.contains_key("Hookshot"), "Should have Hookshot");
-        assert!(items.contains_key("DekuMask"), "Should have DekuMask");
-        assert!(
-            items.contains_key("OdolwaRemains"),
-            "Should have OdolwaRemains"
+        // Check for specific items and verify their values
+        assert_eq!(
+            items.get("MasterSword"),
+            Some(&OotrItem("MasterSword".to_string())),
+            "MasterSword should have correct value"
+        );
+        assert_eq!(
+            items.get("Hookshot"),
+            Some(&OotrItem("Hookshot".to_string())),
+            "Hookshot should have correct value"
+        );
+        assert_eq!(
+            items.get("DekuMask"),
+            Some(&OotrItem("DekuMask".to_string())),
+            "DekuMask should have correct value"
+        );
+        assert_eq!(
+            items.get("OdolwaRemains"),
+            Some(&OotrItem("OdolwaRemains".to_string())),
+            "OdolwaRemains should have correct value"
         );
     }
 
@@ -794,22 +808,26 @@ mod rando_trait_implementation {
         // Should contain major progression items
         assert!(!escaped.is_empty(), "Escaped items should not be empty");
 
-        // Key progression items should be escaped
-        assert!(
-            escaped.contains_key("Hookshot"),
-            "Hookshot should be escaped"
+        // Key progression items should be escaped with correct values
+        assert_eq!(
+            escaped.get("Hookshot"),
+            Some(&OotrItem("Hookshot".to_string())),
+            "Hookshot should be escaped with correct value"
         );
-        assert!(
-            escaped.contains_key("DekuMask"),
-            "DekuMask should be escaped"
+        assert_eq!(
+            escaped.get("DekuMask"),
+            Some(&OotrItem("DekuMask".to_string())),
+            "DekuMask should be escaped with correct value"
         );
-        assert!(
-            escaped.contains_key("ForestMedallion"),
-            "ForestMedallion should be escaped"
+        assert_eq!(
+            escaped.get("ForestMedallion"),
+            Some(&OotrItem("ForestMedallion".to_string())),
+            "ForestMedallion should be escaped with correct value"
         );
-        assert!(
-            escaped.contains_key("OdolwaRemains"),
-            "OdolwaRemains should be escaped"
+        assert_eq!(
+            escaped.get("OdolwaRemains"),
+            Some(&OotrItem("OdolwaRemains".to_string())),
+            "OdolwaRemains should be escaped with correct value"
         );
     }
 
@@ -833,19 +851,34 @@ mod rando_trait_implementation {
         let rando = OotmmRando::new().unwrap();
         let settings = rando.setting_infos().unwrap();
 
-        // Should have common settings
+        // Should have expected number of settings
         assert!(
-            settings.contains("open_door_of_time"),
-            "Should have open_door_of_time setting"
+            settings.len() >= 26,
+            "Should have at least 26 settings, found {}",
+            settings.len()
         );
-        assert!(
-            settings.contains("shuffle_songs"),
-            "Should have shuffle_songs setting"
-        );
-        assert!(
-            settings.contains("bombchus_in_logic"),
-            "Should have bombchus_in_logic setting"
-        );
+
+        // Verify specific setting values exist
+        let expected_settings = [
+            "open_door_of_time",
+            "open_kakariko",
+            "open_gerudo_fortress",
+            "shuffle_songs",
+            "shuffle_smallkeys",
+            "shuffle_bosskeys",
+            "bombchus_in_logic",
+            "logic_rules",
+            "starting_age",
+            "damage_multiplier",
+        ];
+
+        for setting in expected_settings {
+            assert!(
+                settings.contains(setting),
+                "Should have '{}' setting",
+                setting
+            );
+        }
     }
 
     #[test]
@@ -865,9 +898,13 @@ mod rando_trait_implementation {
         rando.enable_trick("hover_boots_trick");
 
         let tricks = rando.logic_tricks().unwrap();
-        assert!(tricks.contains("lens_skip"));
-        assert!(tricks.contains("hover_boots_trick"));
-        assert_eq!(tricks.len(), 2);
+        assert_eq!(tricks.len(), 2, "Should have exactly 2 tricks enabled");
+
+        // Verify exact trick values
+        let mut expected: HashSet<String> = HashSet::new();
+        expected.insert("lens_skip".to_string());
+        expected.insert("hover_boots_trick".to_string());
+        assert_eq!(*tricks, expected, "Tricks should match expected values");
     }
 
     #[test]
@@ -879,13 +916,13 @@ mod rando_trait_implementation {
         tricks.insert("trick_b".to_string());
         tricks.insert("trick_c".to_string());
 
-        rando.set_logic_tricks(tricks);
+        rando.set_logic_tricks(tricks.clone());
 
         let result = rando.logic_tricks().unwrap();
-        assert_eq!(result.len(), 3);
-        assert!(result.contains("trick_a"));
-        assert!(result.contains("trick_b"));
-        assert!(result.contains("trick_c"));
+        assert_eq!(result.len(), 3, "Should have exactly 3 tricks");
+
+        // Verify exact trick values match what was set
+        assert_eq!(*result, tricks, "Tricks should match the input set exactly");
     }
 
     #[test]
