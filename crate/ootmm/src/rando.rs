@@ -695,11 +695,17 @@ mod tests {
         let rando = OotmmRando::new().unwrap();
         let items = rando.item_table().unwrap();
 
-        // Should have items from both games
-        assert!(items.contains_key("MasterSword"));
-        assert!(items.contains_key("Hookshot"));
-        assert!(items.contains_key("DekuMask"));
-        assert!(items.contains_key("OdolwaRemains"));
+        // Should have items from both games with correct values
+        assert_eq!(
+            items.get("MasterSword").map(|i| i.name()),
+            Some("MasterSword")
+        );
+        assert_eq!(items.get("Hookshot").map(|i| i.name()), Some("Hookshot"));
+        assert_eq!(items.get("DekuMask").map(|i| i.name()), Some("DekuMask"));
+        assert_eq!(
+            items.get("OdolwaRemains").map(|i| i.name()),
+            Some("OdolwaRemains")
+        );
     }
 
     #[test]
@@ -707,10 +713,13 @@ mod tests {
         let rando = OotmmRando::new().unwrap();
         let escaped = rando.escaped_items().unwrap();
 
-        // Should contain major progression items
-        assert!(escaped.contains_key("Hookshot"));
-        assert!(escaped.contains_key("DekuMask"));
-        assert!(escaped.contains_key("ForestMedallion"));
+        // Should contain major progression items with correct values
+        assert_eq!(escaped.get("Hookshot").map(|i| i.name()), Some("Hookshot"));
+        assert_eq!(escaped.get("DekuMask").map(|i| i.name()), Some("DekuMask"));
+        assert_eq!(
+            escaped.get("ForestMedallion").map(|i| i.name()),
+            Some("ForestMedallion")
+        );
     }
 
     #[test]
