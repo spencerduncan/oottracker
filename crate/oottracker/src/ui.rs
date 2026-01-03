@@ -2669,22 +2669,22 @@ cells! {
     // ============================================================================
     MmDekuMask: Simple {
         img: ImageInfo::mm("deku_mask"),
-        active: Box::new(|_| false), // TODO: Connect to MM save data
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_deku_mask())),
         toggle: Box::new(|_| ()),
     },
     MmGoronMask: Simple {
         img: ImageInfo::mm("goron_mask"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_goron_mask())),
         toggle: Box::new(|_| ()),
     },
     MmZoraMask: Simple {
         img: ImageInfo::mm("zora_mask"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_zora_mask())),
         toggle: Box::new(|_| ()),
     },
     MmFierceDeityMask: Simple {
         img: ImageInfo::mm("fierce_deity_mask"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_fierce_deity_mask())),
         toggle: Box::new(|_| ()),
     },
 
