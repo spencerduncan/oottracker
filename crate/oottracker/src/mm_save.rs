@@ -1460,6 +1460,15 @@ impl MmSave {
     pub fn has_twinmold_remains(&self) -> bool {
         self.quest_items.contains(MmQuestItems::REMAINS_TWINMOLD)
     }
+
+    // ========================================================================
+    // Bomber's Notebook Accessor Methods
+    // ========================================================================
+
+    /// Check if player has the Bomber's Notebook
+    pub fn has_bombers_notebook(&self) -> bool {
+        self.quest_items.contains(MmQuestItems::NOTEBOOK)
+    }
 }
 
 // ============================================================================
