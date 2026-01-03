@@ -1031,6 +1031,7 @@ impl TrackerCellKind {
                     } else {
                         CellOverlay::None
                     },
+                    accessibility: None,
                 }
             }
             Song { song, check, .. } => CellRender {
@@ -2693,52 +2694,52 @@ cells! {
     // ============================================================================
     MmPostmanHat: Simple {
         img: ImageInfo::mm("postman_hat"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_postman_hat())),
         toggle: Box::new(|_| ()),
     },
     MmAllNightMask: Simple {
         img: ImageInfo::mm("all_night_mask"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_all_night_mask())),
         toggle: Box::new(|_| ()),
     },
     MmBlastMask: Simple {
         img: ImageInfo::mm("blast_mask"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_blast_mask())),
         toggle: Box::new(|_| ()),
     },
     MmStoneMask: Simple {
         img: ImageInfo::mm("stone_mask"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_stone_mask())),
         toggle: Box::new(|_| ()),
     },
     MmGreatFairyMask: Simple {
         img: ImageInfo::mm("great_fairy_mask"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_great_fairy_mask())),
         toggle: Box::new(|_| ()),
     },
     MmKeatonMask: Simple {
         img: ImageInfo::mm("keaton_mask"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_keaton_mask())),
         toggle: Box::new(|_| ()),
     },
     MmBremenMask: Simple {
         img: ImageInfo::mm("bremen_mask"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_bremen_mask())),
         toggle: Box::new(|_| ()),
     },
     MmBunnyHood: Simple {
         img: ImageInfo::mm("bunny_hood"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_bunny_hood())),
         toggle: Box::new(|_| ()),
     },
     MmDonGeroMask: Simple {
         img: ImageInfo::mm("don_gero_mask"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_don_gero_mask())),
         toggle: Box::new(|_| ()),
     },
     MmMaskOfScents: Simple {
         img: ImageInfo::mm("mask_of_scents"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_mask_of_scents())),
         toggle: Box::new(|_| ()),
     },
     MmRomaniMask: Simple {
