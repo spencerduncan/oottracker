@@ -3223,17 +3223,17 @@ cells! {
         max: 1,
     },
     MmSnowheadSmallKeys: TrackerCellKind::MmSmallKeys {
-        get: Box::new(|keys| keys.snowhead),
+        get: Box::new(|keys| keys.snowhead()),
         set: Box::new(|keys, value| keys.snowhead = value),
         max: 3,
     },
     MmGreatBaySmallKeys: TrackerCellKind::MmSmallKeys {
-        get: Box::new(|keys| keys.great_bay),
+        get: Box::new(|keys| keys.great_bay()),
         set: Box::new(|keys, value| keys.great_bay = value),
         max: 1,
     },
     MmStoneTowerSmallKeys: TrackerCellKind::MmSmallKeys {
-        get: Box::new(|keys| keys.stone_tower),
+        get: Box::new(|keys| keys.stone_tower()),
         set: Box::new(|keys, value| keys.stone_tower = value),
         max: 4,
     },
