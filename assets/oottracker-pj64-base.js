@@ -32,6 +32,56 @@ function arraysEqual(lhs, rhs) {
     return true;
 }
 
+// Send OoT RAM data as RamInit packet (variant 4)
+function sendOotRamData(socket, rawRam) {
+    const ramData = new ArrayBuffer(RAM_INIT_PACKET_LENGTH);
+    new DataView(ramData).setUint8(0, 4); // Packet variant: RamInit
+    const ramDataByteArray = new Uint8Array(ramData);
+    var offset = 1;
+    for (var i = 0; i < RAM_RANGES.length; i++) {
+        ramDataByteArray.set(new Uint8Array(rawRam[i]), offset);
+        offset += RAM_RANGES[i][1];
+    }
+    socket.write(new Buffer(ramDataByteArray));
+}
+
+// Send MM RAM data as MmRamInit packet (variant 8)
+function sendMmRamData(socket, rawMmRam) {
+    if (typeof MM_RAM_RANGES === 'undefined' || rawMmRam === null) { return; }
+    const mmData = new ArrayBuffer(MM_RAM_INIT_PACKET_LENGTH);
+    new DataView(mmData).setUint8(0, 8); // Packet variant: MmRamInit
+    const mmDataByteArray = new Uint8Array(mmData);
+    var offset = 1;
+    for (var i = 0; i < MM_RAM_RANGES.length; i++) {
+        mmDataByteArray.set(new Uint8Array(rawMmRam[i]), offset);
+        offset += MM_RAM_RANGES[i][1];
+    }
+    socket.write(new Buffer(mmDataByteArray));
+}
+
+// Read MM RAM ranges and check for changes
+function readMmRamRanges(rawMmRam) {
+    if (typeof MM_RAM_RANGES === 'undefined') { return { rawMmRam: null, changed: false }; }
+
+    var mmChanged = true;
+    if (rawMmRam === null) {
+        rawMmRam = [];
+        for (var i = 0; i < MM_RAM_RANGES.length; i++) {
+            rawMmRam.push(mem.getblock(ADDR_ANY_RDRAM.start + MM_RAM_RANGES[i][0], MM_RAM_RANGES[i][1]));
+        }
+    } else {
+        mmChanged = false;
+        for (var i = 0; i < MM_RAM_RANGES.length; i++) {
+            const newRange = mem.getblock(ADDR_ANY_RDRAM.start + MM_RAM_RANGES[i][0], MM_RAM_RANGES[i][1]);
+            if (!arraysEqual(newRange, rawMmRam[i])) {
+                rawMmRam[i] = newRange;
+                mmChanged = true;
+            }
+        }
+    }
+    return { rawMmRam: rawMmRam, changed: mmChanged };
+}
+
 // Check for OoT "ZELDAZ" magic number at save context offset 0x1c
 function checkOotMagic(saveData) {
     return saveData[0x1c] == 0x5a && saveData[0x1d] == 0x45 &&
@@ -114,26 +164,10 @@ sock.connect({host: "127.0.0.1", port: TCP_PORT}, function() {
 
             // Handle MM-only game (skip OoT processing)
             if (detectedGame === GAME_TYPE_MM) {
-                if (typeof MM_RAM_RANGES !== 'undefined') {
-                    // Read MM RAM ranges
-                    var mmChanged = true;
-                    if (rawMmRam === null) {
-                        rawMmRam = [];
-                        for (var i = 0; i < MM_RAM_RANGES.length; i++) {
-                            rawMmRam.push(mem.getblock(ADDR_ANY_RDRAM.start + MM_RAM_RANGES[i][0], MM_RAM_RANGES[i][1]));
-                        }
-                    } else {
-                        mmChanged = false;
-                        for (var i = 0; i < MM_RAM_RANGES.length; i++) {
-                            const newRange = mem.getblock(ADDR_ANY_RDRAM.start + MM_RAM_RANGES[i][0], MM_RAM_RANGES[i][1]);
-                            if (!arraysEqual(newRange, rawMmRam[i])) {
-                                rawMmRam[i] = newRange;
-                                mmChanged = true;
-                            }
-                        }
-                    }
-                    // TODO: Send MM data when protocol supports it
-                    // For now, MM data is read but not sent
+                var mmResult = readMmRamRanges(rawMmRam);
+                rawMmRam = mmResult.rawMmRam;
+                if (mmResult.changed && rawMmRam !== null) {
+                    sendMmRamData(sock, rawMmRam);
                 }
                 return;
             }
@@ -144,29 +178,18 @@ sock.connect({host: "127.0.0.1", port: TCP_PORT}, function() {
                 if (!checkOotMagic(rawRam[0])) { return; } // ZELDAZ magic number not present
                 if (!checkOotGameMode(rawRam[0])) { return; } // game mode != gameplay
 
-                const ramData = new ArrayBuffer(RAM_INIT_PACKET_LENGTH);
-                new DataView(ramData).setUint8(0, 4); // Packet variant: RamInit //TODO send deltas after the first frame
-                const ramDataByteArray = new Uint8Array(ramData);
-                var offset = 1;
-                for (var i = 0; i < RAM_RANGES.length; i++) {
-                    ramDataByteArray.set(new Uint8Array(rawRam[i]), offset);
-                    offset += RAM_RANGES[i][1];
-                }
-                sock.write(new Buffer(ramDataByteArray));
+                // Send OoT RAM data
+                sendOotRamData(sock, rawRam);
 
-                // For combo mode, also read MM data
-                if (detectedGame === GAME_TYPE_COMBO && typeof MM_RAM_RANGES !== 'undefined') {
-                    if (rawMmRam === null) {
-                        rawMmRam = [];
-                        for (var i = 0; i < MM_RAM_RANGES.length; i++) {
-                            rawMmRam.push(mem.getblock(ADDR_ANY_RDRAM.start + MM_RAM_RANGES[i][0], MM_RAM_RANGES[i][1]));
-                        }
-                    } else {
-                        for (var i = 0; i < MM_RAM_RANGES.length; i++) {
-                            rawMmRam[i] = mem.getblock(ADDR_ANY_RDRAM.start + MM_RAM_RANGES[i][0], MM_RAM_RANGES[i][1]);
-                        }
+                // For combo mode, also read and send MM data
+                if (detectedGame === GAME_TYPE_COMBO) {
+                    var mmResult = readMmRamRanges(rawMmRam);
+                    rawMmRam = mmResult.rawMmRam;
+                    // In combo mode, always send MM data when OoT data is sent
+                    // (since they share the same save file)
+                    if (rawMmRam !== null) {
+                        sendMmRamData(sock, rawMmRam);
                     }
-                    // TODO: Send MM data when protocol supports it
                 }
             }
         });

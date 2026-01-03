@@ -1,5 +1,7 @@
 use {
-    crate::{knowledge, ram::Ram, save, ui::TrackerCellId, ModelDelta, ModelState},
+    crate::{
+        knowledge, mm_save::MmSave, ram::Ram, save, ui::TrackerCellId, ModelDelta, ModelState,
+    },
     async_proto::Protocol,
     async_stream::try_stream,
     futures::{pin_mut, prelude::*},
@@ -22,6 +24,9 @@ pub enum Packet {
     UpdateCell(TrackerCellId, Json),
     ModelInit(ModelState),
     ModelDelta(ModelDelta),
+    /// MM-only RAM initialization packet (variant 8)
+    /// Sent when only Majora's Mask is loaded (standalone MM or MM-only context)
+    MmRamInit(MmSave),
 }
 
 #[derive(Debug, FromArc, Clone)]
