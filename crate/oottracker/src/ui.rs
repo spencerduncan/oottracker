@@ -47,6 +47,9 @@ type StateImageGetter = Box<dyn Fn(&ModelState) -> (bool, ImageInfo)>;
 /// Type alias for functions that set small keys count
 type SmallKeysSetter = Box<dyn Fn(&mut crate::save::SmallKeys, u8)>;
 
+/// Type alias for functions that set MM small keys count
+type MmSmallKeysSetter = Box<dyn Fn(&mut crate::mm_save::MmSmallKeys, u8)>;
+
 const VERSION: u8 = 0;
 
 /// Accessibility status for a location/check.
@@ -511,6 +514,11 @@ pub enum TrackerCellKind {
         set: SmallKeysSetter,
         max_vanilla: u8,
         max_mq: u8,
+    },
+    MmSmallKeys {
+        get: Box<dyn Fn(&crate::mm_save::MmSmallKeys) -> u8>,
+        set: MmSmallKeysSetter,
+        max: u8,
     },
     Song {
         song: QuestItems,
@@ -1001,6 +1009,30 @@ impl TrackerCellKind {
                     accessibility: None,
                 }
             }
+            TrackerCellKind::MmSmallKeys { get, .. } => {
+                let num_small_keys = state
+                    .ram
+                    .mm_save
+                    .as_ref()
+                    .map(|s| get(&s.small_keys))
+                    .unwrap_or(0);
+                CellRender {
+                    img: ImageInfo::extra("small_key"),
+                    style: if num_small_keys > 0 {
+                        CellStyle::Normal
+                    } else {
+                        CellStyle::Dimmed
+                    },
+                    overlay: if num_small_keys > 0 {
+                        CellOverlay::Count {
+                            count: num_small_keys,
+                            count_img: ImageInfo::new("UNIMPLEMENTED"), //TODO
+                        }
+                    } else {
+                        CellOverlay::None
+                    },
+                }
+            }
             Song { song, check, .. } => CellRender {
                 img: ImageInfo::new(match *song {
                     QuestItems::ZELDAS_LULLABY => "lullaby",
@@ -1316,6 +1348,16 @@ impl TrackerCellKind {
                     set(&mut state.ram.save.small_keys, num + 1);
                 }
             }
+            TrackerCellKind::MmSmallKeys { get, set, max } => {
+                if let Some(ref mut mm_save) = state.ram.mm_save {
+                    let num = get(&mm_save.small_keys);
+                    if num == *max {
+                        set(&mut mm_save.small_keys, 0);
+                    } else {
+                        set(&mut mm_save.small_keys, num + 1);
+                    }
+                }
+            }
             Song {
                 song: quest_item, ..
             } => state.ram.save.quest_items.toggle(*quest_item),
@@ -1518,6 +1560,16 @@ impl TrackerCellKind {
                     //TODO check MQ knowledge? Does plentiful go to +1?
                     } else {
                         set(&mut state.ram.save.small_keys, num - 1);
+                    }
+                }
+                TrackerCellKind::MmSmallKeys { get, set, max } => {
+                    if let Some(ref mut mm_save) = state.ram.mm_save {
+                        let num = get(&mm_save.small_keys);
+                        if num == 0 {
+                            set(&mut mm_save.small_keys, *max);
+                        } else {
+                            set(&mut mm_save.small_keys, num - 1);
+                        }
                     }
                 }
                 Song { toggle_overlay, .. } => toggle_overlay(&mut state.ram.save.event_chk_inf),
@@ -2992,29 +3044,25 @@ cells! {
     // ============================================================================
     // MM Items - Dungeon Keys
     // ============================================================================
-    MmWoodfallSmallKeys: TrackerCellKind::SmallKeys {
-        get: Box::new(|_| 0),
-        set: Box::new(|_, _| ()),
-        max_vanilla: 1,
-        max_mq: 1,
+    MmWoodfallSmallKeys: TrackerCellKind::MmSmallKeys {
+        get: Box::new(|keys| keys.woodfall),
+        set: Box::new(|keys, value| keys.woodfall = value),
+        max: 1,
     },
-    MmSnowheadSmallKeys: TrackerCellKind::SmallKeys {
-        get: Box::new(|_| 0),
-        set: Box::new(|_, _| ()),
-        max_vanilla: 3,
-        max_mq: 3,
+    MmSnowheadSmallKeys: TrackerCellKind::MmSmallKeys {
+        get: Box::new(|keys| keys.snowhead),
+        set: Box::new(|keys, value| keys.snowhead = value),
+        max: 3,
     },
-    MmGreatBaySmallKeys: TrackerCellKind::SmallKeys {
-        get: Box::new(|_| 0),
-        set: Box::new(|_, _| ()),
-        max_vanilla: 1,
-        max_mq: 1,
+    MmGreatBaySmallKeys: TrackerCellKind::MmSmallKeys {
+        get: Box::new(|keys| keys.great_bay),
+        set: Box::new(|keys, value| keys.great_bay = value),
+        max: 1,
     },
-    MmStoneTowerSmallKeys: TrackerCellKind::SmallKeys {
-        get: Box::new(|_| 0),
-        set: Box::new(|_, _| ()),
-        max_vanilla: 4,
-        max_mq: 4,
+    MmStoneTowerSmallKeys: TrackerCellKind::MmSmallKeys {
+        get: Box::new(|keys| keys.stone_tower),
+        set: Box::new(|keys, value| keys.stone_tower = value),
+        max: 4,
     },
 
     // ============================================================================
