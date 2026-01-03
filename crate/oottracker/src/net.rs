@@ -330,7 +330,15 @@ impl Connection for RetroArchConnection {
             |sock| async move {
                 sleep(Duration::from_secs(1)).await;
                 let sock = sock.await?;
-                let ram = retroarch_read_ram(&sock).await?;
+                let mut ram = retroarch_read_ram(&sock).await?;
+
+                // Also read MM RAM and parse it (best-effort, don't fail if MM read fails)
+                if let Ok(mm_raw) = retroarch_read_mm_ram(&sock).await {
+                    if let Ok(mm_save) = ram::decode_mm_range_bufs(vec![mm_raw]) {
+                        ram.mm_save = Some(mm_save);
+                    }
+                }
+
                 Ok(Some((
                     Packet::RamInit(ram),
                     Box::pin(async move { Ok(sock) }) as Pin<Box<dyn Future<Output = _> + Send>>,
@@ -357,7 +365,6 @@ async fn retroarch_read_ram(sock: &UdpSocket) -> Result<Ram, Error> {
 
 /// Read MM memory ranges via RetroArch UDP API
 /// Returns raw bytes for MM SaveContext
-#[allow(dead_code)]
 async fn retroarch_read_mm_ram(sock: &UdpSocket) -> Result<Vec<u8>, Error> {
     let ranges = stream::iter(ram::MM_RANGES.iter().copied().tuples())
         .then(|(start, len)| async move { retroarch_read_memory_range(sock, start, len).await })
