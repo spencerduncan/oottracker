@@ -1031,6 +1031,7 @@ impl TrackerCellKind {
                     } else {
                         CellOverlay::None
                     },
+                    accessibility: None,
                 }
             }
             Song { song, check, .. } => CellRender {
@@ -3207,49 +3208,70 @@ cells! {
     MmSharedOcarina: Overlay {
         main_img: ImageInfo::mm("ocarina"),
         overlay_img: ImageInfo::extra("oot_badge"),
-        active: Box::new(|_| (false, false)),
+        active: Box::new(|state| (
+            state.ram.mm_save.as_ref().is_some_and(|save| save.has_ocarina()),
+            state.ram.save.inv.ocarina != Ocarina::None,
+        )),
         toggle_main: Box::new(|_| ()),
         toggle_overlay: Box::new(|_| ()),
     },
     MmSharedHookshot: Overlay {
         main_img: ImageInfo::mm("hookshot"),
         overlay_img: ImageInfo::extra("oot_badge"),
-        active: Box::new(|_| (false, false)),
+        active: Box::new(|state| (
+            state.ram.mm_save.as_ref().is_some_and(|save| save.has_hookshot()),
+            state.ram.save.inv.hookshot != Hookshot::None,
+        )),
         toggle_main: Box::new(|_| ()),
         toggle_overlay: Box::new(|_| ()),
     },
     MmSharedBow: Overlay {
         main_img: ImageInfo::mm("heros_bow"),
         overlay_img: ImageInfo::extra("oot_badge"),
-        active: Box::new(|_| (false, false)),
+        active: Box::new(|state| (
+            state.ram.mm_save.as_ref().is_some_and(|save| save.has_heros_bow()),
+            state.ram.save.inv.bow,
+        )),
         toggle_main: Box::new(|_| ()),
         toggle_overlay: Box::new(|_| ()),
     },
     MmSharedBombs: Overlay {
         main_img: ImageInfo::mm("bombs"),
         overlay_img: ImageInfo::extra("oot_badge"),
-        active: Box::new(|_| (false, false)),
+        active: Box::new(|state| (
+            state.ram.mm_save.as_ref().is_some_and(|save| save.has_bombs()),
+            state.ram.save.upgrades.bomb_bag() != Upgrades::NONE,
+        )),
         toggle_main: Box::new(|_| ()),
         toggle_overlay: Box::new(|_| ()),
     },
     MmSharedMagic: Overlay {
         main_img: ImageInfo::mm("magic"),
         overlay_img: ImageInfo::extra("oot_badge"),
-        active: Box::new(|_| (false, false)),
+        active: Box::new(|state| (
+            state.ram.mm_save.as_ref().is_some_and(|save| save.has_magic()),
+            state.ram.save.magic != MagicCapacity::None,
+        )),
         toggle_main: Box::new(|_| ()),
         toggle_overlay: Box::new(|_| ()),
     },
     MmSharedLens: Overlay {
         main_img: ImageInfo::mm("lens_of_truth"),
         overlay_img: ImageInfo::extra("oot_badge"),
-        active: Box::new(|_| (false, false)),
+        active: Box::new(|state| (
+            state.ram.mm_save.as_ref().is_some_and(|save| save.has_lens_of_truth()),
+            state.ram.save.inv.lens,
+        )),
         toggle_main: Box::new(|_| ()),
         toggle_overlay: Box::new(|_| ()),
     },
     MmSharedWallet: Overlay {
         main_img: ImageInfo::mm("wallet"),
         overlay_img: ImageInfo::extra("oot_badge"),
-        active: Box::new(|_| (false, false)),
+        active: Box::new(|state| (
+            state.ram.mm_save.as_ref().is_some_and(|save| save.upgrades.wallet() != crate::mm_save::MmUpgrades::empty()),
+            state.ram.save.upgrades.wallet() != Upgrades::NONE,
+        )),
         toggle_main: Box::new(|_| ()),
         toggle_overlay: Box::new(|_| ()),
     },
