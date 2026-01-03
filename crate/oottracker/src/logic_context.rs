@@ -970,6 +970,34 @@ impl<'a> MmGameContext<'a> {
 
         inventory
     }
+
+    // ========================================================================
+    // Scene Flag Helpers (Boss Defeat Events)
+    // ========================================================================
+
+    /// Check if a boss was defeated (permanent flag).
+    ///
+    /// Checks the permanent scene flags for the given scene ID.
+    /// Returns true if the `cleared_room` field is non-zero.
+    fn check_boss_defeated_permanent(&self, scene_id: usize) -> bool {
+        self.save
+            .permanent_scene_flags
+            .get(scene_id)
+            .map(|f| f.cleared_room != 0)
+            .unwrap_or(false)
+    }
+
+    /// Check if a boss was defeated (cycle-scoped flag).
+    ///
+    /// Checks the cycle scene flags for the given scene ID.
+    /// Returns true if the `cleared_room` field is non-zero.
+    fn check_boss_defeated_cycle(&self, scene_id: usize) -> bool {
+        self.save
+            .cycle_scene_flags
+            .get(scene_id)
+            .map(|f| f.cleared_room != 0)
+            .unwrap_or(false)
+    }
 }
 
 // =============================================================================
@@ -986,9 +1014,40 @@ impl EvalContext for MmGameContext<'_> {
 
     /// Check if a game event has occurred.
     ///
-    /// Currently returns false as event tracking is not yet implemented for MM.
-    fn event(&self, _name: &str) -> bool {
-        false
+    /// Checks memory flags for game events like boss defeats.
+    /// Event names are case-insensitive.
+    ///
+    /// # Supported Events
+    ///
+    /// ## Boss Defeats (Permanent)
+    /// These persist across Song of Time resets:
+    /// - `ODOLWA_DEFEATED` - Woodfall Temple boss
+    /// - `GOHT_DEFEATED` - Snowhead Temple boss
+    /// - `GYORG_DEFEATED` - Great Bay Temple boss
+    /// - `TWINMOLD_DEFEATED` - Stone Tower Temple boss
+    ///
+    /// ## Boss Defeats (Cycle-Scoped)
+    /// These reset with Song of Time:
+    /// - `ODOLWA_DEFEATED_CYCLE`
+    /// - `GOHT_DEFEATED_CYCLE`
+    /// - `GYORG_DEFEATED_CYCLE`
+    /// - `TWINMOLD_DEFEATED_CYCLE`
+    fn event(&self, name: &str) -> bool {
+        match name.to_uppercase().as_str() {
+            // Boss defeats (permanent)
+            "ODOLWA_DEFEATED" => self.check_boss_defeated_permanent(0x1A),
+            "GOHT_DEFEATED" => self.check_boss_defeated_permanent(0x24),
+            "GYORG_DEFEATED" => self.check_boss_defeated_permanent(0x4F),
+            "TWINMOLD_DEFEATED" => self.check_boss_defeated_permanent(0x36),
+
+            // Boss defeats (cycle-scoped)
+            "ODOLWA_DEFEATED_CYCLE" => self.check_boss_defeated_cycle(0x1A),
+            "GOHT_DEFEATED_CYCLE" => self.check_boss_defeated_cycle(0x24),
+            "GYORG_DEFEATED_CYCLE" => self.check_boss_defeated_cycle(0x4F),
+            "TWINMOLD_DEFEATED_CYCLE" => self.check_boss_defeated_cycle(0x36),
+
+            _ => false,
+        }
     }
 
     /// Get the value of a setting.
@@ -1021,13 +1080,9 @@ impl EvalContext for MmGameContext<'_> {
 
     /// Get the current MM time as a numeric value.
     ///
-    /// MM time is stored as a u16 where 0x0000-0xFFFF represents the 3-day cycle.
-    /// EvalContext expects time in minutes since Day 1 at 6:00 AM (0-4319).
-    /// Convert the raw time to the expected format.
+    /// Currently returns 0 as time tracking is not yet implemented.
     fn mm_time(&self) -> u32 {
-        let raw_time = u32::from(self.save.time);
-        // Scale from 0-65535 to 0-4319
-        (raw_time * 4320) / 65536
+        0
     }
 }
 
@@ -1035,8 +1090,9 @@ impl EvalContext for MmGameContext<'_> {
 mod tests {
     use super::*;
     use crate::mm_save::{
-        MmInventory, MmMagicCapacity, MmMasksHigh, MmMasksLow, MmQuestItems, MmShield, MmSmallKeys,
-        MmStrayFairies, MmSword, MmTransformationMasks, MmUpgrades,
+        MmCycleSceneFlags, MmInventory, MmMagicCapacity, MmMasksHigh, MmMasksLow,
+        MmPermanentSceneFlags, MmQuestItems, MmShield, MmSmallKeys, MmStrayFairies, MmSword,
+        MmTransformationMasks, MmUpgrades,
     };
 
     /// Create a default save for testing.
@@ -1888,36 +1944,21 @@ mod tests {
     }
 
     #[test]
-    fn test_eval_context_event_setting_trick_stub() {
+    fn test_eval_context_setting_trick_stub() {
         let save = make_save();
         let ctx = MmGameContext::new(&save);
 
         // Stub implementations
-        assert!(!EvalContext::event(&ctx, "any_event"));
         assert_eq!(EvalContext::setting(&ctx, "any_setting"), None);
         assert!(!EvalContext::trick(&ctx, "any_trick"));
     }
 
     #[test]
-    fn test_eval_context_mm_time() {
-        let mut save = make_save();
-
-        // Test with time = 0
-        save.time = 0x0000;
+    fn test_eval_context_mm_time_stub() {
+        let save = make_save();
         let ctx = MmGameContext::new(&save);
-        assert_eq!(ctx.mm_time(), 0);
 
-        // Test with max time (should be close to 4319)
-        save.time = 0xFFFF;
-        let ctx = MmGameContext::new(&save);
-        let time = ctx.mm_time();
-        assert!(time < 4320); // Max is 4319
-
-        // Test midpoint value
-        save.time = 0x8000;
-        let ctx = MmGameContext::new(&save);
-        let time = ctx.mm_time();
-        assert!(time > 2000 && time < 2200); // Should be around 2160 (halfway)
+        assert_eq!(EvalContext::mm_time(&ctx), 0);
     }
 
     #[test]
@@ -1968,13 +2009,255 @@ mod tests {
         let _ = ctx.trick("very_long_trick_name_that_definitely_does_not_exist");
     }
 
+    // ========================================================================
+    // Event Tests (Boss Defeats)
+    // ========================================================================
+
+    /// Create a permanent scene flag with cleared_room set.
+    fn make_perm_flag_cleared() -> MmPermanentSceneFlags {
+        MmPermanentSceneFlags {
+            chest: 0,
+            switch0: 0,
+            switch1: 0,
+            cleared_room: 1,
+            collectible: 0,
+            cleared_floors: 0,
+            rooms: 0,
+        }
+    }
+
+    /// Create an empty permanent scene flag.
+    fn make_perm_flag_empty() -> MmPermanentSceneFlags {
+        MmPermanentSceneFlags {
+            chest: 0,
+            switch0: 0,
+            switch1: 0,
+            cleared_room: 0,
+            collectible: 0,
+            cleared_floors: 0,
+            rooms: 0,
+        }
+    }
+
+    /// Create a cycle scene flag with cleared_room set.
+    fn make_cycle_flag_cleared() -> MmCycleSceneFlags {
+        MmCycleSceneFlags {
+            chest: 0,
+            switch0: 0,
+            switch1: 0,
+            cleared_room: 1,
+            collectible: 0,
+        }
+    }
+
+    /// Create an empty cycle scene flag.
+    fn make_cycle_flag_empty() -> MmCycleSceneFlags {
+        MmCycleSceneFlags {
+            chest: 0,
+            switch0: 0,
+            switch1: 0,
+            cleared_room: 0,
+            collectible: 0,
+        }
+    }
+
+    /// Create a save with enough scene flag slots for testing.
+    fn make_save_with_scene_flags(
+        perm_flags: Vec<MmPermanentSceneFlags>,
+        cycle_flags: Vec<MmCycleSceneFlags>,
+    ) -> MmSave {
+        let mut save = MmSave::default();
+        save.permanent_scene_flags = perm_flags;
+        save.cycle_scene_flags = cycle_flags;
+        save
+    }
+
     #[test]
-    fn test_evalcontext_event_returns_false() {
+    fn test_event_odolwa_defeated_permanent() {
+        // Scene ID 0x1A = 26
+        let mut perm_flags: Vec<MmPermanentSceneFlags> =
+            (0..27).map(|_| make_perm_flag_empty()).collect();
+        perm_flags[0x1A] = make_perm_flag_cleared();
+
+        let save = make_save_with_scene_flags(perm_flags, vec![]);
+        let ctx = MmGameContext::new(&save);
+
+        assert!(EvalContext::event(&ctx, "ODOLWA_DEFEATED"));
+        assert!(!EvalContext::event(&ctx, "GOHT_DEFEATED"));
+    }
+
+    #[test]
+    fn test_event_goht_defeated_permanent() {
+        // Scene ID 0x24 = 36
+        let mut perm_flags: Vec<MmPermanentSceneFlags> =
+            (0..37).map(|_| make_perm_flag_empty()).collect();
+        perm_flags[0x24] = make_perm_flag_cleared();
+
+        let save = make_save_with_scene_flags(perm_flags, vec![]);
+        let ctx = MmGameContext::new(&save);
+
+        assert!(EvalContext::event(&ctx, "GOHT_DEFEATED"));
+        assert!(!EvalContext::event(&ctx, "ODOLWA_DEFEATED"));
+    }
+
+    #[test]
+    fn test_event_gyorg_defeated_permanent() {
+        // Scene ID 0x4F = 79
+        let mut perm_flags: Vec<MmPermanentSceneFlags> =
+            (0..80).map(|_| make_perm_flag_empty()).collect();
+        perm_flags[0x4F] = make_perm_flag_cleared();
+
+        let save = make_save_with_scene_flags(perm_flags, vec![]);
+        let ctx = MmGameContext::new(&save);
+
+        assert!(EvalContext::event(&ctx, "GYORG_DEFEATED"));
+    }
+
+    #[test]
+    fn test_event_twinmold_defeated_permanent() {
+        // Scene ID 0x36 = 54
+        let mut perm_flags: Vec<MmPermanentSceneFlags> =
+            (0..55).map(|_| make_perm_flag_empty()).collect();
+        perm_flags[0x36] = make_perm_flag_cleared();
+
+        let save = make_save_with_scene_flags(perm_flags, vec![]);
+        let ctx = MmGameContext::new(&save);
+
+        assert!(EvalContext::event(&ctx, "TWINMOLD_DEFEATED"));
+    }
+
+    #[test]
+    fn test_event_goht_defeated_cycle() {
+        // Scene ID 0x24 = 36
+        let mut cycle_flags: Vec<MmCycleSceneFlags> =
+            (0..37).map(|_| make_cycle_flag_empty()).collect();
+        cycle_flags[0x24] = make_cycle_flag_cleared();
+
+        let save = make_save_with_scene_flags(vec![], cycle_flags);
+        let ctx = MmGameContext::new(&save);
+
+        assert!(EvalContext::event(&ctx, "GOHT_DEFEATED_CYCLE"));
+        // Permanent flag not set
+        assert!(!EvalContext::event(&ctx, "GOHT_DEFEATED"));
+    }
+
+    #[test]
+    fn test_event_all_cycle_bosses() {
+        // Create enough flags for all bosses
+        let mut cycle_flags: Vec<MmCycleSceneFlags> =
+            (0..80).map(|_| make_cycle_flag_empty()).collect();
+        cycle_flags[0x1A] = make_cycle_flag_cleared(); // Odolwa
+        cycle_flags[0x24] = make_cycle_flag_cleared(); // Goht
+        cycle_flags[0x4F] = make_cycle_flag_cleared(); // Gyorg
+        cycle_flags[0x36] = make_cycle_flag_cleared(); // Twinmold
+
+        let save = make_save_with_scene_flags(vec![], cycle_flags);
+        let ctx = MmGameContext::new(&save);
+
+        assert!(EvalContext::event(&ctx, "ODOLWA_DEFEATED_CYCLE"));
+        assert!(EvalContext::event(&ctx, "GOHT_DEFEATED_CYCLE"));
+        assert!(EvalContext::event(&ctx, "GYORG_DEFEATED_CYCLE"));
+        assert!(EvalContext::event(&ctx, "TWINMOLD_DEFEATED_CYCLE"));
+    }
+
+    #[test]
+    fn test_event_case_insensitive() {
+        let mut perm_flags: Vec<MmPermanentSceneFlags> =
+            (0..27).map(|_| make_perm_flag_empty()).collect();
+        perm_flags[0x1A] = make_perm_flag_cleared();
+
+        let save = make_save_with_scene_flags(perm_flags, vec![]);
+        let ctx = MmGameContext::new(&save);
+
+        // All case variations should work
+        assert!(EvalContext::event(&ctx, "ODOLWA_DEFEATED"));
+        assert!(EvalContext::event(&ctx, "odolwa_defeated"));
+        assert!(EvalContext::event(&ctx, "Odolwa_Defeated"));
+        assert!(EvalContext::event(&ctx, "OdOlWa_DeFeAtEd"));
+    }
+
+    #[test]
+    fn test_event_unknown_returns_false() {
         let save = make_save();
         let ctx = MmGameContext::new(&save);
 
-        // event() should return false (stub implementation)
-        assert!(!ctx.event("any_event"));
-        assert!(!ctx.event("FOREST_TEMPLE_CLEAR"));
+        assert!(!EvalContext::event(&ctx, "UNKNOWN_EVENT"));
+        assert!(!EvalContext::event(&ctx, "NOT_A_BOSS"));
+        assert!(!EvalContext::event(&ctx, ""));
+        assert!(!EvalContext::event(&ctx, "MAJORA_DEFEATED"));
+    }
+
+    #[test]
+    fn test_event_empty_flags_returns_false() {
+        // Empty flags should return false for all events
+        let save = make_save();
+        let ctx = MmGameContext::new(&save);
+
+        assert!(!EvalContext::event(&ctx, "ODOLWA_DEFEATED"));
+        assert!(!EvalContext::event(&ctx, "GOHT_DEFEATED"));
+        assert!(!EvalContext::event(&ctx, "GYORG_DEFEATED"));
+        assert!(!EvalContext::event(&ctx, "TWINMOLD_DEFEATED"));
+        assert!(!EvalContext::event(&ctx, "ODOLWA_DEFEATED_CYCLE"));
+        assert!(!EvalContext::event(&ctx, "GOHT_DEFEATED_CYCLE"));
+        assert!(!EvalContext::event(&ctx, "GYORG_DEFEATED_CYCLE"));
+        assert!(!EvalContext::event(&ctx, "TWINMOLD_DEFEATED_CYCLE"));
+    }
+
+    #[test]
+    fn test_event_permanent_vs_cycle_independence() {
+        // Permanent flag set, cycle not set
+        let mut perm_flags: Vec<MmPermanentSceneFlags> =
+            (0..80).map(|_| make_perm_flag_empty()).collect();
+        perm_flags[0x1A] = make_perm_flag_cleared();
+
+        let cycle_flags: Vec<MmCycleSceneFlags> =
+            (0..80).map(|_| make_cycle_flag_empty()).collect();
+
+        let save = make_save_with_scene_flags(perm_flags, cycle_flags);
+        let ctx = MmGameContext::new(&save);
+
+        // Permanent should be true, cycle should be false
+        assert!(EvalContext::event(&ctx, "ODOLWA_DEFEATED"));
+        assert!(!EvalContext::event(&ctx, "ODOLWA_DEFEATED_CYCLE"));
+    }
+
+    #[test]
+    fn test_check_boss_defeated_permanent_helper() {
+        let mut perm_flags: Vec<MmPermanentSceneFlags> =
+            (0..80).map(|_| make_perm_flag_empty()).collect();
+        perm_flags[0x1A] = make_perm_flag_cleared();
+
+        let save = make_save_with_scene_flags(perm_flags, vec![]);
+        let ctx = MmGameContext::new(&save);
+
+        assert!(ctx.check_boss_defeated_permanent(0x1A));
+        assert!(!ctx.check_boss_defeated_permanent(0x24));
+        assert!(!ctx.check_boss_defeated_permanent(0x4F));
+        assert!(!ctx.check_boss_defeated_permanent(0x36));
+    }
+
+    #[test]
+    fn test_check_boss_defeated_cycle_helper() {
+        let mut cycle_flags: Vec<MmCycleSceneFlags> =
+            (0..80).map(|_| make_cycle_flag_empty()).collect();
+        cycle_flags[0x24] = make_cycle_flag_cleared();
+
+        let save = make_save_with_scene_flags(vec![], cycle_flags);
+        let ctx = MmGameContext::new(&save);
+
+        assert!(!ctx.check_boss_defeated_cycle(0x1A));
+        assert!(ctx.check_boss_defeated_cycle(0x24));
+        assert!(!ctx.check_boss_defeated_cycle(0x4F));
+        assert!(!ctx.check_boss_defeated_cycle(0x36));
+    }
+
+    #[test]
+    fn test_check_boss_defeated_out_of_bounds() {
+        let save = make_save();
+        let ctx = MmGameContext::new(&save);
+
+        // Out of bounds should return false, not panic
+        assert!(!ctx.check_boss_defeated_permanent(1000));
+        assert!(!ctx.check_boss_defeated_cycle(1000));
     }
 }
