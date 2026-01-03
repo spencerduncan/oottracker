@@ -173,6 +173,7 @@ pub mod mm_scenes {
 // ============================================================================
 
 /// The type of game/ROM being tracked.
+
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum GameType {
     /// Standalone Ocarina of Time ROM
@@ -217,6 +218,7 @@ impl fmt::Display for GameType {
 }
 
 /// The currently active game in an OoTMM combo ROM.
+
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ActiveGame {
     /// Ocarina of Time is currently active
@@ -248,6 +250,7 @@ impl fmt::Display for ActiveGame {
 }
 
 /// Game transition state for OoTMM.
+
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum TransitionState {
     /// No transition in progress, game is stable
