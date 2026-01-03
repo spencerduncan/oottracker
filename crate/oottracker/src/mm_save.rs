@@ -2921,4 +2921,773 @@ mod tests {
         assert!(save.has_gyorg_remains());
         assert!(!save.has_twinmold_remains());
     }
+
+    // ========================================================================
+    // Mask Parsing from Raw Bytes Tests
+    // ========================================================================
+
+    #[test]
+    fn test_parse_masks_transformation_masks_from_raw() {
+        use offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+
+        // Place transformation masks in mask inventory slots
+        data[MASKS] = mm_item_ids::MASK_DEKU;
+        data[MASKS + 1] = mm_item_ids::MASK_GORON;
+        data[MASKS + 2] = mm_item_ids::MASK_ZORA;
+        data[MASKS + 3] = mm_item_ids::MASK_FIERCE_DEITY;
+
+        let save = MmSave::from_save_data(&data).unwrap();
+
+        assert!(save
+            .masks
+            .transformation
+            .contains(MmTransformationMasks::DEKU));
+        assert!(save
+            .masks
+            .transformation
+            .contains(MmTransformationMasks::GORON));
+        assert!(save
+            .masks
+            .transformation
+            .contains(MmTransformationMasks::ZORA));
+        assert!(save
+            .masks
+            .transformation
+            .contains(MmTransformationMasks::FIERCE_DEITY));
+    }
+
+    #[test]
+    fn test_parse_masks_collectible_masks_low_from_raw() {
+        use offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+
+        // Place collectible masks (low bits) in mask inventory slots
+        data[MASKS] = mm_item_ids::MASK_POSTMAN;
+        data[MASKS + 1] = mm_item_ids::MASK_ALL_NIGHT;
+        data[MASKS + 2] = mm_item_ids::MASK_BLAST;
+        data[MASKS + 3] = mm_item_ids::MASK_STONE;
+        data[MASKS + 4] = mm_item_ids::MASK_GREAT_FAIRY;
+        data[MASKS + 5] = mm_item_ids::MASK_KEATON;
+        data[MASKS + 6] = mm_item_ids::MASK_BREMEN;
+        data[MASKS + 7] = mm_item_ids::MASK_BUNNY;
+        data[MASKS + 8] = mm_item_ids::MASK_DON_GERO;
+        data[MASKS + 9] = mm_item_ids::MASK_SCENTS;
+        data[MASKS + 10] = mm_item_ids::MASK_ROMANI;
+        data[MASKS + 11] = mm_item_ids::MASK_CIRCUS_LEADER;
+        data[MASKS + 12] = mm_item_ids::MASK_KAFEI;
+        data[MASKS + 13] = mm_item_ids::MASK_COUPLES;
+        data[MASKS + 14] = mm_item_ids::MASK_TRUTH;
+        data[MASKS + 15] = mm_item_ids::MASK_KAMARO;
+
+        let save = MmSave::from_save_data(&data).unwrap();
+
+        assert!(save.masks.masks_low.contains(MmMasksLow::POSTMAN));
+        assert!(save.masks.masks_low.contains(MmMasksLow::ALL_NIGHT));
+        assert!(save.masks.masks_low.contains(MmMasksLow::BLAST));
+        assert!(save.masks.masks_low.contains(MmMasksLow::STONE));
+        assert!(save.masks.masks_low.contains(MmMasksLow::GREAT_FAIRY));
+        assert!(save.masks.masks_low.contains(MmMasksLow::KEATON));
+        assert!(save.masks.masks_low.contains(MmMasksLow::BREMEN));
+        assert!(save.masks.masks_low.contains(MmMasksLow::BUNNY));
+        assert!(save.masks.masks_low.contains(MmMasksLow::DON_GERO));
+        assert!(save.masks.masks_low.contains(MmMasksLow::SCENTS));
+        assert!(save.masks.masks_low.contains(MmMasksLow::ROMANI));
+        assert!(save.masks.masks_low.contains(MmMasksLow::CIRCUS_LEADER));
+        assert!(save.masks.masks_low.contains(MmMasksLow::KAFEI));
+        assert!(save.masks.masks_low.contains(MmMasksLow::COUPLES));
+        assert!(save.masks.masks_low.contains(MmMasksLow::TRUTH));
+        assert!(save.masks.masks_low.contains(MmMasksLow::KAMARO));
+        assert_eq!(save.masks.masks_low.bits().count_ones(), 16);
+    }
+
+    #[test]
+    fn test_parse_masks_collectible_masks_high_from_raw() {
+        use offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+
+        // Place high-bit collectible masks
+        data[MASKS] = mm_item_ids::MASK_GIBDO;
+        data[MASKS + 1] = mm_item_ids::MASK_GARO;
+        data[MASKS + 2] = mm_item_ids::MASK_CAPTAIN;
+        data[MASKS + 3] = mm_item_ids::MASK_GIANT;
+
+        let save = MmSave::from_save_data(&data).unwrap();
+
+        assert!(save.masks.masks_high.contains(MmMasksHigh::GIBDO));
+        assert!(save.masks.masks_high.contains(MmMasksHigh::GARO));
+        assert!(save.masks.masks_high.contains(MmMasksHigh::CAPTAIN));
+        assert!(save.masks.masks_high.contains(MmMasksHigh::GIANT));
+        assert_eq!(save.masks.masks_high.bits().count_ones(), 4);
+    }
+
+    #[test]
+    fn test_parse_masks_empty_slots() {
+        use offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+
+        // Fill mask inventory with NONE (0xFF)
+        for i in 0..24 {
+            data[MASKS + i] = mm_item_ids::NONE;
+        }
+
+        let save = MmSave::from_save_data(&data).unwrap();
+
+        assert!(save.masks.transformation.is_empty());
+        assert!(save.masks.masks_low.is_empty());
+        assert!(save.masks.masks_high.is_empty());
+        assert_eq!(save.masks.total_mask_count(), 0);
+    }
+
+    #[test]
+    fn test_parse_masks_invalid_ids_ignored() {
+        use offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+
+        // Put some invalid mask IDs (regular item IDs, not masks)
+        data[MASKS] = mm_item_ids::OCARINA; // Not a mask
+        data[MASKS + 1] = mm_item_ids::BOW; // Not a mask
+        data[MASKS + 2] = 0xAA; // Invalid ID
+        data[MASKS + 3] = mm_item_ids::MASK_DEKU; // Valid mask
+
+        let save = MmSave::from_save_data(&data).unwrap();
+
+        // Only the Deku Mask should be recognized
+        assert!(save
+            .masks
+            .transformation
+            .contains(MmTransformationMasks::DEKU));
+        assert_eq!(save.masks.total_mask_count(), 1);
+    }
+
+    #[test]
+    fn test_parse_masks_all_24_slots() {
+        use offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+
+        // Put all 24 masks in their slots
+        // Transformation masks (4)
+        data[MASKS] = mm_item_ids::MASK_DEKU;
+        data[MASKS + 1] = mm_item_ids::MASK_GORON;
+        data[MASKS + 2] = mm_item_ids::MASK_ZORA;
+        data[MASKS + 3] = mm_item_ids::MASK_FIERCE_DEITY;
+
+        // Low masks (16)
+        data[MASKS + 4] = mm_item_ids::MASK_POSTMAN;
+        data[MASKS + 5] = mm_item_ids::MASK_ALL_NIGHT;
+        data[MASKS + 6] = mm_item_ids::MASK_BLAST;
+        data[MASKS + 7] = mm_item_ids::MASK_STONE;
+        data[MASKS + 8] = mm_item_ids::MASK_GREAT_FAIRY;
+        data[MASKS + 9] = mm_item_ids::MASK_KEATON;
+        data[MASKS + 10] = mm_item_ids::MASK_BREMEN;
+        data[MASKS + 11] = mm_item_ids::MASK_BUNNY;
+        data[MASKS + 12] = mm_item_ids::MASK_DON_GERO;
+        data[MASKS + 13] = mm_item_ids::MASK_SCENTS;
+        data[MASKS + 14] = mm_item_ids::MASK_ROMANI;
+        data[MASKS + 15] = mm_item_ids::MASK_CIRCUS_LEADER;
+        data[MASKS + 16] = mm_item_ids::MASK_KAFEI;
+        data[MASKS + 17] = mm_item_ids::MASK_COUPLES;
+        data[MASKS + 18] = mm_item_ids::MASK_TRUTH;
+        data[MASKS + 19] = mm_item_ids::MASK_KAMARO;
+
+        // High masks (4)
+        data[MASKS + 20] = mm_item_ids::MASK_GIBDO;
+        data[MASKS + 21] = mm_item_ids::MASK_GARO;
+        data[MASKS + 22] = mm_item_ids::MASK_CAPTAIN;
+        data[MASKS + 23] = mm_item_ids::MASK_GIANT;
+
+        let save = MmSave::from_save_data(&data).unwrap();
+
+        // Total should be 4 transformation + 16 low + 4 high = 24
+        assert_eq!(save.masks.transformation.bits().count_ones(), 4);
+        assert_eq!(save.masks.masks_low.bits().count_ones(), 16);
+        assert_eq!(save.masks.masks_high.bits().count_ones(), 4);
+        assert_eq!(save.masks.total_mask_count(), 24);
+    }
+
+    // ========================================================================
+    // Inventory Parsing from Raw Bytes Tests
+    // ========================================================================
+
+    #[test]
+    fn test_parse_inventory_all_items_from_raw() {
+        use offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+
+        // Set all inventory items at their correct slot positions
+        data[INVENTORY] = mm_item_ids::OCARINA; // slot 0
+        data[INVENTORY + 1] = mm_item_ids::BOW; // slot 1
+        data[INVENTORY + 2] = mm_item_ids::FIRE_ARROW; // slot 2
+        data[INVENTORY + 3] = mm_item_ids::ICE_ARROW; // slot 3
+        data[INVENTORY + 4] = mm_item_ids::LIGHT_ARROW; // slot 4
+        data[INVENTORY + 6] = mm_item_ids::BOMB; // slot 6
+        data[INVENTORY + 7] = mm_item_ids::BOMBCHU; // slot 7
+        data[INVENTORY + 8] = mm_item_ids::DEKU_STICK; // slot 8
+        data[INVENTORY + 9] = mm_item_ids::DEKU_NUT; // slot 9
+        data[INVENTORY + 10] = mm_item_ids::MAGIC_BEAN; // slot 10
+        data[INVENTORY + 12] = mm_item_ids::POWDER_KEG; // slot 12
+        data[INVENTORY + 13] = mm_item_ids::PICTOGRAPH_BOX; // slot 13
+        data[INVENTORY + 14] = mm_item_ids::LENS; // slot 14
+        data[INVENTORY + 15] = mm_item_ids::HOOKSHOT; // slot 15
+        data[INVENTORY + 16] = mm_item_ids::GREAT_FAIRY_SWORD; // slot 16
+
+        let save = MmSave::from_save_data(&data).unwrap();
+
+        assert!(save.inventory.ocarina);
+        assert!(save.inventory.bow);
+        assert!(save.inventory.fire_arrows);
+        assert!(save.inventory.ice_arrows);
+        assert!(save.inventory.light_arrows);
+        assert!(save.inventory.bombs);
+        assert!(save.inventory.bombchus);
+        assert!(save.inventory.deku_sticks);
+        assert!(save.inventory.deku_nuts);
+        assert!(save.inventory.magic_beans);
+        assert!(save.inventory.powder_keg);
+        assert!(save.inventory.pictograph_box);
+        assert!(save.inventory.lens);
+        assert!(save.inventory.hookshot);
+        assert!(save.inventory.great_fairy_sword);
+    }
+
+    #[test]
+    fn test_parse_inventory_empty_from_raw() {
+        let mut data = vec![0u8; MM_SIZE];
+
+        // Fill inventory slots with NONE (0xFF)
+        for i in 0..24 {
+            data[offsets::INVENTORY + i] = mm_item_ids::NONE;
+        }
+
+        let save = MmSave::from_save_data(&data).unwrap();
+
+        assert!(!save.inventory.ocarina);
+        assert!(!save.inventory.bow);
+        assert!(!save.inventory.fire_arrows);
+        assert!(!save.inventory.ice_arrows);
+        assert!(!save.inventory.light_arrows);
+        assert!(!save.inventory.bombs);
+        assert!(!save.inventory.bombchus);
+        assert!(!save.inventory.deku_sticks);
+        assert!(!save.inventory.deku_nuts);
+        assert!(!save.inventory.magic_beans);
+        assert!(!save.inventory.powder_keg);
+        assert!(!save.inventory.pictograph_box);
+        assert!(!save.inventory.lens);
+        assert!(!save.inventory.hookshot);
+        assert!(!save.inventory.great_fairy_sword);
+    }
+
+    #[test]
+    fn test_parse_inventory_wrong_slot_item() {
+        use offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+
+        // Put bow item ID in ocarina slot - should not detect ocarina
+        data[INVENTORY] = mm_item_ids::BOW;
+
+        let save = MmSave::from_save_data(&data).unwrap();
+
+        // Ocarina should be false because the value doesn't match expected
+        assert!(!save.inventory.ocarina);
+        // Bow should also be false because it's not in the right slot
+        assert!(!save.inventory.bow);
+    }
+
+    #[test]
+    fn test_parse_inventory_bottles_all_types() {
+        use offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+
+        // Set bottles in slots 18-23
+        data[INVENTORY + 18] = mm_item_ids::BOTTLE_EMPTY;
+        data[INVENTORY + 19] = mm_item_ids::BOTTLE_RED_POTION;
+        data[INVENTORY + 20] = mm_item_ids::BOTTLE_FAIRY;
+        data[INVENTORY + 21] = mm_item_ids::BOTTLE_DEKU_PRINCESS;
+        data[INVENTORY + 22] = mm_item_ids::BOTTLE_CHATEAU_ROMANI;
+        data[INVENTORY + 23] = mm_item_ids::BOTTLE_ZORA_EGG;
+
+        let save = MmSave::from_save_data(&data).unwrap();
+
+        assert_eq!(save.inventory.bottles[0], MmBottle::Empty);
+        assert_eq!(save.inventory.bottles[1], MmBottle::RedPotion);
+        assert_eq!(save.inventory.bottles[2], MmBottle::Fairy);
+        assert_eq!(save.inventory.bottles[3], MmBottle::DekuPrincess);
+        assert_eq!(save.inventory.bottles[4], MmBottle::ChateauRomani);
+        assert_eq!(save.inventory.bottles[5], MmBottle::ZoraEgg);
+    }
+
+    #[test]
+    fn test_parse_inventory_bottles_empty_slots() {
+        let data = vec![0u8; MM_SIZE];
+
+        let save = MmSave::from_save_data(&data).unwrap();
+
+        // All bottles should be None when slots are zero
+        for bottle in &save.inventory.bottles {
+            assert_eq!(*bottle, MmBottle::None);
+        }
+    }
+
+    #[test]
+    fn test_parse_inventory_bottles_all_variants() {
+        use offsets::*;
+
+        let bottle_types = [
+            (mm_item_ids::BOTTLE_EMPTY, MmBottle::Empty),
+            (mm_item_ids::BOTTLE_GREEN_POTION, MmBottle::GreenPotion),
+            (mm_item_ids::BOTTLE_BLUE_POTION, MmBottle::BluePotion),
+            (mm_item_ids::BOTTLE_MILK, MmBottle::Milk),
+            (mm_item_ids::BOTTLE_MILK_HALF, MmBottle::MilkHalf),
+            (mm_item_ids::BOTTLE_FISH, MmBottle::Fish),
+            (mm_item_ids::BOTTLE_BUG, MmBottle::Bug),
+            (mm_item_ids::BOTTLE_BLUE_FIRE, MmBottle::BlueFire),
+            (mm_item_ids::BOTTLE_POE, MmBottle::Poe),
+            (mm_item_ids::BOTTLE_BIG_POE, MmBottle::BigPoe),
+            (mm_item_ids::BOTTLE_WATER, MmBottle::Water),
+            (
+                mm_item_ids::BOTTLE_HOT_SPRING_WATER,
+                MmBottle::HotSpringWater,
+            ),
+            (mm_item_ids::BOTTLE_GOLD_DUST, MmBottle::GoldDust),
+            (mm_item_ids::BOTTLE_MUSHROOM, MmBottle::MagicalMushroom),
+            (mm_item_ids::BOTTLE_SEAHORSE, MmBottle::SeaHorse),
+            (mm_item_ids::BOTTLE_MYSTERY_MILK, MmBottle::MysteryMilk),
+            (
+                mm_item_ids::BOTTLE_MYSTERY_MILK_SPOILED,
+                MmBottle::MysteryMilkSpoiled,
+            ),
+        ];
+
+        for (raw_id, expected_bottle) in bottle_types {
+            let mut data = vec![0u8; MM_SIZE];
+            data[INVENTORY + 18] = raw_id;
+
+            let save = MmSave::from_save_data(&data).unwrap();
+            assert_eq!(
+                save.inventory.bottles[0], expected_bottle,
+                "Failed for bottle ID 0x{:02X}",
+                raw_id
+            );
+        }
+    }
+
+    // ========================================================================
+    // Small Keys Parsing Tests
+    // ========================================================================
+
+    #[test]
+    fn test_parse_small_keys_from_raw() {
+        use offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+
+        data[SMALL_KEYS] = 3; // Woodfall
+        data[SMALL_KEYS + 1] = 2; // Snowhead
+        data[SMALL_KEYS + 2] = 1; // Great Bay
+        data[SMALL_KEYS + 3] = 4; // Stone Tower
+
+        let save = MmSave::from_save_data(&data).unwrap();
+
+        assert_eq!(save.small_keys.woodfall, 3);
+        assert_eq!(save.small_keys.snowhead, 2);
+        assert_eq!(save.small_keys.great_bay, 1);
+        assert_eq!(save.small_keys.stone_tower, 4);
+    }
+
+    #[test]
+    fn test_parse_small_keys_0xff_as_zero() {
+        use offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+
+        // 0xFF means no keys collected yet (uninitialized)
+        data[SMALL_KEYS] = 0xFF;
+        data[SMALL_KEYS + 1] = 0xFF;
+        data[SMALL_KEYS + 2] = 0xFF;
+        data[SMALL_KEYS + 3] = 0xFF;
+
+        let save = MmSave::from_save_data(&data).unwrap();
+
+        // 0xFF should be treated as 0
+        assert_eq!(save.small_keys.woodfall, 0);
+        assert_eq!(save.small_keys.snowhead, 0);
+        assert_eq!(save.small_keys.great_bay, 0);
+        assert_eq!(save.small_keys.stone_tower, 0);
+    }
+
+    #[test]
+    fn test_parse_small_keys_mixed_values() {
+        use offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+
+        data[SMALL_KEYS] = 0xFF; // Should become 0
+        data[SMALL_KEYS + 1] = 2;
+        data[SMALL_KEYS + 2] = 0xFF; // Should become 0
+        data[SMALL_KEYS + 3] = 3;
+
+        let save = MmSave::from_save_data(&data).unwrap();
+
+        assert_eq!(save.small_keys.woodfall, 0);
+        assert_eq!(save.small_keys.snowhead, 2);
+        assert_eq!(save.small_keys.great_bay, 0);
+        assert_eq!(save.small_keys.stone_tower, 3);
+    }
+
+    #[test]
+    fn test_small_keys_accessor_methods() {
+        let keys = MmSmallKeys {
+            woodfall: 1,
+            snowhead: 2,
+            great_bay: 3,
+            stone_tower: 4,
+        };
+
+        assert_eq!(keys.snowhead(), 2);
+        assert_eq!(keys.great_bay(), 3);
+        assert_eq!(keys.stone_tower(), 4);
+    }
+
+    // ========================================================================
+    // Song Parsing from Raw Bytes Tests
+    // ========================================================================
+
+    #[test]
+    fn test_parse_all_songs_from_raw() {
+        use offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+
+        // Set all song bits
+        let quest_bits: u32 = MmQuestItems::SONG_AWAKENING.bits()
+            | MmQuestItems::SONG_GORON.bits()
+            | MmQuestItems::SONG_ZORA.bits()
+            | MmQuestItems::SONG_EMPTINESS.bits()
+            | MmQuestItems::SONG_ORDER.bits()
+            | MmQuestItems::SONG_TIME.bits()
+            | MmQuestItems::SONG_HEALING.bits()
+            | MmQuestItems::SONG_EPONA.bits()
+            | MmQuestItems::SONG_SOARING.bits()
+            | MmQuestItems::SONG_STORMS.bits()
+            | MmQuestItems::SONG_LULLABY_INTRO.bits();
+
+        data[QUEST_ITEMS..QUEST_ITEMS + 4].copy_from_slice(&quest_bits.to_be_bytes());
+
+        let save = MmSave::from_save_data(&data).unwrap();
+
+        assert!(save.quest_items.contains(MmQuestItems::SONG_AWAKENING));
+        assert!(save.quest_items.contains(MmQuestItems::SONG_GORON));
+        assert!(save.quest_items.contains(MmQuestItems::SONG_ZORA));
+        assert!(save.quest_items.contains(MmQuestItems::SONG_EMPTINESS));
+        assert!(save.quest_items.contains(MmQuestItems::SONG_ORDER));
+        assert!(save.quest_items.contains(MmQuestItems::SONG_TIME));
+        assert!(save.quest_items.contains(MmQuestItems::SONG_HEALING));
+        assert!(save.quest_items.contains(MmQuestItems::SONG_EPONA));
+        assert!(save.quest_items.contains(MmQuestItems::SONG_SOARING));
+        assert!(save.quest_items.contains(MmQuestItems::SONG_STORMS));
+        assert!(save.quest_items.contains(MmQuestItems::SONG_LULLABY_INTRO));
+    }
+
+    #[test]
+    fn test_parse_songs_individual_bits() {
+        use offsets::*;
+
+        // Test each song bit individually
+        let songs = [
+            (MmQuestItems::SONG_AWAKENING, "Sonata of Awakening"),
+            (MmQuestItems::SONG_GORON, "Goron Lullaby"),
+            (MmQuestItems::SONG_ZORA, "New Wave Bossa Nova"),
+            (MmQuestItems::SONG_EMPTINESS, "Elegy of Emptiness"),
+            (MmQuestItems::SONG_ORDER, "Oath to Order"),
+            (MmQuestItems::SONG_TIME, "Song of Time"),
+            (MmQuestItems::SONG_HEALING, "Song of Healing"),
+            (MmQuestItems::SONG_EPONA, "Epona's Song"),
+            (MmQuestItems::SONG_SOARING, "Song of Soaring"),
+            (MmQuestItems::SONG_STORMS, "Song of Storms"),
+        ];
+
+        for (song_flag, name) in songs {
+            let mut data = vec![0u8; MM_SIZE];
+            data[QUEST_ITEMS..QUEST_ITEMS + 4].copy_from_slice(&song_flag.bits().to_be_bytes());
+
+            let save = MmSave::from_save_data(&data).unwrap();
+            assert!(
+                save.quest_items.contains(song_flag),
+                "Failed to parse {}",
+                name
+            );
+        }
+    }
+
+    // ========================================================================
+    // Edge Cases and Error Handling Tests
+    // ========================================================================
+
+    #[test]
+    fn test_sword_try_from_all_variants() {
+        assert_eq!(MmSword::try_from(0), Ok(MmSword::None));
+        assert_eq!(MmSword::try_from(1), Ok(MmSword::KokiriSword));
+        assert_eq!(MmSword::try_from(2), Ok(MmSword::RazorSword));
+        assert_eq!(MmSword::try_from(3), Ok(MmSword::GildedSword));
+        assert_eq!(MmSword::try_from(4), Err(4));
+        assert_eq!(MmSword::try_from(255), Err(255));
+    }
+
+    #[test]
+    fn test_shield_try_from_all_variants() {
+        assert_eq!(MmShield::try_from(0), Ok(MmShield::None));
+        assert_eq!(MmShield::try_from(1), Ok(MmShield::HeroShield));
+        assert_eq!(MmShield::try_from(2), Ok(MmShield::MirrorShield));
+        assert_eq!(MmShield::try_from(3), Err(3));
+        assert_eq!(MmShield::try_from(255), Err(255));
+    }
+
+    #[test]
+    fn test_magic_capacity_try_from_all_variants() {
+        assert_eq!(MmMagicCapacity::try_from(0), Ok(MmMagicCapacity::None));
+        assert_eq!(MmMagicCapacity::try_from(1), Ok(MmMagicCapacity::Single));
+        assert_eq!(MmMagicCapacity::try_from(2), Ok(MmMagicCapacity::Double));
+        assert_eq!(MmMagicCapacity::try_from(3), Err(3));
+        assert_eq!(MmMagicCapacity::try_from(255), Err(255));
+    }
+
+    #[test]
+    fn test_parse_invalid_player_form_defaults_to_human() {
+        use offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+        data[PLAYER_FORM] = 99; // Invalid form
+
+        let save = MmSave::from_save_data(&data).unwrap();
+        assert_eq!(save.player_form, PlayerForm::Human);
+    }
+
+    #[test]
+    fn test_parse_invalid_magic_defaults_to_none() {
+        use offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+        data[MAGIC_LEVEL] = 99; // Invalid magic level
+
+        let save = MmSave::from_save_data(&data).unwrap();
+        assert_eq!(save.magic, MmMagicCapacity::None);
+    }
+
+    #[test]
+    fn test_parse_invalid_sword_defaults_to_none() {
+        use offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+        data[SWORD_SHIELD] = 0x0F; // Invalid sword value (15)
+
+        let save = MmSave::from_save_data(&data).unwrap();
+        assert_eq!(save.sword, MmSword::None);
+    }
+
+    #[test]
+    fn test_parse_invalid_shield_defaults_to_none() {
+        use offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+        data[SWORD_SHIELD] = 0xF0; // Invalid shield value (15 << 4)
+
+        let save = MmSave::from_save_data(&data).unwrap();
+        assert_eq!(save.shield, MmShield::None);
+    }
+
+    #[test]
+    fn test_heart_pieces_parsing() {
+        let mut quest = MmQuestItems::empty();
+        assert_eq!(quest.heart_pieces(), 0);
+
+        quest.insert(MmQuestItems::HEART_PIECE_1);
+        assert_eq!(quest.heart_pieces(), 1);
+
+        quest.insert(MmQuestItems::HEART_PIECE_2);
+        assert_eq!(quest.heart_pieces(), 3);
+
+        quest.insert(MmQuestItems::HEART_PIECE_3);
+        assert_eq!(quest.heart_pieces(), 7);
+
+        // Test maximum heart pieces
+        quest = MmQuestItems::HEART_PIECE_1
+            | MmQuestItems::HEART_PIECE_2
+            | MmQuestItems::HEART_PIECE_3
+            | MmQuestItems::HEART_PIECE_4;
+        assert_eq!(quest.heart_pieces(), 15);
+    }
+
+    #[test]
+    fn test_bombers_notebook_accessor() {
+        let mut save = MmSave::default();
+        assert!(!save.has_bombers_notebook());
+
+        save.quest_items.insert(MmQuestItems::NOTEBOOK);
+        assert!(save.has_bombers_notebook());
+    }
+
+    #[test]
+    fn test_bombers_notebook_from_raw() {
+        use offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+        let quest_bits: u32 = MmQuestItems::NOTEBOOK.bits();
+        data[QUEST_ITEMS..QUEST_ITEMS + 4].copy_from_slice(&quest_bits.to_be_bytes());
+
+        let save = MmSave::from_save_data(&data).unwrap();
+        assert!(save.has_bombers_notebook());
+    }
+
+    #[test]
+    fn test_dungeon_items_get_method() {
+        let items = MmAllDungeonItems {
+            woodfall: MmDungeonItems::MAP | MmDungeonItems::COMPASS,
+            snowhead: MmDungeonItems::BOSS_KEY,
+            great_bay: MmDungeonItems::MAP,
+            stone_tower: MmDungeonItems::all(),
+        };
+
+        assert_eq!(items.get(0), MmDungeonItems::MAP | MmDungeonItems::COMPASS);
+        assert_eq!(items.get(1), MmDungeonItems::BOSS_KEY);
+        assert_eq!(items.get(2), MmDungeonItems::MAP);
+        assert_eq!(items.get(3), MmDungeonItems::all());
+        assert_eq!(items.get(4), MmDungeonItems::default()); // Out of bounds
+        assert_eq!(items.get(99), MmDungeonItems::default()); // Way out of bounds
+    }
+
+    #[test]
+    fn test_cycle_scene_flags_parsing() {
+        use offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+
+        // Set first cycle scene's chest flags
+        let chest_flags: u32 = 0xDEADBEEF;
+        data[CYCLE_SCENE_FLAGS..CYCLE_SCENE_FLAGS + 4].copy_from_slice(&chest_flags.to_be_bytes());
+
+        let save = MmSave::from_save_data(&data).unwrap();
+        assert_eq!(save.cycle_scene_flags.len(), 120);
+        assert_eq!(save.cycle_scene_flags[0].chest, 0xDEADBEEF);
+    }
+
+    #[test]
+    fn test_decode_error_variants() {
+        // Test various decode error types exist and can be created
+        let _err = MmDecodeError::AssertEq {
+            offset: 100,
+            expected: 0,
+            found: 1,
+        };
+
+        let _err = MmDecodeError::AssertEqRange {
+            start: 0,
+            end: 4,
+            expected: vec![0, 0, 0, 0],
+            found: vec![1, 2, 3, 4],
+        };
+
+        let _err = MmDecodeError::Index(42);
+
+        let _err = MmDecodeError::IndexRange { start: 0, end: 100 };
+
+        let _err = MmDecodeError::Size(50);
+
+        let _err = MmDecodeError::UnexpectedValue {
+            offset: 10,
+            field: "test_field",
+            value: 99,
+        };
+
+        let _err = MmDecodeError::UnexpectedValueRange {
+            start: 0,
+            end: 4,
+            field: "test_field",
+            value: vec![1, 2, 3, 4],
+        };
+    }
+
+    #[test]
+    fn test_from_save_data_exactly_mm_size() {
+        // Test with exactly MM_SIZE bytes
+        let data = vec![0u8; MM_SIZE];
+        assert!(MmSave::from_save_data(&data).is_ok());
+    }
+
+    #[test]
+    fn test_from_save_data_larger_than_mm_size() {
+        // Data larger than MM_SIZE should still work (only reads MM_SIZE)
+        let data = vec![0u8; MM_SIZE + 100];
+        assert!(MmSave::from_save_data(&data).is_ok());
+    }
+
+    #[test]
+    fn test_to_save_data_produces_correct_size() {
+        let save = MmSave::default();
+        let data = save.to_save_data();
+        assert_eq!(data.len(), MM_SIZE);
+    }
+
+    #[test]
+    fn test_parse_upgrades_from_raw() {
+        use offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+
+        let upgrade_bits: u32 = MmUpgrades::ADULTS_WALLET.bits()
+            | MmUpgrades::BOMB_BAG_30.bits()
+            | MmUpgrades::QUIVER_40.bits();
+        data[UPGRADES..UPGRADES + 4].copy_from_slice(&upgrade_bits.to_be_bytes());
+
+        let save = MmSave::from_save_data(&data).unwrap();
+
+        assert_eq!(save.upgrades.wallet(), MmUpgrades::ADULTS_WALLET);
+        assert_eq!(save.upgrades.bomb_bag(), MmUpgrades::BOMB_BAG_30);
+        assert_eq!(save.upgrades.quiver(), MmUpgrades::QUIVER_40);
+    }
+
+    #[test]
+    fn test_upgrades_set_wallet() {
+        let mut upgrades = MmUpgrades::empty();
+
+        upgrades.set_wallet(MmUpgrades::ADULTS_WALLET);
+        assert_eq!(upgrades.wallet(), MmUpgrades::ADULTS_WALLET);
+
+        upgrades.set_wallet(MmUpgrades::GIANTS_WALLET);
+        assert_eq!(upgrades.wallet(), MmUpgrades::GIANTS_WALLET);
+
+        // Setting to empty should clear
+        upgrades.set_wallet(MmUpgrades::empty());
+        assert_eq!(upgrades.wallet(), MmUpgrades::empty());
+    }
+
+    #[test]
+    fn test_double_defense_parsing() {
+        use offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+
+        // No double defense
+        data[DOUBLE_DEFENSE] = 0;
+        let save = MmSave::from_save_data(&data).unwrap();
+        assert!(!save.double_defense);
+
+        // Has double defense (any non-zero value)
+        data[DOUBLE_DEFENSE] = 1;
+        let save = MmSave::from_save_data(&data).unwrap();
+        assert!(save.double_defense);
+
+        data[DOUBLE_DEFENSE] = 255;
+        let save = MmSave::from_save_data(&data).unwrap();
+        assert!(save.double_defense);
+    }
 }
