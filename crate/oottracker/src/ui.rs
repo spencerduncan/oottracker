@@ -2744,52 +2744,52 @@ cells! {
     },
     MmRomaniMask: Simple {
         img: ImageInfo::mm("romani_mask"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_romani_mask())),
         toggle: Box::new(|_| ()),
     },
     MmCircusLeaderMask: Simple {
         img: ImageInfo::mm("circus_leader_mask"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_circus_leader_mask())),
         toggle: Box::new(|_| ()),
     },
     MmKafeiMask: Simple {
         img: ImageInfo::mm("kafei_mask"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_kafei_mask())),
         toggle: Box::new(|_| ()),
     },
     MmCouplesMask: Simple {
         img: ImageInfo::mm("couples_mask"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_couples_mask())),
         toggle: Box::new(|_| ()),
     },
     MmMaskOfTruth: Simple {
         img: ImageInfo::mm("mask_of_truth"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_mask_of_truth())),
         toggle: Box::new(|_| ()),
     },
     MmKamaroMask: Simple {
         img: ImageInfo::mm("kamaro_mask"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_kamaro_mask())),
         toggle: Box::new(|_| ()),
     },
     MmGibdoMask: Simple {
         img: ImageInfo::mm("gibdo_mask"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_gibdo_mask())),
         toggle: Box::new(|_| ()),
     },
     MmGaroMask: Simple {
         img: ImageInfo::mm("garo_mask"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_garo_mask())),
         toggle: Box::new(|_| ()),
     },
     MmCaptainHat: Simple {
         img: ImageInfo::mm("captain_hat"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_captain_hat())),
         toggle: Box::new(|_| ()),
     },
     MmGiantMask: Simple {
         img: ImageInfo::mm("giant_mask"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_giant_mask())),
         toggle: Box::new(|_| ()),
     },
 
