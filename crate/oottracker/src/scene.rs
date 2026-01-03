@@ -79,8 +79,10 @@ scene_flags! {
                 "Forest Temple First Stalfos Chest" = 0x0000_0001,
             },
             switches: {
+                MEG_DEFEATED /*vanilla*/ = 0x8000_0000,
                 BETH_DEFEATED /*vanilla*/ = 0x4000_0000,
                 JOELLE_DEFEATED /*vanilla*/ = 0x2000_0000,
+                AMY_DEFEATED /*vanilla*/ = 0x1000_0000,
             },
             room_clear: {
                 0 for "Forest Temple NW Outdoors" /*vanilla*/ -> "Forest Temple Outdoors High Balconies" = 0x0000_0400,

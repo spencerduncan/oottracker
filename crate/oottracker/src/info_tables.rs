@@ -49,6 +49,8 @@ flags_list! {
             event "Spirit Trial Clear" = 0x2000, //TODO only consider when known by settings knowledge or visual confirmation
             "Sheik at Colossus" = 0x1000,
             "Song from Ocarina of Time" = 0x0200,
+            "Twinrova" = 0x0002,
+            "Bongo Bongo" = 0x0001,
         },
         11: {
             event "Light Trial Clear" = 0x8000, //TODO only consider when known by settings knowledge or visual confirmation

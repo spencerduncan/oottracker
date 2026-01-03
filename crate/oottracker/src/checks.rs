@@ -268,11 +268,18 @@ impl<R: Rando> CheckExt for Check<R> {
                         | crate::scene::ForestTempleSwitches::BETH_DEFEATED
                     )
                 ),
-                "Forest Temple Amy and Meg" => None, //TODO
+                "Forest Temple Amy and Meg" => Some(
+                    model.ram.scene_flags().forest_temple.switches.contains(
+                        crate::scene::ForestTempleSwitches::AMY_DEFEATED
+                        | crate::scene::ForestTempleSwitches::MEG_DEFEATED
+                    )
+                ),
 
                 // Water Temple
                 "Child Water Temple" => None, //TODO
-                "Water Temple Clear" => None, //TODO
+                "Water Temple Clear" => Some(
+                    model.ram.save.event_chk_inf.checked(&Check::<R>::Location("Morpha".into())).unwrap_or(false)
+                ),
 
                 _ => return Err(CheckError::UnknownEvent(event.clone())),
             },
@@ -470,19 +477,37 @@ impl<R: Rando> CheckExt for Check<R> {
                 "Ganons Castle MQ Forest Trial Freestanding Key" => None, //TODO
 
                 "Links Pocket" => Some(true), //TODO check if vanilla or rando, if vanilla check for appropriate flag
-                "Queen Gohma" => None, //TODO
-                "Twinrova" => None, //TODO
-                "Bongo Bongo" => None, //TODO
+                "Queen Gohma" => Some(
+                    model.ram.save.event_chk_inf.checked(&Check::<R>::Event("Deku Tree Clear".into())).unwrap_or(false)
+                ),
+                "Twinrova" => None, // automatically checked via event_chk_inf
+                "Bongo Bongo" => None, // automatically checked via event_chk_inf
                 "Ganon" => Some(false), //TODO remember if game has been beaten (relevant for multiworld and go mode)
 
-                "Deku Tree Queen Gohma Heart" => None, //TODO
-                "Dodongos Cavern King Dodongo Heart" => None, //TODO
-                "Jabu Jabus Belly Barinade Heart" => None, //TODO
-                "Forest Temple Phantom Ganon Heart" => None, //TODO
-                "Fire Temple Volvagia Heart" => None, //TODO
-                "Water Temple Morpha Heart" => None, //TODO
-                "Spirit Temple Twinrova Heart" => None, //TODO
-                "Shadow Temple Bongo Bongo Heart" => None, //TODO
+                "Deku Tree Queen Gohma Heart" => Some(
+                    model.ram.save.event_chk_inf.checked(&Check::<R>::Event("Deku Tree Clear".into())).unwrap_or(false)
+                ),
+                "Dodongos Cavern King Dodongo Heart" => Some(
+                    model.ram.save.event_chk_inf.checked(&Check::<R>::Location("King Dodongo".into())).unwrap_or(false)
+                ),
+                "Jabu Jabus Belly Barinade Heart" => Some(
+                    model.ram.save.event_chk_inf.checked(&Check::<R>::Location("Barinade".into())).unwrap_or(false)
+                ),
+                "Forest Temple Phantom Ganon Heart" => Some(
+                    model.ram.save.event_chk_inf.checked(&Check::<R>::Location("Phantom Ganon".into())).unwrap_or(false)
+                ),
+                "Fire Temple Volvagia Heart" => Some(
+                    model.ram.save.event_chk_inf.checked(&Check::<R>::Location("Volvagia".into())).unwrap_or(false)
+                ),
+                "Water Temple Morpha Heart" => Some(
+                    model.ram.save.event_chk_inf.checked(&Check::<R>::Location("Morpha".into())).unwrap_or(false)
+                ),
+                "Spirit Temple Twinrova Heart" => Some(
+                    model.ram.save.event_chk_inf.checked(&Check::<R>::Location("Twinrova".into())).unwrap_or(false)
+                ),
+                "Shadow Temple Bongo Bongo Heart" => Some(
+                    model.ram.save.event_chk_inf.checked(&Check::<R>::Location("Bongo Bongo".into())).unwrap_or(false)
+                ),
 
                 // Dungeon Skulls
                 "Deku Tree GS Basement Back Room" => None, //TODO
