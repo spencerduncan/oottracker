@@ -87,11 +87,15 @@ mod world_database_integration {
     fn test_load_sample_world_succeeds() {
         let db = load_sample_world();
 
-        // Verify regions loaded
-        assert!(db.region_count() > 0, "Should have loaded regions");
-        assert!(db.location_count() > 0, "Should have loaded locations");
-        assert!(db.event_count() > 0, "Should have loaded events");
-        assert!(db.exit_count() > 0, "Should have loaded exits");
+        // Verify exact counts from sample_world.yaml fixture
+        assert_eq!(db.region_count(), 29, "Sample world fixture has 29 regions");
+        assert_eq!(
+            db.location_count(),
+            48,
+            "Sample world fixture has 48 locations"
+        );
+        assert_eq!(db.event_count(), 6, "Sample world fixture has 6 events");
+        assert_eq!(db.exit_count(), 54, "Sample world fixture has 54 exits");
     }
 
     #[test]
@@ -232,9 +236,10 @@ mod world_database_integration {
             );
         }
 
-        assert!(
-            parsed > 0,
-            "Should have parsed at least one logic expression"
+        // Sample world has 48 locations all with logic expressions
+        assert_eq!(
+            parsed, 48,
+            "Sample world fixture should have 48 locations with logic"
         );
     }
 
@@ -269,9 +274,10 @@ mod world_database_integration {
             );
         }
 
-        assert!(
-            parsed > 0,
-            "Should have parsed at least one exit logic expression"
+        // Sample world has 54 exits all with logic expressions
+        assert_eq!(
+            parsed, 54,
+            "Sample world fixture should have 54 exits with logic"
         );
     }
 
@@ -306,9 +312,10 @@ mod world_database_integration {
             );
         }
 
-        assert!(
-            parsed > 0,
-            "Should have parsed at least one event logic expression"
+        // Sample world has 6 events all with logic expressions
+        assert_eq!(
+            parsed, 6,
+            "Sample world fixture should have 6 events with logic"
         );
     }
 
@@ -639,20 +646,23 @@ mod statistics {
         println!("  Compound expressions: {}", compound_expressions);
         println!("  Error cases: {}", error_cases);
 
-        // Verify we have good coverage
-        assert!(
-            simple_idents >= 10,
-            "Should have at least 10 simple identifier tests"
+        // Verify exact counts from ootmm_real.yaml fixture (87 total test cases)
+        assert_eq!(
+            simple_idents, 16,
+            "ootmm_real.yaml fixture has 16 simple identifier tests"
         );
-        assert!(
-            function_calls >= 10,
-            "Should have at least 10 function call tests"
+        assert_eq!(
+            function_calls, 33,
+            "ootmm_real.yaml fixture has 33 function call tests"
         );
-        assert!(
-            compound_expressions >= 15,
-            "Should have at least 15 compound expression tests"
+        assert_eq!(
+            compound_expressions, 29,
+            "ootmm_real.yaml fixture has 29 compound expression tests"
         );
-        assert!(error_cases >= 5, "Should have at least 5 error case tests");
+        assert_eq!(
+            error_cases, 9,
+            "ootmm_real.yaml fixture has 9 error case tests"
+        );
     }
 
     #[test]
@@ -685,15 +695,16 @@ mod statistics {
         println!("  Exits with logic: {}", exit_with_logic);
         println!("  Events with logic: {}", event_with_logic);
 
-        // Verify reasonable coverage
-        assert!(db.region_count() >= 10, "Should have at least 10 regions");
-        assert!(
-            db.location_count() >= 20,
-            "Should have at least 20 locations"
+        // Verify exact counts from sample_world.yaml fixture
+        assert_eq!(db.region_count(), 29, "Sample world fixture has 29 regions");
+        assert_eq!(
+            db.location_count(),
+            48,
+            "Sample world fixture has 48 locations"
         );
-        assert!(
-            loc_with_logic >= 15,
-            "Should have at least 15 locations with logic"
+        assert_eq!(
+            loc_with_logic, 48,
+            "Sample world fixture has 48 locations with logic"
         );
     }
 }

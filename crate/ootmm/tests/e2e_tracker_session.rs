@@ -663,7 +663,8 @@ fn test_world_database_location_iteration() {
     let iterated_count = db.locations().count();
 
     assert_eq!(location_count, iterated_count);
-    assert!(location_count > 0);
+    // create_kokiri_forest_world() defines 14 locations across 4 regions
+    assert_eq!(location_count, 14, "Kokiri test world has 14 locations");
 }
 
 #[test]

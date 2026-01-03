@@ -87,9 +87,10 @@ fn test_all_location_logic_expressions_parse() {
         );
     }
 
-    assert!(
-        total > 0,
-        "Expected at least one location with logic expression"
+    // Sample world has 48 locations, all with logic expressions
+    assert_eq!(
+        total, 48,
+        "Expected 48 location logic expressions in sample_world.yaml fixture"
     );
     println!("Successfully parsed {} location logic expressions", total);
 }
@@ -130,9 +131,10 @@ fn test_all_exit_logic_expressions_parse() {
         );
     }
 
-    assert!(
-        total > 0,
-        "Expected at least one exit with logic expression"
+    // Sample world has 54 exits, all with logic expressions
+    assert_eq!(
+        total, 54,
+        "Expected 54 exit logic expressions in sample_world.yaml fixture"
     );
     println!("Successfully parsed {} exit logic expressions", total);
 }
@@ -173,9 +175,10 @@ fn test_all_event_logic_expressions_parse() {
         );
     }
 
-    assert!(
-        total > 0,
-        "Expected at least one event with logic expression"
+    // Sample world has 6 events, all with logic expressions
+    assert_eq!(
+        total, 6,
+        "Expected 6 event logic expressions in sample_world.yaml fixture"
     );
     println!("Successfully parsed {} event logic expressions", total);
 }
@@ -261,9 +264,10 @@ fn test_all_logic_expressions_parse() {
         );
     }
 
-    assert!(
-        total > 0,
-        "Expected at least one logic expression in the world database"
+    // Sample world has 108 total logic expressions (48 location + 54 exit + 6 event)
+    assert_eq!(
+        total, 108,
+        "Expected 108 total logic expressions in sample_world.yaml fixture"
     );
     println!(
         "All {} logic expressions parsed successfully (100% pass rate)",
@@ -276,14 +280,16 @@ fn test_all_logic_expressions_parse() {
 fn test_world_database_loads() {
     let db = load_world_database();
 
-    // Verify we have data
-    assert!(
-        db.region_count() > 0,
-        "Should have loaded at least one region"
+    // Verify we have the expected data from sample_world.yaml fixture
+    assert_eq!(
+        db.region_count(),
+        29,
+        "Sample world fixture should have 29 regions"
     );
-    assert!(
-        db.location_count() > 0,
-        "Should have loaded at least one location"
+    assert_eq!(
+        db.location_count(),
+        48,
+        "Sample world fixture should have 48 locations"
     );
 
     println!(
@@ -330,16 +336,17 @@ fn test_expression_statistics() {
     println!("  Event logic expressions: {}", event_logic_count);
     println!("  Total logic expressions: {}", total);
 
-    assert!(
-        location_logic_count > 0,
-        "Should have locations with logic expressions"
+    // Verify exact counts from sample_world.yaml fixture
+    assert_eq!(
+        location_logic_count, 48,
+        "Sample world fixture should have 48 locations with logic"
     );
-    assert!(
-        exit_logic_count > 0,
-        "Should have exits with logic expressions"
+    assert_eq!(
+        exit_logic_count, 54,
+        "Sample world fixture should have 54 exits with logic"
     );
-    assert!(
-        event_logic_count > 0,
-        "Should have events with logic expressions"
+    assert_eq!(
+        event_logic_count, 6,
+        "Sample world fixture should have 6 events with logic"
     );
 }
