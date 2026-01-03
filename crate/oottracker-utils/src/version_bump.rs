@@ -8,6 +8,7 @@
 )]
 #![forbid(unsafe_code)]
 
+#[cfg(windows)]
 use {
     oottracker_utils::version,
     semver::{BuildMetadata, Prerelease, Version},
@@ -16,6 +17,7 @@ use {
     toml_edit::TomlError,
 };
 
+#[cfg(windows)]
 #[derive(clap::Parser)]
 #[clap(version)]
 enum Args {
@@ -25,6 +27,7 @@ enum Args {
     Exact { version: Version },
 }
 
+#[cfg(windows)]
 #[derive(Debug, thiserror::Error)]
 enum Error {
     #[error(transparent)]
@@ -35,14 +38,15 @@ enum Error {
     Plist(#[from] plist::Error),
     #[error(transparent)]
     Toml(#[from] TomlError),
-    #[error("found Cargo manifest without “package” entry")]
+    #[error("found Cargo manifest without "package" entry")]
     MissingPackageEntry,
-    #[error("found “package” entry in Cargo manifest without “version” entry")]
+    #[error("found "package" entry in Cargo manifest without "version" entry")]
     MissingVersionEntry,
-    #[error("“package” entry in Cargo manifest was not a table")]
+    #[error(""package" entry in Cargo manifest was not a table")]
     PackageIsNotTable,
 }
 
+#[cfg(windows)]
 //FROM https://github.com/dtolnay/semver/issues/243#issuecomment-854337640
 fn increment_patch(v: &mut Version) {
     v.patch += 1;
@@ -50,6 +54,7 @@ fn increment_patch(v: &mut Version) {
     v.build = BuildMetadata::EMPTY;
 }
 
+#[cfg(windows)]
 fn increment_minor(v: &mut Version) {
     v.minor += 1;
     v.patch = 0;
@@ -57,6 +62,7 @@ fn increment_minor(v: &mut Version) {
     v.build = BuildMetadata::EMPTY;
 }
 
+#[cfg(windows)]
 fn increment_major(v: &mut Version) {
     v.major += 1;
     v.minor = 0;
@@ -65,6 +71,7 @@ fn increment_major(v: &mut Version) {
     v.build = BuildMetadata::EMPTY;
 }
 
+#[cfg(windows)]
 #[wheel::main]
 async fn main(args: Args) -> Result<(), Error> {
     let version = match args {
@@ -108,4 +115,10 @@ async fn main(args: Args) -> Result<(), Error> {
         fs::write(manifest_path, manifest.to_string().into_bytes()).await?;
     }
     Ok(())
+}
+
+#[cfg(not(windows))]
+fn main() {
+    eprintln!("oottracker-version-bump is only supported on Windows");
+    std::process::exit(1);
 }
