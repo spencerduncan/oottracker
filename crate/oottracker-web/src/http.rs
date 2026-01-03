@@ -48,7 +48,9 @@ impl TrackerCellIdExt for TrackerCellId {
             format!("cols{colspan}")
         };
         html! {
-            a(id = format!("cell{cell_id}"), href = click_uri.to_string(), class = css_classes) : content; //TODO impl ToHtml for rocket::uri
+            form(id = format!("cell{cell_id}"), method = "POST", action = click_uri.to_string(), class = css_classes) {
+                button(type = "submit") : content;
+            }
         }
     }
 }
@@ -157,7 +159,7 @@ async fn mw_room_view(
     ))
 }
 
-#[rocket::get("/mw/<room>/<world>/<layout>/click/<cell_id>")]
+#[rocket::post("/mw/<room>/<world>/<layout>/click/<cell_id>")]
 async fn mw_click(
     mw_rooms: &State<MwRooms>,
     room: &str,
@@ -332,7 +334,7 @@ async fn restream_room_view(
     ))
 }
 
-#[rocket::get("/restream/<restreamer>/<runner>/<layout>/click/<cell_id>")]
+#[rocket::post("/restream/<restreamer>/<runner>/<layout>/click/<cell_id>")]
 async fn restream_click(
     restreams: &State<Restreams>,
     restreamer: &str,
@@ -416,7 +418,7 @@ async fn room(
     }).await?)
 }
 
-#[rocket::get("/room/<name>/click/<cell_id>")]
+#[rocket::post("/room/<name>/click/<cell_id>")]
 async fn click(
     pool: &State<PgPool>,
     rooms: &State<Rooms>,
