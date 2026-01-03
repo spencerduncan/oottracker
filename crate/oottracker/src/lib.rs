@@ -31,6 +31,8 @@ use {
     std::ops::{AddAssign, Sub},
 };
 
+use ootmm as _; // Dependency added for future MM integration
+
 pub mod checks;
 pub mod ctx;
 #[cfg(feature = "firebase")]

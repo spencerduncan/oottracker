@@ -51,6 +51,9 @@ path = "../ootr"
 [dependencies.ootr-static] # used in tests
 path = "../ootr-static"
 
+[dependencies.ootmm]
+path = "../ootmm"
+
 [dependencies.oottracker-derive]
 path = "../oottracker-derive"
 
