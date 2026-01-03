@@ -655,4 +655,308 @@ mod tests {
         set.insert(ItemCategory::Sword); // duplicate
         assert_eq!(set.len(), 2);
     }
+
+    // ===== SEMANTIC EQUIVALENCE ROUNDTRIP TESTS =====
+    //
+    // These tests verify that roundtripped items preserve semantic properties,
+    // not just structural equality. An item should behave identically after
+    // serialization/deserialization.
+
+    /// Helper to verify semantic equivalence of OoT items after serde roundtrip.
+    fn verify_oot_item_semantic_roundtrip(item: OotItem) {
+        let serialized = serde_yaml::to_string(&item).unwrap();
+        let deserialized: OotItem = serde_yaml::from_str(&serialized).unwrap();
+
+        // Structural check
+        assert_eq!(
+            item, deserialized,
+            "structural equality failed for {:?}",
+            item
+        );
+
+        // Semantic checks - verify all functional properties are preserved
+        assert_eq!(
+            item.category(),
+            deserialized.category(),
+            "category mismatch for {:?}",
+            item
+        );
+        assert_eq!(
+            item.max_count(),
+            deserialized.max_count(),
+            "max_count mismatch for {:?}",
+            item
+        );
+    }
+
+    /// Helper to verify semantic equivalence of MM items after serde roundtrip.
+    fn verify_mm_item_semantic_roundtrip(item: MmItem) {
+        let serialized = serde_yaml::to_string(&item).unwrap();
+        let deserialized: MmItem = serde_yaml::from_str(&serialized).unwrap();
+
+        // Structural check
+        assert_eq!(
+            item, deserialized,
+            "structural equality failed for {:?}",
+            item
+        );
+
+        // Semantic checks - verify all functional properties are preserved
+        assert_eq!(
+            item.category(),
+            deserialized.category(),
+            "category mismatch for {:?}",
+            item
+        );
+        assert_eq!(
+            item.max_count(),
+            deserialized.max_count(),
+            "max_count mismatch for {:?}",
+            item
+        );
+    }
+
+    /// Helper to verify semantic equivalence of combined Item after serde roundtrip.
+    fn verify_combined_item_semantic_roundtrip(item: Item) {
+        let serialized = serde_yaml::to_string(&item).unwrap();
+        let deserialized: Item = serde_yaml::from_str(&serialized).unwrap();
+
+        // Structural check
+        assert_eq!(
+            item, deserialized,
+            "structural equality failed for {:?}",
+            item
+        );
+
+        // Semantic checks - verify all functional properties are preserved
+        assert_eq!(
+            item.category(),
+            deserialized.category(),
+            "category mismatch for {:?}",
+            item
+        );
+        assert_eq!(
+            item.max_count(),
+            deserialized.max_count(),
+            "max_count mismatch for {:?}",
+            item
+        );
+        assert_eq!(
+            item.game(),
+            deserialized.game(),
+            "game mismatch for {:?}",
+            item
+        );
+    }
+
+    #[test]
+    fn test_semantic_roundtrip_oot_swords() {
+        for item in [
+            OotItem::KokiriSword,
+            OotItem::MasterSword,
+            OotItem::BiggoronSword,
+            OotItem::GiantKnife,
+        ] {
+            verify_oot_item_semantic_roundtrip(item);
+        }
+    }
+
+    #[test]
+    fn test_semantic_roundtrip_oot_equipment() {
+        for item in [
+            OotItem::Hookshot,
+            OotItem::Longshot,
+            OotItem::Boomerang,
+            OotItem::Bow,
+            OotItem::MegatonHammer,
+            OotItem::LensOfTruth,
+            OotItem::Slingshot,
+        ] {
+            verify_oot_item_semantic_roundtrip(item);
+        }
+    }
+
+    #[test]
+    fn test_semantic_roundtrip_oot_songs() {
+        for item in [
+            OotItem::ZeldasLullaby,
+            OotItem::EponasSong,
+            OotItem::SariasSong,
+            OotItem::SongOfTime,
+            OotItem::BoleroOfFire,
+            OotItem::PreludeOfLight,
+        ] {
+            verify_oot_item_semantic_roundtrip(item);
+        }
+    }
+
+    #[test]
+    fn test_semantic_roundtrip_oot_quest_items() {
+        for item in [
+            OotItem::KokiriEmerald,
+            OotItem::GoronRuby,
+            OotItem::ZoraSapphire,
+            OotItem::ForestMedallion,
+            OotItem::FireMedallion,
+            OotItem::WaterMedallion,
+            OotItem::ShadowMedallion,
+            OotItem::SpiritMedallion,
+            OotItem::LightMedallion,
+        ] {
+            verify_oot_item_semantic_roundtrip(item);
+        }
+    }
+
+    #[test]
+    fn test_semantic_roundtrip_oot_bottles() {
+        for item in [
+            OotItem::Bottle,
+            OotItem::BottleRedPotion,
+            OotItem::BottleFairy,
+            OotItem::BottleBlueFire,
+        ] {
+            verify_oot_item_semantic_roundtrip(item);
+        }
+    }
+
+    #[test]
+    fn test_semantic_roundtrip_mm_transformation_masks() {
+        for item in [
+            MmItem::DekuMask,
+            MmItem::GoronMask,
+            MmItem::ZoraMask,
+            MmItem::FierceDeityMask,
+        ] {
+            verify_mm_item_semantic_roundtrip(item);
+        }
+    }
+
+    #[test]
+    fn test_semantic_roundtrip_mm_regular_masks() {
+        for item in [
+            MmItem::PostmanHat,
+            MmItem::AllNightMask,
+            MmItem::BlastMask,
+            MmItem::StoneMask,
+            MmItem::BunnyHood,
+            MmItem::GiantMask,
+        ] {
+            verify_mm_item_semantic_roundtrip(item);
+        }
+    }
+
+    #[test]
+    fn test_semantic_roundtrip_mm_boss_remains() {
+        for item in [
+            MmItem::OdolwaRemains,
+            MmItem::GohtRemains,
+            MmItem::GyorgRemains,
+            MmItem::TwinmoldRemains,
+        ] {
+            verify_mm_item_semantic_roundtrip(item);
+        }
+    }
+
+    #[test]
+    fn test_semantic_roundtrip_mm_songs() {
+        for item in [
+            MmItem::SongOfTime,
+            MmItem::SongOfHealing,
+            MmItem::OathToOrder,
+            MmItem::ElegyOfEmptiness,
+        ] {
+            verify_mm_item_semantic_roundtrip(item);
+        }
+    }
+
+    #[test]
+    fn test_semantic_roundtrip_combined_items() {
+        // Test combined Item type preserves game information
+        let oot_items = [
+            Item::Oot(OotItem::Hookshot),
+            Item::Oot(OotItem::MasterSword),
+            Item::Oot(OotItem::ForestMedallion),
+        ];
+        let mm_items = [
+            Item::Mm(MmItem::DekuMask),
+            Item::Mm(MmItem::OdolwaRemains),
+            Item::Mm(MmItem::Hookshot),
+        ];
+
+        for item in oot_items {
+            verify_combined_item_semantic_roundtrip(item);
+        }
+        for item in mm_items {
+            verify_combined_item_semantic_roundtrip(item);
+        }
+    }
+
+    #[test]
+    fn test_semantic_roundtrip_item_category_all() {
+        // Verify all item categories preserve semantic properties
+        let categories = [
+            ItemCategory::Sword,
+            ItemCategory::Shield,
+            ItemCategory::Tunic,
+            ItemCategory::Boots,
+            ItemCategory::Mask,
+            ItemCategory::TransformationMask,
+            ItemCategory::Equipment,
+            ItemCategory::Magic,
+            ItemCategory::Song,
+            ItemCategory::Ocarina,
+            ItemCategory::DungeonItem,
+            ItemCategory::SmallKey,
+            ItemCategory::BossKey,
+            ItemCategory::Upgrade,
+            ItemCategory::Consumable,
+            ItemCategory::QuestItem,
+            ItemCategory::Token,
+            ItemCategory::Bottle,
+            ItemCategory::Trade,
+            ItemCategory::Special,
+        ];
+
+        for category in categories {
+            let serialized = serde_yaml::to_string(&category).unwrap();
+            let deserialized: ItemCategory = serde_yaml::from_str(&serialized).unwrap();
+
+            // Verify hash consistency (semantic property)
+            use std::collections::hash_map::DefaultHasher;
+            use std::hash::{Hash, Hasher};
+
+            let mut h1 = DefaultHasher::new();
+            let mut h2 = DefaultHasher::new();
+            category.hash(&mut h1);
+            deserialized.hash(&mut h2);
+
+            assert_eq!(
+                h1.finish(),
+                h2.finish(),
+                "hash mismatch after roundtrip for {:?}",
+                category
+            );
+        }
+    }
+
+    #[test]
+    fn test_semantic_roundtrip_double() {
+        // Verify that multiple roundtrips preserve semantics
+        let item = OotItem::Hookshot;
+
+        let serialized1 = serde_yaml::to_string(&item).unwrap();
+        let deserialized1: OotItem = serde_yaml::from_str(&serialized1).unwrap();
+
+        let serialized2 = serde_yaml::to_string(&deserialized1).unwrap();
+        let deserialized2: OotItem = serde_yaml::from_str(&serialized2).unwrap();
+
+        // All versions should have identical semantic properties
+        assert_eq!(item.category(), deserialized1.category());
+        assert_eq!(item.category(), deserialized2.category());
+        assert_eq!(item.max_count(), deserialized1.max_count());
+        assert_eq!(item.max_count(), deserialized2.max_count());
+
+        // Serialization should be stable (identical strings)
+        assert_eq!(serialized1, serialized2);
+    }
 }
