@@ -21,7 +21,7 @@ use {
     tokio::io::{AsyncRead, AsyncReadExt as _, AsyncWrite, AsyncWriteExt as _},
 };
 
-use crate::mm_save;
+use crate::mm_save::{self, MmSave};
 
 pub const SIZE: usize = 0x80_0000;
 pub const TEXT_LEN: usize = 0xc0;
@@ -165,7 +165,7 @@ bitflags! {
 
 async_proto::bitflags!(Pad: u16);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(try_from = "Vec<Vec<u8>>", into = "Vec<Vec<u8>>")]
 pub struct Ram {
     pub save: Save,
@@ -179,6 +179,7 @@ pub struct Ram {
     pub pause_state: u16,
     pub pause_changing: bool,
     pub pause_screen_idx: u16,
+    pub mm_save: Option<MmSave>,
 }
 
 impl Default for Ram {
@@ -195,6 +196,7 @@ impl Default for Ram {
             pause_state: 0,
             pause_changing: false,
             pause_screen_idx: 0,
+            mm_save: None,
         }
     }
 }
@@ -233,6 +235,7 @@ impl Ram {
             pause_state: BigEndian::read_u16(data.pause_state),
             pause_changing: BigEndian::read_u16(data.pause_changing) != 0,
             pause_screen_idx: BigEndian::read_u16(data.pause_screen_idx),
+            mm_save: None,
         })
     }
 
@@ -490,6 +493,7 @@ impl Sub<&Ram> for &Ram {
             pause_state,
             pause_changing,
             pause_screen_idx,
+            mm_save: _,
         } = *self;
         Delta {
             save: save - &rhs.save,
@@ -548,5 +552,44 @@ impl TryFrom<Vec<Vec<u8>>> for Ram {
 
     fn try_from(ranges: Vec<Vec<u8>>) -> Result<Self, DecodeError> {
         Self::from_range_bufs(ranges)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ram_default_mm_save_is_none() {
+        let ram = Ram::default();
+        assert!(ram.mm_save.is_none());
+    }
+
+    #[test]
+    fn test_ram_with_mm_save() {
+        let mut ram = Ram::default();
+        let mm_save = MmSave::default();
+        ram.mm_save = Some(mm_save);
+        assert!(ram.mm_save.is_some());
+    }
+
+    #[test]
+    fn test_ram_sub_with_mm_save() {
+        let mut ram1 = Ram::default();
+        let mut ram2 = Ram::default();
+
+        // Set different mm_save values
+        ram1.mm_save = Some(MmSave::default());
+        ram2.mm_save = None;
+
+        // Sub should work without panicking (mm_save is ignored in Delta)
+        let _delta = &ram1 - &ram2;
+    }
+
+    #[test]
+    fn test_ram_from_save_preserves_none_mm_save() {
+        let save = Save::default();
+        let ram = Ram::from(save);
+        assert!(ram.mm_save.is_none());
     }
 }
