@@ -2862,52 +2862,52 @@ cells! {
     // ============================================================================
     MmSongOfTime: Simple {
         img: ImageInfo::mm("song_of_time"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_song_of_time())),
         toggle: Box::new(|_| ()),
     },
     MmSongOfHealing: Simple {
         img: ImageInfo::mm("song_of_healing"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_song_of_healing())),
         toggle: Box::new(|_| ()),
     },
     MmEponasSong: Simple {
         img: ImageInfo::mm("eponas_song"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_eponas_song())),
         toggle: Box::new(|_| ()),
     },
     MmSongOfSoaring: Simple {
         img: ImageInfo::mm("song_of_soaring"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_song_of_soaring())),
         toggle: Box::new(|_| ()),
     },
     MmSongOfStorms: Simple {
         img: ImageInfo::mm("song_of_storms"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_song_of_storms())),
         toggle: Box::new(|_| ()),
     },
     MmSonataOfAwakening: Simple {
         img: ImageInfo::mm("sonata_of_awakening"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_sonata_of_awakening())),
         toggle: Box::new(|_| ()),
     },
     MmGoronLullaby: Simple {
         img: ImageInfo::mm("goron_lullaby"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_goron_lullaby())),
         toggle: Box::new(|_| ()),
     },
     MmNewWaveBossaNova: Simple {
         img: ImageInfo::mm("new_wave_bossa_nova"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_new_wave_bossa_nova())),
         toggle: Box::new(|_| ()),
     },
     MmElegyOfEmptiness: Simple {
         img: ImageInfo::mm("elegy_of_emptiness"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_elegy_of_emptiness())),
         toggle: Box::new(|_| ()),
     },
     MmOathToOrder: Simple {
         img: ImageInfo::mm("oath_to_order"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_oath_to_order())),
         toggle: Box::new(|_| ()),
     },
 
