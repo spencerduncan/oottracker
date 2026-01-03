@@ -2822,7 +2822,7 @@ cells! {
     MmStrayFairyWoodfall: Count {
         dimmed_img: ImageInfo::mm("stray_fairy_woodfall"),
         img: ImageInfo::mm("stray_fairy_woodfall"),
-        get: Box::new(|_| 0), // TODO: Connect to MM save data
+        get: Box::new(|state| state.ram.mm_save.as_ref().map_or(0, |mm| mm.stray_fairies.woodfall)),
         set: Box::new(|_, _| ()),
         max: 15,
         step: 1,
@@ -2830,7 +2830,7 @@ cells! {
     MmStrayFairySnowhead: Count {
         dimmed_img: ImageInfo::mm("stray_fairy_snowhead"),
         img: ImageInfo::mm("stray_fairy_snowhead"),
-        get: Box::new(|_| 0),
+        get: Box::new(|state| state.ram.mm_save.as_ref().map_or(0, |mm| mm.stray_fairies.snowhead)),
         set: Box::new(|_, _| ()),
         max: 15,
         step: 1,
@@ -2838,7 +2838,7 @@ cells! {
     MmStrayFairyGreatBay: Count {
         dimmed_img: ImageInfo::mm("stray_fairy_great_bay"),
         img: ImageInfo::mm("stray_fairy_great_bay"),
-        get: Box::new(|_| 0),
+        get: Box::new(|state| state.ram.mm_save.as_ref().map_or(0, |mm| mm.stray_fairies.great_bay)),
         set: Box::new(|_, _| ()),
         max: 15,
         step: 1,
@@ -2846,14 +2846,14 @@ cells! {
     MmStrayFairyStoneTower: Count {
         dimmed_img: ImageInfo::mm("stray_fairy_stone_tower"),
         img: ImageInfo::mm("stray_fairy_stone_tower"),
-        get: Box::new(|_| 0),
+        get: Box::new(|state| state.ram.mm_save.as_ref().map_or(0, |mm| mm.stray_fairies.stone_tower)),
         set: Box::new(|_, _| ()),
         max: 15,
         step: 1,
     },
     MmStrayFairyClockTown: Simple {
         img: ImageInfo::mm("stray_fairy_clock_town"),
-        active: Box::new(|_| false),
+        active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.stray_fairies.clock_town > 0)),
         toggle: Box::new(|_| ()),
     },
 
