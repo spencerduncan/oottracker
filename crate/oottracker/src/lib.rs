@@ -219,6 +219,256 @@ impl ModelState {
         }
     }
 
+    /// Updates MM-specific knowledge from the current MM save state.
+    ///
+    /// This method processes MM save data to derive knowledge about:
+    /// - Boss remains (dungeon rewards) obtained
+    /// - Songs learned
+    /// - Transformation masks acquired
+    /// - Dungeon item collection status
+    ///
+    /// Similar to `update_knowledge()` for OoT, but handles MM-specific data structures.
+    pub fn update_mm_knowledge(&mut self) {
+        // Early return if MM save data is not available
+        let Some(mm_save) = self.ram.mm_save.clone() else {
+            return;
+        };
+
+        // Ensure check tracker is initialized for MM tracking
+        self.ensure_check_tracker();
+
+        // ========================================================================
+        // Boss Remains Tracking
+        // ========================================================================
+        // Track boss remains as MM's equivalent of dungeon rewards.
+        // When a boss remain is obtained, mark the corresponding boss location as checked.
+
+        if mm_save
+            .quest_items
+            .contains(mm_save::MmQuestItems::REMAINS_ODOLWA)
+        {
+            self.mark_check("mm_woodfall_temple_boss");
+        }
+        if mm_save
+            .quest_items
+            .contains(mm_save::MmQuestItems::REMAINS_GOHT)
+        {
+            self.mark_check("mm_snowhead_temple_boss");
+        }
+        if mm_save
+            .quest_items
+            .contains(mm_save::MmQuestItems::REMAINS_GYORG)
+        {
+            self.mark_check("mm_great_bay_temple_boss");
+        }
+        if mm_save
+            .quest_items
+            .contains(mm_save::MmQuestItems::REMAINS_TWINMOLD)
+        {
+            self.mark_check("mm_stone_tower_temple_boss");
+        }
+
+        // ========================================================================
+        // Song Tracking
+        // ========================================================================
+        // Track songs learned in MM. These can be important for logic.
+
+        if mm_save
+            .quest_items
+            .contains(mm_save::MmQuestItems::SONG_TIME)
+        {
+            self.mark_check("mm_song_of_time");
+        }
+        if mm_save
+            .quest_items
+            .contains(mm_save::MmQuestItems::SONG_HEALING)
+        {
+            self.mark_check("mm_song_of_healing");
+        }
+        if mm_save
+            .quest_items
+            .contains(mm_save::MmQuestItems::SONG_EPONA)
+        {
+            self.mark_check("mm_eponas_song");
+        }
+        if mm_save
+            .quest_items
+            .contains(mm_save::MmQuestItems::SONG_SOARING)
+        {
+            self.mark_check("mm_song_of_soaring");
+        }
+        if mm_save
+            .quest_items
+            .contains(mm_save::MmQuestItems::SONG_STORMS)
+        {
+            self.mark_check("mm_song_of_storms");
+        }
+        if mm_save
+            .quest_items
+            .contains(mm_save::MmQuestItems::SONG_AWAKENING)
+        {
+            self.mark_check("mm_sonata_of_awakening");
+        }
+        if mm_save
+            .quest_items
+            .contains(mm_save::MmQuestItems::SONG_GORON)
+        {
+            self.mark_check("mm_goron_lullaby");
+        }
+        if mm_save
+            .quest_items
+            .contains(mm_save::MmQuestItems::SONG_ZORA)
+        {
+            self.mark_check("mm_new_wave_bossa_nova");
+        }
+        if mm_save
+            .quest_items
+            .contains(mm_save::MmQuestItems::SONG_EMPTINESS)
+        {
+            self.mark_check("mm_elegy_of_emptiness");
+        }
+        if mm_save
+            .quest_items
+            .contains(mm_save::MmQuestItems::SONG_ORDER)
+        {
+            self.mark_check("mm_oath_to_order");
+        }
+
+        // ========================================================================
+        // Transformation Mask Tracking
+        // ========================================================================
+        // Track transformation masks which are key progression items in MM.
+
+        if mm_save
+            .masks
+            .transformation
+            .contains(mm_save::MmTransformationMasks::DEKU)
+        {
+            self.mark_check("mm_deku_mask");
+        }
+        if mm_save
+            .masks
+            .transformation
+            .contains(mm_save::MmTransformationMasks::GORON)
+        {
+            self.mark_check("mm_goron_mask");
+        }
+        if mm_save
+            .masks
+            .transformation
+            .contains(mm_save::MmTransformationMasks::ZORA)
+        {
+            self.mark_check("mm_zora_mask");
+        }
+        if mm_save
+            .masks
+            .transformation
+            .contains(mm_save::MmTransformationMasks::FIERCE_DEITY)
+        {
+            self.mark_check("mm_fierce_deity_mask");
+        }
+        if mm_save
+            .masks
+            .masks_high
+            .contains(mm_save::MmMasksHigh::GIANT)
+        {
+            self.mark_check("mm_giants_mask");
+        }
+
+        // ========================================================================
+        // Key Item Tracking
+        // ========================================================================
+        // Track important inventory items that may be progression.
+
+        if mm_save.inventory.ocarina {
+            self.mark_check("mm_ocarina");
+        }
+        if mm_save.inventory.bow {
+            self.mark_check("mm_bow");
+        }
+        if mm_save.inventory.hookshot {
+            self.mark_check("mm_hookshot");
+        }
+        if mm_save.inventory.lens {
+            self.mark_check("mm_lens_of_truth");
+        }
+        if mm_save.inventory.great_fairy_sword {
+            self.mark_check("mm_great_fairy_sword");
+        }
+        if mm_save.inventory.fire_arrows {
+            self.mark_check("mm_fire_arrows");
+        }
+        if mm_save.inventory.ice_arrows {
+            self.mark_check("mm_ice_arrows");
+        }
+        if mm_save.inventory.light_arrows {
+            self.mark_check("mm_light_arrows");
+        }
+        if mm_save.inventory.powder_keg {
+            self.mark_check("mm_powder_keg");
+        }
+        if mm_save.inventory.pictograph_box {
+            self.mark_check("mm_pictograph_box");
+        }
+
+        // ========================================================================
+        // Dungeon Items Tracking
+        // ========================================================================
+        // Track dungeon maps, compasses, and boss keys.
+
+        // Woodfall Temple
+        if mm_save
+            .dungeon_items
+            .woodfall
+            .contains(mm_save::MmDungeonItems::BOSS_KEY)
+        {
+            self.mark_check("mm_woodfall_boss_key");
+        }
+        // Snowhead Temple
+        if mm_save
+            .dungeon_items
+            .snowhead
+            .contains(mm_save::MmDungeonItems::BOSS_KEY)
+        {
+            self.mark_check("mm_snowhead_boss_key");
+        }
+        // Great Bay Temple
+        if mm_save
+            .dungeon_items
+            .great_bay
+            .contains(mm_save::MmDungeonItems::BOSS_KEY)
+        {
+            self.mark_check("mm_great_bay_boss_key");
+        }
+        // Stone Tower Temple
+        if mm_save
+            .dungeon_items
+            .stone_tower
+            .contains(mm_save::MmDungeonItems::BOSS_KEY)
+        {
+            self.mark_check("mm_stone_tower_boss_key");
+        }
+
+        // ========================================================================
+        // Derived Knowledge
+        // ========================================================================
+        // Process derived knowledge based on MM save state.
+
+        // If player has all 4 boss remains, they can access the Moon
+        let num_remains = mm_save.quest_items.num_remains();
+        if num_remains == 4 {
+            self.mark_check("mm_moon_access");
+        }
+
+        // Track Bomber's Notebook if obtained
+        if mm_save
+            .quest_items
+            .contains(mm_save::MmQuestItems::NOTEBOOK)
+        {
+            self.mark_check("mm_bombers_notebook");
+        }
+    }
+
     /// Ensures the check tracker is initialized when MM tracking is active.
     ///
     /// This method should be called when the model state is updated to ensure
@@ -404,5 +654,187 @@ mod world_database_tests {
         let db = world_database();
         // Embedded data has 4 regions: kokiri_forest, lost_woods (OoT) + clock_town_south, termina_field (MM)
         assert_eq!(db.region_count(), 4, "Should have 4 embedded regions");
+    }
+}
+
+#[cfg(test)]
+mod update_mm_knowledge_tests {
+    use super::*;
+
+    #[test]
+    fn test_update_mm_knowledge_no_mm_save() {
+        let mut state = ModelState::default();
+        // Should not panic when mm_save is None
+        state.update_mm_knowledge();
+        // Check tracker should not be initialized when no MM save
+        assert!(state.check_tracker.is_none());
+    }
+
+    #[test]
+    fn test_update_mm_knowledge_initializes_check_tracker() {
+        let mut state = ModelState::default();
+        state.ram.mm_save = Some(mm_save::MmSave::default());
+        state.update_mm_knowledge();
+        // Check tracker should be initialized
+        assert!(state.check_tracker.is_some());
+    }
+
+    #[test]
+    fn test_update_mm_knowledge_tracks_boss_remains() {
+        let mut state = ModelState::default();
+        let mut mm_save = mm_save::MmSave::default();
+
+        // Add Odolwa's Remains
+        mm_save.quest_items = mm_save::MmQuestItems::REMAINS_ODOLWA;
+        state.ram.mm_save = Some(mm_save);
+        state.update_mm_knowledge();
+
+        assert!(state.is_checked("mm_woodfall_temple_boss"));
+        assert!(!state.is_checked("mm_snowhead_temple_boss"));
+        assert!(!state.is_checked("mm_great_bay_temple_boss"));
+        assert!(!state.is_checked("mm_stone_tower_temple_boss"));
+    }
+
+    #[test]
+    fn test_update_mm_knowledge_tracks_all_boss_remains() {
+        let mut state = ModelState::default();
+        let mut mm_save = mm_save::MmSave::default();
+
+        // Add all boss remains
+        mm_save.quest_items = mm_save::MmQuestItems::REMAINS_ODOLWA
+            | mm_save::MmQuestItems::REMAINS_GOHT
+            | mm_save::MmQuestItems::REMAINS_GYORG
+            | mm_save::MmQuestItems::REMAINS_TWINMOLD;
+        state.ram.mm_save = Some(mm_save);
+        state.update_mm_knowledge();
+
+        assert!(state.is_checked("mm_woodfall_temple_boss"));
+        assert!(state.is_checked("mm_snowhead_temple_boss"));
+        assert!(state.is_checked("mm_great_bay_temple_boss"));
+        assert!(state.is_checked("mm_stone_tower_temple_boss"));
+        assert!(state.is_checked("mm_moon_access"));
+    }
+
+    #[test]
+    fn test_update_mm_knowledge_tracks_songs() {
+        let mut state = ModelState::default();
+        let mut mm_save = mm_save::MmSave::default();
+
+        // Add some songs
+        mm_save.quest_items = mm_save::MmQuestItems::SONG_TIME
+            | mm_save::MmQuestItems::SONG_HEALING
+            | mm_save::MmQuestItems::SONG_SOARING;
+        state.ram.mm_save = Some(mm_save);
+        state.update_mm_knowledge();
+
+        assert!(state.is_checked("mm_song_of_time"));
+        assert!(state.is_checked("mm_song_of_healing"));
+        assert!(state.is_checked("mm_song_of_soaring"));
+        assert!(!state.is_checked("mm_eponas_song"));
+    }
+
+    #[test]
+    fn test_update_mm_knowledge_tracks_transformation_masks() {
+        let mut state = ModelState::default();
+        let mut mm_save = mm_save::MmSave::default();
+
+        // Add transformation masks
+        mm_save.masks.transformation = mm_save::MmTransformationMasks::DEKU
+            | mm_save::MmTransformationMasks::GORON
+            | mm_save::MmTransformationMasks::ZORA;
+        state.ram.mm_save = Some(mm_save);
+        state.update_mm_knowledge();
+
+        assert!(state.is_checked("mm_deku_mask"));
+        assert!(state.is_checked("mm_goron_mask"));
+        assert!(state.is_checked("mm_zora_mask"));
+        assert!(!state.is_checked("mm_fierce_deity_mask"));
+    }
+
+    #[test]
+    fn test_update_mm_knowledge_tracks_key_items() {
+        let mut state = ModelState::default();
+        let mut mm_save = mm_save::MmSave::default();
+
+        // Add key items
+        mm_save.inventory.ocarina = true;
+        mm_save.inventory.bow = true;
+        mm_save.inventory.hookshot = true;
+        state.ram.mm_save = Some(mm_save);
+        state.update_mm_knowledge();
+
+        assert!(state.is_checked("mm_ocarina"));
+        assert!(state.is_checked("mm_bow"));
+        assert!(state.is_checked("mm_hookshot"));
+        assert!(!state.is_checked("mm_lens_of_truth"));
+    }
+
+    #[test]
+    fn test_update_mm_knowledge_tracks_boss_keys() {
+        let mut state = ModelState::default();
+        let mut mm_save = mm_save::MmSave::default();
+
+        // Add boss keys
+        mm_save.dungeon_items.woodfall = mm_save::MmDungeonItems::BOSS_KEY;
+        mm_save.dungeon_items.snowhead = mm_save::MmDungeonItems::BOSS_KEY;
+        state.ram.mm_save = Some(mm_save);
+        state.update_mm_knowledge();
+
+        assert!(state.is_checked("mm_woodfall_boss_key"));
+        assert!(state.is_checked("mm_snowhead_boss_key"));
+        assert!(!state.is_checked("mm_great_bay_boss_key"));
+        assert!(!state.is_checked("mm_stone_tower_boss_key"));
+    }
+
+    #[test]
+    fn test_update_mm_knowledge_tracks_bombers_notebook() {
+        let mut state = ModelState::default();
+        let mut mm_save = mm_save::MmSave::default();
+
+        // Add Bomber's Notebook
+        mm_save.quest_items = mm_save::MmQuestItems::NOTEBOOK;
+        state.ram.mm_save = Some(mm_save);
+        state.update_mm_knowledge();
+
+        assert!(state.is_checked("mm_bombers_notebook"));
+    }
+
+    #[test]
+    fn test_update_mm_knowledge_tracks_giants_mask() {
+        let mut state = ModelState::default();
+        let mut mm_save = mm_save::MmSave::default();
+
+        // Add Giant's Mask (in masks_high, not transformation masks)
+        mm_save.masks.masks_high = mm_save::MmMasksHigh::GIANT;
+        state.ram.mm_save = Some(mm_save);
+        state.update_mm_knowledge();
+
+        assert!(state.is_checked("mm_giants_mask"));
+    }
+
+    #[test]
+    fn test_update_mm_knowledge_moon_access_requires_all_remains() {
+        let mut state = ModelState::default();
+        let mut mm_save = mm_save::MmSave::default();
+
+        // Add only 3 remains - should NOT mark moon access
+        mm_save.quest_items = mm_save::MmQuestItems::REMAINS_ODOLWA
+            | mm_save::MmQuestItems::REMAINS_GOHT
+            | mm_save::MmQuestItems::REMAINS_GYORG;
+        state.ram.mm_save = Some(mm_save);
+        state.update_mm_knowledge();
+
+        assert!(!state.is_checked("mm_moon_access"));
+
+        // Add the 4th remain
+        let mut mm_save2 = mm_save::MmSave::default();
+        mm_save2.quest_items = mm_save::MmQuestItems::REMAINS_ODOLWA
+            | mm_save::MmQuestItems::REMAINS_GOHT
+            | mm_save::MmQuestItems::REMAINS_GYORG
+            | mm_save::MmQuestItems::REMAINS_TWINMOLD;
+        state.ram.mm_save = Some(mm_save2);
+        state.update_mm_knowledge();
+
+        assert!(state.is_checked("mm_moon_access"));
     }
 }
