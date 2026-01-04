@@ -110,7 +110,7 @@ fn main() {
     writeln!(file, "/// # Arguments").unwrap();
     writeln!(
         file,
-        "/// * `name` - The name of the world file (e.g., \"oot_kokiri\")"
+        "/// * `name` - The name of the world file (e.g., \"oot_overworld\")"
     )
     .unwrap();
     writeln!(file, "///").unwrap();

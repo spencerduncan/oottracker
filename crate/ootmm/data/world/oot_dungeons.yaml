@@ -1,0 +1,5286 @@
+# OOT Dungeons Regions
+# Imported from OoTMM randomizer project
+
+regions:
+- id: oot_bottom_of_the_well
+  name: Bottom of the Well
+  game: oot
+  exits:
+  - target: oot_kakariko_well
+    exitType: overworld
+  - target: oot_bottom_of_the_well_main
+    exitType: overworld
+    logic: (is_child && (has_nuts || can_use_sword || has_explosives_or_hammer || has_ranged_weapon || can_use_din)) || time_travel_at_will
+- id: oot_bottom_of_the_well_wallmaster_main
+  name: Bottom of the Well Wallmaster Main
+  game: oot
+  exits:
+  - target: oot_void
+    exitType: overworld
+- id: oot_bottom_of_the_well_main
+  name: Bottom of the Well Main
+  game: oot
+  locations:
+  - id: oot_bottom_of_the_well_coffin
+    name: Bottom of the Well Coffin
+    locationType: npc
+    logic: can_swim || event(BOTW_WATER_DRAINED) || (has_iron_boots && hookshot_anywhere)
+  - id: oot_bottom_of_the_well_compass
+    name: Bottom of the Well Compass
+    locationType: npc
+    logic: has_lens
+  - id: oot_bottom_of_the_well_under_debris
+    name: Bottom of the Well Under Debris
+    locationType: npc
+    logic: has_explosives
+  - id: oot_bottom_of_the_well_back_west
+    name: Bottom of the Well Back West
+    locationType: npc
+    logic: has_explosives && has_lens
+  - id: oot_bottom_of_the_well_east
+    name: Bottom of the Well East
+    locationType: npc
+    logic: has_lens
+  - id: oot_bottom_of_the_well_front_west
+    name: Bottom of the Well Front West
+    locationType: npc
+    logic: has_lens
+  - id: oot_bottom_of_the_well_underwater
+    name: Bottom of the Well Underwater
+    locationType: npc
+    logic: event(BOTW_WATER_DRAINED) || has_iron_boots
+  - id: oot_bottom_of_the_well_east_cage
+    name: Bottom of the Well East Cage
+    locationType: npc
+    logic: (small_keys_botw(3) || climb_anywhere) && has_lens
+  - id: oot_bottom_of_the_well_blood_chest
+    name: Bottom of the Well Blood Chest
+    locationType: chest
+    logic: has_lens
+  - id: oot_bottom_of_the_well_underwater_2
+    name: Bottom of the Well Underwater 2
+    locationType: npc
+    logic: event(BOTW_WATER_DRAINED) || has_iron_boots
+  - id: oot_bottom_of_the_well_map
+    name: Bottom of the Well Map
+    locationType: npc
+    logic: has_explosives_or_hammer || (has_bombflowers && (small_keys_botw(3) || can_use_din)) || climb_anywhere || hookshot_anywhere
+  - id: oot_bottom_of_the_well_pits
+    name: Bottom of the Well Pits
+    locationType: npc
+    logic: (small_keys_botw(3) || climb_anywhere) && has_lens
+  - id: oot_bottom_of_the_well_lens
+    name: Bottom of the Well Lens
+    locationType: npc
+    logic: soul_enemy(SOUL_ENEMY_DEAD_HAND) && event(BOTW_WATER_DRAINED) && (can_use_sword || (can_use_sticks && trick(OOT_DEAD_HAND_STICKS)))
+  - id: oot_bottom_of_the_well_lens_side_chest
+    name: Bottom of the Well Lens Side Chest
+    locationType: chest
+    logic: event(BOTW_WATER_DRAINED) && has_lens
+  - id: oot_bottom_of_the_well_gs_east_cage
+    name: Bottom of the Well GS East Cage
+    locationType: collectible
+    logic: gs && (small_keys_botw(3) || climb_anywhere) && has_lens && (can_collect_distance || (climb_anywhere && (can_use_sword_master
+      || has_ranged_weapon || has_explosives || can_use_sticks || can_use_din || (age_sword_adult && has(SWORD_BIGGORON)))))
+  - id: oot_bottom_of_the_well_gs_inner_west
+    name: Bottom of the Well GS Inner West
+    locationType: collectible
+    logic: gs && small_keys_botw(3) && has_lens && (can_collect_distance || (climb_anywhere && (can_use_sword_master || has_ranged_weapon
+      || has_explosives || can_use_sticks || can_use_din || (age_sword_adult && has(SWORD_BIGGORON)))))
+  - id: oot_bottom_of_the_well_gs_inner_east
+    name: Bottom of the Well GS Inner East
+    locationType: collectible
+    logic: gs && (small_keys_botw(3) || climb_anywhere) && has_lens && (can_collect_distance || (climb_anywhere && (can_use_sword_master
+      || has_ranged_weapon || has_explosives || can_use_sticks || can_use_din || (age_sword_adult && has(SWORD_BIGGORON)))))
+  - id: oot_bottom_of_the_well_sr_1
+    name: Bottom of the Well SR 1
+    locationType: npc
+    logic: 'true'
+  - id: oot_bottom_of_the_well_sr_2
+    name: Bottom of the Well SR 2
+    locationType: npc
+    logic: 'true'
+  - id: oot_bottom_of_the_well_sr_3
+    name: Bottom of the Well SR 3
+    locationType: npc
+    logic: 'true'
+  - id: oot_bottom_of_the_well_sr_4
+    name: Bottom of the Well SR 4
+    locationType: npc
+    logic: 'true'
+  - id: oot_bottom_of_the_well_sr_5
+    name: Bottom of the Well SR 5
+    locationType: npc
+    logic: 'true'
+  - id: oot_bottom_of_the_well_pot_main_room_1
+    name: Bottom of the Well Pot Main Room 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_bottom_of_the_well_pot_main_room_2
+    name: Bottom of the Well Pot Main Room 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_bottom_of_the_well_pot_main_room_3
+    name: Bottom of the Well Pot Main Room 3
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_bottom_of_the_well_pot_main_room_4
+    name: Bottom of the Well Pot Main Room 4
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_bottom_of_the_well_pot_main_room_5
+    name: Bottom of the Well Pot Main Room 5
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_bottom_of_the_well_pot_main_room_underwater
+    name: Bottom of the Well Pot Main Room Underwater
+    locationType: freestanding
+    logic: event(BOTW_WATER_DRAINED) || ((can_swim || has_iron_boots) && (has_ranged_weapon || has_bombchu))
+  - id: oot_bottom_of_the_well_pot_basement_01
+    name: Bottom of the Well Pot Basement 01
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_bottom_of_the_well_pot_basement_02
+    name: Bottom of the Well Pot Basement 02
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_bottom_of_the_well_pot_basement_03
+    name: Bottom of the Well Pot Basement 03
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_bottom_of_the_well_pot_basement_04
+    name: Bottom of the Well Pot Basement 04
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_bottom_of_the_well_pot_basement_05
+    name: Bottom of the Well Pot Basement 05
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_bottom_of_the_well_pot_basement_06
+    name: Bottom of the Well Pot Basement 06
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_bottom_of_the_well_pot_basement_07
+    name: Bottom of the Well Pot Basement 07
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_bottom_of_the_well_pot_basement_08
+    name: Bottom of the Well Pot Basement 08
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_bottom_of_the_well_pot_basement_09
+    name: Bottom of the Well Pot Basement 09
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_bottom_of_the_well_pot_basement_10
+    name: Bottom of the Well Pot Basement 10
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_bottom_of_the_well_pot_basement_11
+    name: Bottom of the Well Pot Basement 11
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_bottom_of_the_well_pot_basement_12
+    name: Bottom of the Well Pot Basement 12
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_bottom_of_the_well_pot_side_room
+    name: Bottom of the Well Pot Side Room
+    locationType: freestanding
+    logic: has_lens && (small_keys_botw(3) || climb_anywhere)
+  - id: oot_bottom_of_the_well_flying_pot_1
+    name: Bottom of the Well Flying Pot 1
+    locationType: freestanding
+    logic: has_lens && small_keys_botw(3) && soul_flying_pot
+  - id: oot_bottom_of_the_well_flying_pot_2
+    name: Bottom of the Well Flying Pot 2
+    locationType: freestanding
+    logic: has_lens && small_keys_botw(3) && soul_flying_pot
+  - id: oot_bottom_of_the_well_flying_pot_3
+    name: Bottom of the Well Flying Pot 3
+    locationType: freestanding
+    logic: has_lens && small_keys_botw(3) && soul_flying_pot
+  - id: oot_bottom_of_the_well_grass_01
+    name: Bottom of the Well Grass 01
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_bottom_of_the_well_grass_02
+    name: Bottom of the Well Grass 02
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_bottom_of_the_well_grass_03
+    name: Bottom of the Well Grass 03
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_bottom_of_the_well_grass_04
+    name: Bottom of the Well Grass 04
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_bottom_of_the_well_grass_05
+    name: Bottom of the Well Grass 05
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_bottom_of_the_well_grass_06
+    name: Bottom of the Well Grass 06
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_bottom_of_the_well_grass_07
+    name: Bottom of the Well Grass 07
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_bottom_of_the_well_grass_08
+    name: Bottom of the Well Grass 08
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_bottom_of_the_well_grass_09
+    name: Bottom of the Well Grass 09
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_bottom_of_the_well_grass_10
+    name: Bottom of the Well Grass 10
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_bottom_of_the_well_grass_11
+    name: Bottom of the Well Grass 11
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_bottom_of_the_well_grass_12
+    name: Bottom of the Well Grass 12
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_bottom_of_the_well_heart_1
+    name: Bottom of the Well Heart 1
+    locationType: freestanding
+    logic: can_swim || event(BOTW_WATER_DRAINED) || (has_iron_boots && hookshot_anywhere)
+  - id: oot_bottom_of_the_well_heart_2
+    name: Bottom of the Well Heart 2
+    locationType: freestanding
+    logic: can_swim || event(BOTW_WATER_DRAINED) || (has_iron_boots && hookshot_anywhere)
+  - id: oot_bottom_of_the_well_basement_big_fairy
+    name: Bottom of the Well Basement Big Fairy
+    locationType: fairy
+    logic: can_play_sun
+  exits:
+  - target: oot_bottom_of_the_well
+    exitType: overworld
+  - target: oot_bottom_of_the_well_wallmaster_main
+    exitType: overworld
+    logic: soul_wallmaster && has_lens
+  - target: oot_bottom_of_the_well_basement_platform
+    exitType: overworld
+    logic: has_lens || climb_anywhere || hookshot_anywhere
+  events:
+  - id: OOT_BOTW_WATER_DRAINED
+    name: Botw Water Drained
+    logic: song_event(0x10)
+- id: oot_bottom_of_the_well_basement_platform
+  name: Bottom of the Well Basement Platform
+  game: oot
+  locations:
+  - id: oot_bottom_of_the_well_rupee_1
+    name: Bottom of the Well Rupee 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_bottom_of_the_well_rupee_2
+    name: Bottom of the Well Rupee 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_bottom_of_the_well_rupee_3
+    name: Bottom of the Well Rupee 3
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_bottom_of_the_well_rupee_4
+    name: Bottom of the Well Rupee 4
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_bottom_of_the_well_rupee_5
+    name: Bottom of the Well Rupee 5
+    locationType: freestanding
+    logic: 'true'
+- id: oot_deku_tree
+  name: Deku Tree
+  game: oot
+  exits:
+  - target: oot_kokiri_forest_near_deku_tree
+    exitType: overworld
+  - target: oot_deku_tree_lobby
+    exitType: overworld
+- id: oot_deku_tree_lobby
+  name: Deku Tree Lobby
+  game: oot
+  locations:
+  - id: oot_deku_tree_map_chest
+    name: Deku Tree Map Chest
+    locationType: chest
+    logic: 'true'
+  - id: oot_deku_tree_compass_chest
+    name: Deku Tree Compass Chest
+    locationType: chest
+    logic: 'true'
+  - id: oot_deku_tree_compass_room_side_chest
+    name: Deku Tree Compass Room Side Chest
+    locationType: chest
+    logic: 'true'
+  - id: oot_deku_tree_gs_compass
+    name: Deku Tree GS Compass
+    locationType: collectible
+    logic: gs && can_damage_skull
+  - id: oot_deku_tree_grass_lobby_1
+    name: Deku Tree Grass Lobby 1
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_deku_tree_grass_lobby_2
+    name: Deku Tree Grass Lobby 2
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_deku_tree_grass_lobby_3
+    name: Deku Tree Grass Lobby 3
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_deku_tree_grass_lobby_4
+    name: Deku Tree Grass Lobby 4
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_deku_tree_grass_lobby_5
+    name: Deku Tree Grass Lobby 5
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_deku_tree_grass_compass_room_1
+    name: Deku Tree Grass Compass Room 1
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_deku_tree_grass_compass_room_2
+    name: Deku Tree Grass Compass Room 2
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_deku_tree_heart_main_room_lower
+    name: Deku Tree Heart Main Room Lower
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_deku_tree_heart_main_room_upper
+    name: Deku Tree Heart Main Room Upper
+    locationType: freestanding
+    logic: has_fire || has_nuts || can_use_sword || has_explosives_or_hammer || has_ranged_weapon || can_use_sticks
+  exits:
+  - target: oot_deku_tree_slingshot_room
+    exitType: overworld
+    logic: soul_deku_scrub && (has_shield_for_scrubs || can_hammer)
+  - target: oot_deku_tree_basement
+    exitType: overworld
+    logic: has_fire || has_nuts || can_use_sword || has_explosives_or_hammer || has_ranged_weapon || can_use_sticks
+- id: oot_deku_tree_slingshot_room
+  name: Deku Tree Slingshot Room
+  game: oot
+  locations:
+  - id: oot_deku_tree_slingshot_chest
+    name: Deku Tree Slingshot Chest
+    locationType: chest
+    logic: 'true'
+  - id: oot_deku_tree_slingshot_side_chest
+    name: Deku Tree Slingshot Side Chest
+    locationType: chest
+    logic: 'true'
+  - id: oot_deku_tree_grass_slingshot_room_1
+    name: Deku Tree Grass Slingshot Room 1
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_deku_tree_grass_slingshot_room_2
+    name: Deku Tree Grass Slingshot Room 2
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_deku_tree_grass_slingshot_room_3
+    name: Deku Tree Grass Slingshot Room 3
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_deku_tree_grass_slingshot_room_4
+    name: Deku Tree Grass Slingshot Room 4
+    locationType: freestanding
+    logic: can_cut_grass
+  exits:
+  - target: oot_deku_tree_lobby
+    exitType: overworld
+- id: oot_deku_tree_basement
+  name: Deku Tree Basement
+  game: oot
+  locations:
+  - id: oot_deku_tree_basement_chest
+    name: Deku Tree Basement Chest
+    locationType: chest
+    logic: 'true'
+  - id: oot_deku_tree_gs_basement_gate
+    name: Deku Tree GS Basement Gate
+    locationType: collectible
+    logic: gs && can_damage_skull
+  - id: oot_deku_tree_gs_basement_vines
+    name: Deku Tree GS Basement Vines
+    locationType: collectible
+    logic: gs && (has_ranged_weapon || can_use_din || has_explosives)
+  - id: oot_deku_tree_grass_basement_main_1
+    name: Deku Tree Grass Basement Main 1
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_deku_tree_grass_basement_main_2
+    name: Deku Tree Grass Basement Main 2
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_deku_tree_grass_eye_switch_room_1
+    name: Deku Tree Grass Eye Switch Room 1
+    locationType: freestanding
+    logic: can_cut_grass && event(DEKU_BURN_WEB)
+  - id: oot_deku_tree_grass_eye_switch_room_2
+    name: Deku Tree Grass Eye Switch Room 2
+    locationType: freestanding
+    logic: can_cut_grass && event(DEKU_BURN_WEB)
+  - id: oot_deku_tree_grass_eye_switch_room_3
+    name: Deku Tree Grass Eye Switch Room 3
+    locationType: freestanding
+    logic: can_cut_grass && event(DEKU_BURN_WEB)
+  - id: oot_deku_tree_grass_eye_switch_room_4
+    name: Deku Tree Grass Eye Switch Room 4
+    locationType: freestanding
+    logic: can_cut_grass && event(DEKU_BURN_WEB)
+  exits:
+  - target: oot_deku_tree_lobby
+    exitType: overworld
+  - target: oot_deku_tree_basement_back_room
+    exitType: overworld
+    logic: can_hit_triggers_distance && event(DEKU_BURN_WEB) && (can_swim || longshot_anywhere || (has_iron_boots && hookshot_anywhere)
+      || trick(OOT_DEKU_WATER_ROOM_SPIKE_NOTHING))
+  - target: oot_deku_tree_basement_ledge
+    exitType: overworld
+    logic: trick(OOT_DEKU_SKIP) || can_use_ice_arrow_platforms || is_adult || has_hover_boots || climb_anywhere || hookshot_anywhere
+  events:
+  - id: OOT_DEKU_BURN_WEB
+    name: Deku Burn Web
+    logic: has_fire_or_sticks
+- id: oot_deku_tree_basement_back_room
+  name: Deku Tree Basement Back Room
+  game: oot
+  locations:
+  - id: oot_deku_tree_gs_basement_back_room
+    name: Deku Tree GS Basement Back Room
+    locationType: collectible
+    logic: gs && event(DEKU_MUD_WALL) && event(DEKU_BURN_WEB) && (can_collect_distance || (climb_anywhere && (has_explosives
+      || has_ranged_weapon || can_use_din || (age_sword_adult && has(SWORD_BIGGORON)))))
+  - id: oot_deku_tree_grass_larva_room_1
+    name: Deku Tree Grass Larva Room 1
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_deku_tree_grass_larva_room_2
+    name: Deku Tree Grass Larva Room 2
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_deku_tree_grass_water_room_1
+    name: Deku Tree Grass Water Room 1
+    locationType: freestanding
+    logic: can_cut_grass && event(DEKU_BURN_WEB)
+  - id: oot_deku_tree_grass_water_room_2
+    name: Deku Tree Grass Water Room 2
+    locationType: freestanding
+    logic: can_cut_grass && event(DEKU_BURN_WEB)
+  - id: oot_deku_tree_grass_torch_room_1
+    name: Deku Tree Grass Torch Room 1
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_deku_tree_grass_torch_room_2
+    name: Deku Tree Grass Torch Room 2
+    locationType: freestanding
+    logic: can_cut_grass
+  exits:
+  - target: oot_deku_tree_basement_ledge
+    exitType: overworld
+    logic: is_child
+  events:
+  - id: OOT_DEKU_MUD_WALL
+    name: Deku Mud Wall
+    logic: has_explosives_or_hammer
+- id: oot_deku_tree_basement_ledge
+  name: Deku Tree Basement Ledge
+  game: oot
+  exits:
+  - target: oot_deku_tree_basement
+    exitType: overworld
+  - target: oot_deku_tree_basement_back_room
+    exitType: overworld
+    logic: is_child
+  - target: oot_deku_tree_before_boss
+    exitType: overworld
+    logic: has_fire_or_sticks && (can_swim || has_iron_boots)
+- id: oot_deku_tree_before_boss
+  name: Deku Tree Before Boss
+  game: oot
+  locations:
+  - id: oot_deku_tree_grass_pre_boss_room_1
+    name: Deku Tree Grass Pre-Boss Room 1
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_deku_tree_grass_pre_boss_room_2
+    name: Deku Tree Grass Pre-Boss Room 2
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_deku_tree_grass_pre_boss_room_3
+    name: Deku Tree Grass Pre-Boss Room 3
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_deku_tree_heart_pre_boss_1
+    name: Deku Tree Heart Pre-Boss 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_deku_tree_heart_pre_boss_2
+    name: Deku Tree Heart Pre-Boss 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_deku_tree_heart_pre_boss_3
+    name: Deku Tree Heart Pre-Boss 3
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_deku_tree_basement_ledge
+    exitType: overworld
+  - target: oot_deku_tree_boss
+    exitType: overworld
+    logic: soul_deku_scrub && has_shield_for_scrubs
+- id: oot_dodongo_cavern
+  name: Dodongo Cavern
+  game: oot
+  exits:
+  - target: oot_death_mountain
+    exitType: overworld
+  - target: oot_dodongo_cavern_main
+    exitType: overworld
+    logic: has_bombflowers || can_hammer || has_blue_fire_arrows_mudwall || has_mask_blast
+- id: oot_dodongo_cavern_main
+  name: Dodongo Cavern Main
+  game: oot
+  locations:
+  - id: oot_dodongo_cavern_map_chest
+    name: Dodongo Cavern Map Chest
+    locationType: chest
+    logic: 'true'
+  - id: oot_dodongo_cavern_lobby_scrub
+    name: Dodongo Cavern Lobby Scrub
+    locationType: scrub
+    logic: business_scrub(0x1f)
+  exits:
+  - target: oot_dodongo_cavern
+    exitType: overworld
+  - target: oot_dodongo_cavern_right_corridor
+    exitType: overworld
+    logic: has_bombflowers || can_hammer || has_blue_fire_arrows_mudwall || has_mask_blast
+  - target: oot_dodongo_cavern_main_ledge
+    exitType: overworld
+    logic: is_adult || climb_anywhere || hookshot_anywhere
+  - target: oot_dodongo_cavern_stairs
+    exitType: overworld
+    logic: event(DC_MAIN_SWITCH)
+  - target: oot_dodongo_cavern_pre_boss_lobby
+    exitType: overworld
+    logic: event(DC_BOMB_EYES)
+- id: oot_dodongo_cavern_right_corridor
+  name: Dodongo Cavern Right Corridor
+  game: oot
+  locations:
+  - id: oot_dodongo_cavern_gs_scarecrow
+    name: Dodongo Cavern GS Scarecrow
+    locationType: collectible
+    logic: gs && ((is_adult && scarecrow_hookshot) || (climb_anywhere && can_damage_skull) || hookshot_anywhere)
+  - id: oot_dodongo_cavern_pot_right_corridor_pot_1
+    name: Dodongo Cavern Pot Right Corridor Pot 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_pot_right_corridor_pot_2
+    name: Dodongo Cavern Pot Right Corridor Pot 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_pot_right_corridor_pot_3
+    name: Dodongo Cavern Pot Right Corridor Pot 3
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_pot_right_corridor_pot_4
+    name: Dodongo Cavern Pot Right Corridor Pot 4
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_pot_right_corridor_pot_5
+    name: Dodongo Cavern Pot Right Corridor Pot 5
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_pot_right_corridor_pot_6
+    name: Dodongo Cavern Pot Right Corridor Pot 6
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_dodongo_cavern_main
+    exitType: overworld
+  - target: oot_dodongo_cavern_side_room
+    exitType: overworld
+    logic: (soul_enemy(SOUL_ENEMY_BABY_DODONGO) && (can_use_sword || can_use_sticks)) || has_explosives_or_hammer || has_blue_fire_arrows_mudwall
+      || has_mask_blast
+  - target: oot_dodongo_cavern_miniboss_1
+    exitType: overworld
+- id: oot_dodongo_cavern_side_room
+  name: Dodongo Cavern Side Room
+  game: oot
+  locations:
+  - id: oot_dodongo_cavern_gs_side_room
+    name: Dodongo Cavern GS Side Room
+    locationType: collectible
+    logic: gs && can_damage_skull
+  - id: oot_dodongo_cavern_grass_east_corridor_side_room
+    name: Dodongo Cavern Grass East Corridor Side Room
+    locationType: freestanding
+    logic: can_cut_grass
+  exits:
+  - target: oot_dodongo_cavern_right_corridor
+    exitType: overworld
+- id: oot_dodongo_cavern_miniboss_1
+  name: Dodongo Cavern Miniboss 1
+  game: oot
+  locations:
+  - id: oot_dodongo_cavern_pot_miniboss_1
+    name: Dodongo Cavern Pot Miniboss 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_pot_miniboss_2
+    name: Dodongo Cavern Pot Miniboss 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_pot_miniboss_3
+    name: Dodongo Cavern Pot Miniboss 3
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_pot_miniboss_4
+    name: Dodongo Cavern Pot Miniboss 4
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_heart_miniboss_lava
+    name: Dodongo Cavern Heart Miniboss Lava
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_dodongo_cavern_right_corridor
+    exitType: overworld
+    logic: soul_lizalfos_dinolfos && (can_use_sticks || can_use_sword || can_use_slingshot || can_hammer)
+  - target: oot_dodongo_cavern_green_room
+    exitType: overworld
+    logic: soul_lizalfos_dinolfos && (can_use_sticks || can_use_sword || can_use_slingshot || can_hammer)
+  - target: oot_dodongo_cavern_miniboss_2
+    exitType: overworld
+    logic: time_travel_at_will && (climb_anywhere || (is_adult && hookshot_anywhere) || longshot_anywhere)
+- id: oot_dodongo_cavern_green_room
+  name: Dodongo Cavern Green Room
+  game: oot
+  locations:
+  - id: oot_dodongo_cavern_pot_green_room_pot_1
+    name: Dodongo Cavern Pot Green Room Pot 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_pot_green_room_pot_2
+    name: Dodongo Cavern Pot Green Room Pot 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_pot_green_room_pot_3
+    name: Dodongo Cavern Pot Green Room Pot 3
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_pot_green_room_pot_4
+    name: Dodongo Cavern Pot Green Room Pot 4
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_dodongo_cavern_miniboss_1
+    exitType: overworld
+  - target: oot_dodongo_cavern_green_side_room
+    exitType: overworld
+  - target: oot_dodongo_cavern_main_ledge
+    exitType: overworld
+    logic: has_fire_or_sticks
+- id: oot_dodongo_cavern_green_side_room
+  name: Dodongo Cavern Green Side Room
+  game: oot
+  locations:
+  - id: oot_dodongo_cavern_green_side_room_scrub
+    name: Dodongo Cavern Green Side Room Scrub
+    locationType: scrub
+    logic: business_scrub(0x1d)
+  exits:
+  - target: oot_dodongo_cavern_green_room
+    exitType: overworld
+- id: oot_dodongo_cavern_main_ledge
+  name: Dodongo Cavern Main Ledge
+  game: oot
+  exits:
+  - target: oot_dodongo_cavern_main
+    exitType: overworld
+  - target: oot_dodongo_cavern_green_room
+    exitType: overworld
+  events:
+  - id: OOT_DC_MAIN_SWITCH
+    name: Dc Main Switch
+- id: oot_dodongo_cavern_stairs
+  name: Dodongo Cavern Stairs
+  game: oot
+  exits:
+  - target: oot_dodongo_cavern_main
+    exitType: overworld
+  - target: oot_dodongo_cavern_compass_room
+    exitType: overworld
+    logic: has_bombflowers || can_hammer || has_blue_fire_arrows_mudwall || has_mask_blast
+  - target: oot_dodongo_cavern_stairs_top
+    exitType: overworld
+    logic: has_bombflowers || can_use_din || climb_anywhere || hookshot_anywhere
+- id: oot_dodongo_cavern_stairs_top
+  name: Dodongo Cavern Stairs Top
+  game: oot
+  locations:
+  - id: oot_dodongo_cavern_gs_stairs_vines
+    name: Dodongo Cavern GS Stairs Vines
+    locationType: collectible
+    logic: gs
+  - id: oot_dodongo_cavern_gs_stairs_top
+    name: Dodongo Cavern GS Stairs Top
+    locationType: collectible
+    logic: gs && ((can_collect_distance && event(DC_SHORTCUT)) || hookshot_anywhere || (climb_anywhere && (has_explosives
+      || has_ranged_weapon || can_use_din)))
+  - id: oot_dodongo_cavern_pot_stairs_pot_1
+    name: Dodongo Cavern Pot Stairs Pot 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_pot_stairs_pot_2
+    name: Dodongo Cavern Pot Stairs Pot 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_pot_stairs_pot_3
+    name: Dodongo Cavern Pot Stairs Pot 3
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_pot_stairs_pot_4
+    name: Dodongo Cavern Pot Stairs Pot 4
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_grass_lobby
+    name: Dodongo Cavern Grass Lobby
+    locationType: freestanding
+    logic: can_cut_grass
+  exits:
+  - target: oot_dodongo_cavern_stairs
+    exitType: overworld
+  - target: oot_dodongo_cavern_bomb_bag_room_1
+    exitType: overworld
+- id: oot_dodongo_cavern_compass_room
+  name: Dodongo Cavern Compass Room
+  game: oot
+  locations:
+  - id: oot_dodongo_cavern_compass_chest
+    name: Dodongo Cavern Compass Chest
+    locationType: chest
+    logic: 'true'
+  exits:
+  - target: oot_dodongo_cavern_stairs
+    exitType: overworld
+    logic: soul_armos
+- id: oot_dodongo_cavern_bomb_bag_room_1
+  name: Dodongo Cavern Bomb Bag Room 1
+  game: oot
+  locations:
+  - id: oot_dodongo_cavern_bomb_bag_side_chest
+    name: Dodongo Cavern Bomb Bag Side Chest
+    locationType: chest
+    logic: 'true'
+  - id: oot_dodongo_cavern_pot_room_before_miniboss_1
+    name: Dodongo Cavern Pot Room Before Miniboss 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_pot_room_before_miniboss_2
+    name: Dodongo Cavern Pot Room Before Miniboss 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_grass_bomb_bag_room
+    name: Dodongo Cavern Grass Bomb Bag Room
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_dodongo_cavern_grass_pre_miniboss
+    name: Dodongo Cavern Grass Pre-Miniboss
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_dodongo_cavern_heart_bomb_bag_room
+    name: Dodongo Cavern Heart Bomb Bag Room
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_dodongo_cavern_stairs_top
+    exitType: overworld
+  - target: oot_dodongo_cavern_bomb_bag_room_2
+    exitType: overworld
+    logic: can_longshot || has_hover_boots || (is_adult && trick(OOT_DC_JUMP)) || climb_anywhere || hookshot_anywhere
+  - target: oot_dodongo_cavern_miniboss_2
+    exitType: overworld
+    logic: can_hit_triggers_distance || climb_anywhere || hookshot_anywhere
+  - target: oot_dodongo_cavern_bomb_bag_side_room
+    exitType: overworld
+    logic: has_explosives_or_hammer || has_blue_fire_arrows_mudwall || has_mask_blast
+- id: oot_dodongo_cavern_bomb_bag_side_room
+  name: Dodongo Cavern Bomb Bag Side Room
+  game: oot
+  locations:
+  - id: oot_dodongo_cavern_bomb_bag_side_room_left_scrub
+    name: Dodongo Cavern Bomb Bag Side Room Left Scrub
+    locationType: scrub
+    logic: business_scrub(0x1e)
+  - id: oot_dodongo_cavern_bomb_bag_side_room_right_scrub
+    name: Dodongo Cavern Bomb Bag Side Room Right Scrub
+    locationType: scrub
+    logic: business_scrub(0x1c)
+  exits:
+  - target: oot_dodongo_cavern_bomb_bag_room_1
+    exitType: overworld
+- id: oot_dodongo_cavern_miniboss_2
+  name: Dodongo Cavern Miniboss 2
+  game: oot
+  locations:
+  - id: oot_dodongo_cavern_heart_miniboss_upper_1
+    name: Dodongo Cavern Heart Miniboss Upper 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_heart_miniboss_upper_2
+    name: Dodongo Cavern Heart Miniboss Upper 2
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_dodongo_cavern_bomb_bag_room_1
+    exitType: overworld
+    logic: soul_lizalfos_dinolfos && (can_use_sticks || can_use_sword || can_use_slingshot || can_hammer)
+  - target: oot_dodongo_cavern_bomb_bag_room_2
+    exitType: overworld
+    logic: soul_lizalfos_dinolfos && (can_use_sticks || can_use_sword || can_use_slingshot || can_hammer)
+  - target: oot_dodongo_cavern_miniboss_1
+    exitType: overworld
+    logic: time_travel_at_will
+- id: oot_dodongo_cavern_bomb_bag_room_2
+  name: Dodongo Cavern Bomb Bag Room 2
+  game: oot
+  locations:
+  - id: oot_dodongo_cavern_bomb_bag_chest
+    name: Dodongo Cavern Bomb Bag Chest
+    locationType: chest
+    logic: 'true'
+  - id: oot_dodongo_cavern_pot_bomb_bag_room_1
+    name: Dodongo Cavern Pot Bomb Bag Room 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_pot_bomb_bag_room_2
+    name: Dodongo Cavern Pot Bomb Bag Room 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_pot_room_after_miniboss_1
+    name: Dodongo Cavern Pot Room After Miniboss 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_pot_room_after_miniboss_2
+    name: Dodongo Cavern Pot Room After Miniboss 2
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_dodongo_cavern_miniboss_2
+    exitType: overworld
+  - target: oot_dodongo_cavern_bomb_bag_room_1
+    exitType: overworld
+  - target: oot_dodongo_cavern_main_bridge
+    exitType: overworld
+- id: oot_dodongo_cavern_main_bridge
+  name: Dodongo Cavern Main Bridge
+  game: oot
+  locations:
+  - id: oot_dodongo_cavern_bridge_chest
+    name: Dodongo Cavern Bridge Chest
+    locationType: chest
+    logic: has_explosives_or_hammer || has_blue_fire_arrows_mudwall || has_mask_blast
+  exits:
+  - target: oot_dodongo_cavern_bomb_bag_room_2
+    exitType: overworld
+  events:
+  - id: OOT_DC_SHORTCUT
+    name: Dc Shortcut
+  - id: OOT_DC_BOMB_EYES
+    name: Dc Bomb Eyes
+    logic: has_explosives
+- id: oot_dodongo_cavern_pre_boss_lobby
+  name: Dodongo Cavern Pre-Boss Lobby
+  game: oot
+  locations:
+  - id: oot_dodongo_cavern_pot_skull_1
+    name: Dodongo Cavern Pot Skull 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_pot_skull_2
+    name: Dodongo Cavern Pot Skull 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_pot_skull_3
+    name: Dodongo Cavern Pot Skull 3
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_pot_skull_4
+    name: Dodongo Cavern Pot Skull 4
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_dodongo_cavern_grass_pre_boss
+    name: Dodongo Cavern Grass Pre-Boss
+    locationType: freestanding
+    logic: can_cut_grass
+  exits:
+  - target: oot_dodongo_cavern_main
+    exitType: overworld
+  - target: oot_dodongo_cavern_boss
+    exitType: overworld
+  - target: oot_dodongo_cavern_gs_near_boss
+    exitType: overworld
+    logic: has_explosives_or_hammer || has_blue_fire_arrows_mudwall || has_mask_blast
+- id: oot_dodongo_cavern_gs_near_boss
+  name: Dodongo Cavern GS Near Boss
+  game: oot
+  locations:
+  - id: oot_dodongo_cavern_gs_near_boss
+    name: Dodongo Cavern GS Near Boss
+    locationType: collectible
+    logic: gs && can_damage_skull
+  exits:
+  - target: oot_dodongo_cavern_pre_boss_lobby
+    exitType: overworld
+- id: oot_fire_temple
+  name: Fire Temple
+  game: oot
+  exits:
+  - target: oot_death_mountain_crater_near_temple
+    exitType: overworld
+  - target: oot_fire_temple_lava_room
+    exitType: overworld
+    logic: small_keys_fire(1)
+  - target: oot_fire_temple_boss_key_loop_start
+    exitType: overworld
+    logic: cond(setting(smallKeyShuffleOot, anywhere), small_keys_fire(7), true) && can_hammer
+  - target: oot_fire_temple_pre_boss
+    exitType: overworld
+- id: oot_fire_temple_pre_boss
+  name: Fire Temple Pre-Boss
+  game: oot
+  locations:
+  - id: oot_fire_temple_jail_1_chest
+    name: Fire Temple Jail 1 Chest
+    locationType: chest
+    logic: has_tunic_goron
+  - id: oot_fire_temple_pot_pre_boss_room_1
+    name: Fire Temple Pot Pre-Boss Room 1
+    locationType: freestanding
+    logic: has_tunic_goron && ((is_adult && (has_hover_boots || can_hookshot || glitch_megaflip)) || climb_anywhere || hookshot_anywhere)
+  - id: oot_fire_temple_pot_pre_boss_room_2
+    name: Fire Temple Pot Pre-Boss Room 2
+    locationType: freestanding
+    logic: has_tunic_goron && ((is_adult && (has_hover_boots || can_hookshot || glitch_megaflip)) || climb_anywhere || hookshot_anywhere)
+  - id: oot_fire_temple_pot_pre_boss_room_3
+    name: Fire Temple Pot Pre-Boss Room 3
+    locationType: freestanding
+    logic: has_tunic_goron && ((is_adult && (has_hover_boots || can_hookshot || glitch_megaflip)) || climb_anywhere || hookshot_anywhere)
+  - id: oot_fire_temple_pot_pre_boss_room_4
+    name: Fire Temple Pot Pre-Boss Room 4
+    locationType: freestanding
+    logic: has_tunic_goron && ((is_adult && (has_hover_boots || can_hookshot || glitch_megaflip)) || climb_anywhere || hookshot_anywhere)
+  exits:
+  - target: oot_fire_temple
+    exitType: overworld
+  - target: oot_fire_temple_boss
+    exitType: overworld
+    logic: boss_key(BOSS_KEY_FIRE) && has_tunic_goron && (((is_adult || time_travel_at_will) && event(FIRE_TEMPLE_PILLAR_HAMMER))
+      || has_hover_boots || climb_anywhere || hookshot_anywhere)
+- id: oot_fire_temple_boss_key_loop_start
+  name: Fire Temple Boss Key Loop Start
+  game: oot
+  exits:
+  - target: oot_fire_temple
+    exitType: overworld
+  - target: oot_fire_temple_boss_key_loop_floor_tiles
+    exitType: overworld
+    logic: soul_keese && soul_enemy(SOUL_ENEMY_TORCH_SLUG)
+- id: oot_fire_temple_boss_key_loop_floor_tiles
+  name: Fire Temple Boss Key Loop Floor Tiles
+  game: oot
+  locations:
+  - id: oot_fire_temple_gs_hammer_statues
+    name: Fire Temple GS Hammer Statues
+    locationType: collectible
+    logic: gs
+  exits:
+  - target: oot_fire_temple_boss_key_loop_start
+    exitType: overworld
+  - target: oot_fire_temple_boss_key_loop_flare_dancer
+    exitType: overworld
+- id: oot_fire_temple_boss_key_loop_flare_dancer
+  name: Fire Temple Boss Key Loop Flare Dancer
+  game: oot
+  locations:
+  - id: oot_fire_temple_boss_key_side_chest
+    name: Fire Temple Boss Key Side Chest
+    locationType: chest
+    logic: soul_enemy(SOUL_ENEMY_FLARE_DANCER) && (is_adult || can_hookshot || climb_anywhere)
+  exits:
+  - target: oot_fire_temple_boss_key_loop_floor_tiles
+    exitType: overworld
+    logic: soul_enemy(SOUL_ENEMY_FLARE_DANCER)
+  - target: oot_fire_temple_boss_key_loop_end
+    exitType: overworld
+    logic: soul_enemy(SOUL_ENEMY_FLARE_DANCER)
+- id: oot_fire_temple_boss_key_loop_end
+  name: Fire Temple Boss Key Loop End
+  game: oot
+  locations:
+  - id: oot_fire_temple_boss_key_chest
+    name: Fire Temple Boss Key Chest
+    locationType: chest
+    logic: 'true'
+- id: oot_fire_temple_lava_room
+  name: Fire Temple Lava Room
+  game: oot
+  locations:
+  - id: oot_fire_temple_lava_room_north_jail_chest
+    name: Fire Temple Lava Room North Jail Chest
+    locationType: chest
+    logic: has_tunic_goron
+  - id: oot_fire_temple_lava_room_south_jail_chest
+    name: Fire Temple Lava Room South Jail Chest
+    locationType: chest
+    logic: (is_adult || climb_anywhere || hookshot_anywhere) && has_tunic_goron && has_explosives
+  - id: oot_fire_temple_gs_lava_side_room
+    name: Fire Temple GS Lava Side Room
+    locationType: collectible
+    logic: gs && has_tunic_goron && (climb_anywhere || hookshot_anywhere || (is_adult && can_play_time)) && can_damage_skull
+  - id: oot_fire_temple_pot_lava_room_1
+    name: Fire Temple Pot Lava Room 1
+    locationType: freestanding
+    logic: has_tunic_goron
+  - id: oot_fire_temple_pot_lava_room_2
+    name: Fire Temple Pot Lava Room 2
+    locationType: freestanding
+    logic: has_tunic_goron
+  - id: oot_fire_temple_pot_lava_room_3
+    name: Fire Temple Pot Lava Room 3
+    locationType: freestanding
+    logic: has_tunic_goron
+  - id: oot_fire_temple_heart_elevator_1
+    name: Fire Temple Heart Elevator 1
+    locationType: freestanding
+    logic: small_keys_fire(2) && has_tunic_goron_strict
+  - id: oot_fire_temple_heart_elevator_2
+    name: Fire Temple Heart Elevator 2
+    locationType: freestanding
+    logic: small_keys_fire(2) && has_tunic_goron_strict
+  - id: oot_fire_temple_heart_elevator_3
+    name: Fire Temple Heart Elevator 3
+    locationType: freestanding
+    logic: small_keys_fire(2) && has_tunic_goron_strict
+  exits:
+  - target: oot_fire_temple_maze
+    exitType: overworld
+    logic: small_keys_fire(3) && has_tunic_goron_strict && (hookshot_anywhere || ((((is_adult || time_travel_at_will) && has_goron_bracelet)
+      || climb_anywhere) && (has_ranged_weapon || has_explosives)))
+- id: oot_fire_temple_maze
+  name: Fire Temple Maze
+  game: oot
+  locations:
+  - id: oot_fire_temple_maze_chest
+    name: Fire Temple Maze Chest
+    locationType: chest
+    logic: 'true'
+  - id: oot_fire_temple_maze_jail_chest
+    name: Fire Temple Maze Jail Chest
+    locationType: chest
+    logic: 'true'
+  - id: oot_fire_temple_gs_maze
+    name: Fire Temple GS Maze
+    locationType: collectible
+    logic: gs && has_explosives && (climb_anywhere || can_collect_distance)
+  - id: oot_fire_temple_map
+    name: Fire Temple Map
+    locationType: npc
+    logic: can_hit_triggers_distance && small_keys_fire(4)
+  exits:
+  - target: oot_fire_temple_maze_upper
+    exitType: overworld
+    logic: small_keys_fire(5) || climb_anywhere || hookshot_anywhere
+  - target: oot_fire_temple_ledge_above_main
+    exitType: overworld
+    logic: small_keys_fire(4) || climb_anywhere || hookshot_anywhere
+- id: oot_fire_temple_ledge_above_main
+  name: Fire Temple Ledge Above Main
+  game: oot
+  locations:
+  - id: oot_fire_temple_heart_ledge_above_main_1
+    name: Fire Temple Heart Ledge Above Main 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_fire_temple_heart_ledge_above_main_2
+    name: Fire Temple Heart Ledge Above Main 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_fire_temple_heart_ledge_above_main_3
+    name: Fire Temple Heart Ledge Above Main 3
+    locationType: freestanding
+    logic: 'true'
+- id: oot_fire_temple_maze_upper
+  name: Fire Temple Maze Upper
+  game: oot
+  locations:
+  - id: oot_fire_temple_above_maze_chest
+    name: Fire Temple Above Maze Chest
+    locationType: chest
+    logic: 'true'
+  - id: oot_fire_temple_below_maze_chest
+    name: Fire Temple Below Maze Chest
+    locationType: chest
+    logic: has_explosives
+  - id: oot_fire_temple_heart_map_room_1
+    name: Fire Temple Heart Map Room 1
+    locationType: freestanding
+    logic: is_adult || climb_anywhere || hookshot_anywhere || can_boomerang
+  - id: oot_fire_temple_heart_map_room_2
+    name: Fire Temple Heart Map Room 2
+    locationType: freestanding
+    logic: is_adult || climb_anywhere || hookshot_anywhere || can_boomerang
+  - id: oot_fire_temple_heart_map_room_3
+    name: Fire Temple Heart Map Room 3
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_fire_temple_ring
+    exitType: overworld
+    logic: small_keys_fire(6) && (is_adult || climb_anywhere || hookshot_anywhere)
+  - target: oot_fire_temple_scarecrow
+    exitType: overworld
+    logic: scarecrow_hookshot || hookshot_anywhere || climb_anywhere
+- id: oot_fire_temple_scarecrow
+  name: Fire Temple Scarecrow
+  game: oot
+  locations:
+  - id: oot_fire_temple_scarecrow_chest
+    name: Fire Temple Scarecrow Chest
+    locationType: chest
+    logic: 'true'
+  - id: oot_fire_temple_gs_scarecrow_wall
+    name: Fire Temple GS Scarecrow Wall
+    locationType: collectible
+    logic: gs && (can_use_sword || has_ranged_weapon || has_explosives || can_use_sticks || can_use_din)
+  - id: oot_fire_temple_gs_scarecrow_top
+    name: Fire Temple GS Scarecrow Top
+    locationType: collectible
+    logic: gs && (can_hookshot || (climb_anywhere && (has_ranged_weapon || has_explosives || can_use_din)))
+- id: oot_fire_temple_ring
+  name: Fire Temple Ring
+  game: oot
+  locations:
+  - id: oot_fire_temple_compass
+    name: Fire Temple Compass
+    locationType: npc
+    logic: 'true'
+  - id: oot_fire_temple_pot_ring_1
+    name: Fire Temple Pot Ring 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_fire_temple_pot_ring_2
+    name: Fire Temple Pot Ring 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_fire_temple_pot_ring_3
+    name: Fire Temple Pot Ring 3
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_fire_temple_pot_ring_4
+    name: Fire Temple Pot Ring 4
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_fire_temple_before_miniboss
+    exitType: overworld
+    logic: small_keys_fire(7) || hookshot_anywhere || climb_anywhere
+  - target: oot_fire_temple_pillar_ledge
+    exitType: overworld
+    logic: has_hover_boots || hookshot_anywhere || climb_anywhere
+- id: oot_fire_temple_before_miniboss
+  name: Fire Temple Before Miniboss
+  game: oot
+  locations:
+  - id: oot_fire_temple_ring_jail
+    name: Fire Temple Ring Jail
+    locationType: npc
+    logic: can_hammer && can_play_time
+  - id: oot_fire_temple_pot_before_miniboss_1
+    name: Fire Temple Pot Before Miniboss 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_fire_temple_pot_before_miniboss_2
+    name: Fire Temple Pot Before Miniboss 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_fire_temple_pot_before_miniboss_3
+    name: Fire Temple Pot Before Miniboss 3
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_fire_temple_pot_before_miniboss_4
+    name: Fire Temple Pot Before Miniboss 4
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_fire_temple_after_miniboss
+    exitType: overworld
+    logic: soul_enemy(SOUL_ENEMY_FLARE_DANCER) && has_explosives && (can_use_sword || can_hammer || can_use_sticks)
+  - target: oot_fire_temple_pillar_ledge
+    exitType: overworld
+    logic: can_play_time || hookshot_anywhere || climb_anywhere
+- id: oot_fire_temple_pillar_ledge
+  name: Fire Temple Pillar Ledge
+  game: oot
+  exits:
+  - target: oot_fire_temple_before_miniboss
+    exitType: overworld
+    logic: can_hammer
+  - target: oot_fire_temple_ring
+    exitType: overworld
+  events:
+  - id: OOT_FIRE_TEMPLE_PILLAR_HAMMER
+    name: Fire Temple Pillar Hammer
+    logic: can_hammer
+- id: oot_fire_temple_after_miniboss
+  name: Fire Temple After Miniboss
+  game: oot
+  locations:
+  - id: oot_fire_temple_hammer
+    name: Fire Temple Hammer
+    locationType: npc
+    logic: 'true'
+  - id: oot_fire_temple_crate_1
+    name: Fire Temple Crate 1
+    locationType: freestanding
+    logic: can_hammer
+  - id: oot_fire_temple_crate_2
+    name: Fire Temple Crate 2
+    locationType: freestanding
+    logic: can_hammer
+  exits:
+  - target: oot_fire_temple_pillar_ledge
+    exitType: overworld
+    logic: can_hammer
+- id: oot_forest_temple
+  name: Forest Temple
+  game: oot
+  locations:
+  - id: oot_forest_temple_tree_small_key
+    name: Forest Temple Tree Small Key
+    locationType: npc
+    logic: 'true'
+  - id: oot_forest_temple_gs_entrance
+    name: Forest Temple GS Entrance
+    locationType: collectible
+    logic: gs && (has_ranged_weapon || has_explosives || can_use_din)
+  exits:
+  - target: oot_sacred_meadow
+    exitType: overworld
+  - target: oot_forest_temple_main
+    exitType: overworld
+    logic: can_damage || can_collect_distance || can_hammer
+- id: oot_forest_temple_wallmaster_west
+  name: Forest Temple Wallmaster West
+  game: oot
+  exits:
+  - target: oot_void
+    exitType: overworld
+- id: oot_forest_temple_wallmaster_east
+  name: Forest Temple Wallmaster East
+  game: oot
+  exits:
+  - target: oot_void
+    exitType: overworld
+- id: oot_forest_temple_main
+  name: Forest Temple Main
+  game: oot
+  locations:
+  - id: oot_forest_temple_gs_main
+    name: Forest Temple GS Main
+    locationType: collectible
+    logic: gs && (can_collect_distance || (climb_anywhere && (has_ranged_weapon || has_explosives || can_use_din)))
+  - id: oot_forest_temple_pot_main_room_1
+    name: Forest Temple Pot Main Room 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_forest_temple_pot_main_room_2
+    name: Forest Temple Pot Main Room 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_forest_temple_pot_main_room_3
+    name: Forest Temple Pot Main Room 3
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_forest_temple_pot_main_room_4
+    name: Forest Temple Pot Main Room 4
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_forest_temple_pot_main_room_5
+    name: Forest Temple Pot Main Room 5
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_forest_temple_pot_main_room_6
+    name: Forest Temple Pot Main Room 6
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_forest_temple
+    exitType: overworld
+  - target: oot_forest_temple_mini_boss
+    exitType: overworld
+  - target: oot_forest_temple_garden_west
+    exitType: overworld
+    logic: is_child || can_play_time
+  - target: oot_forest_temple_garden_east
+    exitType: overworld
+    logic: can_hit_triggers_distance
+  - target: oot_forest_temple_maze
+    exitType: overworld
+    logic: small_keys_forest(1)
+  - target: oot_forest_temple_antichamber
+    exitType: overworld
+    logic: event(FOREST_POE_4)
+  - target: oot_forest_temple_poe_3
+    exitType: overworld
+    logic: climb_anywhere || hookshot_anywhere
+  events:
+  - id: OOT_FOREST_POE_4
+    name: Forest Poe 4
+    logic: soul_poe && event(FOREST_POE_1) && event(FOREST_POE_2) && event(FOREST_POE_3)
+- id: oot_forest_temple_mini_boss
+  name: Forest Temple Mini-Boss
+  game: oot
+  locations:
+  - id: oot_forest_temple_mini_boss_key
+    name: Forest Temple Mini-Boss Key
+    locationType: boss
+    logic: can_use_sword && soul_enemy(SOUL_ENEMY_STALFOS)
+  - id: oot_forest_temple_pot_miniboss_lower_1
+    name: Forest Temple Pot Miniboss Lower 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_forest_temple_pot_miniboss_lower_2
+    name: Forest Temple Pot Miniboss Lower 2
+    locationType: freestanding
+    logic: 'true'
+- id: oot_forest_temple_garden_west
+  name: Forest Temple Garden West
+  game: oot
+  locations:
+  - id: oot_forest_temple_gs_garden_west
+    name: Forest Temple GS Garden West
+    locationType: collectible
+    logic: gs && ((can_longshot || (climb_anywhere && has_bombchu)) || (event(FOREST_LEDGE_REACHED) && (can_collect_distance
+      || (climb_anywhere && has_ranged_weapon))))
+  exits:
+  - target: oot_forest_temple_main
+    exitType: overworld
+  - target: oot_forest_temple_map_room
+    exitType: overworld
+  - target: oot_forest_temple_well
+    exitType: overworld
+    logic: event(FOREST_WELL) || can_dive_big
+  - target: oot_forest_temple_garden_west_ledge
+    exitType: overworld
+    logic: climb_anywhere || hookshot_anywhere
+- id: oot_forest_temple_garden_west_ledge
+  name: Forest Temple Garden West Ledge
+  game: oot
+  locations:
+  - id: oot_forest_temple_heart_garden_1
+    name: Forest Temple Heart Garden 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_forest_temple_heart_garden_2
+    name: Forest Temple Heart Garden 2
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_forest_temple_garden_west
+    exitType: overworld
+  - target: oot_forest_temple_floormaster
+    exitType: overworld
+  - target: oot_forest_temple_maze
+    exitType: overworld
+  - target: oot_forest_temple_twisted_1_alt
+    exitType: overworld
+    logic: event(FOREST_TWISTED_HALL) && hookshot_anywhere && climb_anywhere
+  events:
+  - id: OOT_FOREST_LEDGE_REACHED
+    name: Forest Ledge Reached
+- id: oot_forest_temple_floormaster
+  name: Forest Temple Floormaster
+  game: oot
+  locations:
+  - id: oot_forest_temple_floormaster
+    name: Forest Temple Floormaster
+    locationType: npc
+    logic: soul_floormaster && (can_use_sword || can_use_sticks)
+- id: oot_forest_temple_map_room
+  name: Forest Temple Map Room
+  game: oot
+  locations:
+  - id: oot_forest_temple_map
+    name: Forest Temple Map
+    locationType: npc
+    logic: soul_bubble && (can_use_bow || has_explosives || ((can_hookshot || has_nuts || can_boomerang || has_shield) &&
+      (can_use_sword || can_use_slingshot || can_use_sticks)))
+  exits:
+  - target: oot_forest_temple_garden_west
+    exitType: overworld
+    logic: soul_bubble && (can_use_bow || has_explosives || ((can_hookshot || has_nuts || can_boomerang || has_shield) &&
+      (can_use_sword || can_use_slingshot || can_use_sticks)))
+  - target: oot_forest_temple_garden_east_ledge
+    exitType: overworld
+    logic: soul_bubble && (can_use_bow || has_explosives || ((can_hookshot || has_nuts || can_boomerang || has_shield) &&
+      (can_use_sword || can_use_slingshot || can_use_sticks)))
+- id: oot_forest_temple_garden_east_ledge
+  name: Forest Temple Garden East Ledge
+  game: oot
+  exits:
+  - target: oot_forest_temple_garden_east
+    exitType: overworld
+  - target: oot_forest_temple_map_room
+    exitType: overworld
+  events:
+  - id: OOT_FOREST_WELL
+    name: Forest Well
+- id: oot_forest_temple_garden_east
+  name: Forest Temple Garden East
+  game: oot
+  locations:
+  - id: oot_forest_temple_garden
+    name: Forest Temple Garden
+    locationType: npc
+    logic: can_hookshot || climb_anywhere
+  - id: oot_forest_temple_gs_garden_east
+    name: Forest Temple GS Garden East
+    locationType: collectible
+    logic: gs && (can_hookshot || (climb_anywhere && (has_ranged_weapon || can_use_sword_master || has_explosives || can_use_din
+      || (age_sword_adult && has(SWORD_BIGGORON)) || can_use_sticks || (can_use_sword_kokiri && has_hover_boots))))
+  exits:
+  - target: oot_forest_temple_well
+    exitType: overworld
+    logic: event(FOREST_WELL) || can_dive_big
+  - target: oot_forest_temple_garden_east_ledge
+    exitType: overworld
+    logic: can_longshot || (can_hookshot && trick(OOT_FOREST_HOOK)) || climb_anywhere
+  - target: oot_forest_temple_checkerboard
+    exitType: overworld
+    logic: climb_anywhere || hookshot_anywhere
+- id: oot_forest_temple_well
+  name: Forest Temple Well
+  game: oot
+  locations:
+  - id: oot_forest_temple_well
+    name: Forest Temple Well
+    locationType: npc
+    logic: event(FOREST_WELL)
+  - id: oot_forest_temple_heart_well_1
+    name: Forest Temple Heart Well 1
+    locationType: freestanding
+    logic: event(FOREST_WELL) || has_iron_boots
+  - id: oot_forest_temple_heart_well_2
+    name: Forest Temple Heart Well 2
+    locationType: freestanding
+    logic: event(FOREST_WELL) || has_iron_boots
+  exits:
+  - target: oot_forest_temple_garden_west
+    exitType: overworld
+  - target: oot_forest_temple_garden_east
+    exitType: overworld
+- id: oot_forest_temple_maze
+  name: Forest Temple Maze
+  game: oot
+  locations:
+  - id: oot_forest_temple_maze
+    name: Forest Temple Maze
+    locationType: npc
+    logic: (has_goron_bracelet || climb_anywhere || hookshot_anywhere) && can_hit_triggers_distance
+  exits:
+  - target: oot_forest_temple_main
+    exitType: overworld
+  - target: oot_forest_temple_garden_west_ledge
+    exitType: overworld
+    logic: has_hover_boots || climb_anywhere || hookshot_anywhere
+  - target: oot_forest_temple_twisted_1_normal
+    exitType: overworld
+    logic: (((is_adult || time_travel_at_will) && has_goron_bracelet) || climb_anywhere || hookshot_anywhere) && cond(!setting(hookshotAnywhereOot,
+      off) && !setting(ageChange, none), small_keys_forest(5), small_keys_forest(2))
+  - target: oot_forest_temple_twisted_1_alt
+    exitType: overworld
+    logic: event(FOREST_TWISTED_HALL) && cond(!setting(hookshotAnywhereOot, off) && !setting(ageChange, none), small_keys_forest(5),
+      small_keys_forest(2))
+  events:
+  - id: OOT_FOREST_TWISTED_HALL
+    name: Forest Twisted Hall
+    logic: (((is_adult || time_travel_at_will) && has_goron_bracelet) || climb_anywhere || hookshot_anywhere) && can_hit_triggers_distance
+- id: oot_forest_temple_twisted_1_normal
+  name: Forest Temple Twisted 1 Normal
+  game: oot
+  exits:
+  - target: oot_forest_temple_wallmaster_west
+    exitType: overworld
+    logic: soul_wallmaster
+  - target: oot_forest_temple_poe_1
+    exitType: overworld
+    logic: cond(!setting(hookshotAnywhereOot, off) && !setting(ageChange, none), small_keys_forest(5), small_keys_forest(3))
+- id: oot_forest_temple_twisted_1_alt
+  name: Forest Temple Twisted 1 Alt
+  game: oot
+  locations:
+  - id: oot_forest_temple_boss_key
+    name: Forest Temple Boss Key
+    locationType: boss
+    logic: 'true'
+  exits:
+  - target: oot_forest_temple_wallmaster_west
+    exitType: overworld
+    logic: soul_wallmaster
+  - target: oot_forest_temple_garden_west_ledge
+    exitType: overworld
+    logic: soul_bubble && (can_use_bow || can_hammer || has_explosives || has_nuts || can_collect_distance || has_shield)
+- id: oot_forest_temple_poe_1
+  name: Forest Temple Poe 1
+  game: oot
+  locations:
+  - id: oot_forest_temple_poe_key
+    name: Forest Temple Poe Key
+    locationType: npc
+    logic: event(FOREST_POE_1)
+  exits:
+  - target: oot_forest_temple_mini_boss_2
+    exitType: overworld
+  events:
+  - id: OOT_FOREST_POE_1
+    name: Forest Poe 1
+    logic: soul_poe && can_use_bow
+- id: oot_forest_temple_mini_boss_2
+  name: Forest Temple Mini-Boss 2
+  game: oot
+  locations:
+  - id: oot_forest_temple_bow
+    name: Forest Temple Bow
+    locationType: npc
+    logic: can_use_sword && soul_enemy(SOUL_ENEMY_STALFOS)
+  - id: oot_forest_temple_pot_miniboss_upper_1
+    name: Forest Temple Pot Miniboss Upper 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_forest_temple_pot_miniboss_upper_2
+    name: Forest Temple Pot Miniboss Upper 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_forest_temple_pot_miniboss_upper_3
+    name: Forest Temple Pot Miniboss Upper 3
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_forest_temple_pot_miniboss_upper_4
+    name: Forest Temple Pot Miniboss Upper 4
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_forest_temple_poe_2
+    exitType: overworld
+    logic: can_use_sword && soul_enemy(SOUL_ENEMY_STALFOS)
+- id: oot_forest_temple_poe_2
+  name: Forest Temple Poe 2
+  game: oot
+  locations:
+  - id: oot_forest_temple_compass
+    name: Forest Temple Compass
+    locationType: npc
+    logic: event(FOREST_POE_2)
+  - id: oot_forest_temple_pot_blue_poe_1
+    name: Forest Temple Pot Blue Poe 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_forest_temple_pot_blue_poe_2
+    name: Forest Temple Pot Blue Poe 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_forest_temple_pot_blue_poe_3
+    name: Forest Temple Pot Blue Poe 3
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_forest_temple_twisted_2_normal
+    exitType: overworld
+    logic: small_keys_forest(4)
+  events:
+  - id: OOT_FOREST_POE_2
+    name: Forest Poe 2
+    logic: soul_poe && can_use_bow
+- id: oot_forest_temple_twisted_2_normal
+  name: Forest Temple Twisted 2 Normal
+  game: oot
+  exits:
+  - target: oot_forest_temple_wallmaster_east
+    exitType: overworld
+    logic: soul_wallmaster
+  - target: oot_forest_temple_rotating_room
+    exitType: overworld
+    logic: small_keys_forest(5)
+- id: oot_forest_temple_rotating_room
+  name: Forest Temple Rotating Room
+  game: oot
+  locations:
+  - id: oot_forest_temple_pot_rotating_room_1
+    name: Forest Temple Pot Rotating Room 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_forest_temple_pot_rotating_room_2
+    name: Forest Temple Pot Rotating Room 2
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_forest_temple_twisted_2_alt
+    exitType: overworld
+    logic: can_use_bow || can_use_din
+- id: oot_forest_temple_twisted_2_alt
+  name: Forest Temple Twisted 2 Alt
+  game: oot
+  exits:
+  - target: oot_forest_temple_wallmaster_east
+    exitType: overworld
+    logic: soul_wallmaster
+  - target: oot_forest_temple_checkerboard
+    exitType: overworld
+- id: oot_forest_temple_checkerboard
+  name: Forest Temple Checkerboard
+  game: oot
+  locations:
+  - id: oot_forest_temple_checkerboard
+    name: Forest Temple Checkerboard
+    locationType: npc
+    logic: 'true'
+  exits:
+  - target: oot_forest_temple_poe_3
+    exitType: overworld
+  - target: oot_forest_temple_garden_east
+    exitType: overworld
+- id: oot_forest_temple_poe_3
+  name: Forest Temple Poe 3
+  game: oot
+  locations:
+  - id: oot_forest_temple_pot_green_poe_pot_1
+    name: Forest Temple Pot Green Poe Pot 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_forest_temple_pot_green_poe_pot_2
+    name: Forest Temple Pot Green Poe Pot 2
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_forest_temple_checkerboard
+    exitType: overworld
+  events:
+  - id: OOT_FOREST_POE_3
+    name: Forest Poe 3
+    logic: soul_poe && can_use_bow
+- id: oot_forest_temple_antichamber
+  name: Forest Temple Antichamber
+  game: oot
+  locations:
+  - id: oot_forest_temple_antichamber
+    name: Forest Temple Antichamber
+    locationType: npc
+    logic: 'true'
+  - id: oot_forest_temple_gs_antichamber
+    name: Forest Temple GS Antichamber
+    locationType: collectible
+    logic: gs && (can_collect_distance || climb_anywhere)
+  exits:
+  - target: oot_forest_temple_boss
+    exitType: overworld
+    logic: boss_key(BOSS_KEY_FOREST)
+- id: oot_ganon_castle
+  name: Ganon Castle
+  game: oot
+  exits:
+  - target: oot_ganon_castle_exterior_after_bridge
+    exitType: overworld
+  - target: oot_ganon_castle_light
+    exitType: overworld
+    logic: can_lift_gold
+  - target: oot_ganon_castle_forest
+    exitType: overworld
+  - target: oot_ganon_castle_fire
+    exitType: overworld
+  - target: oot_ganon_castle_water
+    exitType: overworld
+  - target: oot_ganon_castle_spirit
+    exitType: overworld
+  - target: oot_ganon_castle_shadow
+    exitType: overworld
+  - target: oot_ganon_castle_stairs
+    exitType: overworld
+  - target: oot_ganon_castle_fairy_fountain
+    exitType: overworld
+    logic: has_lens
+- id: oot_ganon_castle_spirit_wallmaster
+  name: Ganon Castle Spirit Wallmaster
+  game: oot
+  exits:
+  - target: oot_void
+    exitType: overworld
+- id: oot_ganon_castle_light_wallmaster
+  name: Ganon Castle Light Wallmaster
+  game: oot
+  exits:
+  - target: oot_void
+    exitType: overworld
+- id: oot_ganon_castle_fairy_fountain
+  name: Ganon Castle Fairy Fountain
+  game: oot
+  locations:
+  - id: oot_ganon_castle_leftmost_scrub
+    name: Ganon Castle Leftmost Scrub
+    locationType: scrub
+    logic: business_scrub(0x21)
+  - id: oot_ganon_castle_left_center_scrub
+    name: Ganon Castle Left-Center Scrub
+    locationType: scrub
+    logic: business_scrub(0x22)
+  - id: oot_ganon_castle_right_center_scrub
+    name: Ganon Castle Right-Center Scrub
+    locationType: scrub
+    logic: business_scrub(0x23)
+  - id: oot_ganon_castle_rightmost_scrub
+    name: Ganon Castle Rightmost Scrub
+    locationType: scrub
+    logic: business_scrub(0x24)
+  - id: oot_ganon_castle_fairy_fountain_fairy_1
+    name: Ganon Castle Fairy Fountain Fairy 1
+    locationType: fairy
+    logic: 'true'
+  - id: oot_ganon_castle_fairy_fountain_fairy_2
+    name: Ganon Castle Fairy Fountain Fairy 2
+    locationType: fairy
+    logic: 'true'
+  - id: oot_ganon_castle_fairy_fountain_fairy_3
+    name: Ganon Castle Fairy Fountain Fairy 3
+    locationType: fairy
+    logic: 'true'
+  - id: oot_ganon_castle_fairy_fountain_fairy_4
+    name: Ganon Castle Fairy Fountain Fairy 4
+    locationType: fairy
+    logic: 'true'
+  - id: oot_ganon_castle_fairy_fountain_fairy_5
+    name: Ganon Castle Fairy Fountain Fairy 5
+    locationType: fairy
+    logic: 'true'
+  - id: oot_ganon_castle_fairy_fountain_fairy_6
+    name: Ganon Castle Fairy Fountain Fairy 6
+    locationType: fairy
+    logic: 'true'
+  - id: oot_ganon_castle_fairy_fountain_fairy_7
+    name: Ganon Castle Fairy Fountain Fairy 7
+    locationType: fairy
+    logic: 'true'
+  - id: oot_ganon_castle_fairy_fountain_fairy_8
+    name: Ganon Castle Fairy Fountain Fairy 8
+    locationType: fairy
+    logic: 'true'
+- id: oot_ganon_castle_light
+  name: Ganon Castle Light
+  game: oot
+  locations:
+  - id: oot_ganon_castle_light_chest_around_1
+    name: Ganon Castle Light Chest Around 1
+    locationType: chest
+    logic: 'true'
+  - id: oot_ganon_castle_light_chest_around_2
+    name: Ganon Castle Light Chest Around 2
+    locationType: chest
+    logic: 'true'
+  - id: oot_ganon_castle_light_chest_around_3
+    name: Ganon Castle Light Chest Around 3
+    locationType: chest
+    logic: 'true'
+  - id: oot_ganon_castle_light_chest_around_4
+    name: Ganon Castle Light Chest Around 4
+    locationType: chest
+    logic: 'true'
+  - id: oot_ganon_castle_light_chest_around_5
+    name: Ganon Castle Light Chest Around 5
+    locationType: chest
+    logic: 'true'
+  - id: oot_ganon_castle_light_chest_around_6
+    name: Ganon Castle Light Chest Around 6
+    locationType: chest
+    logic: 'true'
+  - id: oot_ganon_castle_light_chest_center
+    name: Ganon Castle Light Chest Center
+    locationType: chest
+    logic: soul_keese && soul_skulltula && has_lens && (can_use_sword || has_explosives_or_hammer || can_use_slingshot ||
+      can_use_sticks)
+  - id: oot_ganon_castle_light_chest_lullaby
+    name: Ganon Castle Light Chest Lullaby
+    locationType: chest
+    logic: small_keys_ganon(1) && song_event(0x11)
+  exits:
+  - target: oot_ganon_castle_light_2
+    exitType: overworld
+    logic: small_keys_ganon(2)
+- id: oot_ganon_castle_light_2
+  name: Ganon Castle Light 2
+  game: oot
+  locations:
+  - id: oot_ganon_castle_sr_light_alcove_right
+    name: Ganon Castle SR Light Alcove Right
+    locationType: npc
+    logic: 'true'
+  - id: oot_ganon_castle_sr_light_alcove_left
+    name: Ganon Castle SR Light Alcove Left
+    locationType: npc
+    logic: 'true'
+  - id: oot_ganon_castle_sr_light_center_top
+    name: Ganon Castle SR Light Center Top
+    locationType: npc
+    logic: can_hookshot || climb_anywhere
+  - id: oot_ganon_castle_sr_light_center_right
+    name: Ganon Castle SR Light Center Right
+    locationType: npc
+    logic: 'true'
+  - id: oot_ganon_castle_sr_light_center_left
+    name: Ganon Castle SR Light Center Left
+    locationType: npc
+    logic: 'true'
+  - id: oot_ganon_castle_pot_light
+    name: Ganon Castle Pot Light
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_ganon_castle_light_end
+    exitType: overworld
+    logic: silver_rupees_ganon_light && has_lens
+- id: oot_ganon_castle_light_end
+  name: Ganon Castle Light End
+  game: oot
+  locations:
+  - id: oot_ganon_castle_pot_light_end_1
+    name: Ganon Castle Pot Light End 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ganon_castle_pot_light_end_2
+    name: Ganon Castle Pot Light End 2
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_ganon_castle_light_wallmaster
+    exitType: overworld
+    logic: soul_wallmaster
+  events:
+  - id: OOT_GANON_TRIAL_LIGHT
+    name: Ganon Trial Light
+    logic: can_use_light_arrows
+- id: oot_ganon_castle_forest
+  name: Ganon Castle Forest
+  game: oot
+  locations:
+  - id: oot_ganon_castle_forest_chest
+    name: Ganon Castle Forest Chest
+    locationType: chest
+    logic: soul_wolfos && (can_use_sword || has_explosives_or_hammer || can_hit_triggers_distance || can_use_sticks || can_use_din)
+  exits:
+  - target: oot_ganon_castle_forest_2
+    exitType: overworld
+    logic: has_fire_arrows || (can_use_din && (has_ranged_weapon_adult || climb_anywhere))
+- id: oot_ganon_castle_forest_2
+  name: Ganon Castle Forest 2
+  game: oot
+  locations:
+  - id: oot_ganon_castle_sr_forest_center_right
+    name: Ganon Castle SR Forest Center Right
+    locationType: npc
+    logic: 'true'
+  - id: oot_ganon_castle_sr_forest_front
+    name: Ganon Castle SR Forest Front
+    locationType: npc
+    logic: 'true'
+  - id: oot_ganon_castle_sr_forest_back_right
+    name: Ganon Castle SR Forest Back Right
+    locationType: npc
+    logic: 'true'
+  - id: oot_ganon_castle_sr_forest_back_middle
+    name: Ganon Castle SR Forest Back Middle
+    locationType: npc
+    logic: 'true'
+  - id: oot_ganon_castle_sr_forest_center_left
+    name: Ganon Castle SR Forest Center Left
+    locationType: npc
+    logic: is_adult || climb_anywhere || can_hookshot
+  exits:
+  - target: oot_ganon_castle_forest_end
+    exitType: overworld
+    logic: silver_rupees_ganon_forest
+- id: oot_ganon_castle_forest_end
+  name: Ganon Castle Forest End
+  game: oot
+  locations:
+  - id: oot_ganon_castle_pot_forest_end_1
+    name: Ganon Castle Pot Forest End 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ganon_castle_pot_forest_end_2
+    name: Ganon Castle Pot Forest End 2
+    locationType: freestanding
+    logic: 'true'
+  events:
+  - id: OOT_GANON_TRIAL_FOREST
+    name: Ganon Trial Forest
+    logic: can_use_light_arrows
+- id: oot_ganon_castle_fire
+  name: Ganon Castle Fire
+  game: oot
+  locations:
+  - id: oot_ganon_castle_sr_fire_back_right
+    name: Ganon Castle SR Fire Back Right
+    locationType: npc
+    logic: has_tunic_goron
+  - id: oot_ganon_castle_sr_fire_left
+    name: Ganon Castle SR Fire Left
+    locationType: npc
+    logic: has_tunic_goron
+  - id: oot_ganon_castle_sr_fire_far_right
+    name: Ganon Castle SR Fire Far Right
+    locationType: npc
+    logic: has_tunic_goron_strict && (can_lift_gold || climb_anywhere || hookshot_anywhere || glitch_megaflip)
+  - id: oot_ganon_castle_sr_fire_front_right
+    name: Ganon Castle SR Fire Front Right
+    locationType: npc
+    logic: has_tunic_goron
+  - id: oot_ganon_castle_sr_fire_black_pillar
+    name: Ganon Castle SR Fire Black Pillar
+    locationType: npc
+    logic: has_tunic_goron && can_lift_gold
+  - id: oot_ganon_castle_heart_fire
+    name: Ganon Castle Heart Fire
+    locationType: freestanding
+    logic: has_tunic_goron
+  exits:
+  - target: oot_ganon_castle_fire_end
+    exitType: overworld
+    logic: silver_rupees_ganon_fire && has_tunic_goron_strict && (can_longshot || climb_anywhere)
+- id: oot_ganon_castle_fire_end
+  name: Ganon Castle Fire End
+  game: oot
+  locations:
+  - id: oot_ganon_castle_pot_fire_end_1
+    name: Ganon Castle Pot Fire End 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ganon_castle_pot_fire_end_2
+    name: Ganon Castle Pot Fire End 2
+    locationType: freestanding
+    logic: 'true'
+  events:
+  - id: OOT_GANON_TRIAL_FIRE
+    name: Ganon Trial Fire
+    logic: can_use_light_arrows
+- id: oot_ganon_castle_water
+  name: Ganon Castle Water
+  game: oot
+  locations:
+  - id: oot_ganon_castle_water_chest_1
+    name: Ganon Castle Water Chest 1
+    locationType: chest
+    logic: 'true'
+  - id: oot_ganon_castle_water_chest_2
+    name: Ganon Castle Water Chest 2
+    locationType: chest
+    logic: 'true'
+  - id: oot_ganon_castle_icicle_water_01
+    name: Ganon Castle Icicle Water 01
+    locationType: npc
+    logic: break_icicle
+  - id: oot_ganon_castle_icicle_water_02
+    name: Ganon Castle Icicle Water 02
+    locationType: npc
+    logic: break_icicle
+  - id: oot_ganon_castle_icicle_water_03
+    name: Ganon Castle Icicle Water 03
+    locationType: npc
+    logic: break_icicle
+  - id: oot_ganon_castle_icicle_water_04
+    name: Ganon Castle Icicle Water 04
+    locationType: npc
+    logic: break_icicle
+  - id: oot_ganon_castle_icicle_water_05
+    name: Ganon Castle Icicle Water 05
+    locationType: npc
+    logic: break_icicle
+  - id: oot_ganon_castle_icicle_water_06
+    name: Ganon Castle Icicle Water 06
+    locationType: npc
+    logic: break_icicle
+  - id: oot_ganon_castle_icicle_water_07
+    name: Ganon Castle Icicle Water 07
+    locationType: npc
+    logic: break_icicle
+  - id: oot_ganon_castle_icicle_water_08
+    name: Ganon Castle Icicle Water 08
+    locationType: npc
+    logic: break_icicle
+  - id: oot_ganon_castle_icicle_water_09
+    name: Ganon Castle Icicle Water 09
+    locationType: npc
+    logic: break_icicle
+  - id: oot_ganon_castle_icicle_water_10
+    name: Ganon Castle Icicle Water 10
+    locationType: npc
+    logic: break_icicle
+  - id: oot_ganon_castle_icicle_water_11
+    name: Ganon Castle Icicle Water 11
+    locationType: npc
+    logic: break_icicle
+  - id: oot_ganon_castle_icicle_water_12
+    name: Ganon Castle Icicle Water 12
+    locationType: npc
+    logic: break_icicle
+  - id: oot_ganon_castle_icicle_water_13
+    name: Ganon Castle Icicle Water 13
+    locationType: npc
+    logic: break_icicle
+  - id: oot_ganon_castle_icicle_water_14
+    name: Ganon Castle Icicle Water 14
+    locationType: npc
+    logic: break_icicle
+  exits:
+  - target: oot_ganon_castle_water_2
+    exitType: overworld
+    logic: soul_freezard && has_blue_fire && (can_use_sword_master || can_use_sword_goron || can_use_sticks || has_explosives_or_hammer
+      || can_use_din)
+  events:
+  - id: OOT_BLUE_FIRE
+    name: Blue Fire
+    logic: has_bottle && (can_use_sword || has_explosives_or_hammer || can_use_sticks)
+- id: oot_ganon_castle_water_2
+  name: Ganon Castle Water 2
+  game: oot
+  locations:
+  - id: oot_ganon_castle_pot_water
+    name: Ganon Castle Pot Water
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_ganon_castle_water_end
+    exitType: overworld
+    logic: can_hammer && (is_adult || climb_anywhere || hookshot_anywhere)
+- id: oot_ganon_castle_water_end
+  name: Ganon Castle Water End
+  game: oot
+  locations:
+  - id: oot_ganon_castle_pot_water_end_1
+    name: Ganon Castle Pot Water End 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ganon_castle_pot_water_end_2
+    name: Ganon Castle Pot Water End 2
+    locationType: freestanding
+    logic: 'true'
+  events:
+  - id: OOT_GANON_TRIAL_WATER
+    name: Ganon Trial Water
+    logic: can_use_light_arrows
+- id: oot_ganon_castle_spirit
+  name: Ganon Castle Spirit
+  game: oot
+  locations:
+  - id: oot_ganon_castle_sr_spirit_center_midair
+    name: Ganon Castle SR Spirit Center Midair
+    locationType: npc
+    logic: can_hookshot
+  - id: oot_ganon_castle_sr_spirit_front_right
+    name: Ganon Castle SR Spirit Front Right
+    locationType: npc
+    logic: 'true'
+  - id: oot_ganon_castle_sr_spirit_center_bottom
+    name: Ganon Castle SR Spirit Center Bottom
+    locationType: npc
+    logic: 'true'
+  - id: oot_ganon_castle_sr_spirit_back_left
+    name: Ganon Castle SR Spirit Back Left
+    locationType: npc
+    logic: 'true'
+  - id: oot_ganon_castle_sr_spirit_back_right
+    name: Ganon Castle SR Spirit Back Right
+    locationType: npc
+    logic: 'true'
+  - id: oot_ganon_castle_heart_spirit
+    name: Ganon Castle Heart Spirit
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ganon_castle_spirit_big_fairy
+    name: Ganon Castle Spirit Big Fairy
+    locationType: fairy
+    logic: can_play_sun
+  exits:
+  - target: oot_ganon_castle_spirit_2
+    exitType: overworld
+    logic: silver_rupees_ganon_spirit
+- id: oot_ganon_castle_spirit_2
+  name: Ganon Castle Spirit 2
+  game: oot
+  locations:
+  - id: oot_ganon_castle_spirit_chest_1
+    name: Ganon Castle Spirit Chest 1
+    locationType: chest
+    logic: can_use_sticks || can_use_sword || has_bombchu || hookshot_anywhere || (climb_anywhere && (has_ranged_weapon ||
+      has_explosives))
+  - id: oot_ganon_castle_spirit_chest_2
+    name: Ganon Castle Spirit Chest 2
+    locationType: chest
+    logic: (has_bombchu || climb_anywhere || hookshot_anywhere) && has_lens
+  exits:
+  - target: oot_ganon_castle_spirit_wallmaster
+    exitType: overworld
+    logic: (has_bombchu || climb_anywhere || hookshot_anywhere) && soul_wallmaster && can_reflect_light
+  - target: oot_ganon_castle_spirit_end
+    exitType: overworld
+    logic: (has_bombchu || climb_anywhere || hookshot_anywhere) && can_reflect_light && can_use_bow
+- id: oot_ganon_castle_spirit_end
+  name: Ganon Castle Spirit End
+  game: oot
+  locations:
+  - id: oot_ganon_castle_pot_spirit_end_1
+    name: Ganon Castle Pot Spirit End 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ganon_castle_pot_spirit_end_2
+    name: Ganon Castle Pot Spirit End 2
+    locationType: freestanding
+    logic: 'true'
+  events:
+  - id: OOT_GANON_TRIAL_SPIRIT
+    name: Ganon Trial Spirit
+    logic: can_use_light_arrows
+- id: oot_ganon_castle_shadow
+  name: Ganon Castle Shadow
+  game: oot
+  locations:
+  - id: oot_ganon_castle_shadow_chest_1
+    name: Ganon Castle Shadow Chest 1
+    locationType: chest
+    logic: can_play_time || can_hookshot || has_hover_boots || has_fire_arrows
+  - id: oot_ganon_castle_shadow_chest_2
+    name: Ganon Castle Shadow Chest 2
+    locationType: chest
+    logic: ((((can_longshot && soul_like_like) || has_fire_arrows) && (has_hover_boots || has_fire)) || (climb_anywhere &&
+      (has_hover_boots || hookshot_anywhere || has_lens)))
+  - id: oot_ganon_castle_pot_shadow_1
+    name: Ganon Castle Pot Shadow 1
+    locationType: freestanding
+    logic: ((((can_longshot && soul_like_like) || has_fire_arrows) && (has_hover_boots || has_fire)) || (climb_anywhere &&
+      (has_hover_boots || hookshot_anywhere || (has_lens && has_fire_arrows))))
+  - id: oot_ganon_castle_pot_shadow_2
+    name: Ganon Castle Pot Shadow 2
+    locationType: freestanding
+    logic: ((((can_longshot && soul_like_like) || has_fire_arrows) && (has_hover_boots || has_fire)) || (climb_anywhere &&
+      (has_hover_boots || hookshot_anywhere || (has_lens && has_fire_arrows))))
+  - id: oot_ganon_castle_heart_shadow_1
+    name: Ganon Castle Heart Shadow 1
+    locationType: freestanding
+    logic: ((((can_longshot && soul_like_like) || has_fire_arrows) && (has_hover_boots || has_fire)) || climb_anywhere) &&
+      has_lens
+  - id: oot_ganon_castle_heart_shadow_2
+    name: Ganon Castle Heart Shadow 2
+    locationType: freestanding
+    logic: ((((can_longshot && soul_like_like) || has_fire_arrows) && (has_hover_boots || has_fire)) || climb_anywhere) &&
+      has_lens
+  - id: oot_ganon_castle_heart_shadow_3
+    name: Ganon Castle Heart Shadow 3
+    locationType: freestanding
+    logic: ((((can_longshot && soul_like_like) || has_fire_arrows) && (has_hover_boots || has_fire)) || climb_anywhere) &&
+      has_lens
+  exits:
+  - target: oot_ganon_castle_shadow_end
+    exitType: overworld
+    logic: can_hammer && ((((can_longshot && soul_like_like) || has_fire_arrows) && (has_hover_boots || has_fire) && (has_lens
+      || (can_longshot && has_hover_boots))) || (climb_anywhere && (has_hover_boots || hookshot_anywhere || has_lens)))
+- id: oot_ganon_castle_shadow_end
+  name: Ganon Castle Shadow End
+  game: oot
+  locations:
+  - id: oot_ganon_castle_pot_shadow_end_1
+    name: Ganon Castle Pot Shadow End 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ganon_castle_pot_shadow_end_2
+    name: Ganon Castle Pot Shadow End 2
+    locationType: freestanding
+    logic: 'true'
+  events:
+  - id: OOT_GANON_TRIAL_SHADOW
+    name: Ganon Trial Shadow
+    logic: can_use_light_arrows
+- id: oot_ganon_castle_stairs
+  name: Ganon Castle Stairs
+  game: oot
+  exits:
+  - target: oot_ganon_castle
+    exitType: overworld
+  - target: oot_ganon_castle_tower
+    exitType: overworld
+    logic: ganon_barrier
+- id: oot_ganon_castle_tower
+  name: Ganon Castle Tower
+  game: oot
+  exits:
+  - target: oot_ganon_castle_stairs
+    exitType: overworld
+  - target: oot_ganon_castle_tower_lobby
+    exitType: overworld
+- id: oot_ganon_castle_tower_lobby
+  name: Ganon Castle Tower Lobby
+  game: oot
+  exits:
+  - target: oot_ganon_castle_tower
+    exitType: overworld
+  - target: oot_ganon_castle_tower_dinolfos_room
+    exitType: overworld
+- id: oot_ganon_castle_tower_dinolfos_room
+  name: Ganon Castle Tower Dinolfos Room
+  game: oot
+  exits:
+  - target: oot_ganon_castle_tower_lobby
+    exitType: overworld
+    logic: event(GANON_TOWER_LIZALFOS_CLEAR)
+  - target: oot_ganon_castle_tower_first_transitional_staircase
+    exitType: overworld
+    logic: event(GANON_TOWER_LIZALFOS_CLEAR)
+  events:
+  - id: OOT_GANON_TOWER_LIZALFOS_CLEAR
+    name: Ganon Tower Lizalfos Clear
+    logic: soul_lizalfos_dinolfos && (can_use_sticks || has_weapon || can_use_slingshot)
+- id: oot_ganon_castle_tower_first_transitional_staircase
+  name: Ganon Castle Tower First Transitional Staircase
+  game: oot
+  exits:
+  - target: oot_ganon_castle_tower_dinolfos_room
+    exitType: overworld
+  - target: oot_ganon_castle_tower_stalfos_room
+    exitType: overworld
+- id: oot_ganon_castle_tower_stalfos_room
+  name: Ganon Castle Tower Stalfos Room
+  game: oot
+  locations:
+  - id: oot_ganon_castle_boss_key
+    name: Ganon Castle Boss Key
+    locationType: boss
+    logic: event(GANON_TOWER_STALFOS_CLEAR)
+  exits:
+  - target: oot_ganon_castle_tower_first_transitional_staircase
+    exitType: overworld
+    logic: event(GANON_TOWER_STALFOS_CLEAR)
+  - target: oot_ganon_castle_tower_second_transitional_staircase
+    exitType: overworld
+    logic: event(GANON_TOWER_STALFOS_CLEAR)
+  events:
+  - id: OOT_GANON_TOWER_STALFOS_CLEAR
+    name: Ganon Tower Stalfos Clear
+    logic: soul_enemy(SOUL_ENEMY_STALFOS) && has_weapon
+- id: oot_ganon_castle_tower_second_transitional_staircase
+  name: Ganon Castle Tower Second Transitional Staircase
+  game: oot
+  exits:
+  - target: oot_ganon_castle_tower_stalfos_room
+    exitType: overworld
+  - target: oot_ganon_castle_tower_iron_knuckle_room
+    exitType: overworld
+- id: oot_ganon_castle_tower_iron_knuckle_room
+  name: Ganon Castle Tower Iron Knuckle Room
+  game: oot
+  exits:
+  - target: oot_ganon_castle_tower_second_transitional_staircase
+    exitType: overworld
+    logic: event(GANON_TOWER_IRON_KNUCKLE_CLEAR)
+  - target: oot_ganon_castle_tower_staircase_before_boss_door
+    exitType: overworld
+    logic: event(GANON_TOWER_IRON_KNUCKLE_CLEAR)
+  events:
+  - id: OOT_GANON_TOWER_IRON_KNUCKLE_CLEAR
+    name: Ganon Tower Iron Knuckle Clear
+    logic: soul_iron_knuckle && has_weapon
+- id: oot_ganon_castle_tower_staircase_before_boss_door
+  name: Ganon Castle Tower Staircase Before Boss Door
+  game: oot
+  exits:
+  - target: oot_ganon_castle_tower_iron_knuckle_room
+    exitType: overworld
+  - target: oot_ganon_castle_tower_lower_arena
+    exitType: overworld
+    logic: setting(ganonBossKey, removed) || has(BOSS_KEY_GANON) || (setting(ganonBossKey, custom) && special(GANON_BK))
+- id: oot_ganon_castle_tower_lower_arena
+  name: Ganon Castle Tower Lower Arena
+  game: oot
+  locations:
+  - id: oot_ganon_tower_pot_01
+    name: Ganon Tower Pot 01
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ganon_tower_pot_02
+    name: Ganon Tower Pot 02
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ganon_tower_pot_03
+    name: Ganon Tower Pot 03
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ganon_tower_pot_04
+    name: Ganon Tower Pot 04
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ganon_tower_pot_05
+    name: Ganon Tower Pot 05
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ganon_tower_pot_06
+    name: Ganon Tower Pot 06
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ganon_tower_pot_07
+    name: Ganon Tower Pot 07
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ganon_tower_pot_08
+    name: Ganon Tower Pot 08
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ganon_tower_pot_09
+    name: Ganon Tower Pot 09
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ganon_tower_pot_10
+    name: Ganon Tower Pot 10
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ganon_tower_pot_11
+    name: Ganon Tower Pot 11
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ganon_tower_pot_12
+    name: Ganon Tower Pot 12
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ganon_tower_pot_13
+    name: Ganon Tower Pot 13
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ganon_tower_pot_14
+    name: Ganon Tower Pot 14
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ganon_tower_pot_15
+    name: Ganon Tower Pot 15
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ganon_tower_pot_16
+    name: Ganon Tower Pot 16
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ganon_tower_pot_17
+    name: Ganon Tower Pot 17
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ganon_tower_pot_18
+    name: Ganon Tower Pot 18
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_ganon_castle_tower_staircase_before_boss_door
+    exitType: overworld
+    logic: 'false'
+  - target: oot_ganon_castle_tower_final_staircase
+    exitType: overworld
+  events:
+  - id: OOT_GANON_PRE_BOSS
+    name: Ganon Pre Boss
+- id: oot_ganon_castle_tower_final_staircase
+  name: Ganon Castle Tower Final Staircase
+  game: oot
+  exits:
+  - target: oot_ganon_castle_tower_lower_arena
+    exitType: overworld
+    logic: 'false'
+  - target: oot_ganon_castle_tower_boss
+    exitType: overworld
+- id: oot_ganon_castle_tower_boss
+  name: Ganon Castle Tower Boss
+  game: oot
+  events:
+  - id: OOT_GANON_START
+    name: Ganon Start
+    logic: '!is_goal_triforce'
+  - id: OOT_GANON
+    name: Ganon
+    logic: event(GANON_START) && can_use_light_arrows && soul_npc(SOUL_NPC_ZELDA) && can_use_sword_master
+- id: oot_gerudo_fortress_carpenter_1_left
+  name: Gerudo Fortress Carpenter 1 Left
+  game: oot
+  locations:
+  - id: oot_gerudo_fortress_jail_1
+    name: Gerudo Fortress Jail 1
+    locationType: npc
+    logic: (can_use_sword || can_hammer || ((can_boomerang || has_nuts) && can_use_sticks)) && soul_carpenters && soul_thief_fighter
+  - id: oot_gerudo_member_card
+    name: Gerudo Member Card
+    locationType: npc
+    logic: carpenters_rescued
+  - id: oot_gerudo_fortress_pot_jail_1_1
+    name: Gerudo Fortress Pot Jail 1 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_gerudo_fortress_pot_jail_1_2
+    name: Gerudo Fortress Pot Jail 1 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_gerudo_fortress_pot_jail_1_3
+    name: Gerudo Fortress Pot Jail 1 3
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_thieves_hideout_crate_jail_1
+    name: Thieves Hideout Crate Jail 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_gerudo_fortress_wonder_item_jail_1_1
+    name: Gerudo Fortress Wonder Item Jail 1 1
+    locationType: shop
+    logic: can_use_bow
+  - id: oot_gerudo_fortress_wonder_item_jail_1_2
+    name: Gerudo Fortress Wonder Item Jail 1 2
+    locationType: shop
+    logic: can_use_bow
+  exits:
+  - target: oot_gerudo_fortress_exterior
+    exitType: overworld
+  - target: oot_gerudo_fortress_carpenter_1_right
+    exitType: overworld
+  events:
+  - id: OOT_CARPENTER_1
+    name: Carpenter 1
+    logic: can_rescue_carpenter
+- id: oot_gerudo_fortress_carpenter_1_right
+  name: Gerudo Fortress Carpenter 1 Right
+  game: oot
+  exits:
+  - target: oot_gerudo_fortress_exterior
+    exitType: overworld
+  - target: oot_gerudo_fortress_carpenter_1_left
+    exitType: overworld
+- id: oot_gerudo_fortress_carpenter_2_bottom
+  name: Gerudo Fortress Carpenter 2 Bottom
+  game: oot
+  locations:
+  - id: oot_gerudo_fortress_jail_2
+    name: Gerudo Fortress Jail 2
+    locationType: npc
+    logic: (can_use_sword || can_hammer || ((can_boomerang || has_nuts) && can_use_sticks)) && soul_carpenters && soul_thief_fighter
+  - id: oot_gerudo_fortress_pot_jail_2_1
+    name: Gerudo Fortress Pot Jail 2 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_gerudo_fortress_pot_jail_2_2
+    name: Gerudo Fortress Pot Jail 2 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_gerudo_fortress_pot_jail_2_3
+    name: Gerudo Fortress Pot Jail 2 3
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_gerudo_fortress_pot_jail_2_4
+    name: Gerudo Fortress Pot Jail 2 4
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_gerudo_fortress_pot_jail_2_5
+    name: Gerudo Fortress Pot Jail 2 5
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_gerudo_fortress_pot_jail_2_6
+    name: Gerudo Fortress Pot Jail 2 6
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_gerudo_fortress_pot_jail_2_7
+    name: Gerudo Fortress Pot Jail 2 7
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_thieves_hideout_crate_jail_2_1
+    name: Thieves Hideout Crate Jail 2 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_thieves_hideout_crate_jail_2_2
+    name: Thieves Hideout Crate Jail 2 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_gerudo_fortress_wonder_item_jail_2_1
+    name: Gerudo Fortress Wonder Item Jail 2 1
+    locationType: shop
+    logic: can_use_bow
+  - id: oot_gerudo_fortress_wonder_item_jail_2_2
+    name: Gerudo Fortress Wonder Item Jail 2 2
+    locationType: shop
+    logic: can_use_bow
+  exits:
+  - target: oot_gerudo_fortress_exterior
+    exitType: overworld
+  - target: oot_gerudo_fortress_carpenter_2_top
+    exitType: overworld
+  events:
+  - id: OOT_CARPENTER_2
+    name: Carpenter 2
+    logic: can_rescue_carpenter
+- id: oot_gerudo_fortress_carpenter_2_top
+  name: Gerudo Fortress Carpenter 2 Top
+  game: oot
+  exits:
+  - target: oot_gerudo_fortress_lower_center_ledge
+    exitType: overworld
+  - target: oot_gerudo_fortress_carpenter_2_bottom
+    exitType: overworld
+- id: oot_gerudo_fortress_carpenter_4_bottom
+  name: Gerudo Fortress Carpenter 4 Bottom
+  game: oot
+  exits:
+  - target: oot_gerudo_fortress_lower_right_ledge
+    exitType: overworld
+  - target: oot_gerudo_fortress_carpenter_4_top
+    exitType: overworld
+- id: oot_gerudo_fortress_carpenter_4_top
+  name: Gerudo Fortress Carpenter 4 Top
+  game: oot
+  locations:
+  - id: oot_gerudo_fortress_jail_4
+    name: Gerudo Fortress Jail 4
+    locationType: npc
+    logic: (can_use_sword || can_hammer || ((can_boomerang || has_nuts) && can_use_sticks)) && soul_carpenters && soul_thief_fighter
+  - id: oot_gerudo_fortress_wonder_item_jail_4_1
+    name: Gerudo Fortress Wonder Item Jail 4 1
+    locationType: shop
+    logic: can_use_bow
+  - id: oot_gerudo_fortress_wonder_item_jail_4_2
+    name: Gerudo Fortress Wonder Item Jail 4 2
+    locationType: shop
+    logic: can_use_bow
+  exits:
+  - target: oot_gerudo_fortress_lower_center_ledge
+    exitType: overworld
+  - target: oot_gerudo_fortress_carpenter_4_bottom
+    exitType: overworld
+  events:
+  - id: OOT_CARPENTER_4
+    name: Carpenter 4
+    logic: can_rescue_carpenter
+- id: oot_gerudo_fortress_kitchen_tunnel_end
+  name: Gerudo Fortress Kitchen Tunnel End
+  game: oot
+  exits:
+  - target: oot_gerudo_fortress_exterior
+    exitType: overworld
+  - target: oot_gerudo_fortress_kitchen_tunnel_mid
+    exitType: overworld
+- id: oot_gerudo_fortress_kitchen_tunnel_mid
+  name: Gerudo Fortress Kitchen Tunnel Mid
+  game: oot
+  locations:
+  - id: oot_thieves_hideout_crate_kitchen_corridor_1
+    name: Thieves Hideout Crate Kitchen Corridor 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_thieves_hideout_crate_kitchen_corridor_2
+    name: Thieves Hideout Crate Kitchen Corridor 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_thieves_hideout_crate_kitchen_corridor_3
+    name: Thieves Hideout Crate Kitchen Corridor 3
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_thieves_hideout_crate_kitchen_corridor_4
+    name: Thieves Hideout Crate Kitchen Corridor 4
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_gerudo_fortress_lower_right_ledge
+    exitType: overworld
+  - target: oot_gerudo_fortress_kitchen_tunnel_end
+    exitType: overworld
+  - target: oot_gerudo_fortress_kitchen_bottom
+    exitType: overworld
+    logic: evade_gerudo
+- id: oot_gerudo_fortress_kitchen_bottom
+  name: Gerudo Fortress Kitchen Bottom
+  game: oot
+  locations:
+  - id: oot_gerudo_fortress_pot_kitchen_1
+    name: Gerudo Fortress Pot Kitchen 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_gerudo_fortress_pot_kitchen_2
+    name: Gerudo Fortress Pot Kitchen 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_thieves_hideout_crate_kitchen
+    name: Thieves Hideout Crate Kitchen
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_gerudo_fortress_kitchen_big_fairy
+    name: Gerudo Fortress Kitchen Big Fairy
+    locationType: fairy
+    logic: can_play_sun
+  - id: oot_gerudo_fortress_wonder_item_kitchen_skull
+    name: Gerudo Fortress Wonder Item Kitchen Skull
+    locationType: shop
+    logic: can_use_bow
+  - id: oot_gerudo_fortress_wonder_item_kitchen_soup
+    name: Gerudo Fortress Wonder Item Kitchen Soup
+    locationType: shop
+    logic: evade_gerudo
+  exits:
+  - target: oot_gerudo_fortress_kitchen_tunnel_mid
+    exitType: overworld
+    logic: evade_gerudo
+  - target: oot_gerudo_fortress_kitchen_ledge_near_tunnel
+    exitType: overworld
+    logic: evade_gerudo
+  - target: oot_gerudo_fortress_kitchen_ledge_away_from_tunnel
+    exitType: overworld
+    logic: evade_gerudo
+- id: oot_gerudo_fortress_kitchen_ledge_near_tunnel
+  name: Gerudo Fortress Kitchen Ledge Near Tunnel
+  game: oot
+  exits:
+  - target: oot_gerudo_fortress_lower_center_ledge
+    exitType: overworld
+  - target: oot_gerudo_fortress_kitchen_bottom
+    exitType: overworld
+    logic: evade_gerudo
+  - target: oot_gerudo_fortress_kitchen_ledge_away_from_tunnel
+    exitType: overworld
+    logic: can_hookshot || has_hover_boots || climb_anywhere
+- id: oot_gerudo_fortress_kitchen_ledge_away_from_tunnel
+  name: Gerudo Fortress Kitchen Ledge Away from Tunnel
+  game: oot
+  exits:
+  - target: oot_gerudo_fortress_upper_center_ledge
+    exitType: overworld
+  - target: oot_gerudo_fortress_kitchen_bottom
+    exitType: overworld
+    logic: evade_gerudo
+  - target: oot_gerudo_fortress_kitchen_ledge_near_tunnel
+    exitType: overworld
+    logic: can_hookshot || has_hover_boots || climb_anywhere
+- id: oot_gerudo_fortress_carpenter_3
+  name: Gerudo Fortress Carpenter 3
+  game: oot
+  locations:
+  - id: oot_gerudo_fortress_jail_3
+    name: Gerudo Fortress Jail 3
+    locationType: npc
+    logic: (can_use_sword || can_hammer || ((can_boomerang || has_nuts) && can_use_sticks)) && soul_carpenters && soul_thief_fighter
+  - id: oot_gerudo_fortress_pot_jail_3_1
+    name: Gerudo Fortress Pot Jail 3 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_gerudo_fortress_pot_jail_3_2
+    name: Gerudo Fortress Pot Jail 3 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_thieves_hideout_crate_jail_3
+    name: Thieves Hideout Crate Jail 3
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_gerudo_fortress_wonder_item_jail_3_1
+    name: Gerudo Fortress Wonder Item Jail 3 1
+    locationType: shop
+    logic: can_use_bow
+  - id: oot_gerudo_fortress_wonder_item_jail_3_2
+    name: Gerudo Fortress Wonder Item Jail 3 2
+    locationType: shop
+    logic: can_use_bow
+  exits:
+  - target: oot_gerudo_fortress_center_ledge
+    exitType: overworld
+  events:
+  - id: OOT_CARPENTER_3
+    name: Carpenter 3
+    logic: can_rescue_carpenter
+- id: oot_gerudo_fortress_break_room_bottom
+  name: Gerudo Fortress Break Room Bottom
+  game: oot
+  locations:
+  - id: oot_gerudo_fortress_pot_break_room_1
+    name: Gerudo Fortress Pot Break Room 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_gerudo_fortress_pot_break_room_2
+    name: Gerudo Fortress Pot Break Room 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_gerudo_fortress_wonder_item_break_room_bottom
+    name: Gerudo Fortress Wonder Item Break Room Bottom
+    locationType: shop
+    logic: can_use_bow
+  - id: oot_thieves_hideout_crate_break_room_1
+    name: Thieves Hideout Crate Break Room 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_thieves_hideout_crate_break_room_2
+    name: Thieves Hideout Crate Break Room 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_thieves_hideout_crate_break_room_3
+    name: Thieves Hideout Crate Break Room 3
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_thieves_hideout_crate_break_room_4
+    name: Thieves Hideout Crate Break Room 4
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_gerudo_fortress_lower_left_ledge
+    exitType: overworld
+  - target: oot_gerudo_fortress_break_room_top
+    exitType: overworld
+    logic: can_hookshot || climb_anywhere
+- id: oot_gerudo_fortress_break_room_top
+  name: Gerudo Fortress Break Room Top
+  game: oot
+  locations:
+  - id: oot_gerudo_fortress_wonder_item_break_room_top
+    name: Gerudo Fortress Wonder Item Break Room Top
+    locationType: shop
+    logic: can_use_bow
+  exits:
+  - target: oot_gerudo_fortress_above_prison
+    exitType: overworld
+  - target: oot_gerudo_fortress_break_room_bottom
+    exitType: overworld
+    logic: can_hookshot || climb_anywhere
+- id: oot_gerudo_training_grounds
+  name: Gerudo Training Grounds
+  game: oot
+  locations:
+  - id: oot_gerudo_training_grounds_entrance_1
+    name: Gerudo Training Grounds Entrance 1
+    locationType: npc
+    logic: can_hit_triggers_distance
+  - id: oot_gerudo_training_grounds_entrance_2
+    name: Gerudo Training Grounds Entrance 2
+    locationType: npc
+    logic: can_hit_triggers_distance
+  - id: oot_gerudo_training_grounds_stalfos
+    name: Gerudo Training Grounds Stalfos
+    locationType: npc
+    logic: can_use_sword && soul_enemy(SOUL_ENEMY_STALFOS)
+  - id: oot_gerudo_training_grounds_heart_1
+    name: Gerudo Training Grounds Heart 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_gerudo_training_grounds_heart_2
+    name: Gerudo Training Grounds Heart 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_gerudo_training_grounds_entrance_big_fairy
+    name: Gerudo Training Grounds Entrance Big Fairy
+    locationType: fairy
+    logic: can_play_storms
+  - id: oot_gerudo_training_grounds_wonder_item_beamos_room
+    name: Gerudo Training Grounds Wonder Item Beamos Room
+    locationType: shop
+    logic: can_use_bow
+  exits:
+  - target: oot_gerudo_fortress_exterior
+    exitType: overworld
+  - target: oot_gerudo_training_grounds_slopes
+    exitType: overworld
+    logic: can_use_sword && soul_enemy(SOUL_ENEMY_STALFOS)
+  - target: oot_gerudo_training_grounds_right_side
+    exitType: overworld
+    logic: has_explosives && can_use_sword && soul_beamos && soul_lizalfos_dinolfos
+  - target: oot_gerudo_training_grounds_maze
+    exitType: overworld
+- id: oot_gerudo_training_grounds_wallmaster
+  name: Gerudo Training Grounds Wallmaster
+  game: oot
+  exits:
+  - target: oot_void
+    exitType: overworld
+- id: oot_gerudo_training_grounds_slopes
+  name: Gerudo Training Grounds Slopes
+  game: oot
+  locations:
+  - id: oot_gerudo_training_grounds_sr_slope_front_right
+    name: Gerudo Training Grounds SR Slope Front Right
+    locationType: npc
+    logic: 'true'
+  - id: oot_gerudo_training_grounds_sr_slope_front_left
+    name: Gerudo Training Grounds SR Slope Front Left
+    locationType: npc
+    logic: 'true'
+  - id: oot_gerudo_training_grounds_sr_slope_front_above
+    name: Gerudo Training Grounds SR Slope Front Above
+    locationType: npc
+    logic: (is_adult && can_hookshot) || can_longshot
+  - id: oot_gerudo_training_grounds_sr_slope_center
+    name: Gerudo Training Grounds SR Slope Center
+    locationType: npc
+    logic: 'true'
+  - id: oot_gerudo_training_grounds_sr_slope_back
+    name: Gerudo Training Grounds SR Slope Back
+    locationType: npc
+    logic: 'true'
+  exits:
+  - target: oot_gerudo_training_grounds
+    exitType: overworld
+  - target: oot_gerudo_training_grounds_slopes_end
+    exitType: overworld
+    logic: can_hookshot || climb_anywhere
+  - target: oot_gerudo_training_grounds_wallmaster
+    exitType: overworld
+    logic: soul_wallmaster
+- id: oot_gerudo_training_grounds_slopes_end
+  name: Gerudo Training Grounds Slopes End
+  game: oot
+  exits:
+  - target: oot_gerudo_training_grounds_slopes
+    exitType: overworld
+    logic: can_hookshot || climb_anywhere
+  - target: oot_gerudo_training_grounds_left_side
+    exitType: overworld
+    logic: silver_rupees_gtg_slopes
+- id: oot_gerudo_training_grounds_left_side
+  name: Gerudo Training Grounds Left Side
+  game: oot
+  locations:
+  - id: oot_gerudo_training_grounds_near_block
+    name: Gerudo Training Grounds Near Block
+    locationType: npc
+    logic: soul_wolfos && (can_use_sword || can_use_sticks || has_explosives_or_hammer || can_hit_triggers_distance || can_use_din)
+  exits:
+  - target: oot_gerudo_training_grounds_slopes_end
+    exitType: overworld
+  - target: oot_gerudo_training_grounds_after_block
+    exitType: overworld
+    logic: can_lift_silver && event(GTG_LIKE_LIKE_ROOM)
+  - target: oot_gerudo_training_grounds_upper
+    exitType: overworld
+    logic: (can_hookshot || climb_anywhere) && has_lens
+- id: oot_gerudo_training_grounds_after_block
+  name: Gerudo Training Grounds After Block
+  game: oot
+  locations:
+  - id: oot_gerudo_training_grounds_behind_block_invisible
+    name: Gerudo Training Grounds Behind Block Invisible
+    locationType: npc
+    logic: has_lens
+  - id: oot_gerudo_training_grounds_behind_block_visible
+    name: Gerudo Training Grounds Behind Block Visible
+    locationType: npc
+    logic: 'true'
+  - id: oot_gerudo_training_grounds_behind_block_enemy_back
+    name: Gerudo Training Grounds Behind Block Enemy Back
+    locationType: npc
+    logic: soul_like_like && (can_use_sword || can_use_sticks || has_explosives_or_hammer || can_hit_triggers_distance)
+  - id: oot_gerudo_training_grounds_behind_block_enemy_front
+    name: Gerudo Training Grounds Behind Block Enemy Front
+    locationType: npc
+    logic: soul_like_like && (can_use_sword || can_use_sticks || has_explosives_or_hammer || can_hit_triggers_distance)
+- id: oot_gerudo_training_grounds_upper
+  name: Gerudo Training Grounds Upper
+  game: oot
+  locations:
+  - id: oot_gerudo_training_maze_upper_cage
+    name: Gerudo Training Maze Upper Cage
+    locationType: npc
+    logic: can_use_bow
+  - id: oot_gerudo_training_grounds_wonder_item_eye_statue_room
+    name: Gerudo Training Grounds Wonder Item Eye Statue Room
+    locationType: shop
+    logic: has_hover_boots
+  exits:
+  - target: oot_gerudo_training_grounds_left_side
+    exitType: overworld
+    logic: has_lens
+  - target: oot_gerudo_training_grounds_statue
+    exitType: overworld
+  events:
+  - id: OOT_GTG_LIKE_LIKE_ROOM
+    name: Gtg Like Like Room
+- id: oot_gerudo_training_grounds_right_side
+  name: Gerudo Training Grounds Right Side
+  game: oot
+  locations:
+  - id: oot_gerudo_training_grounds_lizalfos
+    name: Gerudo Training Grounds Lizalfos
+    locationType: npc
+    logic: 'true'
+  exits:
+  - target: oot_gerudo_training_grounds_lava
+    exitType: overworld
+- id: oot_gerudo_training_grounds_lava
+  name: Gerudo Training Grounds Lava
+  game: oot
+  locations:
+  - id: oot_gerudo_training_grounds_sr_lava_front_left
+    name: Gerudo Training Grounds SR Lava Front Left
+    locationType: npc
+    logic: 'true'
+  - id: oot_gerudo_training_grounds_sr_lava_front_right
+    name: Gerudo Training Grounds SR Lava Front Right
+    locationType: npc
+    logic: 'true'
+  - id: oot_gerudo_training_grounds_sr_lava_back_left
+    name: Gerudo Training Grounds SR Lava Back Left
+    locationType: npc
+    logic: has_hover_boots || can_play_time || climb_anywhere || hookshot_anywhere || is_child
+  - id: oot_gerudo_training_grounds_sr_lava_back_center
+    name: Gerudo Training Grounds SR Lava Back Center
+    locationType: npc
+    logic: (can_hookshot && (can_longshot || has_hover_boots || can_play_time || hookshot_anywhere || is_child)) || climb_anywhere
+  - id: oot_gerudo_training_grounds_sr_lava_back_right
+    name: Gerudo Training Grounds SR Lava Back Right
+    locationType: npc
+    logic: can_longshot || has_hover_boots || can_play_time || is_child || climb_anywhere || hookshot_anywhere
+  exits:
+  - target: oot_gerudo_training_grounds_maze_side
+    exitType: overworld
+    logic: can_play_time || is_child || climb_anywhere || hookshot_anywhere
+  - target: oot_gerudo_training_grounds_hammer
+    exitType: overworld
+    logic: (can_hookshot && (can_longshot || has_hover_boots || can_play_time || hookshot_anywhere || is_child)) || climb_anywhere
+  - target: oot_gerudo_training_grounds_water
+    exitType: overworld
+    logic: silver_rupees_gtg_lava
+- id: oot_gerudo_training_grounds_maze_side
+  name: Gerudo Training Grounds Maze Side
+  game: oot
+  locations:
+  - id: oot_gerudo_training_freestanding_key
+    name: Gerudo Training Freestanding Key
+    locationType: npc
+    logic: 'true'
+  - id: oot_gerudo_training_maze_side_chest_1
+    name: Gerudo Training Maze Side Chest 1
+    locationType: chest
+    logic: 'true'
+  - id: oot_gerudo_training_maze_side_chest_2
+    name: Gerudo Training Maze Side Chest 2
+    locationType: chest
+    logic: 'true'
+  exits:
+  - target: oot_gerudo_training_grounds_lava
+    exitType: overworld
+  - target: oot_gerudo_training_grounds_hammer
+    exitType: overworld
+    logic: can_hookshot
+- id: oot_gerudo_training_grounds_water
+  name: Gerudo Training Grounds Water
+  game: oot
+  locations:
+  - id: oot_gerudo_training_water
+    name: Gerudo Training Water
+    locationType: npc
+    logic: silver_rupees_gtg_water
+  exits:
+  - target: oot_gerudo_training_grounds_underwater
+    exitType: overworld
+    logic: can_play_time && has_iron_boots && has_tunic_zora
+- id: oot_gerudo_training_grounds_underwater
+  name: Gerudo Training Grounds Underwater
+  game: oot
+  locations:
+  - id: oot_gerudo_training_grounds_sr_water_1
+    name: Gerudo Training Grounds SR Water 1
+    locationType: npc
+    logic: 'true'
+  - id: oot_gerudo_training_grounds_sr_water_2
+    name: Gerudo Training Grounds SR Water 2
+    locationType: npc
+    logic: can_swim || can_hookshot
+  - id: oot_gerudo_training_grounds_sr_water_3
+    name: Gerudo Training Grounds SR Water 3
+    locationType: npc
+    logic: 'true'
+  - id: oot_gerudo_training_grounds_sr_water_4
+    name: Gerudo Training Grounds SR Water 4
+    locationType: npc
+    logic: can_swim || can_hookshot
+  - id: oot_gerudo_training_grounds_sr_water_5
+    name: Gerudo Training Grounds SR Water 5
+    locationType: npc
+    logic: can_swim || hookshot_anywhere
+- id: oot_gerudo_training_grounds_hammer
+  name: Gerudo Training Grounds Hammer
+  game: oot
+  locations:
+  - id: oot_gerudo_training_grounds_hammer_room_switch
+    name: Gerudo Training Grounds Hammer Room Switch
+    locationType: npc
+    logic: can_hammer
+  - id: oot_gerudo_training_grounds_hammer_room
+    name: Gerudo Training Grounds Hammer Room
+    locationType: npc
+    logic: soul_keese && soul_enemy(SOUL_ENEMY_TORCH_SLUG) && (can_use_sword || can_use_sticks || can_hammer || can_use_bow)
+  - id: oot_gerudo_training_grounds_wonder_item_torch_slugs_room
+    name: Gerudo Training Grounds Wonder Item Torch Slugs Room
+    locationType: collectible
+    logic: can_use_bow
+  exits:
+  - target: oot_gerudo_training_grounds_lava
+    exitType: overworld
+    logic: soul_enemy(SOUL_ENEMY_TORCH_SLUG) && soul_keese && (can_use_sword || can_use_sticks || can_hammer || can_use_bow)
+  - target: oot_gerudo_training_grounds_statue
+    exitType: overworld
+    logic: can_hammer && can_hit_triggers_distance
+- id: oot_gerudo_training_grounds_statue
+  name: Gerudo Training Grounds Statue
+  game: oot
+  locations:
+  - id: oot_gerudo_training_grounds_eye_statue
+    name: Gerudo Training Grounds Eye Statue
+    locationType: npc
+    logic: can_use_bow
+  exits:
+  - target: oot_gerudo_training_grounds_hammer
+    exitType: overworld
+  - target: oot_gerudo_training_grounds_upper
+    exitType: overworld
+    logic: climb_anywhere || hookshot_anywhere
+- id: oot_gerudo_training_grounds_maze
+  name: Gerudo Training Grounds Maze
+  game: oot
+  locations:
+  - id: oot_gerudo_training_maze_upper_fake_ceiling
+    name: Gerudo Training Maze Upper Fake Ceiling
+    locationType: npc
+    logic: small_keys_gtg(3) && has_lens
+  - id: oot_gerudo_training_maze_chest_1
+    name: Gerudo Training Maze Chest 1
+    locationType: chest
+    logic: small_keys_gtg(4)
+  - id: oot_gerudo_training_maze_chest_2
+    name: Gerudo Training Maze Chest 2
+    locationType: chest
+    logic: small_keys_gtg(6)
+  - id: oot_gerudo_training_maze_chest_3
+    name: Gerudo Training Maze Chest 3
+    locationType: chest
+    logic: small_keys_gtg(7)
+  - id: oot_gerudo_training_maze_chest_4
+    name: Gerudo Training Maze Chest 4
+    locationType: chest
+    logic: small_keys_gtg(9)
+  exits:
+  - target: oot_gerudo_training_grounds_maze_side
+    exitType: overworld
+    logic: small_keys_gtg(9)
+- id: oot_ice_cavern
+  name: Ice Cavern
+  game: oot
+  locations:
+  - id: oot_ice_cavern_rupee_ice
+    name: Ice Cavern Rupee Ice
+    locationType: freestanding
+    logic: has_blue_fire
+  - id: oot_ice_cavern_entrance_big_fairy
+    name: Ice Cavern Entrance Big Fairy
+    locationType: fairy
+    logic: can_play_storms
+  - id: oot_ice_cavern_icicle_before_entrance_1
+    name: Ice Cavern Icicle Before Entrance 1
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_before_entrance_2
+    name: Ice Cavern Icicle Before Entrance 2
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_before_entrance_3
+    name: Ice Cavern Icicle Before Entrance 3
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_entrance_1
+    name: Ice Cavern Icicle Entrance 1
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_entrance_2
+    name: Ice Cavern Icicle Entrance 2
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_entrance_3
+    name: Ice Cavern Icicle Entrance 3
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_red_ice_entrance
+    name: Ice Cavern Red Ice Entrance
+    locationType: npc
+    logic: has_blue_fire
+  - id: oot_ice_cavern_red_ice_freezard_1
+    name: Ice Cavern Red Ice Freezard 1
+    locationType: npc
+    logic: has_blue_fire
+  - id: oot_ice_cavern_red_ice_freezard_2
+    name: Ice Cavern Red Ice Freezard 2
+    locationType: npc
+    logic: has_blue_fire
+  exits:
+  - target: oot_zora_fountain_frozen
+    exitType: overworld
+  - target: oot_ice_cavern_scythe
+    exitType: overworld
+    logic: soul_freezard && (can_use_sword_master || can_use_sword_biggoron || can_hammer || can_use_sticks || has_fire ||
+      has_explosives)
+  - target: oot_ice_cavern_end
+    exitType: overworld
+    logic: has_iron_boots && (climb_anywhere || hookshot_anywhere)
+- id: oot_ice_cavern_scythe
+  name: Ice Cavern Scythe
+  game: oot
+  locations:
+  - id: oot_ice_cavern_gs_scythe_room
+    name: Ice Cavern GS Scythe Room
+    locationType: collectible
+    logic: gs && (can_collect_distance || (climb_anywhere && (can_use_sword || can_use_sticks || has_ranged_weapon || has_explosives
+      || can_use_din)))
+  - id: oot_ice_cavern_sr_scythe_left
+    name: Ice Cavern SR Scythe Left
+    locationType: npc
+    logic: 'true'
+  - id: oot_ice_cavern_sr_scythe_center_left
+    name: Ice Cavern SR Scythe Center Left
+    locationType: npc
+    logic: 'true'
+  - id: oot_ice_cavern_sr_scythe_back
+    name: Ice Cavern SR Scythe Back
+    locationType: npc
+    logic: 'true'
+  - id: oot_ice_cavern_sr_scythe_center_right
+    name: Ice Cavern SR Scythe Center Right
+    locationType: npc
+    logic: 'true'
+  - id: oot_ice_cavern_sr_scythe_midair
+    name: Ice Cavern SR Scythe Midair
+    locationType: npc
+    logic: is_adult || climb_anywhere || hookshot_anywhere
+  - id: oot_ice_cavern_pot_first_corridor_1
+    name: Ice Cavern Pot First Corridor 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ice_cavern_pot_first_corridor_2
+    name: Ice Cavern Pot First Corridor 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ice_cavern_pot_scythe_room_1
+    name: Ice Cavern Pot Scythe Room 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ice_cavern_pot_scythe_room_2
+    name: Ice Cavern Pot Scythe Room 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ice_cavern_pot_scythe_room_3
+    name: Ice Cavern Pot Scythe Room 3
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ice_cavern_flying_pot_scythe_room
+    name: Ice Cavern Flying Pot Scythe Room
+    locationType: freestanding
+    logic: soul_flying_pot
+  - id: oot_ice_cavern_icicle_before_scythe_1
+    name: Ice Cavern Icicle Before Scythe 1
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_before_scythe_2
+    name: Ice Cavern Icicle Before Scythe 2
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_before_scythe_3
+    name: Ice Cavern Icicle Before Scythe 3
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_before_scythe_4
+    name: Ice Cavern Icicle Before Scythe 4
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_scythe_1
+    name: Ice Cavern Icicle Scythe 1
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_scythe_2
+    name: Ice Cavern Icicle Scythe 2
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_scythe_3
+    name: Ice Cavern Icicle Scythe 3
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  exits:
+  - target: oot_ice_cavern_hp_room
+    exitType: overworld
+    logic: has_blue_fire
+  - target: oot_ice_cavern_block_room
+    exitType: overworld
+    logic: has_blue_fire
+  - target: oot_ice_cavern_first_fire_room
+    exitType: overworld
+    logic: (is_adult || climb_anywhere || hookshot_anywhere) && silver_rupees_ic_scythe
+- id: oot_ice_cavern_hp_room
+  name: Ice Cavern HP Room
+  game: oot
+  locations:
+  - id: oot_ice_cavern_compass
+    name: Ice Cavern Compass
+    locationType: npc
+    logic: 'true'
+  - id: oot_ice_cavern_hp
+    name: Ice Cavern HP
+    locationType: collectible
+    logic: 'true'
+  - id: oot_ice_cavern_gs_hp_room
+    name: Ice Cavern GS HP Room
+    locationType: collectible
+    logic: gs && (can_collect_distance || (climb_anywhere && (can_use_sword || can_use_sticks || has_ranged_weapon || has_explosives
+      || can_use_din)))
+  - id: oot_ice_cavern_icicle_compass_01
+    name: Ice Cavern Icicle Compass 01
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_compass_02
+    name: Ice Cavern Icicle Compass 02
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_compass_03
+    name: Ice Cavern Icicle Compass 03
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_compass_04
+    name: Ice Cavern Icicle Compass 04
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_compass_05
+    name: Ice Cavern Icicle Compass 05
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_compass_06
+    name: Ice Cavern Icicle Compass 06
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_compass_07
+    name: Ice Cavern Icicle Compass 07
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_compass_08
+    name: Ice Cavern Icicle Compass 08
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_compass_09
+    name: Ice Cavern Icicle Compass 09
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_compass_10
+    name: Ice Cavern Icicle Compass 10
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_compass_11
+    name: Ice Cavern Icicle Compass 11
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_compass_12
+    name: Ice Cavern Icicle Compass 12
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_compass_13
+    name: Ice Cavern Icicle Compass 13
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_red_ice_compass_1
+    name: Ice Cavern Red Ice Compass 1
+    locationType: npc
+    logic: has_blue_fire
+  - id: oot_ice_cavern_red_ice_compass_2
+    name: Ice Cavern Red Ice Compass 2
+    locationType: npc
+    logic: has_blue_fire
+- id: oot_ice_cavern_first_fire_room
+  name: Ice Cavern First Fire Room
+  game: oot
+  locations:
+  - id: oot_ice_cavern_map
+    name: Ice Cavern Map
+    locationType: npc
+    logic: has_blue_fire
+  - id: oot_ice_cavern_pot_map_room
+    name: Ice Cavern Pot Map Room
+    locationType: freestanding
+    logic: has_blue_fire
+  - id: oot_ice_cavern_heart_1
+    name: Ice Cavern Heart 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ice_cavern_heart_2
+    name: Ice Cavern Heart 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ice_cavern_heart_3
+    name: Ice Cavern Heart 3
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_ice_cavern_icicle_before_map_1
+    name: Ice Cavern Icicle Before Map 1
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_before_map_2
+    name: Ice Cavern Icicle Before Map 2
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_before_map_3
+    name: Ice Cavern Icicle Before Map 3
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_red_ice_map_1
+    name: Ice Cavern Red Ice Map 1
+    locationType: npc
+    logic: has_blue_fire
+  - id: oot_ice_cavern_red_ice_map_2
+    name: Ice Cavern Red Ice Map 2
+    locationType: npc
+    logic: has_blue_fire
+- id: oot_ice_cavern_block_room
+  name: Ice Cavern Block Room
+  game: oot
+  locations:
+  - id: oot_ice_cavern_gs_block_room
+    name: Ice Cavern GS Block Room
+    locationType: collectible
+    logic: gs && (can_collect_distance || (climb_anywhere && (has_ranged_weapon || has_explosives || can_use_din)))
+  - id: oot_ice_cavern_sr_blocks_back_left
+    name: Ice Cavern SR Blocks Back Left
+    locationType: npc
+    logic: 'true'
+  - id: oot_ice_cavern_sr_blocks_back_right
+    name: Ice Cavern SR Blocks Back Right
+    locationType: npc
+    logic: 'true'
+  - id: oot_ice_cavern_sr_blocks_center
+    name: Ice Cavern SR Blocks Center
+    locationType: npc
+    logic: 'true'
+  - id: oot_ice_cavern_sr_blocks_alcove
+    name: Ice Cavern SR Blocks Alcove
+    locationType: npc
+    logic: has_blue_fire
+  - id: oot_ice_cavern_sr_blocks_front_left
+    name: Ice Cavern SR Blocks Front Left
+    locationType: npc
+    logic: 'true'
+  - id: oot_ice_cavern_pot_red_ice_1
+    name: Ice Cavern Pot Red Ice 1
+    locationType: freestanding
+    logic: silver_rupees_ic_block
+  - id: oot_ice_cavern_pot_red_ice_2
+    name: Ice Cavern Pot Red Ice 2
+    locationType: freestanding
+    logic: silver_rupees_ic_block
+  - id: oot_ice_cavern_rupee_midair_1
+    name: Ice Cavern Rupee Midair 1
+    locationType: freestanding
+    logic: can_play_time
+  - id: oot_ice_cavern_rupee_midair_2
+    name: Ice Cavern Rupee Midair 2
+    locationType: freestanding
+    logic: can_play_time
+  - id: oot_ice_cavern_rupee_midair_3
+    name: Ice Cavern Rupee Midair 3
+    locationType: freestanding
+    logic: can_play_time
+  - id: oot_ice_cavern_icicle_before_block_1
+    name: Ice Cavern Icicle Before Block 1
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_before_block_2
+    name: Ice Cavern Icicle Before Block 2
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_before_block_3
+    name: Ice Cavern Icicle Before Block 3
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_before_block_4
+    name: Ice Cavern Icicle Before Block 4
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_before_block_5
+    name: Ice Cavern Icicle Before Block 5
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_red_ice_block
+    name: Ice Cavern Red Ice Block
+    locationType: npc
+    logic: has_blue_fire
+  exits:
+  - target: oot_ice_cavern_scythe
+    exitType: overworld
+  - target: oot_ice_cavern_end
+    exitType: overworld
+    logic: silver_rupees_ic_block
+- id: oot_ice_cavern_end
+  name: Ice Cavern End
+  game: oot
+  locations:
+  - id: oot_ice_cavern_iron_boots
+    name: Ice Cavern Iron Boots
+    locationType: npc
+    logic: soul_wolfos && (can_use_sword || can_hit_triggers_distance || has_explosives_or_hammer || can_use_din || can_use_sticks)
+  - id: oot_ice_cavern_sheik_song
+    name: Ice Cavern Sheik Song
+    locationType: song
+    logic: soul_wolfos && soul_npc(SOUL_NPC_SHEIK) && (can_use_sword || can_hit_triggers_distance || has_explosives_or_hammer
+      || can_use_din || can_use_sticks)
+  - id: oot_ice_cavern_icicle_after_block_1
+    name: Ice Cavern Icicle After Block 1
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_after_block_2
+    name: Ice Cavern Icicle After Block 2
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_after_block_3
+    name: Ice Cavern Icicle After Block 3
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_after_block_4
+    name: Ice Cavern Icicle After Block 4
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_after_block_5
+    name: Ice Cavern Icicle After Block 5
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_after_block_6
+    name: Ice Cavern Icicle After Block 6
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_after_block_7
+    name: Ice Cavern Icicle After Block 7
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_icicle_after_block_8
+    name: Ice Cavern Icicle After Block 8
+    locationType: npc
+    logic: break_icicle_ice_cavern
+  - id: oot_ice_cavern_red_ice_after_block_1
+    name: Ice Cavern Red Ice After Block 1
+    locationType: npc
+    logic: has_blue_fire
+  - id: oot_ice_cavern_red_ice_after_block_2
+    name: Ice Cavern Red Ice After Block 2
+    locationType: npc
+    logic: has_blue_fire
+  - id: oot_ice_cavern_red_ice_after_block_3
+    name: Ice Cavern Red Ice After Block 3
+    locationType: npc
+    logic: has_blue_fire
+  exits:
+  - target: oot_ice_cavern_block_room
+    exitType: overworld
+    logic: (climb_anywhere || hookshot_anywhere || has_blue_fire) && soul_wolfos && (can_use_sword || can_hit_triggers_distance
+      || has_explosives_or_hammer || can_use_din || can_use_sticks)
+- id: oot_jabu_jabu
+  name: Jabu-Jabu
+  game: oot
+  exits:
+  - target: oot_zora_fountain
+    exitType: overworld
+  - target: oot_jabu_jabu_elevator
+    exitType: overworld
+    logic: has_ranged_weapon || has_explosives
+- id: oot_jabu_jabu_elevator
+  name: Jabu-Jabu Elevator
+  game: oot
+  locations:
+  - id: oot_jabu_jabu_scrub
+    name: Jabu-Jabu Scrub
+    locationType: scrub
+    logic: (can_swim && (is_child || can_dive_small || time_travel_at_will)) && business_scrub(0x20)
+  - id: oot_jabu_jabu_small_crate_1
+    name: Jabu-Jabu Small Crate 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_jabu_jabu_small_crate_2
+    name: Jabu-Jabu Small Crate 2
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_jabu_jabu
+    exitType: overworld
+  - target: oot_jabu_jabu_pre_boss_room
+    exitType: overworld
+    logic: event(BIG_OCTO) || (has_hover_boots && (trick(OOT_JABU_BOSS_HOVER) || can_play_elegy)) || climb_anywhere || (glitch_megaflip
+      && ((trick(OOT_JJB_BOXLESS) && can_jump_slash) || can_play_elegy))
+  - target: oot_jabu_jabu_hole_room
+    exitType: overworld
+- id: oot_jabu_jabu_hole_room
+  name: Jabu-Jabu Hole Room
+  game: oot
+  exits:
+  - target: oot_jabu_jabu_elevator
+    exitType: overworld
+  - target: oot_jabu_jabu_parasite_fork
+    exitType: overworld
+  - target: oot_jabu_jabu_basement
+    exitType: overworld
+  - target: oot_jabu_jabu_before_big_octo
+    exitType: overworld
+    logic: event(PARASITE)
+- id: oot_jabu_jabu_parasite_fork
+  name: Jabu-Jabu Parasite Fork
+  game: oot
+  exits:
+  - target: oot_jabu_jabu_hole_room
+    exitType: overworld
+  - target: oot_jabu_jabu_boomerang_room
+    exitType: overworld
+  - target: oot_jabu_jabu_map_room
+    exitType: overworld
+    logic: soul_ruto || can_play_elegy
+  - target: oot_jabu_jabu_compass_room
+    exitType: overworld
+    logic: event(RED_PARASITE)
+  - target: oot_jabu_jabu_blue_parasite
+    exitType: overworld
+    logic: event(RED_PARASITE)
+  - target: oot_jabu_jabu_green_parasite
+    exitType: overworld
+    logic: event(BLUE_PARASITE)
+  events:
+  - id: OOT_PARASITE
+    name: Parasite
+    logic: event(RED_PARASITE) && event(BLUE_PARASITE) && event(GREEN_PARASITE)
+- id: oot_jabu_jabu_boomerang_room
+  name: Jabu-Jabu Boomerang Room
+  game: oot
+  locations:
+  - id: oot_jabu_jabu_boomerang_chest
+    name: Jabu-Jabu Boomerang Chest
+    locationType: chest
+    logic: soul_enemy(SOUL_ENEMY_STINGER) && soul_ruto
+  exits:
+  - target: oot_jabu_jabu_parasite_fork
+    exitType: overworld
+- id: oot_jabu_jabu_map_room
+  name: Jabu-Jabu Map Room
+  game: oot
+  locations:
+  - id: oot_jabu_jabu_map_chest
+    name: Jabu-Jabu Map Chest
+    locationType: chest
+    logic: event(RED_PARASITE)
+  exits:
+  - target: oot_jabu_jabu_parasite_fork
+    exitType: overworld
+  events:
+  - id: OOT_RED_PARASITE
+    name: Red Parasite
+    logic: soul_enemy(SOUL_ENEMY_PARASITE) && can_boomerang
+- id: oot_jabu_jabu_compass_room
+  name: Jabu-Jabu Compass Room
+  game: oot
+  locations:
+  - id: oot_jabu_jabu_compass_chest
+    name: Jabu-Jabu Compass Chest
+    locationType: chest
+    logic: soul_enemy(SOUL_ENEMY_SHABOM)
+  exits:
+  - target: oot_jabu_jabu_parasite_fork
+    exitType: overworld
+    logic: soul_enemy(SOUL_ENEMY_SHABOM)
+- id: oot_jabu_jabu_blue_parasite
+  name: Jabu-Jabu Blue Parasite
+  game: oot
+  exits:
+  - target: oot_jabu_jabu_parasite_fork
+    exitType: overworld
+    logic: event(BLUE_PARASITE)
+  events:
+  - id: OOT_BLUE_PARASITE
+    name: Blue Parasite
+    logic: soul_enemy(SOUL_ENEMY_PARASITE) && can_boomerang
+- id: oot_jabu_jabu_green_parasite
+  name: Jabu-Jabu Green Parasite
+  game: oot
+  exits:
+  - target: oot_jabu_jabu_parasite_fork
+    exitType: overworld
+    logic: event(GREEN_PARASITE) && soul_enemy(SOUL_ENEMY_BIRI_BARI)
+  events:
+  - id: OOT_GREEN_PARASITE
+    name: Green Parasite
+    logic: soul_enemy(SOUL_ENEMY_PARASITE) && can_boomerang
+- id: oot_jabu_jabu_basement
+  name: Jabu-Jabu Basement
+  game: oot
+  locations:
+  - id: oot_jabu_jabu_gs_bottom_lower
+    name: Jabu-Jabu GS Bottom Lower
+    locationType: collectible
+    logic: gs && (can_collect_distance || climb_anywhere)
+  - id: oot_jabu_jabu_gs_bottom_upper
+    name: Jabu-Jabu GS Bottom Upper
+    locationType: collectible
+    logic: gs && (can_collect_distance || climb_anywhere)
+  exits:
+  - target: oot_jabu_jabu_hole_room
+    exitType: overworld
+  - target: oot_jabu_jabu_muscle_block_room
+    exitType: overworld
+  - target: oot_jabu_jabu_water_switch_room
+    exitType: overworld
+- id: oot_jabu_jabu_muscle_block_room
+  name: Jabu-Jabu Muscle Block Room
+  game: oot
+  locations:
+  - id: oot_jabu_jabu_pot_muscle_block_room_1
+    name: Jabu-Jabu Pot Muscle Block Room 1
+    locationType: freestanding
+    logic: can_boomerang || can_use_ice_arrow_platforms || climb_anywhere
+  - id: oot_jabu_jabu_pot_muscle_block_room_2
+    name: Jabu-Jabu Pot Muscle Block Room 2
+    locationType: freestanding
+    logic: can_boomerang || can_use_ice_arrow_platforms || climb_anywhere
+  - id: oot_jabu_jabu_pot_muscle_block_room_3
+    name: Jabu-Jabu Pot Muscle Block Room 3
+    locationType: freestanding
+    logic: can_boomerang || can_use_ice_arrow_platforms || climb_anywhere
+  - id: oot_jabu_jabu_pot_muscle_block_room_4
+    name: Jabu-Jabu Pot Muscle Block Room 4
+    locationType: freestanding
+    logic: can_boomerang || can_use_ice_arrow_platforms || climb_anywhere
+  - id: oot_jabu_jabu_pot_muscle_block_room_5
+    name: Jabu-Jabu Pot Muscle Block Room 5
+    locationType: freestanding
+    logic: can_boomerang || can_use_ice_arrow_platforms || climb_anywhere
+  exits:
+  - target: oot_jabu_jabu_basement
+    exitType: overworld
+- id: oot_jabu_jabu_water_switch_room
+  name: Jabu-Jabu Water Switch Room
+  game: oot
+  locations:
+  - id: oot_jabu_jabu_gs_water_switch
+    name: Jabu-Jabu GS Water Switch
+    locationType: collectible
+    logic: gs
+  - id: oot_jabu_jabu_pot_alcove_1
+    name: Jabu-Jabu Pot Alcove 1
+    locationType: freestanding
+    logic: can_swim || has_hover_boots || climb_anywhere
+  - id: oot_jabu_jabu_pot_alcove_2
+    name: Jabu-Jabu Pot Alcove 2
+    locationType: freestanding
+    logic: can_swim || has_hover_boots || climb_anywhere
+  - id: oot_jabu_jabu_pot_alcove_3
+    name: Jabu-Jabu Pot Alcove 3
+    locationType: freestanding
+    logic: can_swim || has_hover_boots || climb_anywhere
+  exits:
+  - target: oot_jabu_jabu_basement
+    exitType: overworld
+  - target: oot_jabu_jabu_elevator
+    exitType: overworld
+    logic: (can_swim || is_adult || time_travel_at_will || has_hover_boots) && (has_ranged_weapon || has_bombs)
+- id: oot_jabu_jabu_before_big_octo
+  name: Jabu-Jabu Before Big Octo
+  game: oot
+  exits:
+  - target: oot_jabu_jabu_basement
+    exitType: overworld
+  - target: oot_jabu_jabu_big_octo
+    exitType: overworld
+- id: oot_jabu_jabu_big_octo
+  name: Jabu-Jabu Big Octo
+  game: oot
+  locations:
+  - id: oot_jabu_jabu_pot_big_octo_room_1
+    name: Jabu-Jabu Pot Big Octo Room 1
+    locationType: freestanding
+    logic: event(BIG_OCTO) || climb_anywhere
+  - id: oot_jabu_jabu_pot_big_octo_room_2
+    name: Jabu-Jabu Pot Big Octo Room 2
+    locationType: freestanding
+    logic: event(BIG_OCTO) || climb_anywhere
+  - id: oot_jabu_jabu_pot_big_octo_room_3
+    name: Jabu-Jabu Pot Big Octo Room 3
+    locationType: freestanding
+    logic: event(BIG_OCTO) || climb_anywhere
+  exits:
+  - target: oot_jabu_jabu_elevator
+    exitType: overworld
+    logic: event(BIG_OCTO) || climb_anywhere
+  events:
+  - id: OOT_BIG_OCTO
+    name: Big Octo
+    logic: soul_octorok && event(PARASITE) && soul_ruto && (can_use_sword || can_use_sticks)
+- id: oot_jabu_jabu_pre_boss_room
+  name: Jabu-Jabu Pre-Boss Room
+  game: oot
+  locations:
+  - id: oot_jabu_jabu_gs_near_boss
+    name: Jabu-Jabu GS Near Boss
+    locationType: collectible
+    logic: gs
+  exits:
+  - target: oot_jabu_jabu_boss
+    exitType: overworld
+    logic: can_boomerang || (trick(OOT_JABU_BOSS_HIGH_SWITCH) && ((has_hover_boots && has_bombs) || can_hit_triggers_distance
+      || can_longshot || has_bombchu)) || (climb_anywhere && (can_use_sword || can_use_sticks || has_ranged_weapon || has_explosives_or_hammer))
+  - target: oot_jabu_jabu_elevator
+    exitType: overworld
+- id: oot_shadow_temple
+  name: Shadow Temple
+  game: oot
+  exits:
+  - target: oot_graveyard_upper
+    exitType: overworld
+  - target: oot_shadow_temple_pit
+    exitType: overworld
+    logic: has_hover_boots || can_hookshot || climb_anywhere || glitch_megaflip
+- id: oot_shadow_temple_wallmaster
+  name: Shadow Temple Wallmaster
+  game: oot
+  exits:
+  - target: oot_void
+    exitType: overworld
+- id: oot_shadow_temple_pit
+  name: Shadow Temple Pit
+  game: oot
+  locations:
+  - id: oot_shadow_temple_map
+    name: Shadow Temple Map
+    locationType: npc
+    logic: soul_redead_gibdo && soul_keese && has_lens && (can_use_sword || can_use_sticks || can_use_din || can_hammer)
+  - id: oot_shadow_temple_hover_boots
+    name: Shadow Temple Hover Boots
+    locationType: npc
+    logic: soul_enemy(SOUL_ENEMY_DEAD_HAND) && has_lens && (can_use_sword || (can_use_sticks && trick(OOT_DEAD_HAND_STICKS)))
+  - id: oot_shadow_temple_pot_early_maze_1
+    name: Shadow Temple Pot Early Maze 1
+    locationType: freestanding
+    logic: has_lens
+  - id: oot_shadow_temple_pot_early_maze_2
+    name: Shadow Temple Pot Early Maze 2
+    locationType: freestanding
+    logic: has_lens
+  - id: oot_shadow_temple_pot_early_maze_3
+    name: Shadow Temple Pot Early Maze 3
+    locationType: freestanding
+    logic: has_lens
+  - id: oot_shadow_temple_pot_early_maze_4
+    name: Shadow Temple Pot Early Maze 4
+    locationType: freestanding
+    logic: has_lens
+  - id: oot_shadow_temple_pot_early_maze_5
+    name: Shadow Temple Pot Early Maze 5
+    locationType: freestanding
+    logic: has_lens
+  - id: oot_shadow_temple_pot_early_maze_6
+    name: Shadow Temple Pot Early Maze 6
+    locationType: freestanding
+    logic: has_lens
+  - id: oot_shadow_temple_pot_map_room_1
+    name: Shadow Temple Pot Map Room 1
+    locationType: freestanding
+    logic: has_lens
+  - id: oot_shadow_temple_pot_map_room_2
+    name: Shadow Temple Pot Map Room 2
+    locationType: freestanding
+    logic: has_lens
+  - id: oot_shadow_temple_flying_pot_early_maze
+    name: Shadow Temple Flying Pot Early Maze
+    locationType: freestanding
+    logic: has_lens && soul_flying_pot
+  exits:
+  - target: oot_shadow_temple_main
+    exitType: overworld
+    logic: (has_hover_boots || hookshot_anywhere || glitch_megaflip) && has_lens
+- id: oot_shadow_temple_main
+  name: Shadow Temple Main
+  game: oot
+  locations:
+  - id: oot_shadow_temple_compass
+    name: Shadow Temple Compass
+    locationType: npc
+    logic: soul_redead_gibdo && (can_use_sword || can_use_sticks || can_use_din || can_hammer)
+  - id: oot_shadow_temple_beamos_big_fairy
+    name: Shadow Temple Beamos Big Fairy
+    locationType: fairy
+    logic: can_play_storms
+  exits:
+  - target: oot_shadow_temple_open
+    exitType: overworld
+    logic: cond(!setting(climbMostSurfacesOot, off), small_keys_shadow(4), small_keys_shadow(1)) && has_explosives
+  - target: oot_shadow_temple_scythe_silver_rupees
+    exitType: overworld
+- id: oot_shadow_temple_scythe_silver_rupees
+  name: Shadow Temple Scythe Silver Rupees
+  game: oot
+  locations:
+  - id: oot_shadow_temple_sr_scythe_1
+    name: Shadow Temple SR Scythe 1
+    locationType: npc
+    logic: 'true'
+  - id: oot_shadow_temple_sr_scythe_2
+    name: Shadow Temple SR Scythe 2
+    locationType: npc
+    logic: can_hookshot || (is_adult && has_hover_boots) || climb_anywhere
+  - id: oot_shadow_temple_sr_scythe_3
+    name: Shadow Temple SR Scythe 3
+    locationType: npc
+    logic: 'true'
+  - id: oot_shadow_temple_sr_scythe_4
+    name: Shadow Temple SR Scythe 4
+    locationType: npc
+    logic: 'true'
+  - id: oot_shadow_temple_sr_scythe_5
+    name: Shadow Temple SR Scythe 5
+    locationType: npc
+    logic: 'true'
+  - id: oot_shadow_temple_silver_rupees
+    name: Shadow Temple Silver Rupees
+    locationType: freestanding
+    logic: silver_rupees_shadow_scythe
+  exits:
+  - target: oot_shadow_temple_main
+    exitType: overworld
+  - target: oot_shadow_temple_boat
+    exitType: overworld
+    logic: (climb_anywhere && trick(OOT_SHADOW_BOAT_EARLY)) || event(SHADOW_SHORTCUT)
+- id: oot_shadow_temple_open
+  name: Shadow Temple Open
+  game: oot
+  locations:
+  - id: oot_shadow_temple_spinning_blades_visible
+    name: Shadow Temple Spinning Blades Visible
+    locationType: npc
+    logic: event(SHADOW_INVISIBLE_SCYTHE_GATE)
+  - id: oot_shadow_temple_spinning_blades_invisible
+    name: Shadow Temple Spinning Blades Invisible
+    locationType: npc
+    logic: event(SHADOW_INVISIBLE_SCYTHE_GATE)
+  - id: oot_shadow_temple_gs_invisible_scythe
+    name: Shadow Temple GS Invisible Scythe
+    locationType: collectible
+    logic: gs && event(SHADOW_INVISIBLE_SCYTHE_GATE) && (can_collect_distance || climb_anywhere)
+  - id: oot_shadow_temple_sr_pit_1
+    name: Shadow Temple SR Pit 1
+    locationType: npc
+    logic: 'true'
+  - id: oot_shadow_temple_sr_pit_2
+    name: Shadow Temple SR Pit 2
+    locationType: npc
+    logic: 'true'
+  - id: oot_shadow_temple_sr_pit_3
+    name: Shadow Temple SR Pit 3
+    locationType: npc
+    logic: 'true'
+  - id: oot_shadow_temple_sr_pit_4
+    name: Shadow Temple SR Pit 4
+    locationType: npc
+    logic: 'true'
+  - id: oot_shadow_temple_sr_pit_5
+    name: Shadow Temple SR Pit 5
+    locationType: npc
+    logic: 'true'
+  - id: oot_shadow_temple_stalfos_big_fairy
+    name: Shadow Temple Stalfos Big Fairy
+    locationType: fairy
+    logic: can_play_storms
+  - id: oot_shadow_temple_heart_scythe_1
+    name: Shadow Temple Heart Scythe 1
+    locationType: freestanding
+    logic: (can_play_time && is_adult) || can_boomerang || hookshot_anywhere || climb_anywhere
+  - id: oot_shadow_temple_heart_scythe_2
+    name: Shadow Temple Heart Scythe 2
+    locationType: freestanding
+    logic: (can_play_time && is_adult) || can_boomerang || hookshot_anywhere || climb_anywhere
+  exits:
+  - target: oot_shadow_temple_falling_spikes
+    exitType: overworld
+    logic: silver_rupees_shadow_pit
+  - target: oot_shadow_temple_invisible_spikes
+    exitType: overworld
+    logic: cond(!setting(climbMostSurfacesOot, off), small_keys_shadow(4), small_keys_shadow(2))
+  - target: oot_shadow_temple_wallmaster
+    exitType: overworld
+    logic: soul_wallmaster
+  events:
+  - id: OOT_SHADOW_INVISIBLE_SCYTHE_GATE
+    name: Shadow Invisible Scythe Gate
+    logic: soul_like_like && soul_keese && (has_ranged_weapon_adult || can_use_slingshot || can_use_sticks || has_explosives_or_hammer
+      || can_use_sword)
+- id: oot_shadow_temple_falling_spikes
+  name: Shadow Temple Falling Spikes
+  game: oot
+  locations:
+  - id: oot_shadow_temple_falling_spikes_lower
+    name: Shadow Temple Falling Spikes Lower
+    locationType: npc
+    logic: 'true'
+  - id: oot_shadow_temple_falling_spikes_upper_1
+    name: Shadow Temple Falling Spikes Upper 1
+    locationType: npc
+    logic: (is_adult && has_goron_bracelet) || climb_anywhere || hookshot_anywhere
+  - id: oot_shadow_temple_falling_spikes_upper_2
+    name: Shadow Temple Falling Spikes Upper 2
+    locationType: npc
+    logic: (is_adult && has_goron_bracelet) || climb_anywhere || hookshot_anywhere
+  - id: oot_shadow_temple_gs_falling_spikes
+    name: Shadow Temple GS Falling Spikes
+    locationType: collectible
+    logic: gs && (can_collect_distance || (climb_anywhere && can_damage_skull))
+  - id: oot_shadow_temple_pot_falling_spikes_bottom_1
+    name: Shadow Temple Pot Falling Spikes Bottom 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_shadow_temple_pot_falling_spikes_bottom_2
+    name: Shadow Temple Pot Falling Spikes Bottom 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_shadow_temple_pot_falling_spikes_top_1
+    name: Shadow Temple Pot Falling Spikes Top 1
+    locationType: freestanding
+    logic: (is_adult && has_goron_bracelet) || climb_anywhere || hookshot_anywhere
+  - id: oot_shadow_temple_pot_falling_spikes_top_2
+    name: Shadow Temple Pot Falling Spikes Top 2
+    locationType: freestanding
+    logic: (is_adult && has_goron_bracelet) || climb_anywhere || hookshot_anywhere
+- id: oot_shadow_temple_invisible_spikes
+  name: Shadow Temple Invisible Spikes
+  game: oot
+  locations:
+  - id: oot_shadow_temple_sr_spikes_back_left
+    name: Shadow Temple SR Spikes Back Left
+    locationType: npc
+    logic: has_lens && (can_hookshot || climb_anywhere)
+  - id: oot_shadow_temple_sr_spikes_right
+    name: Shadow Temple SR Spikes Right
+    locationType: npc
+    logic: can_hookshot || climb_anywhere
+  - id: oot_shadow_temple_sr_spikes_center
+    name: Shadow Temple SR Spikes Center
+    locationType: npc
+    logic: 'true'
+  - id: oot_shadow_temple_sr_spikes_front_left
+    name: Shadow Temple SR Spikes Front Left
+    locationType: npc
+    logic: can_hookshot || climb_anywhere
+  - id: oot_shadow_temple_sr_spikes_midair
+    name: Shadow Temple SR Spikes Midair
+    locationType: npc
+    logic: has_lens && (can_hookshot || climb_anywhere) && (can_use_sword || can_use_sticks || can_hammer || has_hover_boots
+      || longshot_anywhere)
+  - id: oot_shadow_temple_invisible_spike_room
+    name: Shadow Temple Invisible Spike Room
+    locationType: npc
+    logic: soul_redead_gibdo && (can_use_sword || can_use_sticks || can_use_din || can_hammer)
+  exits:
+  - target: oot_shadow_temple_open
+    exitType: overworld
+    logic: small_keys_shadow(4)
+  - target: oot_shadow_temple_wind_front
+    exitType: overworld
+    logic: cond(!setting(climbMostSurfacesOot, off), small_keys_shadow(4), small_keys_shadow(3) && ((is_adult && (can_use_sword_or_sticks
+      || can_use_din) && soul_redead_gibdo && can_hookshot) || can_longshot))
+  - target: oot_shadow_temple_skull_pot
+    exitType: overworld
+    logic: silver_rupees_shadow_spikes
+- id: oot_shadow_temple_skull_pot
+  name: Shadow Temple Skull Pot
+  game: oot
+  locations:
+  - id: oot_shadow_temple_skull
+    name: Shadow Temple Skull
+    locationType: npc
+    logic: has_bombflowers
+  - id: oot_shadow_temple_gs_skull_pot
+    name: Shadow Temple GS Skull Pot
+    locationType: collectible
+    logic: gs && (can_damage_skull || has_goron_bracelet)
+- id: oot_shadow_temple_wind_front
+  name: Shadow Temple Wind Front
+  game: oot
+  exits:
+  - target: oot_shadow_temple_wind_back
+    exitType: overworld
+  - target: oot_shadow_temple_invisible_spikes
+    exitType: overworld
+    logic: small_keys_shadow(4)
+- id: oot_shadow_temple_wind_back
+  name: Shadow Temple Wind Back
+  game: oot
+  locations:
+  - id: oot_shadow_temple_wind_room_hint
+    name: Shadow Temple Wind Room Hint
+    locationType: npc
+    logic: 'true'
+  exits:
+  - target: oot_shadow_temple_wind_gibdo
+    exitType: overworld
+  - target: oot_shadow_temple_wind_front
+    exitType: overworld
+    logic: climb_anywhere || can_hookshot
+- id: oot_shadow_temple_wind_gibdo
+  name: Shadow Temple Wind Gibdo
+  game: oot
+  locations:
+  - id: oot_shadow_temple_after_wind
+    name: Shadow Temple After Wind
+    locationType: npc
+    logic: soul_redead_gibdo && (can_use_sword || can_use_din || can_use_sticks || can_hammer)
+  - id: oot_shadow_temple_after_wind_invisible
+    name: Shadow Temple After Wind Invisible
+    locationType: npc
+    logic: has_explosives
+  - id: oot_shadow_temple_pot_after_wind_1
+    name: Shadow Temple Pot After Wind 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_shadow_temple_pot_after_wind_2
+    name: Shadow Temple Pot After Wind 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_shadow_temple_flying_pot_after_wind_1
+    name: Shadow Temple Flying Pot After Wind 1
+    locationType: freestanding
+    logic: soul_flying_pot
+  - id: oot_shadow_temple_flying_pot_after_wind_2
+    name: Shadow Temple Flying Pot After Wind 2
+    locationType: freestanding
+    logic: soul_flying_pot
+  - id: oot_shadow_temple_big_fairy_after_wind
+    name: Shadow Temple Big Fairy After Wind
+    locationType: fairy
+    logic: can_play_sun
+  exits:
+  - target: oot_shadow_temple_boat
+    exitType: overworld
+    logic: small_keys_shadow(4)
+  - target: oot_shadow_temple_wind_back
+    exitType: overworld
+    logic: soul_redead_gibdo && (can_use_sword || can_use_din || can_use_sticks || can_hammer)
+- id: oot_shadow_temple_boat
+  name: Shadow Temple Boat
+  game: oot
+  locations:
+  - id: oot_shadow_temple_gs_near_boat
+    name: Shadow Temple GS Near Boat
+    locationType: collectible
+    logic: gs && (can_longshot || hookshot_anywhere || (climb_anywhere && (can_use_sword || has_ranged_weapon || has_explosives
+      || can_use_din)))
+  - id: oot_shadow_temple_heart_shortcut_1
+    name: Shadow Temple Heart Shortcut 1
+    locationType: freestanding
+    logic: scarecrow_longshot || hookshot_anywhere || climb_anywhere
+  - id: oot_shadow_temple_heart_shortcut_2
+    name: Shadow Temple Heart Shortcut 2
+    locationType: freestanding
+    logic: scarecrow_longshot || hookshot_anywhere || climb_anywhere
+  exits:
+  - target: oot_shadow_temple_after_boat
+    exitType: overworld
+    logic: song_event(0x0c) && (can_hookshot || climb_anywhere || (is_adult && event(SHADOW_SHORTCUT)))
+  - target: oot_shadow_temple_wind_gibdo
+    exitType: overworld
+    logic: small_keys_shadow(4)
+  - target: oot_shadow_temple_scythe_silver_rupees
+    exitType: overworld
+    logic: event(SHADOW_SHORTCUT) || (climb_anywhere && trick(OOT_SHADOW_BOAT_EARLY))
+  events:
+  - id: OOT_SHADOW_SHORTCUT
+    name: Shadow Shortcut
+    logic: has_goron_bracelet
+- id: oot_shadow_temple_after_boat
+  name: Shadow Temple After Boat
+  game: oot
+  locations:
+  - id: oot_shadow_temple_boss_key_room_1
+    name: Shadow Temple Boss Key Room 1
+    locationType: boss
+    logic: can_use_din || climb_anywhere || hookshot_anywhere
+  - id: oot_shadow_temple_boss_key_room_2
+    name: Shadow Temple Boss Key Room 2
+    locationType: boss
+    logic: can_use_din || climb_anywhere || hookshot_anywhere
+  - id: oot_shadow_temple_invisible_floormaster
+    name: Shadow Temple Invisible Floormaster
+    locationType: npc
+    logic: soul_floormaster && (can_use_sword || can_hit_triggers_distance || can_use_din || can_use_sticks || can_hammer)
+  - id: oot_shadow_temple_gs_triple_skull_pot
+    name: Shadow Temple GS Triple Skull Pot
+    locationType: collectible
+    logic: gs && (can_collect_distance || (climb_anywhere && (has_ranged_weapon || can_use_sword || can_use_sticks || can_use_din
+      || has_bombflowers)))
+  - id: oot_shadow_temple_pot_boss_key_room
+    name: Shadow Temple Pot Boss Key Room
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_shadow_temple_pot_invisible_floormaster_room_1
+    name: Shadow Temple Pot Invisible Floormaster Room 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_shadow_temple_pot_invisible_floormaster_room_2
+    name: Shadow Temple Pot Invisible Floormaster Room 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_shadow_temple_pot_boat_before_bridge_1
+    name: Shadow Temple Pot Boat Before Bridge 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_shadow_temple_pot_boat_before_bridge_2
+    name: Shadow Temple Pot Boat Before Bridge 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_shadow_temple_pot_boat_after_bridge_1
+    name: Shadow Temple Pot Boat After Bridge 1
+    locationType: freestanding
+    logic: can_use_bow || scarecrow_longshot || climb_anywhere
+  - id: oot_shadow_temple_pot_boat_after_bridge_2
+    name: Shadow Temple Pot Boat After Bridge 2
+    locationType: freestanding
+    logic: can_use_bow || scarecrow_longshot || climb_anywhere
+  - id: oot_shadow_temple_heart_pre_boss_1
+    name: Shadow Temple Heart Pre-Boss 1
+    locationType: freestanding
+    logic: scarecrow_longshot || climb_anywhere
+  - id: oot_shadow_temple_heart_pre_boss_2
+    name: Shadow Temple Heart Pre-Boss 2
+    locationType: freestanding
+    logic: scarecrow_longshot || climb_anywhere
+  - id: oot_shadow_temple_heart_pre_boss_3
+    name: Shadow Temple Heart Pre-Boss 3
+    locationType: freestanding
+    logic: scarecrow_longshot || climb_anywhere
+  - id: oot_shadow_temple_wonder_item
+    name: Shadow Temple Wonder Item
+    locationType: freestanding
+    logic: can_use_bow
+  exits:
+  - target: oot_shadow_temple_pre_boss
+    exitType: overworld
+    logic: small_keys_shadow(5) && (can_use_bow || scarecrow_longshot || climb_anywhere || event(SHADOW_PILLAR)) && (has_hover_boots
+      || climb_anywhere || hookshot_anywhere || glitch_megaflip)
+  events:
+  - id: OOT_SHADOW_PILLAR
+    name: Shadow Pillar
+    logic: can_use_bow || (has_bombflowers && (scarecrow_longshot || climb_anywhere || longshot_anywhere))
+- id: oot_shadow_temple_pre_boss
+  name: Shadow Temple Pre-Boss
+  game: oot
+  exits:
+  - target: oot_shadow_temple_boss
+    exitType: overworld
+    logic: boss_key(BOSS_KEY_SHADOW)
+- id: oot_spirit_temple
+  name: Spirit Temple
+  game: oot
+  locations:
+  - id: oot_spirit_temple_pot_lobby_1
+    name: Spirit Temple Pot Lobby 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_spirit_temple_pot_lobby_2
+    name: Spirit Temple Pot Lobby 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_spirit_temple_flying_pot_lobby_1
+    name: Spirit Temple Flying Pot Lobby 1
+    locationType: freestanding
+    logic: soul_flying_pot
+  - id: oot_spirit_temple_flying_pot_lobby_2
+    name: Spirit Temple Flying Pot Lobby 2
+    locationType: freestanding
+    logic: soul_flying_pot
+  exits:
+  - target: oot_desert_colossus_spirit_exit
+    exitType: overworld
+  - target: oot_spirit_temple_child_entrance
+    exitType: overworld
+    logic: is_child
+  - target: oot_spirit_temple_adult_entrance
+    exitType: overworld
+    logic: can_lift_silver
+  events:
+  - id: OOT_SPIRIT_CHILD_DOOR
+    name: Spirit Child Door
+    logic: is_child && small_keys_spirit(5)
+  - id: OOT_SPIRIT_ADULT_DOOR
+    name: Spirit Adult Door
+    logic: can_lift_silver && cond(setting(agelessBoots) || setting(agelessHookshot) || setting(agelessStrength) || !setting(climbMostSurfacesOot,
+      off) || !setting(ageChange, none), small_keys_spirit(5), small_keys_spirit(3))
+- id: oot_spirit_temple_wallmaster_child_rupees
+  name: Spirit Temple Wallmaster Child Rupees
+  game: oot
+  exits:
+  - target: oot_void
+    exitType: overworld
+- id: oot_spirit_temple_wallmaster_adult_climb
+  name: Spirit Temple Wallmaster Adult Climb
+  game: oot
+  exits:
+  - target: oot_void
+    exitType: overworld
+- id: oot_spirit_temple_child_entrance
+  name: Spirit Temple Child Entrance
+  game: oot
+  exits:
+  - target: oot_spirit_temple
+    exitType: overworld
+    logic: is_child
+  - target: oot_spirit_temple_child_left
+    exitType: overworld
+    logic: soul_keese && soul_armos && (can_use_sticks || has_explosives_or_hammer || ((can_boomerang || has_nuts) && (can_use_sword
+      || can_use_slingshot)) || time_travel_at_will)
+  - target: oot_spirit_temple_child_right
+    exitType: overworld
+    logic: soul_keese && soul_armos && (can_use_sticks || has_explosives_or_hammer || ((can_boomerang || has_nuts) && (can_use_sword
+      || can_use_slingshot)) || time_travel_at_will)
+  - target: oot_spirit_temple_child_crawlspace
+    exitType: overworld
+    logic: is_child
+- id: oot_spirit_temple_child_left
+  name: Spirit Temple Child Left
+  game: oot
+  exits:
+  - target: oot_spirit_temple_child_entrance
+    exitType: overworld
+  - target: oot_spirit_temple_child_back_left
+    exitType: overworld
+    logic: has_ranged_weapon_child || hookshot_anywhere || climb_anywhere || (can_hookshot && can_jump_slash) || can_longshot
+- id: oot_spirit_temple_child_right
+  name: Spirit Temple Child Right
+  game: oot
+  locations:
+  - id: oot_spirit_temple_gs_child_fence
+    name: Spirit Temple GS Child Fence
+    locationType: collectible
+    logic: gs && (can_collect_distance || (climb_anywhere && (can_use_din || has_ranged_weapon || has_explosives)))
+  exits:
+  - target: oot_spirit_temple_child_entrance
+    exitType: overworld
+  - target: oot_spirit_temple_child_back_right
+    exitType: overworld
+    logic: silver_rupees_spirit_child
+  events:
+  - id: OOT_SPIRIT_CHEST_CHILD
+    name: Spirit Chest Child
+    logic: has_fire_or_sticks
+- id: oot_spirit_temple_child_back_left
+  name: Spirit Temple Child Back Left
+  game: oot
+  locations:
+  - id: oot_spirit_temple_child_first_chest
+    name: Spirit Temple Child First Chest
+    locationType: chest
+    logic: 'true'
+  - id: oot_spirit_temple_flying_pot_child_after_bridge_1
+    name: Spirit Temple Flying Pot Child After Bridge 1
+    locationType: freestanding
+    logic: soul_flying_pot
+  - id: oot_spirit_temple_flying_pot_child_after_bridge_2
+    name: Spirit Temple Flying Pot Child After Bridge 2
+    locationType: freestanding
+    logic: soul_flying_pot
+  - id: oot_spirit_temple_pot_child_anubis_room_1
+    name: Spirit Temple Pot Child Anubis Room 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_spirit_temple_pot_child_anubis_room_2
+    name: Spirit Temple Pot Child Anubis Room 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_spirit_temple_pot_child_anubis_room_3
+    name: Spirit Temple Pot Child Anubis Room 3
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_spirit_temple_pot_child_anubis_room_4
+    name: Spirit Temple Pot Child Anubis Room 4
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_spirit_temple_child_back_right
+    exitType: overworld
+    logic: soul_enemy(SOUL_ENEMY_ANUBIS)
+  events:
+  - id: OOT_SHIELD_DEKU
+    name: Shield Deku
+    logic: setting(restoreBrokenActors)
+- id: oot_spirit_temple_child_back_right
+  name: Spirit Temple Child Back Right
+  game: oot
+  locations:
+  - id: oot_spirit_temple_child_second_chest
+    name: Spirit Temple Child Second Chest
+    locationType: chest
+    logic: event(SPIRIT_CHEST_CHILD)
+  - id: oot_spirit_temple_sr_child_1
+    name: Spirit Temple SR Child 1
+    locationType: npc
+    logic: 'true'
+  - id: oot_spirit_temple_sr_child_2
+    name: Spirit Temple SR Child 2
+    locationType: npc
+    logic: 'true'
+  - id: oot_spirit_temple_sr_child_3
+    name: Spirit Temple SR Child 3
+    locationType: npc
+    logic: 'true'
+  - id: oot_spirit_temple_sr_child_4
+    name: Spirit Temple SR Child 4
+    locationType: npc
+    logic: 'true'
+  - id: oot_spirit_temple_sr_child_5
+    name: Spirit Temple SR Child 5
+    locationType: npc
+    logic: 'true'
+  exits:
+  - target: oot_spirit_temple_child_back_left
+    exitType: overworld
+    logic: soul_enemy(SOUL_ENEMY_ANUBIS)
+  - target: oot_spirit_temple_wallmaster_child_rupees
+    exitType: overworld
+    logic: soul_wallmaster
+- id: oot_spirit_temple_child_crawlspace
+  name: Spirit Temple Child Crawlspace
+  game: oot
+  locations:
+  - id: oot_spirit_temple_crate_1
+    name: Spirit Temple Crate 1
+    locationType: freestanding
+    logic: is_child
+  - id: oot_spirit_temple_crate_2
+    name: Spirit Temple Crate 2
+    locationType: freestanding
+    logic: is_child
+  exits:
+  - target: oot_spirit_temple_child_entrance
+    exitType: overworld
+    logic: is_child
+  - target: oot_spirit_temple_child_climb
+    exitType: overworld
+    logic: cond(!setting(climbMostSurfacesOot, off), (small_keys_spirit(1) && can_reflect_light && has_explosives) || small_keys_spirit(2),
+      small_keys_spirit(1))
+- id: oot_spirit_temple_child_climb
+  name: Spirit Temple Child Climb
+  game: oot
+  locations:
+  - id: oot_spirit_temple_child_climb_1
+    name: Spirit Temple Child Climb 1
+    locationType: npc
+    logic: has_ranged_weapon_both || (climb_anywhere && (can_use_sword || can_use_sticks || can_hammer)) || (event(SPIRIT_CHILD_DOOR)
+      && (has_ranged_weapon_child || can_hookshot)) || (event(SPIRIT_ADULT_DOOR) && (has_ranged_weapon_adult || can_boomerang))
+  - id: oot_spirit_temple_child_climb_2
+    name: Spirit Temple Child Climb 2
+    locationType: npc
+    logic: has_ranged_weapon_both || (climb_anywhere && (can_use_sword || can_use_sticks || can_hammer)) || (event(SPIRIT_CHILD_DOOR)
+      && (has_ranged_weapon_child || can_hookshot)) || (event(SPIRIT_ADULT_DOOR) && (has_ranged_weapon_adult || can_boomerang))
+  - id: oot_spirit_temple_gs_child_climb
+    name: Spirit Temple GS Child Climb
+    locationType: collectible
+    logic: gs && (can_use_sword || has_ranged_weapon || has_explosives || can_use_sticks || can_use_din || (has_hover_boots
+      && can_hammer))
+  - id: oot_spirit_temple_pot_child_climb
+    name: Spirit Temple Pot Child Climb
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_spirit_temple_statue
+    exitType: overworld
+    logic: has_explosives || has_sunlight_arrows
+  - target: oot_spirit_temple_child_crawlspace
+    exitType: overworld
+    logic: small_keys_spirit(5)
+- id: oot_spirit_temple_child_upper
+  name: Spirit Temple Child Upper
+  game: oot
+  locations:
+  - id: oot_spirit_temple_sun_block_room_torches
+    name: Spirit Temple Sun Block Room Torches
+    locationType: npc
+    logic: (event(SPIRIT_CHILD_DOOR) && can_use_sticks && silver_rupees_spirit_sun) || (has_fire_spirit && silver_rupees_spirit_sun)
+      || can_use_din || (has_fire_arrows && event(SPIRIT_ADULT_DOOR))
+  - id: oot_spirit_temple_sr_sun_1
+    name: Spirit Temple SR Sun 1
+    locationType: npc
+    logic: 'true'
+  - id: oot_spirit_temple_sr_sun_2
+    name: Spirit Temple SR Sun 2
+    locationType: npc
+    logic: 'true'
+  - id: oot_spirit_temple_sr_sun_3
+    name: Spirit Temple SR Sun 3
+    locationType: npc
+    logic: 'true'
+  - id: oot_spirit_temple_sr_sun_4
+    name: Spirit Temple SR Sun 4
+    locationType: npc
+    logic: 'true'
+  - id: oot_spirit_temple_sr_sun_5
+    name: Spirit Temple SR Sun 5
+    locationType: npc
+    logic: 'true'
+  - id: oot_spirit_temple_gs_iron_knuckle
+    name: Spirit Temple GS Iron Knuckle
+    locationType: collectible
+    logic: gs && ((event(SPIRIT_CHILD_DOOR) && has_explosives && can_collect_distance) || (event(SPIRIT_ADULT_DOOR) && can_collect_distance)
+      || cond(!setting(climbMostSurfacesOot, off), ((has_explosives && can_reflect_light && small_keys_spirit(1)) || small_keys_spirit(3))
+      && (can_collect_distance || has_ranged_weapon || has_explosives || can_use_din), can_collect_ageless && (has_explosives
+      || small_keys_spirit(2))))
+  - id: oot_spirit_temple_pot_child_hand_stairway_1
+    name: Spirit Temple Pot Child Hand Stairway 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_spirit_temple_pot_child_hand_stairway_2
+    name: Spirit Temple Pot Child Hand Stairway 2
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_spirit_temple_statue
+    exitType: overworld
+  - target: oot_spirit_temple_child_hand
+    exitType: overworld
+    logic: small_keys_spirit(5) && soul_iron_knuckle && (can_use_sword || has_explosives || can_use_sticks)
+- id: oot_spirit_temple_child_hand
+  name: Spirit Temple Child Hand
+  game: oot
+  locations:
+  - id: oot_spirit_temple_silver_gauntlets
+    name: Spirit Temple Silver Gauntlets
+    locationType: npc
+    logic: 'true'
+  exits:
+  - target: oot_spirit_temple_child_upper
+    exitType: overworld
+    logic: cond(!setting(climbMostSurfacesOot, off), (has_explosives && can_reflect_light && small_keys_spirit(1)) || small_keys_spirit(3),
+      small_keys_spirit(5))
+  - target: oot_spirit_temple_adult_hand
+    exitType: overworld
+    logic: longshot_anywhere
+  - target: oot_desert_colossus
+    exitType: overworld
+  - target: oot_spirit_temple
+    exitType: overworld
+- id: oot_spirit_temple_adult_entrance
+  name: Spirit Temple Adult Entrance
+  game: oot
+  locations:
+  - id: oot_spirit_temple_adult_lullaby
+    name: Spirit Temple Adult Lullaby
+    locationType: npc
+    logic: song_event(0x0e) && (can_hookshot || climb_anywhere)
+  exits:
+  - target: oot_spirit_temple_adult_climb
+    exitType: overworld
+    logic: cond(!setting(climbMostSurfacesOot, off), (has_explosives && can_reflect_light && small_keys_spirit(1)) || small_keys_spirit(3),
+      small_keys_spirit(1))
+  - target: oot_spirit_temple_adult_boulders
+    exitType: overworld
+    logic: has_ranged_weapon || can_boomerang || has_bombchu
+- id: oot_spirit_temple_adult_boulders
+  name: Spirit Temple Adult Boulders
+  game: oot
+  locations:
+  - id: oot_spirit_temple_gs_boulders
+    name: Spirit Temple GS Boulders
+    locationType: collectible
+    logic: gs && can_play_time
+  - id: oot_spirit_temple_adult_silver_rupees
+    name: Spirit Temple Adult Silver Rupees
+    locationType: freestanding
+    logic: silver_rupees_spirit_boulders
+  - id: oot_spirit_temple_adult_silver_rupees_big_fairy
+    name: Spirit Temple Adult Silver Rupees Big Fairy
+    locationType: freestanding
+    logic: silver_rupees_spirit_boulders && can_play_sun
+  - id: oot_spirit_temple_sr_boulders_1
+    name: Spirit Temple SR Boulders 1
+    locationType: npc
+    logic: 'true'
+  - id: oot_spirit_temple_sr_boulders_2
+    name: Spirit Temple SR Boulders 2
+    locationType: npc
+    logic: 'true'
+  - id: oot_spirit_temple_sr_boulders_3
+    name: Spirit Temple SR Boulders 3
+    locationType: npc
+    logic: 'true'
+  - id: oot_spirit_temple_sr_boulders_4
+    name: Spirit Temple SR Boulders 4
+    locationType: npc
+    logic: 'true'
+  - id: oot_spirit_temple_sr_boulders_5
+    name: Spirit Temple SR Boulders 5
+    locationType: npc
+    logic: 'true'
+- id: oot_spirit_temple_adult_climb
+  name: Spirit Temple Adult Climb
+  game: oot
+  locations:
+  - id: oot_spirit_temple_adult_suns_on_wall_1
+    name: Spirit Temple Adult Suns on Wall 1
+    locationType: npc
+    logic: cond(!setting(climbMostSurfacesOot, off), (has_explosives && (has_mirror_shield || small_keys_spirit(2))) || small_keys_spirit(3)
+      || (has_explosives && small_keys_spirit(2)), (((setting(agelessBoots) && trick(OOT_SPIRIT_CHILD_HOVER) && has_hover_boots_raw)
+      || (setting(agelessHookshot) && has_hookshot(1))) && has_explosives) || event(SPIRIT_ADULT_DOOR) || (event(SPIRIT_CHILD_DOOR)
+      && ((trick(OOT_SPIRIT_CHILD_HOVER) && has_hover_boots) || can_hookshot)) || (time_travel_at_will && has_explosives &&
+      (has_hookshot(1) || (has_hover_boots_raw && trick(OOT_SPIRIT_CHILD_HOVER)))))
+  - id: oot_spirit_temple_adult_suns_on_wall_2
+    name: Spirit Temple Adult Suns on Wall 2
+    locationType: npc
+    logic: cond(!setting(climbMostSurfacesOot, off), (has_explosives && (has_mirror_shield || small_keys_spirit(2))) || small_keys_spirit(3)
+      || (has_explosives && small_keys_spirit(2)), (((setting(agelessBoots) && trick(OOT_SPIRIT_CHILD_HOVER) && has_hover_boots_raw)
+      || (setting(agelessHookshot) && has_hookshot(1))) && has_explosives) || event(SPIRIT_ADULT_DOOR) || (event(SPIRIT_CHILD_DOOR)
+      && ((trick(OOT_SPIRIT_CHILD_HOVER) && has_hover_boots) || can_hookshot)) || (time_travel_at_will && has_explosives &&
+      (has_hookshot(1) || (has_hover_boots_raw && trick(OOT_SPIRIT_CHILD_HOVER)))))
+  - id: oot_spirit_temple_flying_pot_adult_climb_1
+    name: Spirit Temple Flying Pot Adult Climb 1
+    locationType: freestanding
+    logic: soul_flying_pot && cond(!setting(climbMostSurfacesOot, off), (has_explosives && (has_mirror_shield || small_keys_spirit(2)))
+      || small_keys_spirit(3) || (has_explosives && small_keys_spirit(2)), (((setting(agelessBoots) && trick(OOT_SPIRIT_CHILD_HOVER)
+      && has_hover_boots_raw) || (setting(agelessHookshot) && has_hookshot(1))) && has_explosives) || event(SPIRIT_ADULT_DOOR)
+      || (event(SPIRIT_CHILD_DOOR) && ((trick(OOT_SPIRIT_CHILD_HOVER) && has_hover_boots) || can_hookshot)) || (time_travel_at_will
+      && has_explosives && (has_hookshot(1) || (has_hover_boots_raw && trick(OOT_SPIRIT_CHILD_HOVER)))))
+  - id: oot_spirit_temple_flying_pot_adult_climb_2
+    name: Spirit Temple Flying Pot Adult Climb 2
+    locationType: freestanding
+    logic: soul_flying_pot && cond(!setting(climbMostSurfacesOot, off), (has_explosives && (has_mirror_shield || small_keys_spirit(2)))
+      || small_keys_spirit(3) || (has_explosives && small_keys_spirit(2)), (((setting(agelessBoots) && trick(OOT_SPIRIT_CHILD_HOVER)
+      && has_hover_boots_raw) || (setting(agelessHookshot) && has_hookshot(1))) && has_explosives) || event(SPIRIT_ADULT_DOOR)
+      || (event(SPIRIT_CHILD_DOOR) && ((trick(OOT_SPIRIT_CHILD_HOVER) && has_hover_boots) || can_hookshot)) || (time_travel_at_will
+      && has_explosives && (has_hookshot(1) || (has_hover_boots_raw && trick(OOT_SPIRIT_CHILD_HOVER)))))
+  exits:
+  - target: oot_spirit_temple_wallmaster_adult_climb
+    exitType: overworld
+    logic: soul_wallmaster
+  - target: oot_spirit_temple_statue_adult
+    exitType: overworld
+  - target: oot_spirit_temple_adult_entrance
+    exitType: overworld
+    logic: small_keys_spirit(5)
+- id: oot_spirit_temple_statue
+  name: Spirit Temple Statue
+  game: oot
+  locations:
+  - id: oot_spirit_temple_statue_base
+    name: Spirit Temple Statue Base
+    locationType: npc
+    logic: (event(SPIRIT_CHILD_DOOR) && has_explosives && can_use_sticks) || has_fire_spirit || can_use_din || (has_fire_arrows
+      && event(SPIRIT_ADULT_DOOR))
+  - id: oot_spirit_temple_gs_statue
+    name: Spirit Temple GS Statue
+    locationType: collectible
+    logic: gs && ((event(SPIRIT_ADULT_DOOR) && ((is_adult && scarecrow_hookshot) || has_hover_boots || can_longshot || climb_anywhere))
+      || (event(SPIRIT_CHILD_DOOR) && has_explosives && (has_hover_boots || can_hookshot || climb_anywhere)) || (climb_anywhere
+      && can_damage_skull))
+  - id: oot_spirit_temple_pot_statue_room_1
+    name: Spirit Temple Pot Statue Room 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_spirit_temple_pot_statue_room_2
+    name: Spirit Temple Pot Statue Room 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_spirit_temple_pot_statue_room_3
+    name: Spirit Temple Pot Statue Room 3
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_spirit_temple_pot_statue_room_4
+    name: Spirit Temple Pot Statue Room 4
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_spirit_temple_pot_statue_room_5
+    name: Spirit Temple Pot Statue Room 5
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_spirit_temple_pot_statue_room_6
+    name: Spirit Temple Pot Statue Room 6
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_spirit_temple_flying_pot_statue_room_1
+    name: Spirit Temple Flying Pot Statue Room 1
+    locationType: freestanding
+    logic: soul_flying_pot
+  - id: oot_spirit_temple_flying_pot_statue_room_2
+    name: Spirit Temple Flying Pot Statue Room 2
+    locationType: freestanding
+    logic: soul_flying_pot
+  exits:
+  - target: oot_spirit_temple_statue_adult
+    exitType: overworld
+    logic: (trick(OOT_SPIRIT_CHILD_HOVER) && has_hover_boots) || can_hookshot || climb_anywhere
+  - target: oot_spirit_temple_child_climb
+    exitType: overworld
+  - target: oot_spirit_temple_child_upper
+    exitType: overworld
+  - target: oot_spirit_temple_boss
+    exitType: overworld
+    logic: boss_key(BOSS_KEY_SPIRIT) && event(SPIRIT_LIGHT_STATUE) && (can_hookshot || (climb_anywhere && has_hover_boots
+      && can_jump_slash && trick(OOT_SPIRIT_BOSS_CLIMB_NO_HOOK)))
+- id: oot_spirit_temple_statue_adult
+  name: Spirit Temple Statue Adult
+  game: oot
+  locations:
+  - id: oot_spirit_temple_statue_hands
+    name: Spirit Temple Statue Hands
+    locationType: npc
+    logic: cond(!setting(climbMostSurfacesOot, off), (has_explosives && (has_mirror_shield || small_keys_spirit(2))) || small_keys_spirit(3)
+      || (has_explosives && small_keys_spirit(2)), (((setting(agelessBoots) && trick(OOT_SPIRIT_CHILD_HOVER) && has_hover_boots_raw)
+      || (setting(agelessHookshot) && has_hookshot(1))) && has_explosives) || event(SPIRIT_ADULT_DOOR) || (event(SPIRIT_CHILD_DOOR)
+      && ((trick(OOT_SPIRIT_CHILD_HOVER) && has_hover_boots) || can_hookshot)) || (time_travel_at_will && has_explosives &&
+      (has_hookshot(1) || (has_hover_boots_raw && trick(OOT_SPIRIT_CHILD_HOVER))))) && song_event(0x0d)
+  - id: oot_spirit_temple_statue_upper_right
+    name: Spirit Temple Statue Upper Right
+    locationType: npc
+    logic: cond(!setting(climbMostSurfacesOot, off), (has_explosives && (has_mirror_shield || small_keys_spirit(2))) || small_keys_spirit(3)
+      || (has_explosives && small_keys_spirit(2)), (((setting(agelessBoots) && trick(OOT_SPIRIT_CHILD_HOVER) && has_hover_boots_raw)
+      || (setting(agelessHookshot) && has_hookshot(1))) && has_explosives) || (event(SPIRIT_ADULT_DOOR) && (has_hover_boots
+      || has_hookshot(1))) || (event(SPIRIT_CHILD_DOOR) && ((trick(OOT_SPIRIT_CHILD_HOVER) && has_hover_boots) || can_hookshot))
+      || (time_travel_at_will && has_explosives && (has_hookshot(1) || (has_hover_boots_raw && trick(OOT_SPIRIT_CHILD_HOVER)))))
+      && song_event(0x0d)
+  - id: oot_spirit_temple_pot_adult_upper
+    name: Spirit Temple Pot Adult Upper
+    locationType: freestanding
+    logic: small_keys_spirit(4)
+  exits:
+  - target: oot_spirit_temple_statue
+    exitType: overworld
+  - target: oot_spirit_temple_adult_climb
+    exitType: overworld
+  - target: oot_spirit_temple_adult_upper
+    exitType: overworld
+    logic: small_keys_spirit(4)
+- id: oot_spirit_temple_adult_upper
+  name: Spirit Temple Adult Upper
+  game: oot
+  exits:
+  - target: oot_spirit_temple_adult_upper_2
+    exitType: overworld
+    logic: has_explosives && soul_beamos && soul_enemy(SOUL_ENEMY_ANUBIS)
+  - target: oot_spirit_temple_adult_climb_2
+    exitType: overworld
+    logic: small_keys_spirit(5)
+  - target: oot_spirit_temple_statue_adult
+    exitType: overworld
+    logic: has_explosives && soul_beamos && soul_enemy(SOUL_ENEMY_ANUBIS) && ((small_keys_spirit(1) && can_reflect_light)
+      || small_keys_spirit(2))
+- id: oot_spirit_temple_adult_upper_2
+  name: Spirit Temple Adult Upper 2
+  game: oot
+  locations:
+  - id: oot_spirit_temple_adult_late_sun_on_wall
+    name: Spirit Temple Adult Late Sun on Wall
+    locationType: npc
+    logic: can_reflect_light
+  - id: oot_spirit_temple_adult_invisible_1
+    name: Spirit Temple Adult Invisible 1
+    locationType: npc
+    logic: has_lens && (soul_armos || can_play_elegy)
+  - id: oot_spirit_temple_adult_invisible_2
+    name: Spirit Temple Adult Invisible 2
+    locationType: npc
+    logic: has_lens && (soul_armos || can_play_elegy)
+  - id: oot_spirit_temple_adult_sunlight_big_fairy
+    name: Spirit Temple Adult Sunlight Big Fairy
+    locationType: fairy
+    logic: can_play_sun
+  exits:
+  - target: oot_spirit_temple_adult_upper
+    exitType: overworld
+  - target: oot_spirit_temple_adult_hand
+    exitType: overworld
+    logic: (soul_armos || can_play_elegy) && soul_iron_knuckle && (can_use_sword || has_explosives || can_use_sticks)
+- id: oot_spirit_temple_adult_hand
+  name: Spirit Temple Adult Hand
+  game: oot
+  locations:
+  - id: oot_spirit_temple_mirror_shield
+    name: Spirit Temple Mirror Shield
+    locationType: npc
+    logic: 'true'
+  exits:
+  - target: oot_spirit_temple_adult_upper_2
+    exitType: overworld
+    logic: soul_iron_knuckle && (can_use_sword || has_explosives || can_use_sticks)
+  - target: oot_spirit_temple_child_hand
+    exitType: overworld
+    logic: can_longshot
+  - target: oot_desert_colossus
+    exitType: overworld
+  - target: oot_spirit_temple
+    exitType: overworld
+- id: oot_spirit_temple_adult_climb_2
+  name: Spirit Temple Adult Climb 2
+  game: oot
+  locations:
+  - id: oot_spirit_temple_adult_boss_key_chest
+    name: Spirit Temple Adult Boss Key Chest
+    locationType: chest
+    logic: song_event(0x0f) && ((can_hookshot && can_hit_triggers_distance) || climb_anywhere || hookshot_anywhere)
+  - id: oot_spirit_temple_adult_topmost_sun_on_wall
+    name: Spirit Temple Adult Topmost Sun on Wall
+    locationType: npc
+    logic: can_reflect_light
+  - id: oot_spirit_temple_flying_pot_topmost_1
+    name: Spirit Temple Flying Pot Topmost 1
+    locationType: freestanding
+    logic: soul_flying_pot
+  - id: oot_spirit_temple_flying_pot_topmost_2
+    name: Spirit Temple Flying Pot Topmost 2
+    locationType: freestanding
+    logic: soul_flying_pot
+  - id: oot_spirit_temple_flying_pot_topmost_3
+    name: Spirit Temple Flying Pot Topmost 3
+    locationType: freestanding
+    logic: soul_flying_pot
+  - id: oot_spirit_temple_flying_pot_topmost_4
+    name: Spirit Temple Flying Pot Topmost 4
+    locationType: freestanding
+    logic: soul_flying_pot
+  - id: oot_spirit_temple_flying_pot_topmost_5
+    name: Spirit Temple Flying Pot Topmost 5
+    locationType: freestanding
+    logic: soul_flying_pot
+  - id: oot_spirit_temple_flying_pot_topmost_6
+    name: Spirit Temple Flying Pot Topmost 6
+    locationType: freestanding
+    logic: soul_flying_pot
+  - id: oot_spirit_temple_heart_1
+    name: Spirit Temple Heart 1
+    locationType: freestanding
+    logic: can_hookshot
+  - id: oot_spirit_temple_heart_2
+    name: Spirit Temple Heart 2
+    locationType: freestanding
+    logic: can_hookshot
+  events:
+  - id: OOT_SPIRIT_LIGHT_STATUE
+    name: Spirit Light Statue
+    logic: has_mirror_shield && has_explosives
+- id: oot_treasure_chest_game
+  name: Treasure Chest Game
+  game: oot
+  locations:
+  - id: oot_treasure_chest_game_buy_key
+    name: Treasure Chest Game Buy Key
+    locationType: chest
+    logic: can_use_wallet(1) && soul_chest_game_owner
+  exits:
+  - target: oot_market
+    exitType: overworld
+  - target: oot_treasure_chest_game_room_1
+    exitType: overworld
+    logic: small_keys_tcg(1)
+- id: oot_treasure_chest_game_room_1
+  name: Treasure Chest Game Room 1
+  game: oot
+  locations:
+  - id: oot_treasure_chest_game_room_1_chest_left
+    name: Treasure Chest Game Room 1 Chest Left
+    locationType: chest
+    logic: 'true'
+  - id: oot_treasure_chest_game_room_1_chest_right
+    name: Treasure Chest Game Room 1 Chest Right
+    locationType: chest
+    logic: 'true'
+  exits:
+  - target: oot_treasure_chest_game_room_2
+    exitType: overworld
+    logic: small_keys_tcg(2)
+- id: oot_treasure_chest_game_room_2
+  name: Treasure Chest Game Room 2
+  game: oot
+  locations:
+  - id: oot_treasure_chest_game_room_2_chest_left
+    name: Treasure Chest Game Room 2 Chest Left
+    locationType: chest
+    logic: 'true'
+  - id: oot_treasure_chest_game_room_2_chest_right
+    name: Treasure Chest Game Room 2 Chest Right
+    locationType: chest
+    logic: 'true'
+  exits:
+  - target: oot_treasure_chest_game_room_3
+    exitType: overworld
+    logic: small_keys_tcg(3)
+- id: oot_treasure_chest_game_room_3
+  name: Treasure Chest Game Room 3
+  game: oot
+  locations:
+  - id: oot_treasure_chest_game_room_3_chest_left
+    name: Treasure Chest Game Room 3 Chest Left
+    locationType: chest
+    logic: 'true'
+  - id: oot_treasure_chest_game_room_3_chest_right
+    name: Treasure Chest Game Room 3 Chest Right
+    locationType: chest
+    logic: 'true'
+  exits:
+  - target: oot_treasure_chest_game_room_4
+    exitType: overworld
+    logic: small_keys_tcg(4)
+- id: oot_treasure_chest_game_room_4
+  name: Treasure Chest Game Room 4
+  game: oot
+  locations:
+  - id: oot_treasure_chest_game_room_4_chest_left
+    name: Treasure Chest Game Room 4 Chest Left
+    locationType: chest
+    logic: 'true'
+  - id: oot_treasure_chest_game_room_4_chest_right
+    name: Treasure Chest Game Room 4 Chest Right
+    locationType: chest
+    logic: 'true'
+  exits:
+  - target: oot_treasure_chest_game_room_5
+    exitType: overworld
+    logic: small_keys_tcg(5)
+- id: oot_treasure_chest_game_room_5
+  name: Treasure Chest Game Room 5
+  game: oot
+  locations:
+  - id: oot_treasure_chest_game_room_5_chest_left
+    name: Treasure Chest Game Room 5 Chest Left
+    locationType: chest
+    logic: 'true'
+  - id: oot_treasure_chest_game_room_5_chest_right
+    name: Treasure Chest Game Room 5 Chest Right
+    locationType: chest
+    logic: 'true'
+  exits:
+  - target: oot_treasure_chest_game_room_6
+    exitType: overworld
+    logic: small_keys_tcg(6)
+- id: oot_treasure_chest_game_room_6
+  name: Treasure Chest Game Room 6
+  game: oot
+  locations:
+  - id: oot_treasure_chest_game_hp
+    name: Treasure Chest Game HP
+    locationType: collectible
+    logic: 'true'
+- id: oot_water_temple
+  name: Water Temple
+  game: oot
+  exits:
+  - target: oot_lake_hylia_near_water_temple
+    exitType: overworld
+    logic: can_swim_or_sink
+  - target: oot_water_temple_main
+    exitType: overworld
+    logic: can_swim || (hookshot_anywhere && has_iron_boots)
+- id: oot_water_temple_main
+  name: Water Temple Main
+  game: oot
+  locations:
+  - id: oot_water_temple_pot_main_room_near_block_1
+    name: Water Temple Pot Main Room Near Block 1
+    locationType: freestanding
+    logic: event(WATER_LEVEL_LOW) || (has_iron_boots && can_hookshot)
+  - id: oot_water_temple_pot_main_room_near_block_2
+    name: Water Temple Pot Main Room Near Block 2
+    locationType: freestanding
+    logic: event(WATER_LEVEL_LOW) || (has_iron_boots && can_hookshot)
+  - id: oot_water_temple_pot_main_room_near_boss_1
+    name: Water Temple Pot Main Room Near Boss 1
+    locationType: freestanding
+    logic: ((can_longshot || can_use_ice_arrow_platforms) && event(WATER_LEVEL_RESET)) || climb_anywhere
+  - id: oot_water_temple_pot_main_room_near_boss_2
+    name: Water Temple Pot Main Room Near Boss 2
+    locationType: freestanding
+    logic: ((can_longshot || can_use_ice_arrow_platforms) && event(WATER_LEVEL_RESET)) || climb_anywhere
+  exits:
+  - target: oot_water_temple
+    exitType: overworld
+  - target: oot_water_temple_ruto_room
+    exitType: overworld
+    logic: has_tunic_zora && (has_iron_boots || (can_longshot && trick(OOT_WATER_LONGSHOT)))
+  - target: oot_water_temple_center_bottom
+    exitType: overworld
+    logic: event(WATER_LEVEL_LOW) && small_keys_water(5)
+  - target: oot_water_temple_center_middle
+    exitType: overworld
+    logic: event(WATER_LEVEL_LOW) && (can_use_din || can_use_bow)
+  - target: oot_water_temple_compass_room
+    exitType: overworld
+    logic: (has_tunic_zora && has_iron_boots && can_hookshot) || (event(WATER_LEVEL_LOW) && (can_hookshot || climb_anywhere))
+  - target: oot_water_temple_dragon_room
+    exitType: overworld
+    logic: event(WATER_LEVEL_LOW) && has_goron_bracelet && can_dive_small && (can_use_sword || has_ranged_weapon || has_explosives_or_hammer)
+  - target: oot_water_temple_elevator
+    exitType: overworld
+    logic: (small_keys_water(5) && (can_hookshot || climb_anywhere)) || can_use_bow || can_use_din
+  - target: oot_water_temple_corridor
+    exitType: overworld
+    logic: (can_longshot || can_use_ice_arrow_platforms || has_hover_boots || hookshot_anywhere) && can_hit_triggers_distance
+      && event(WATER_LEVEL_LOW)
+  - target: oot_water_temple_waterfalls
+    exitType: overworld
+    logic: has_tunic_zora && small_keys_water(4) && (can_longshot || can_use_ice_arrow_platforms || climb_anywhere || hookshot_anywhere)
+      && (has_iron_boots || event(WATER_LEVEL_LOW))
+  - target: oot_water_temple_large_pit
+    exitType: overworld
+    logic: small_keys_water(4) && event(WATER_LEVEL_RESET)
+  - target: oot_water_temple_antichamber_room
+    exitType: overworld
+    logic: ((can_longshot || can_use_ice_arrow_platforms || (trick(OOT_WATER_BOSSBOOTS) && is_adult && has_iron_boots && can_swim))
+      && event(WATER_LEVEL_RESET)) || climb_anywhere || longshot_anywhere
+  - target: oot_water_temple_cage_room
+    exitType: overworld
+    logic: has_tunic_zora && event(WATER_LEVEL_LOW) && has_explosives && can_dive_small
+  - target: oot_water_temple_main_ledge
+    exitType: overworld
+    logic: (is_adult && has_hover_boots) || hookshot_anywhere
+- id: oot_water_temple_main_ledge
+  name: Water Temple Main Ledge
+  game: oot
+  exits:
+  - target: oot_water_temple_main
+    exitType: overworld
+  events:
+  - id: OOT_WATER_LEVEL_RESET
+    name: Water Level Reset
+- id: oot_water_temple_ruto_room
+  name: Water Temple Ruto Room
+  game: oot
+  locations:
+  - id: oot_water_temple_bombable_chest
+    name: Water Temple Bombable Chest
+    locationType: chest
+    logic: (event(WATER_LEVEL_MIDDLE) || (event(WATER_LEVEL_LOW) && (climb_anywhere || longshot_anywhere))) && has_explosives
+  - id: oot_water_temple_pot_ruto_room_1
+    name: Water Temple Pot Ruto Room 1
+    locationType: freestanding
+    logic: event(WATER_LEVEL_LOW) || (has_iron_boots && can_hookshot)
+  - id: oot_water_temple_pot_ruto_room_2
+    name: Water Temple Pot Ruto Room 2
+    locationType: freestanding
+    logic: event(WATER_LEVEL_LOW) || (has_iron_boots && can_hookshot)
+  exits:
+  - target: oot_water_temple_map_room
+    exitType: overworld
+    logic: event(WATER_LEVEL_RESET) || climb_anywhere || longshot_anywhere
+  - target: oot_water_temple_shell_room
+    exitType: overworld
+    logic: event(WATER_LEVEL_LOW) && (can_use_bow || has_fire)
+  events:
+  - id: OOT_WATER_LEVEL_LOW
+    name: Water Level Low
+    logic: song_event(0x0b)
+- id: oot_water_temple_map_room
+  name: Water Temple Map Room
+  game: oot
+  locations:
+  - id: oot_water_temple_map
+    name: Water Temple Map
+    locationType: npc
+    logic: soul_enemy(SOUL_ENEMY_SPIKE)
+- id: oot_water_temple_shell_room
+  name: Water Temple Shell Room
+  game: oot
+  locations:
+  - id: oot_water_temple_shell_chest
+    name: Water Temple Shell Chest
+    locationType: chest
+    logic: soul_shell_blade
+- id: oot_water_temple_center_bottom
+  name: Water Temple Center Bottom
+  game: oot
+  exits:
+  - target: oot_water_temple_under_center
+    exitType: overworld
+    logic: event(WATER_LEVEL_MIDDLE) && has_iron_boots && has_tunic_zora_strict
+  - target: oot_water_temple_center_middle
+    exitType: overworld
+    logic: can_hookshot || climb_anywhere
+- id: oot_water_temple_center_middle
+  name: Water Temple Center Middle
+  game: oot
+  locations:
+  - id: oot_water_temple_gs_center
+    name: Water Temple GS Center
+    locationType: collectible
+    logic: gs && (can_longshot || hookshot_anywhere || (climb_anywhere && (has_ranged_weapon || has_bombchu)))
+  exits:
+  - target: oot_water_temple_center_bottom
+    exitType: overworld
+  events:
+  - id: OOT_WATER_LEVEL_MIDDLE
+    name: Water Level Middle
+    logic: song_event(0x0b)
+- id: oot_water_temple_under_center
+  name: Water Temple Under Center
+  game: oot
+  locations:
+  - id: oot_water_temple_under_center
+    name: Water Temple Under Center
+    locationType: npc
+    logic: can_hookshot && soul_enemy(SOUL_ENEMY_SPIKE) && soul_shell_blade
+- id: oot_water_temple_compass_room
+  name: Water Temple Compass Room
+  game: oot
+  locations:
+  - id: oot_water_temple_compass
+    name: Water Temple Compass
+    locationType: npc
+    logic: can_use_sword || can_use_sticks || has_ranged_weapon || has_explosives_or_hammer
+  - id: oot_water_temple_pot_compass_room_1
+    name: Water Temple Pot Compass Room 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_water_temple_pot_compass_room_2
+    name: Water Temple Pot Compass Room 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_water_temple_pot_compass_room_3
+    name: Water Temple Pot Compass Room 3
+    locationType: freestanding
+    logic: 'true'
+- id: oot_water_temple_dragon_room
+  name: Water Temple Dragon Room
+  game: oot
+  locations:
+  - id: oot_water_temple_dragon_chest
+    name: Water Temple Dragon Chest
+    locationType: chest
+    logic: can_hookshot && has_iron_boots
+  exits:
+  - target: oot_water_temple_dragon_room_ledge
+    exitType: overworld
+    logic: climb_anywhere || hookshot_anywhere
+- id: oot_water_temple_elevator
+  name: Water Temple Elevator
+  game: oot
+  exits:
+  - target: oot_water_temple_main_ledge
+    exitType: overworld
+    logic: has_ranged_weapon || has_explosives
+- id: oot_water_temple_corridor
+  name: Water Temple Corridor
+  game: oot
+  locations:
+  - id: oot_water_temple_corridor_chest
+    name: Water Temple Corridor Chest
+    locationType: chest
+    logic: has_goron_bracelet
+  - id: oot_water_temple_pot_corridor_1
+    name: Water Temple Pot Corridor 1
+    locationType: freestanding
+    logic: has_goron_bracelet
+  - id: oot_water_temple_pot_corridor_2
+    name: Water Temple Pot Corridor 2
+    locationType: freestanding
+    logic: has_goron_bracelet
+- id: oot_water_temple_waterfalls
+  name: Water Temple Waterfalls
+  game: oot
+  exits:
+  - target: oot_water_temple_blocks
+    exitType: overworld
+  - target: oot_water_temple_waterfalls_ledge
+    exitType: overworld
+    logic: (is_adult && (has_hover_boots || climb_anywhere || hookshot_anywhere)) || (is_child && (has_iron_boots && (climb_anywhere
+      || hookshot_anywhere)))
+- id: oot_water_temple_blocks
+  name: Water Temple Blocks
+  game: oot
+  locations:
+  - id: oot_water_temple_pot_blocks_room_1
+    name: Water Temple Pot Blocks Room 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_water_temple_pot_blocks_room_2
+    name: Water Temple Pot Blocks Room 2
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_water_temple_waterfalls_ledge
+    exitType: overworld
+    logic: (has_explosives && has_goron_bracelet) || climb_anywhere || hookshot_anywhere
+- id: oot_water_temple_waterfalls_ledge
+  name: Water Temple Waterfalls Ledge
+  game: oot
+  locations:
+  - id: oot_water_temple_gs_waterfalls
+    name: Water Temple GS Waterfalls
+    locationType: collectible
+    logic: gs && (can_collect_distance || ((can_use_sword_gilded || can_use_sword_master || (age_sword_adult && has(SWORD_BIGGORON))
+      || can_use_sticks || has_ranged_weapon || can_use_din || (has_hover_boots && (can_use_sword_kokiri || can_use_sword_goron
+      || has_explosives))) && (has_hover_boots || climb_anywhere)))
+  exits:
+  - target: oot_water_temple_boss_key_room
+    exitType: overworld
+    logic: small_keys_water(5) && ((is_adult && can_dive_small) || has_iron_boots || hookshot_anywhere)
+- id: oot_water_temple_boss_key_room
+  name: Water Temple Boss Key Room
+  game: oot
+  locations:
+  - id: oot_water_temple_boss_key_chest
+    name: Water Temple Boss Key Chest
+    locationType: chest
+    logic: 'true'
+  - id: oot_water_temple_pot_boss_key_room_1
+    name: Water Temple Pot Boss Key Room 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_water_temple_pot_boss_key_room_2
+    name: Water Temple Pot Boss Key Room 2
+    locationType: freestanding
+    logic: 'true'
+- id: oot_water_temple_large_pit
+  name: Water Temple Large Pit
+  game: oot
+  locations:
+  - id: oot_water_temple_gs_large_pit
+    name: Water Temple GS Large Pit
+    locationType: collectible
+    logic: gs && (can_longshot || (can_hit_triggers_distance && climb_anywhere) || (climb_anywhere && has_bombchu && trick(OOT_WATER_PIT_GS_CHU)))
+  exits:
+  - target: oot_water_temple_before_dark_link
+    exitType: overworld
+    logic: small_keys_water(5) && can_hookshot
+- id: oot_water_temple_before_dark_link
+  name: Water Temple Before Dark Link
+  game: oot
+  locations:
+  - id: oot_water_temple_pot_before_dark_link_1
+    name: Water Temple Pot Before Dark Link 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_water_temple_pot_before_dark_link_2
+    name: Water Temple Pot Before Dark Link 2
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_water_temple_dark_link
+    exitType: overworld
+- id: oot_water_temple_dark_link
+  name: Water Temple Dark Link
+  game: oot
+  exits:
+  - target: oot_water_temple_longshot_room
+    exitType: overworld
+    logic: soul_enemy(SOUL_ENEMY_DARK_LINK) && can_use_sword
+  - target: oot_water_temple_before_dark_link
+    exitType: overworld
+    logic: soul_enemy(SOUL_ENEMY_DARK_LINK) && can_use_sword
+- id: oot_water_temple_longshot_room
+  name: Water Temple Longshot Room
+  game: oot
+  locations:
+  - id: oot_water_temple_longshot
+    name: Water Temple Longshot
+    locationType: npc
+    logic: 'true'
+  exits:
+  - target: oot_water_temple_river
+    exitType: overworld
+    logic: event(LONGSHOT_TIME_BLOCK) || is_child
+  - target: oot_water_temple_dark_link
+    exitType: overworld
+  events:
+  - id: OOT_LONGSHOT_TIME_BLOCK
+    name: Longshot Time Block
+    logic: can_play_time
+- id: oot_water_temple_river
+  name: Water Temple River
+  game: oot
+  locations:
+  - id: oot_water_temple_gs_river
+    name: Water Temple GS River
+    locationType: collectible
+    logic: gs && has_iron_boots
+  - id: oot_water_temple_pot_river_1
+    name: Water Temple Pot River 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_water_temple_pot_river_2
+    name: Water Temple Pot River 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_water_temple_heart_1
+    name: Water Temple Heart 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_water_temple_heart_2
+    name: Water Temple Heart 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_water_temple_heart_3
+    name: Water Temple Heart 3
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_water_temple_heart_4
+    name: Water Temple Heart 4
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_water_temple_dragon_room_ledge
+    exitType: overworld
+    logic: can_hit_triggers_distance
+  - target: oot_water_temple_longshot_room
+    exitType: overworld
+    logic: longshot_anywhere && climb_anywhere && (is_child || event(LONGSHOT_TIME_BLOCK))
+- id: oot_water_temple_dragon_room_ledge
+  name: Water Temple Dragon Room Ledge
+  game: oot
+  locations:
+  - id: oot_water_temple_river_chest
+    name: Water Temple River Chest
+    locationType: chest
+    logic: 'true'
+  exits:
+  - target: oot_water_temple_dragon_room
+    exitType: overworld
+  - target: oot_water_temple_river
+    exitType: overworld
+    logic: hookshot_anywhere && trick(OOT_WATER_REVERSE_RIVER)
+- id: oot_water_temple_cage_room
+  name: Water Temple Cage Room
+  game: oot
+  exits:
+  - target: oot_water_temple_inside_cage
+    exitType: overworld
+    logic: can_hookshot || (is_adult && has_hover_boots) || climb_anywhere
+- id: oot_water_temple_inside_cage
+  name: Water Temple Inside Cage
+  game: oot
+  locations:
+  - id: oot_water_temple_gs_cage
+    name: Water Temple GS Cage
+    locationType: collectible
+    logic: gs && can_use_sword_or_sticks
+  - id: oot_water_temple_pot_skull_cage_1
+    name: Water Temple Pot Skull Cage 1
+    locationType: freestanding
+    logic: can_use_sword_or_sticks
+  - id: oot_water_temple_pot_skull_cage_2
+    name: Water Temple Pot Skull Cage 2
+    locationType: freestanding
+    logic: can_use_sword_or_sticks
+  - id: oot_water_temple_pot_skull_cage_3
+    name: Water Temple Pot Skull Cage 3
+    locationType: freestanding
+    logic: can_use_sword_or_sticks
+  - id: oot_water_temple_pot_skull_cage_4
+    name: Water Temple Pot Skull Cage 4
+    locationType: freestanding
+    logic: can_use_sword_or_sticks
+- id: oot_water_temple_antichamber_room
+  name: Water Temple Antichamber Room
+  game: oot
+  exits:
+  - target: oot_water_temple_boss
+    exitType: overworld
+    logic: boss_key(BOSS_KEY_WATER)

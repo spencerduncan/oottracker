@@ -785,8 +785,12 @@ mod tests {
         let rando = OotmmRando::new().unwrap();
         let db = rando.world_database();
 
-        // Embedded data has 4 regions (2 OoT + 2 MM from data/world/*.yaml)
-        assert_eq!(db.region_count(), 4, "Embedded data has 4 regions");
+        // Comprehensive OoTMM data has 1000+ regions from both games
+        assert!(
+            db.region_count() > 1000,
+            "Expected 1000+ regions from comprehensive OoTMM data, got {}",
+            db.region_count()
+        );
     }
 
     #[test]
