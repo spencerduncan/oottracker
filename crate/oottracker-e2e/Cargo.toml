@@ -10,7 +10,7 @@ thiserror = "1"
 
 [dependencies.tokio]
 version = "1"
-features = ["process", "time", "net", "sync"]
+features = ["process", "time", "net", "sync", "io-util"]
 
 [dev-dependencies.tokio]
 version = "1"
