@@ -122,9 +122,6 @@ enum Error {
     #[error("missing environment variable: {0}")]
     MissingEnvar(&'static str),
     #[cfg(windows)]
-    #[error("Project64 plugin uses the wrong protocol version")]
-    ProtocolVersionMismatch,
-    #[cfg(windows)]
     #[error("there is already a release with this version number")]
     SameVersion,
     #[cfg(windows)]
@@ -581,147 +578,6 @@ impl Task<Result<(), Error>> for BuildMacOs {
                 repo.release_attach(&client, &release, "oottracker-mac.dmg", "application/x-apple-diskimage", dmg_data).await?;
                 Ok(Ok(()))
             }).await,
-        }
-    }
-}
-
-#[cfg(windows)]
-enum BuildPj64 {
-    CompileJs(reqwest::Client, Repo, broadcast::Receiver<Release>),
-    WaitRelease(reqwest::Client, Repo, broadcast::Receiver<Release>, Vec<u8>),
-    Upload(reqwest::Client, Repo, Release, Vec<u8>),
-}
-
-#[cfg(windows)]
-impl BuildPj64 {
-    fn new(client: reqwest::Client, repo: Repo, release_rx: broadcast::Receiver<Release>) -> Self {
-        Self::CompileJs(client, repo, release_rx)
-    }
-}
-
-#[cfg(windows)]
-impl fmt::Display for BuildPj64 {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::CompileJs(..) => write!(f, "compiling oottracker-pj64.js"),
-            Self::WaitRelease(..) => write!(f, "waiting for GitHub release to be created"),
-            Self::Upload(..) => write!(f, "uploading oottracker-pj64.js"),
-        }
-    }
-}
-
-#[cfg(windows)]
-impl Progress for BuildPj64 {
-    fn progress(&self) -> Percent {
-        Percent::fraction(
-            match self {
-                Self::CompileJs(..) => 0,
-                Self::WaitRelease(..) => 1,
-                Self::Upload(..) => 2,
-            },
-            3,
-        )
-    }
-}
-
-#[cfg(windows)]
-#[async_trait]
-impl Task<Result<(), Error>> for BuildPj64 {
-    async fn run(self) -> Result<Result<(), Error>, Self> {
-        match self {
-            Self::CompileJs(client, repo, release_rx) => {
-                gres::transpose(async move {
-                    let mut buf = Vec::default();
-                    writeln!(
-                        &mut buf,
-                        "const TCP_PORT = {};",
-                        oottracker::proto::TCP_PORT
-                    )?;
-                    // OoT constants
-                    writeln!(&mut buf, "const SAVE_ADDR = {};", oottracker::save::ADDR)?;
-                    writeln!(&mut buf, "const SAVE_SIZE = {};", oottracker::save::SIZE)?;
-                    writeln!(
-                        &mut buf,
-                        "const RAM_RANGES = [{}];",
-                        oottracker::ram::RANGES
-                            .iter()
-                            .copied()
-                            .tuples()
-                            .map(|(start, len)| format!("[{}, {}]", start, len))
-                            .join(", ")
-                    )?;
-                    // MM constants
-                    writeln!(
-                        &mut buf,
-                        "const MM_SAVE_ADDR = {};",
-                        oottracker::ram::MM_SAVE_ADDR
-                    )?;
-                    writeln!(
-                        &mut buf,
-                        "const MM_SAVE_SIZE = {};",
-                        oottracker::mm_save::MM_SIZE
-                    )?;
-                    writeln!(
-                        &mut buf,
-                        "const MM_RAM_RANGES = [{}];",
-                        oottracker::ram::MM_RANGES
-                            .iter()
-                            .copied()
-                            .tuples()
-                            .map(|(start, len)| format!("[{}, {}]", start, len))
-                            .join(", ")
-                    )?;
-                    // Combo context addresses (for OoTMM game detection)
-                    writeln!(
-                        &mut buf,
-                        "const OOT_COMBO_CONTEXT_ADDR = {};",
-                        oottracker::ram::OOT_COMBO_CONTEXT_ADDR
-                    )?;
-                    writeln!(
-                        &mut buf,
-                        "const MM_COMBO_CONTEXT_ADDR = {};",
-                        oottracker::ram::MM_COMBO_CONTEXT_ADDR
-                    )?;
-                    let mut base =
-                        BufReader::new(File::open("assets/oottracker-pj64-base.js").await?).lines();
-                    while let Some(line) = base.next_line().await? {
-                        if let Some((_, version)) =
-                            regex_captures!("^const VERSION = ([0-9]+);", &line)
-                        {
-                            if version.parse::<u8>()? != oottracker::proto::VERSION {
-                                return Err(Error::ProtocolVersionMismatch);
-                            }
-                            break;
-                        }
-                    }
-                    let mut base = base.into_inner();
-                    base.seek(SeekFrom::Start(0)).await?;
-                    io::copy(&mut base, &mut buf).await?;
-                    Ok(Err(Self::WaitRelease(client, repo, release_rx, buf)))
-                })
-                .await
-            }
-            Self::WaitRelease(client, repo, mut release_rx, buf) => {
-                gres::transpose(async move {
-                    let release = release_rx.recv().await?;
-                    Ok(Err(Self::Upload(client, repo, release, buf)))
-                })
-                .await
-            }
-            Self::Upload(client, repo, release, buf) => {
-                gres::transpose(async move {
-                    repo.release_attach(
-                        &client,
-                        &release,
-                        "oottracker-pj64.js",
-                        "text/javascript",
-                        buf,
-                    )
-                    .await?;
-                    Ok(Ok(()))
-                })
-                .await
-            }
         }
     }
 }
@@ -1258,7 +1114,6 @@ async fn main(args: Args) -> Result<(), Error> {
     let (release_tx, release_rx_bizhawk) = broadcast::channel(1);
     let release_rx_gui = release_tx.subscribe();
     let release_rx_macos = release_tx.subscribe();
-    let release_rx_pj64 = release_tx.subscribe();
     let release_rx_pj64em = release_tx.subscribe();
     let create_release_args = args.clone();
     let create_release_client = client.clone();
@@ -1328,21 +1183,6 @@ async fn main(args: Args) -> Result<(), Error> {
                     cli.run(
                         BuildMacOs::new(client, repo, release_rx_macos),
                         "macOS build done",
-                    )
-                    .await?
-                })
-                .await?
-            }
-        },
-        {
-            let cli = Arc::clone(&cli);
-            let client = client.clone();
-            let repo = repo.clone();
-            async move {
-                tokio::spawn(async move {
-                    cli.run(
-                        BuildPj64::new(client, repo, release_rx_pj64),
-                        "Project64 build done",
                     )
                     .await?
                 })

@@ -142,7 +142,7 @@ Install gamescope via your package manager if needed (e.g., `sudo apt install ga
 
 ### Step 3: Install the Tracker Script
 
-1. **Locate the tracker script** in the oottracker repository:
+1. **Locate the Lua tracker script** in the oottracker repository:
    ```
    assets/oottracker-pj64em-base.lua
    ```
@@ -222,7 +222,17 @@ Install gamescope via your package manager if needed (e.g., `sudo apt install ga
   gamescope -f -- ./pj64em.sh
   ```
 
-#### Wine crashes or graphical glitches
+### Tracker not connecting
+- Ensure the tracker GUI/web is running BEFORE enabling the script
+- Check that port 24801 is not blocked by firewall
+- Verify with: `ss -tlnp | grep 24801`
+- Look for error messages in Project64-EM's script console
+
+### Script not appearing in Project64-EM
+- Ensure the `.lua` file is in the Scripts folder within your Project64-EM directory
+- Restart Project64-EM after adding the script
+
+### Wine crashes or graphical glitches
 - Try different Wine versions (wine-staging often works better for games)
 - Install required Wine dependencies: `winetricks d3dx9 vcrun2019`
 - Check Wine logs by removing `WINEDEBUG=-all` from your launch script
@@ -231,18 +241,10 @@ Install gamescope via your package manager if needed (e.g., `sudo apt install ga
 
 ## Script Configuration (Optional)
 
-The tracker script supports configuration at the top of the file:
+The Lua tracker script connects to `127.0.0.1` on the port defined by the tracker protocol.
+The connection settings are built into the script based on the tracker's TCP port constant.
 
-```lua
--- Connection settings
-local TRACKER_HOST = "127.0.0.1"
-local TRACKER_PORT = 24801
-
--- Memory polling interval (ms)
-local POLL_INTERVAL = 100
-```
-
-Edit these if running the tracker on a different machine or port.
+For advanced configuration, you can modify the script's connection parameters at the top of the file.
 
 ---
 
