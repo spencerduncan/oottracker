@@ -16,6 +16,7 @@
 pub mod checks;
 pub mod embedded_data;
 pub mod error;
+pub mod events;
 pub mod expr;
 pub mod item;
 pub mod items;
@@ -45,4 +46,10 @@ pub use settings::{
     GanonBossKeyMode, HookshotAnywhereState, JpLayout, KakarikoGateState, LacsMode, LogicMode,
     MajoraChildMode, MmDungeon, MoonCrashMode, OotDungeon, RandomizerSettings, ShufflePotsMm,
     SmallKeyShuffleOot,
+};
+
+// Re-export event types
+pub use events::{
+    offsets as event_offsets, EventReadError, OotEvent, OotEventCategory, OotEventFlag,
+    OotEventReader, OotEventWriter,
 };

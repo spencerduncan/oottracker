@@ -3045,6 +3045,7 @@ name = "ootmm"
 version = "0.1.0"
 dependencies = [
  "async-proto",
+ "byteorder",
  "ootr",
  "serde",
  "serde_json",
