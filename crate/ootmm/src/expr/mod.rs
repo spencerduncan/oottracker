@@ -9,6 +9,7 @@ mod ast;
 mod context;
 mod eval;
 mod lexer;
+mod oot_context;
 mod parser;
 mod token;
 
@@ -18,5 +19,6 @@ pub use ast::Expr;
 pub use context::{Age, GameContext, GameContextBuilder};
 pub use eval::{eval, eval_str, EvalContext, EvalError, Evaluator};
 pub use lexer::{LexError, Lexer};
+pub use oot_context::{OotEvalContext, OotEvalContextBuilder, OotRamReader, OOT_SAVE_BASE};
 pub use parser::{parse, ParseError, Parser};
 pub use token::Token;
