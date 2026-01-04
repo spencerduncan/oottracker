@@ -1463,3 +1463,297 @@ fn main(args: Args) -> Result<(), Error> {
     })?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ==========================================================================
+    // ConnectionKind tests
+    // ==========================================================================
+
+    #[test]
+    fn test_connection_kind_default_is_retroarch() {
+        assert_eq!(ConnectionKind::default(), ConnectionKind::RetroArch);
+    }
+
+    #[test]
+    fn test_connection_kind_display_tcp_listener() {
+        assert_eq!(ConnectionKind::TcpListener.to_string(), "Project64");
+    }
+
+    #[test]
+    fn test_connection_kind_display_retroarch() {
+        assert_eq!(ConnectionKind::RetroArch.to_string(), "RetroArch");
+    }
+
+    #[test]
+    fn test_connection_kind_display_web() {
+        assert_eq!(ConnectionKind::Web.to_string(), "web");
+    }
+
+    #[test]
+    fn test_connection_kind_equality() {
+        assert_eq!(ConnectionKind::TcpListener, ConnectionKind::TcpListener);
+        assert_eq!(ConnectionKind::RetroArch, ConnectionKind::RetroArch);
+        assert_eq!(ConnectionKind::Web, ConnectionKind::Web);
+        assert_ne!(ConnectionKind::TcpListener, ConnectionKind::RetroArch);
+        assert_ne!(ConnectionKind::RetroArch, ConnectionKind::Web);
+        assert_ne!(ConnectionKind::TcpListener, ConnectionKind::Web);
+    }
+
+    // ==========================================================================
+    // ConnectionParams tests
+    // ==========================================================================
+
+    #[test]
+    fn test_connection_params_default_is_retroarch() {
+        let params = ConnectionParams::default();
+        assert_eq!(params.kind(), ConnectionKind::RetroArch);
+    }
+
+    #[test]
+    fn test_connection_params_tcp_listener_kind() {
+        let params = ConnectionParams::TcpListener;
+        assert_eq!(params.kind(), ConnectionKind::TcpListener);
+    }
+
+    #[test]
+    fn test_connection_params_retroarch_kind() {
+        let params = ConnectionParams::RetroArch {
+            port: 55355,
+            port_state: text_input::State::default(),
+        };
+        assert_eq!(params.kind(), ConnectionKind::RetroArch);
+    }
+
+    #[test]
+    fn test_connection_params_web_kind() {
+        let params = ConnectionParams::Web {
+            url: String::new(),
+            url_state: text_input::State::default(),
+            passcode: String::new(),
+            passcode_state: text_input::State::default(),
+        };
+        assert_eq!(params.kind(), ConnectionKind::Web);
+    }
+
+    #[test]
+    fn test_connection_params_default_retroarch_port() {
+        let params = ConnectionParams::default();
+        if let ConnectionParams::RetroArch { port, .. } = params {
+            assert_eq!(port, 55355);
+        } else {
+            panic!("Expected RetroArch variant");
+        }
+    }
+
+    #[test]
+    fn test_connection_params_set_kind_retroarch_to_tcp() {
+        let mut params = ConnectionParams::default();
+        params.set_kind(ConnectionKind::TcpListener);
+        assert_eq!(params.kind(), ConnectionKind::TcpListener);
+    }
+
+    #[test]
+    fn test_connection_params_set_kind_retroarch_to_web() {
+        let mut params = ConnectionParams::default();
+        params.set_kind(ConnectionKind::Web);
+        assert_eq!(params.kind(), ConnectionKind::Web);
+        if let ConnectionParams::Web { url, passcode, .. } = params {
+            assert!(url.is_empty());
+            assert!(passcode.is_empty());
+        } else {
+            panic!("Expected Web variant");
+        }
+    }
+
+    #[test]
+    fn test_connection_params_set_kind_tcp_to_retroarch() {
+        let mut params = ConnectionParams::TcpListener;
+        params.set_kind(ConnectionKind::RetroArch);
+        assert_eq!(params.kind(), ConnectionKind::RetroArch);
+        if let ConnectionParams::RetroArch { port, .. } = params {
+            assert_eq!(port, 55355);
+        } else {
+            panic!("Expected RetroArch variant");
+        }
+    }
+
+    #[test]
+    fn test_connection_params_set_kind_web_to_tcp() {
+        let mut params = ConnectionParams::Web {
+            url: "http://example.com".to_string(),
+            url_state: text_input::State::default(),
+            passcode: "secret".to_string(),
+            passcode_state: text_input::State::default(),
+        };
+        params.set_kind(ConnectionKind::TcpListener);
+        assert_eq!(params.kind(), ConnectionKind::TcpListener);
+    }
+
+    #[test]
+    fn test_connection_params_set_kind_same_kind_noop() {
+        let mut params = ConnectionParams::RetroArch {
+            port: 12345, // Non-default port
+            port_state: text_input::State::default(),
+        };
+        params.set_kind(ConnectionKind::RetroArch);
+        // Should preserve the existing port since kind is the same
+        if let ConnectionParams::RetroArch { port, .. } = params {
+            assert_eq!(port, 12345);
+        } else {
+            panic!("Expected RetroArch variant");
+        }
+    }
+
+    #[test]
+    fn test_connection_params_set_kind_web_same_noop() {
+        let mut params = ConnectionParams::Web {
+            url: "http://preserved.com".to_string(),
+            url_state: text_input::State::default(),
+            passcode: "preserved".to_string(),
+            passcode_state: text_input::State::default(),
+        };
+        params.set_kind(ConnectionKind::Web);
+        if let ConnectionParams::Web { url, passcode, .. } = params {
+            assert_eq!(url, "http://preserved.com");
+            assert_eq!(passcode, "preserved");
+        } else {
+            panic!("Expected Web variant");
+        }
+    }
+
+    // ==========================================================================
+    // TrackerLayoutExt cell_at tests
+    // ==========================================================================
+
+    #[test]
+    fn test_cell_at_outside_bounds_returns_none() {
+        let layout = TrackerLayout::default();
+        // Position far outside any cell
+        let result = layout.cell_at([-100.0, -100.0], true);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_cell_at_excludes_songs_when_flag_false() {
+        let layout = TrackerLayout::default();
+        // Position in the songs area (bottom rows, y > 5 rows of cells)
+        let songs_y = (MEDALLION_LOCATION_HEIGHT as f32 + 10.0) + (CELL_SIZE as f32 + 10.0) * 5.0;
+        let result = layout.cell_at([10.0, songs_y + 10.0], false);
+        assert!(result.is_none());
+    }
+
+    // ==========================================================================
+    // Message Display tests
+    // ==========================================================================
+
+    #[test]
+    fn test_message_display_client_disconnected() {
+        let msg: Message<ootr_static::Rando> = Message::ClientDisconnected;
+        assert_eq!(msg.to_string(), "connection lost");
+    }
+
+    #[test]
+    fn test_message_display_connection_error_net() {
+        let msg: Message<ootr_static::Rando> =
+            Message::ConnectionError(ConnectionError::MissingRoomName);
+        assert_eq!(msg.to_string(), "connection error: missing room name");
+    }
+
+    #[test]
+    fn test_message_display_connection_error_extra_path() {
+        let msg: Message<ootr_static::Rando> =
+            Message::ConnectionError(ConnectionError::ExtraPathSegments);
+        assert_eq!(
+            msg.to_string(),
+            "connection error: too many path segments in URL"
+        );
+    }
+
+    // ==========================================================================
+    // ConnectionError Display tests
+    // ==========================================================================
+
+    #[test]
+    fn test_connection_error_display_extra_path_segments() {
+        let err = ConnectionError::ExtraPathSegments;
+        assert_eq!(err.to_string(), "too many path segments in URL");
+    }
+
+    #[test]
+    fn test_connection_error_display_missing_room_name() {
+        let err = ConnectionError::MissingRoomName;
+        assert_eq!(err.to_string(), "missing room name");
+    }
+
+    #[test]
+    fn test_connection_error_display_unsupported_host_some() {
+        let err = ConnectionError::UnsupportedHost(Some(url::Host::Domain("example.com".into())));
+        assert_eq!(
+            err.to_string(),
+            "the tracker at example.com is not (yet) supported"
+        );
+    }
+
+    #[test]
+    fn test_connection_error_display_unsupported_host_none() {
+        let err = ConnectionError::UnsupportedHost(None);
+        assert_eq!(err.to_string(), "this kind of connection is not supported");
+    }
+
+    #[test]
+    fn test_connection_error_display_unsupported_room_kind() {
+        let err = ConnectionError::UnsupportedRoomKind("tournament".to_string());
+        // The Display implementation uses smart quotes
+        assert!(err
+            .to_string()
+            .contains("tournament")
+            .then_some(())
+            .is_some());
+        assert!(err.to_string().contains("rooms are not (yet) supported"));
+    }
+
+    // ==========================================================================
+    // UpdateCheckError Display tests
+    // ==========================================================================
+
+    #[test]
+    fn test_update_check_error_display_no_releases() {
+        let err = UpdateCheckError::NoReleases;
+        assert_eq!(err.to_string(), "there are no released versions");
+    }
+
+    // ==========================================================================
+    // Constants tests
+    // ==========================================================================
+
+    #[test]
+    fn test_cell_size_constant() {
+        assert_eq!(CELL_SIZE, 50);
+    }
+
+    #[test]
+    fn test_stone_size_constant() {
+        assert_eq!(STONE_SIZE, 30);
+    }
+
+    #[test]
+    fn test_medallion_location_height_constant() {
+        assert_eq!(MEDALLION_LOCATION_HEIGHT, 18);
+    }
+
+    #[test]
+    fn test_width_calculation() {
+        // WIDTH = (CELL_SIZE + 10) * 6 = 60 * 6 = 360
+        assert_eq!(WIDTH, 360);
+    }
+
+    #[test]
+    fn test_height_calculation() {
+        // HEIGHT = (MEDALLION_LOCATION_HEIGHT + 10) + (CELL_SIZE + 10) * 7
+        // HEIGHT = 28 + 60 * 7 = 28 + 420 = 448
+        assert_eq!(HEIGHT, 448);
+    }
+}
