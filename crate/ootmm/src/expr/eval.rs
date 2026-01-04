@@ -84,6 +84,292 @@ pub trait EvalContext {
     fn is_night(&self) -> bool {
         !self.is_day()
     }
+
+    // ===== can_* helper macros =====
+    // These compose existing has() and is_adult()/is_child() checks
+    // to provide convenient helpers for common randomizer logic patterns.
+
+    /// Check if the player has any explosive (bombs or bombchu).
+    fn has_explosives(&self) -> bool {
+        self.has_item("BOMBS", 1) || self.has_item("BOMB_BAG", 1) || self.has_item("BOMBCHU", 1)
+    }
+
+    /// Check if the player can use explosives to blast walls/obstacles.
+    /// Requires having explosives (bombs or bombchu).
+    fn can_blast(&self) -> bool {
+        self.has_explosives()
+    }
+
+    /// Check if the player can use a ranged projectile.
+    /// Includes bow (adult), slingshot (child), hookshot (adult), and boomerang (child).
+    fn can_use_projectile(&self) -> bool {
+        // Adult projectiles
+        (self.is_adult()
+            && (self.has_item("BOW", 1)
+                || self.has_item("HOOKSHOT", 1)
+                || self.has_item("LONGSHOT", 1)))
+            // Child projectiles
+            || (self.is_child()
+                && (self.has_item("SLINGSHOT", 1) || self.has_item("BOOMERANG", 1)))
+        // Any age projectiles (Deku Nuts can stun, but aren't truly projectiles for switches)
+    }
+
+    /// Check if the player can stun enemies.
+    /// Includes deku nuts, boomerang (child), hookshot (adult), and various other items.
+    fn can_stun(&self) -> bool {
+        self.has_item("DEKU_NUT", 1)
+            || self.has_item("DEKU_NUTS", 1)
+            || (self.is_child() && self.has_item("BOOMERANG", 1))
+            || (self.is_adult() && (self.has_item("HOOKSHOT", 1) || self.has_item("LONGSHOT", 1)))
+    }
+
+    /// Check if the player can use the hookshot.
+    /// In OoT, hookshot is adult-only.
+    fn can_hookshot(&self) -> bool {
+        self.is_adult() && (self.has_item("HOOKSHOT", 1) || self.has_item("LONGSHOT", 1))
+    }
+
+    /// Check if the player can use the longshot.
+    /// In OoT, longshot is adult-only.
+    fn can_longshot(&self) -> bool {
+        self.is_adult() && self.has_item("LONGSHOT", 1)
+    }
+
+    /// Check if the player can use the boomerang.
+    /// In OoT, boomerang is child-only.
+    fn can_boomerang(&self) -> bool {
+        self.is_child() && self.has_item("BOOMERANG", 1)
+    }
+
+    /// Check if the player can use the megaton hammer.
+    /// In OoT, hammer is adult-only.
+    fn can_hammer(&self) -> bool {
+        self.is_adult() && (self.has_item("HAMMER", 1) || self.has_item("MEGATON_HAMMER", 1))
+    }
+
+    /// Check if the player can smash things (rusty switches, etc.).
+    /// In OoT this is the hammer. In MM this includes Goron pound.
+    fn can_smash(&self) -> bool {
+        self.can_hammer()
+    }
+
+    /// Check if the player can dive underwater.
+    /// Requires having a scale (silver or golden).
+    fn can_dive(&self) -> bool {
+        self.has_item("SCALE", 1)
+            || self.has_item("SILVER_SCALE", 1)
+            || self.has_item("GOLDEN_SCALE", 1)
+            || self.has_item("GOLD_SCALE", 1)
+    }
+
+    /// Check if the player can dive deeply underwater.
+    /// Requires having the golden scale.
+    fn can_dive_deep(&self) -> bool {
+        self.has_item("GOLDEN_SCALE", 1) || self.has_item("GOLD_SCALE", 1)
+    }
+
+    /// Check if the player can play ocarina songs.
+    /// Requires having any ocarina.
+    fn can_play(&self) -> bool {
+        self.has_item("OCARINA", 1)
+            || self.has_item("OCARINA_FAIRY", 1)
+            || self.has_item("OCARINA_TIME", 1)
+            || self.has_item("OCARINA_OF_TIME", 1)
+    }
+
+    /// Check if the player can use a sword.
+    /// Varies by age: child uses Kokiri Sword, adult uses Master/Biggoron Sword.
+    fn can_use_sword(&self) -> bool {
+        (self.is_child() && self.has_item("KOKIRI_SWORD", 1))
+            || (self.is_adult()
+                && (self.has_item("MASTER_SWORD", 1) || self.has_item("BIGGORON_SWORD", 1)))
+    }
+
+    /// Check if the player has fire-based attacks.
+    /// Includes Din's Fire and Fire Arrows (with bow and magic).
+    fn has_fire(&self) -> bool {
+        (self.has_item("DINS_FIRE", 1) || self.has_item("DIN", 1))
+            || (self.is_adult()
+                && self.has_item("BOW", 1)
+                && (self.has_item("FIRE_ARROWS", 1) || self.has_item("FIRE_ARROW", 1)))
+    }
+
+    /// Check if the player can light torches.
+    /// Includes fire-based attacks, deku sticks, and fire arrows.
+    fn can_light_torch(&self) -> bool {
+        self.has_fire()
+            || self.has_item("DEKU_STICK", 1)
+            || self.has_item("DEKU_STICKS", 1)
+            || self.has_item("STICKS", 1)
+    }
+
+    /// Check if the player can cut grass/bushes/signs/webs.
+    /// Includes swords, deku sticks, boomerang (child), and other cutting implements.
+    fn can_cut(&self) -> bool {
+        self.can_use_sword()
+            || self.has_item("DEKU_STICK", 1)
+            || self.has_item("DEKU_STICKS", 1)
+            || self.has_item("STICKS", 1)
+            || self.can_boomerang()
+            || self.can_hammer()
+    }
+
+    /// Check if child Link can attack enemies.
+    /// Includes Kokiri Sword, Deku Sticks, Slingshot, Boomerang, etc.
+    fn can_child_attack(&self) -> bool {
+        self.is_child()
+            && (self.has_item("KOKIRI_SWORD", 1)
+                || self.has_item("DEKU_STICK", 1)
+                || self.has_item("DEKU_STICKS", 1)
+                || self.has_item("STICKS", 1)
+                || self.has_item("SLINGSHOT", 1)
+                || self.has_item("BOOMERANG", 1)
+                || self.has_item("BOMBS", 1)
+                || self.has_item("BOMB_BAG", 1)
+                || self.has_item("BOMBCHU", 1)
+                || self.has_item("DINS_FIRE", 1)
+                || self.has_item("DIN", 1))
+    }
+
+    /// Check if adult Link can attack enemies.
+    /// Includes Master Sword, Biggoron Sword, Bow, Hookshot, Hammer, etc.
+    fn can_adult_attack(&self) -> bool {
+        self.is_adult()
+            && (self.has_item("MASTER_SWORD", 1)
+                || self.has_item("BIGGORON_SWORD", 1)
+                || self.has_item("BOW", 1)
+                || self.has_item("HOOKSHOT", 1)
+                || self.has_item("LONGSHOT", 1)
+                || self.has_item("HAMMER", 1)
+                || self.has_item("MEGATON_HAMMER", 1)
+                || self.has_item("BOMBS", 1)
+                || self.has_item("BOMB_BAG", 1)
+                || self.has_item("BOMBCHU", 1)
+                || self.has_item("DINS_FIRE", 1)
+                || self.has_item("DIN", 1))
+    }
+
+    /// Check if the player can deal damage to enemies.
+    /// Combines child and adult attack checks.
+    fn can_damage(&self) -> bool {
+        self.can_child_attack() || self.can_adult_attack()
+    }
+
+    /// Check if the player has magic available.
+    fn has_magic(&self) -> bool {
+        self.has_item("MAGIC", 1)
+            || self.has_item("MAGIC_METER", 1)
+            || self.has_item("MAGIC_UPGRADE", 1)
+    }
+
+    /// Check if the player can use magic spells.
+    /// Requires having magic and at least one spell.
+    fn can_use_magic(&self) -> bool {
+        self.has_magic()
+            && (self.has_item("DINS_FIRE", 1)
+                || self.has_item("DIN", 1)
+                || self.has_item("FARORES_WIND", 1)
+                || self.has_item("FARORE", 1)
+                || self.has_item("NAYRUS_LOVE", 1)
+                || self.has_item("NAYRU", 1))
+    }
+
+    /// Check if the player has any bow (adult only).
+    fn can_use_bow(&self) -> bool {
+        self.is_adult() && self.has_item("BOW", 1)
+    }
+
+    /// Check if the player has the slingshot (child only).
+    fn can_use_slingshot(&self) -> bool {
+        self.is_child() && self.has_item("SLINGSHOT", 1)
+    }
+
+    /// Check if the player can shoot something (bow or slingshot).
+    fn can_shoot(&self) -> bool {
+        self.can_use_bow() || self.can_use_slingshot()
+    }
+
+    /// Check if the player can access water temple areas (iron boots + zora tunic).
+    fn can_dive_water_temple(&self) -> bool {
+        self.is_adult()
+            && (self.has_item("IRON_BOOTS", 1) || self.has_item("BOOTS_IRON", 1))
+            && (self.has_item("ZORA_TUNIC", 1) || self.has_item("TUNIC_ZORA", 1))
+    }
+
+    /// Check if the player can use iron boots (adult only).
+    fn can_use_iron_boots(&self) -> bool {
+        self.is_adult() && (self.has_item("IRON_BOOTS", 1) || self.has_item("BOOTS_IRON", 1))
+    }
+
+    /// Check if the player can use hover boots (adult only).
+    fn can_use_hover_boots(&self) -> bool {
+        self.is_adult() && (self.has_item("HOVER_BOOTS", 1) || self.has_item("BOOTS_HOVER", 1))
+    }
+
+    /// Check if the player has strength upgrades for lifting/pushing.
+    fn has_strength(&self) -> bool {
+        self.has_item("STRENGTH", 1)
+            || self.has_item("GORON_BRACELET", 1)
+            || self.has_item("SILVER_GAUNTLETS", 1)
+            || self.has_item("GOLDEN_GAUNTLETS", 1)
+            || self.has_item("GOLD_GAUNTLETS", 1)
+    }
+
+    /// Check if the player can lift heavy objects (silver gauntlets or better).
+    fn can_lift_heavy(&self) -> bool {
+        self.has_item("SILVER_GAUNTLETS", 1)
+            || self.has_item("GOLDEN_GAUNTLETS", 1)
+            || self.has_item("GOLD_GAUNTLETS", 1)
+    }
+
+    /// Check if the player can lift the heaviest objects (golden gauntlets).
+    fn can_lift_heaviest(&self) -> bool {
+        self.has_item("GOLDEN_GAUNTLETS", 1) || self.has_item("GOLD_GAUNTLETS", 1)
+    }
+
+    // ===== MM-specific helpers =====
+    // These are primarily useful for MM contexts but defined on the trait
+    // with sensible defaults for OoT contexts.
+
+    /// Check if the player has the Deku Mask (MM transformation).
+    fn has_mask_deku(&self) -> bool {
+        self.has_item("MASK_DEKU", 1)
+    }
+
+    /// Check if the player has the Goron Mask (MM transformation).
+    fn has_mask_goron(&self) -> bool {
+        self.has_item("MASK_GORON", 1)
+    }
+
+    /// Check if the player has the Zora Mask (MM transformation).
+    fn has_mask_zora(&self) -> bool {
+        self.has_item("MASK_ZORA", 1)
+    }
+
+    /// Check if the player has the Fierce Deity Mask (MM transformation).
+    fn has_mask_fierce_deity(&self) -> bool {
+        self.has_item("MASK_FIERCE_DEITY", 1)
+    }
+
+    /// Check if the player can use the powder keg (MM, requires Goron + license).
+    fn can_use_powder_keg(&self) -> bool {
+        self.has_mask_goron() && self.has_item("POWDER_KEG", 1)
+    }
+
+    /// Check if the player can swim fast (MM Zora mask).
+    fn can_swim_fast(&self) -> bool {
+        self.has_mask_zora()
+    }
+
+    /// Check if the player can roll fast (MM Goron mask).
+    fn can_roll_fast(&self) -> bool {
+        self.has_mask_goron()
+    }
+
+    /// Check if the player can fly (MM Deku mask + flower).
+    fn can_fly_deku(&self) -> bool {
+        self.has_mask_deku()
+    }
 }
 
 /// Expression evaluator that ties together lexer, parser, and built-in functions.
@@ -166,15 +452,63 @@ impl<'a, C: EvalContext> Evaluator<'a, C> {
     /// - `is_adult`: true if the player is Adult Link
     /// - `is_child`: true if the player is Child Link
     /// - `is_human`: always true (player can always be in human form in MM tracker)
+    /// - `is_day`: true if it's daytime (6 AM - 6 PM)
+    /// - `is_night`: true if it's nighttime (6 PM - 6 AM)
     /// - `true`: always true
     /// - `false`: always false
+    /// - can_* helpers: various helper macros
     fn eval_ident(&self, name: &str) -> Result<bool, EvalError> {
         match name {
+            // Core identifiers
             "is_adult" => Ok(self.ctx.is_adult()),
             "is_child" => Ok(self.ctx.is_child()),
             "is_human" => Ok(true),
+            "is_day" => Ok(self.ctx.is_day()),
+            "is_night" => Ok(self.ctx.is_night()),
             "true" => Ok(true),
             "false" => Ok(false),
+
+            // can_* helper macros (can be used without parentheses)
+            "has_explosives" => Ok(self.ctx.has_explosives()),
+            "can_blast" => Ok(self.ctx.can_blast()),
+            "can_use_projectile" => Ok(self.ctx.can_use_projectile()),
+            "can_stun" => Ok(self.ctx.can_stun()),
+            "can_hookshot" => Ok(self.ctx.can_hookshot()),
+            "can_longshot" => Ok(self.ctx.can_longshot()),
+            "can_boomerang" => Ok(self.ctx.can_boomerang()),
+            "can_hammer" => Ok(self.ctx.can_hammer()),
+            "can_smash" => Ok(self.ctx.can_smash()),
+            "can_dive" => Ok(self.ctx.can_dive()),
+            "can_dive_deep" => Ok(self.ctx.can_dive_deep()),
+            "can_play" => Ok(self.ctx.can_play()),
+            "can_use_sword" => Ok(self.ctx.can_use_sword()),
+            "has_fire" => Ok(self.ctx.has_fire()),
+            "can_light_torch" => Ok(self.ctx.can_light_torch()),
+            "can_cut" => Ok(self.ctx.can_cut()),
+            "can_child_attack" => Ok(self.ctx.can_child_attack()),
+            "can_adult_attack" => Ok(self.ctx.can_adult_attack()),
+            "can_damage" => Ok(self.ctx.can_damage()),
+            "has_magic" => Ok(self.ctx.has_magic()),
+            "can_use_magic" => Ok(self.ctx.can_use_magic()),
+            "can_use_bow" => Ok(self.ctx.can_use_bow()),
+            "can_use_slingshot" => Ok(self.ctx.can_use_slingshot()),
+            "can_shoot" => Ok(self.ctx.can_shoot()),
+            "can_dive_water_temple" => Ok(self.ctx.can_dive_water_temple()),
+            "can_use_iron_boots" => Ok(self.ctx.can_use_iron_boots()),
+            "can_use_hover_boots" => Ok(self.ctx.can_use_hover_boots()),
+            "has_strength" => Ok(self.ctx.has_strength()),
+            "can_lift_heavy" => Ok(self.ctx.can_lift_heavy()),
+            "can_lift_heaviest" => Ok(self.ctx.can_lift_heaviest()),
+            // MM-specific helpers
+            "has_mask_deku" => Ok(self.ctx.has_mask_deku()),
+            "has_mask_goron" => Ok(self.ctx.has_mask_goron()),
+            "has_mask_zora" => Ok(self.ctx.has_mask_zora()),
+            "has_mask_fierce_deity" => Ok(self.ctx.has_mask_fierce_deity()),
+            "can_use_powder_keg" => Ok(self.ctx.can_use_powder_keg()),
+            "can_swim_fast" => Ok(self.ctx.can_swim_fast()),
+            "can_roll_fast" => Ok(self.ctx.can_roll_fast()),
+            "can_fly_deku" => Ok(self.ctx.can_fly_deku()),
+
             _ => {
                 // Check if it's an event or setting
                 if self.ctx.event(name) {
@@ -199,8 +533,107 @@ impl<'a, C: EvalContext> Evaluator<'a, C> {
             "setting" => self.eval_setting(args),
             "trick" => self.eval_trick(args),
             "cond" => self.eval_cond(args),
+            // can_* helper macros - no arguments
+            "has_explosives" => {
+                self.eval_no_args(args, "has_explosives", || self.ctx.has_explosives())
+            }
+            "can_blast" => self.eval_no_args(args, "can_blast", || self.ctx.can_blast()),
+            "can_use_projectile" => {
+                self.eval_no_args(args, "can_use_projectile", || self.ctx.can_use_projectile())
+            }
+            "can_stun" => self.eval_no_args(args, "can_stun", || self.ctx.can_stun()),
+            "can_hookshot" => self.eval_no_args(args, "can_hookshot", || self.ctx.can_hookshot()),
+            "can_longshot" => self.eval_no_args(args, "can_longshot", || self.ctx.can_longshot()),
+            "can_boomerang" => {
+                self.eval_no_args(args, "can_boomerang", || self.ctx.can_boomerang())
+            }
+            "can_hammer" => self.eval_no_args(args, "can_hammer", || self.ctx.can_hammer()),
+            "can_smash" => self.eval_no_args(args, "can_smash", || self.ctx.can_smash()),
+            "can_dive" => self.eval_no_args(args, "can_dive", || self.ctx.can_dive()),
+            "can_dive_deep" => {
+                self.eval_no_args(args, "can_dive_deep", || self.ctx.can_dive_deep())
+            }
+            "can_play" => self.eval_no_args(args, "can_play", || self.ctx.can_play()),
+            "can_use_sword" => {
+                self.eval_no_args(args, "can_use_sword", || self.ctx.can_use_sword())
+            }
+            "has_fire" => self.eval_no_args(args, "has_fire", || self.ctx.has_fire()),
+            "can_light_torch" => {
+                self.eval_no_args(args, "can_light_torch", || self.ctx.can_light_torch())
+            }
+            "can_cut" => self.eval_no_args(args, "can_cut", || self.ctx.can_cut()),
+            "can_child_attack" => {
+                self.eval_no_args(args, "can_child_attack", || self.ctx.can_child_attack())
+            }
+            "can_adult_attack" => {
+                self.eval_no_args(args, "can_adult_attack", || self.ctx.can_adult_attack())
+            }
+            "can_damage" => self.eval_no_args(args, "can_damage", || self.ctx.can_damage()),
+            "has_magic" => self.eval_no_args(args, "has_magic", || self.ctx.has_magic()),
+            "can_use_magic" => {
+                self.eval_no_args(args, "can_use_magic", || self.ctx.can_use_magic())
+            }
+            "can_use_bow" => self.eval_no_args(args, "can_use_bow", || self.ctx.can_use_bow()),
+            "can_use_slingshot" => {
+                self.eval_no_args(args, "can_use_slingshot", || self.ctx.can_use_slingshot())
+            }
+            "can_shoot" => self.eval_no_args(args, "can_shoot", || self.ctx.can_shoot()),
+            "can_dive_water_temple" => self.eval_no_args(args, "can_dive_water_temple", || {
+                self.ctx.can_dive_water_temple()
+            }),
+            "can_use_iron_boots" => {
+                self.eval_no_args(args, "can_use_iron_boots", || self.ctx.can_use_iron_boots())
+            }
+            "can_use_hover_boots" => self.eval_no_args(args, "can_use_hover_boots", || {
+                self.ctx.can_use_hover_boots()
+            }),
+            "has_strength" => self.eval_no_args(args, "has_strength", || self.ctx.has_strength()),
+            "can_lift_heavy" => {
+                self.eval_no_args(args, "can_lift_heavy", || self.ctx.can_lift_heavy())
+            }
+            "can_lift_heaviest" => {
+                self.eval_no_args(args, "can_lift_heaviest", || self.ctx.can_lift_heaviest())
+            }
+            // MM-specific helpers
+            "has_mask_deku" => {
+                self.eval_no_args(args, "has_mask_deku", || self.ctx.has_mask_deku())
+            }
+            "has_mask_goron" => {
+                self.eval_no_args(args, "has_mask_goron", || self.ctx.has_mask_goron())
+            }
+            "has_mask_zora" => {
+                self.eval_no_args(args, "has_mask_zora", || self.ctx.has_mask_zora())
+            }
+            "has_mask_fierce_deity" => self.eval_no_args(args, "has_mask_fierce_deity", || {
+                self.ctx.has_mask_fierce_deity()
+            }),
+            "can_use_powder_keg" => {
+                self.eval_no_args(args, "can_use_powder_keg", || self.ctx.can_use_powder_keg())
+            }
+            "can_swim_fast" => {
+                self.eval_no_args(args, "can_swim_fast", || self.ctx.can_swim_fast())
+            }
+            "can_roll_fast" => {
+                self.eval_no_args(args, "can_roll_fast", || self.ctx.can_roll_fast())
+            }
+            "can_fly_deku" => self.eval_no_args(args, "can_fly_deku", || self.ctx.can_fly_deku()),
             _ => Err(EvalError::UnknownFunction(name.to_string())),
         }
+    }
+
+    /// Evaluate a no-argument helper function.
+    fn eval_no_args<F>(&self, args: &[Expr], name: &str, f: F) -> Result<bool, EvalError>
+    where
+        F: FnOnce() -> bool,
+    {
+        if !args.is_empty() {
+            return Err(EvalError::Error(format!(
+                "{}() expects 0 arguments, got {}",
+                name,
+                args.len()
+            )));
+        }
+        Ok(f())
     }
 
     /// Evaluate the `event` built-in function.
@@ -964,5 +1397,559 @@ mod tests {
         let ctx = MockContext::new();
         let result = eval_str("setting(a, b, c)", &ctx);
         assert!(result.is_err());
+    }
+
+    // ===== can_* helper macro tests =====
+
+    // --- has_explosives / can_blast tests ---
+
+    #[test]
+    fn test_has_explosives_with_bombs() {
+        let ctx = MockContext::new().with_item("BOMBS", 1);
+        assert!(eval_str("has_explosives", &ctx).unwrap());
+        assert!(eval_str("has_explosives()", &ctx).unwrap());
+        assert!(eval_str("can_blast", &ctx).unwrap());
+        assert!(eval_str("can_blast()", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_has_explosives_with_bombchu() {
+        let ctx = MockContext::new().with_item("BOMBCHU", 1);
+        assert!(eval_str("has_explosives", &ctx).unwrap());
+        assert!(eval_str("can_blast", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_has_explosives_none() {
+        let ctx = MockContext::new();
+        assert!(!eval_str("has_explosives", &ctx).unwrap());
+        assert!(!eval_str("can_blast", &ctx).unwrap());
+    }
+
+    // --- can_use_projectile tests ---
+
+    #[test]
+    fn test_can_use_projectile_adult_bow() {
+        let ctx = MockContext::new().with_item("BOW", 1).with_adult_age();
+        assert!(eval_str("can_use_projectile", &ctx).unwrap());
+        assert!(eval_str("can_use_projectile()", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_use_projectile_adult_hookshot() {
+        let ctx = MockContext::new().with_item("HOOKSHOT", 1).with_adult_age();
+        assert!(eval_str("can_use_projectile", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_use_projectile_child_slingshot() {
+        let ctx = MockContext::new()
+            .with_item("SLINGSHOT", 1)
+            .with_child_age();
+        assert!(eval_str("can_use_projectile", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_use_projectile_child_boomerang() {
+        let ctx = MockContext::new()
+            .with_item("BOOMERANG", 1)
+            .with_child_age();
+        assert!(eval_str("can_use_projectile", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_use_projectile_adult_with_child_items() {
+        // Adult with child-only items cannot use them
+        let ctx = MockContext::new()
+            .with_item("SLINGSHOT", 1)
+            .with_item("BOOMERANG", 1)
+            .with_adult_age();
+        assert!(!eval_str("can_use_projectile", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_use_projectile_child_with_adult_items() {
+        // Child with adult-only items cannot use them
+        let ctx = MockContext::new()
+            .with_item("BOW", 1)
+            .with_item("HOOKSHOT", 1)
+            .with_child_age();
+        assert!(!eval_str("can_use_projectile", &ctx).unwrap());
+    }
+
+    // --- can_hookshot tests ---
+
+    #[test]
+    fn test_can_hookshot_adult() {
+        let ctx = MockContext::new().with_item("HOOKSHOT", 1).with_adult_age();
+        assert!(eval_str("can_hookshot", &ctx).unwrap());
+        assert!(eval_str("can_hookshot()", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_hookshot_adult_with_longshot() {
+        let ctx = MockContext::new().with_item("LONGSHOT", 1).with_adult_age();
+        assert!(eval_str("can_hookshot", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_hookshot_child() {
+        // Child cannot use hookshot
+        let ctx = MockContext::new().with_item("HOOKSHOT", 1).with_child_age();
+        assert!(!eval_str("can_hookshot", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_hookshot_no_item() {
+        let ctx = MockContext::new().with_adult_age();
+        assert!(!eval_str("can_hookshot", &ctx).unwrap());
+    }
+
+    // --- can_longshot tests ---
+
+    #[test]
+    fn test_can_longshot_adult() {
+        let ctx = MockContext::new().with_item("LONGSHOT", 1).with_adult_age();
+        assert!(eval_str("can_longshot", &ctx).unwrap());
+        assert!(eval_str("can_longshot()", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_longshot_adult_with_hookshot_only() {
+        // Having hookshot doesn't mean you have longshot
+        let ctx = MockContext::new().with_item("HOOKSHOT", 1).with_adult_age();
+        assert!(!eval_str("can_longshot", &ctx).unwrap());
+    }
+
+    // --- can_boomerang tests ---
+
+    #[test]
+    fn test_can_boomerang_child() {
+        let ctx = MockContext::new()
+            .with_item("BOOMERANG", 1)
+            .with_child_age();
+        assert!(eval_str("can_boomerang", &ctx).unwrap());
+        assert!(eval_str("can_boomerang()", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_boomerang_adult() {
+        // Adult cannot use boomerang
+        let ctx = MockContext::new()
+            .with_item("BOOMERANG", 1)
+            .with_adult_age();
+        assert!(!eval_str("can_boomerang", &ctx).unwrap());
+    }
+
+    // --- can_hammer tests ---
+
+    #[test]
+    fn test_can_hammer_adult() {
+        let ctx = MockContext::new().with_item("HAMMER", 1).with_adult_age();
+        assert!(eval_str("can_hammer", &ctx).unwrap());
+        assert!(eval_str("can_hammer()", &ctx).unwrap());
+        assert!(eval_str("can_smash", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_hammer_adult_megaton() {
+        let ctx = MockContext::new()
+            .with_item("MEGATON_HAMMER", 1)
+            .with_adult_age();
+        assert!(eval_str("can_hammer", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_hammer_child() {
+        // Child cannot use hammer
+        let ctx = MockContext::new().with_item("HAMMER", 1).with_child_age();
+        assert!(!eval_str("can_hammer", &ctx).unwrap());
+    }
+
+    // --- can_dive tests ---
+
+    #[test]
+    fn test_can_dive_with_scale() {
+        let ctx = MockContext::new().with_item("SCALE", 1);
+        assert!(eval_str("can_dive", &ctx).unwrap());
+        assert!(eval_str("can_dive()", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_dive_with_silver_scale() {
+        let ctx = MockContext::new().with_item("SILVER_SCALE", 1);
+        assert!(eval_str("can_dive", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_dive_with_golden_scale() {
+        let ctx = MockContext::new().with_item("GOLDEN_SCALE", 1);
+        assert!(eval_str("can_dive", &ctx).unwrap());
+        assert!(eval_str("can_dive_deep", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_dive_deep_requires_golden() {
+        let ctx = MockContext::new().with_item("SILVER_SCALE", 1);
+        assert!(eval_str("can_dive", &ctx).unwrap());
+        assert!(!eval_str("can_dive_deep", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_dive_none() {
+        let ctx = MockContext::new();
+        assert!(!eval_str("can_dive", &ctx).unwrap());
+    }
+
+    // --- can_play tests ---
+
+    #[test]
+    fn test_can_play_with_ocarina() {
+        let ctx = MockContext::new().with_item("OCARINA", 1);
+        assert!(eval_str("can_play", &ctx).unwrap());
+        assert!(eval_str("can_play()", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_play_with_fairy_ocarina() {
+        let ctx = MockContext::new().with_item("OCARINA_FAIRY", 1);
+        assert!(eval_str("can_play", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_play_none() {
+        let ctx = MockContext::new();
+        assert!(!eval_str("can_play", &ctx).unwrap());
+    }
+
+    // --- can_use_sword tests ---
+
+    #[test]
+    fn test_can_use_sword_child() {
+        let ctx = MockContext::new()
+            .with_item("KOKIRI_SWORD", 1)
+            .with_child_age();
+        assert!(eval_str("can_use_sword", &ctx).unwrap());
+        assert!(eval_str("can_use_sword()", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_use_sword_adult() {
+        let ctx = MockContext::new()
+            .with_item("MASTER_SWORD", 1)
+            .with_adult_age();
+        assert!(eval_str("can_use_sword", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_use_sword_wrong_age() {
+        // Adult with Kokiri Sword can't use it
+        let ctx = MockContext::new()
+            .with_item("KOKIRI_SWORD", 1)
+            .with_adult_age();
+        assert!(!eval_str("can_use_sword", &ctx).unwrap());
+
+        // Child with Master Sword can't use it
+        let ctx2 = MockContext::new()
+            .with_item("MASTER_SWORD", 1)
+            .with_child_age();
+        assert!(!eval_str("can_use_sword", &ctx2).unwrap());
+    }
+
+    // --- has_fire tests ---
+
+    #[test]
+    fn test_has_fire_dins() {
+        let ctx = MockContext::new().with_item("DINS_FIRE", 1);
+        assert!(eval_str("has_fire", &ctx).unwrap());
+        assert!(eval_str("has_fire()", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_has_fire_arrows() {
+        let ctx = MockContext::new()
+            .with_item("BOW", 1)
+            .with_item("FIRE_ARROWS", 1)
+            .with_adult_age();
+        assert!(eval_str("has_fire", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_has_fire_none() {
+        let ctx = MockContext::new();
+        assert!(!eval_str("has_fire", &ctx).unwrap());
+    }
+
+    // --- can_stun tests ---
+
+    #[test]
+    fn test_can_stun_with_nuts() {
+        let ctx = MockContext::new().with_item("DEKU_NUT", 1);
+        assert!(eval_str("can_stun", &ctx).unwrap());
+        assert!(eval_str("can_stun()", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_stun_with_boomerang_child() {
+        let ctx = MockContext::new()
+            .with_item("BOOMERANG", 1)
+            .with_child_age();
+        assert!(eval_str("can_stun", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_stun_with_hookshot_adult() {
+        let ctx = MockContext::new().with_item("HOOKSHOT", 1).with_adult_age();
+        assert!(eval_str("can_stun", &ctx).unwrap());
+    }
+
+    // --- can_child_attack / can_adult_attack / can_damage tests ---
+
+    #[test]
+    fn test_can_child_attack() {
+        let ctx = MockContext::new()
+            .with_item("KOKIRI_SWORD", 1)
+            .with_child_age();
+        assert!(eval_str("can_child_attack", &ctx).unwrap());
+        assert!(eval_str("can_child_attack()", &ctx).unwrap());
+        assert!(eval_str("can_damage", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_child_attack_with_stick() {
+        let ctx = MockContext::new()
+            .with_item("DEKU_STICK", 1)
+            .with_child_age();
+        assert!(eval_str("can_child_attack", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_adult_attack() {
+        let ctx = MockContext::new()
+            .with_item("MASTER_SWORD", 1)
+            .with_adult_age();
+        assert!(eval_str("can_adult_attack", &ctx).unwrap());
+        assert!(eval_str("can_adult_attack()", &ctx).unwrap());
+        assert!(eval_str("can_damage", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_damage_requires_attack() {
+        let ctx = MockContext::new().with_adult_age();
+        assert!(!eval_str("can_damage", &ctx).unwrap());
+    }
+
+    // --- has_strength / can_lift tests ---
+
+    #[test]
+    fn test_has_strength() {
+        let ctx = MockContext::new().with_item("GORON_BRACELET", 1);
+        assert!(eval_str("has_strength", &ctx).unwrap());
+        assert!(eval_str("has_strength()", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_lift_heavy() {
+        let ctx = MockContext::new().with_item("SILVER_GAUNTLETS", 1);
+        assert!(eval_str("has_strength", &ctx).unwrap());
+        assert!(eval_str("can_lift_heavy", &ctx).unwrap());
+        assert!(eval_str("can_lift_heavy()", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_lift_heaviest() {
+        let ctx = MockContext::new().with_item("GOLDEN_GAUNTLETS", 1);
+        assert!(eval_str("has_strength", &ctx).unwrap());
+        assert!(eval_str("can_lift_heavy", &ctx).unwrap());
+        assert!(eval_str("can_lift_heaviest", &ctx).unwrap());
+        assert!(eval_str("can_lift_heaviest()", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_lift_heavy_not_enough() {
+        let ctx = MockContext::new().with_item("GORON_BRACELET", 1);
+        assert!(eval_str("has_strength", &ctx).unwrap());
+        assert!(!eval_str("can_lift_heavy", &ctx).unwrap());
+    }
+
+    // --- can_use_bow / can_use_slingshot / can_shoot tests ---
+
+    #[test]
+    fn test_can_use_bow() {
+        let ctx = MockContext::new().with_item("BOW", 1).with_adult_age();
+        assert!(eval_str("can_use_bow", &ctx).unwrap());
+        assert!(eval_str("can_use_bow()", &ctx).unwrap());
+        assert!(eval_str("can_shoot", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_use_slingshot() {
+        let ctx = MockContext::new()
+            .with_item("SLINGSHOT", 1)
+            .with_child_age();
+        assert!(eval_str("can_use_slingshot", &ctx).unwrap());
+        assert!(eval_str("can_use_slingshot()", &ctx).unwrap());
+        assert!(eval_str("can_shoot", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_shoot_none() {
+        let ctx = MockContext::new();
+        assert!(!eval_str("can_shoot", &ctx).unwrap());
+    }
+
+    // --- can_use_iron_boots / can_use_hover_boots tests ---
+
+    #[test]
+    fn test_can_use_iron_boots() {
+        let ctx = MockContext::new()
+            .with_item("IRON_BOOTS", 1)
+            .with_adult_age();
+        assert!(eval_str("can_use_iron_boots", &ctx).unwrap());
+        assert!(eval_str("can_use_iron_boots()", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_use_hover_boots() {
+        let ctx = MockContext::new()
+            .with_item("HOVER_BOOTS", 1)
+            .with_adult_age();
+        assert!(eval_str("can_use_hover_boots", &ctx).unwrap());
+        assert!(eval_str("can_use_hover_boots()", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_use_boots_child() {
+        // Child cannot use adult boots
+        let ctx = MockContext::new()
+            .with_item("IRON_BOOTS", 1)
+            .with_item("HOVER_BOOTS", 1)
+            .with_child_age();
+        assert!(!eval_str("can_use_iron_boots", &ctx).unwrap());
+        assert!(!eval_str("can_use_hover_boots", &ctx).unwrap());
+    }
+
+    // --- can_dive_water_temple tests ---
+
+    #[test]
+    fn test_can_dive_water_temple() {
+        let ctx = MockContext::new()
+            .with_item("IRON_BOOTS", 1)
+            .with_item("ZORA_TUNIC", 1)
+            .with_adult_age();
+        assert!(eval_str("can_dive_water_temple", &ctx).unwrap());
+        assert!(eval_str("can_dive_water_temple()", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_dive_water_temple_missing_tunic() {
+        let ctx = MockContext::new()
+            .with_item("IRON_BOOTS", 1)
+            .with_adult_age();
+        assert!(!eval_str("can_dive_water_temple", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_dive_water_temple_missing_boots() {
+        let ctx = MockContext::new()
+            .with_item("ZORA_TUNIC", 1)
+            .with_adult_age();
+        assert!(!eval_str("can_dive_water_temple", &ctx).unwrap());
+    }
+
+    // --- MM mask helpers tests ---
+
+    #[test]
+    fn test_has_mask_deku() {
+        let ctx = MockContext::new().with_item("MASK_DEKU", 1);
+        assert!(eval_str("has_mask_deku", &ctx).unwrap());
+        assert!(eval_str("has_mask_deku()", &ctx).unwrap());
+        assert!(eval_str("can_fly_deku", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_has_mask_goron() {
+        let ctx = MockContext::new().with_item("MASK_GORON", 1);
+        assert!(eval_str("has_mask_goron", &ctx).unwrap());
+        assert!(eval_str("has_mask_goron()", &ctx).unwrap());
+        assert!(eval_str("can_roll_fast", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_has_mask_zora() {
+        let ctx = MockContext::new().with_item("MASK_ZORA", 1);
+        assert!(eval_str("has_mask_zora", &ctx).unwrap());
+        assert!(eval_str("has_mask_zora()", &ctx).unwrap());
+        assert!(eval_str("can_swim_fast", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_has_mask_fierce_deity() {
+        let ctx = MockContext::new().with_item("MASK_FIERCE_DEITY", 1);
+        assert!(eval_str("has_mask_fierce_deity", &ctx).unwrap());
+        assert!(eval_str("has_mask_fierce_deity()", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_use_powder_keg() {
+        let ctx = MockContext::new()
+            .with_item("MASK_GORON", 1)
+            .with_item("POWDER_KEG", 1);
+        assert!(eval_str("can_use_powder_keg", &ctx).unwrap());
+        assert!(eval_str("can_use_powder_keg()", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_can_use_powder_keg_no_goron() {
+        let ctx = MockContext::new().with_item("POWDER_KEG", 1);
+        assert!(!eval_str("can_use_powder_keg", &ctx).unwrap());
+    }
+
+    // --- Helper with wrong arg count error tests ---
+
+    #[test]
+    fn test_helper_wrong_arg_count() {
+        let ctx = MockContext::new();
+        let result = eval_str("can_blast(BOMBS)", &ctx);
+        assert!(result.is_err());
+    }
+
+    // --- Complex expressions with helpers ---
+
+    #[test]
+    fn test_helper_in_complex_expression() {
+        let ctx = MockContext::new()
+            .with_item("HOOKSHOT", 1)
+            .with_item("BOMBS", 1)
+            .with_item("SCALE", 1)
+            .with_adult_age();
+
+        assert!(eval_str("can_hookshot && can_blast && can_dive", &ctx).unwrap());
+        assert!(eval_str("can_hookshot() && can_blast() && can_dive()", &ctx).unwrap());
+        assert!(eval_str("(can_hookshot || can_boomerang) && can_blast", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_helper_combined_with_has_and_events() {
+        let ctx = MockContext::new()
+            .with_item("HOOKSHOT", 1)
+            .with_item("BOW", 1)
+            .with_event("FOREST_TEMPLE_CLEAR")
+            .with_adult_age();
+
+        assert!(eval_str(
+            "is_adult && can_hookshot && has(BOW) && event(FOREST_TEMPLE_CLEAR)",
+            &ctx
+        )
+        .unwrap());
+    }
+
+    // --- is_day / is_night tests ---
+
+    #[test]
+    fn test_is_day_identifier() {
+        let ctx = MockContext::new(); // Default time is 0 (daytime)
+        assert!(eval_str("is_day", &ctx).unwrap());
+        assert!(!eval_str("is_night", &ctx).unwrap());
     }
 }
