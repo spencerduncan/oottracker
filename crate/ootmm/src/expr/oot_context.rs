@@ -25,6 +25,7 @@
 //! ```
 
 use crate::expr::EvalContext;
+use crate::settings::RandomizerSettings;
 use std::collections::{HashMap, HashSet};
 
 /// Base address of OoT save data in N64 RDRAM.
@@ -271,12 +272,14 @@ pub struct OotEvalContext<'a, R: OotRamReader> {
     save_base: u32,
     /// Enabled tricks (configured by user).
     tricks: HashSet<String>,
-    /// Settings (configured by user).
+    /// Legacy settings (configured by user, for backward compatibility).
     settings: HashMap<String, bool>,
     /// Events (tracked separately, not in RAM).
     events: HashSet<String>,
     /// Address for Link's age (may differ from save data).
     age_addr: u32,
+    /// Randomizer settings for logic evaluation.
+    randomizer_settings: Option<&'a RandomizerSettings>,
 }
 
 impl<'a, R: OotRamReader> OotEvalContext<'a, R> {
@@ -294,6 +297,7 @@ impl<'a, R: OotRamReader> OotEvalContext<'a, R> {
             settings: HashMap::new(),
             events: HashSet::new(),
             age_addr: 0x11A5D0 + 0x04, // Default age address
+            randomizer_settings: None,
         }
     }
 
@@ -310,7 +314,22 @@ impl<'a, R: OotRamReader> OotEvalContext<'a, R> {
             settings: HashMap::new(),
             events: HashSet::new(),
             age_addr: save_base + 0x04,
+            randomizer_settings: None,
         }
+    }
+
+    /// Sets the randomizer settings for logic evaluation.
+    ///
+    /// When set, `setting()` and `trick()` calls will first check the
+    /// randomizer settings before falling back to legacy settings/tricks.
+    pub fn set_randomizer_settings(&mut self, settings: &'a RandomizerSettings) {
+        self.randomizer_settings = Some(settings);
+    }
+
+    /// Returns the randomizer settings if set.
+    #[must_use]
+    pub fn randomizer_settings(&self) -> Option<&RandomizerSettings> {
+        self.randomizer_settings
     }
 
     /// Sets the address for reading Link's age.
@@ -682,11 +701,34 @@ impl<R: OotRamReader> EvalContext for OotEvalContext<'_, R> {
     }
 
     fn setting(&self, name: &str) -> Option<bool> {
+        // First check randomizer settings if available
+        if let Some(rs) = self.randomizer_settings {
+            if let Some(value) = rs.get_bool_setting(name) {
+                return Some(value);
+            }
+        }
+        // Fall back to legacy settings
         self.settings.get(name).copied()
     }
 
+    fn setting_value(&self, name: &str, value: &str) -> bool {
+        // Delegate to randomizer settings if available
+        if let Some(rs) = self.randomizer_settings {
+            return rs.check_setting_value(name, value);
+        }
+        false
+    }
+
     fn trick(&self, name: &str) -> bool {
-        self.tricks.contains(name)
+        // Check local tricks first
+        if self.tricks.contains(name) {
+            return true;
+        }
+        // Then check randomizer settings tricks if available
+        if let Some(rs) = self.randomizer_settings {
+            return rs.has_trick(name);
+        }
+        false
     }
 
     fn is_adult(&self) -> bool {
@@ -741,10 +783,17 @@ impl<'a, R: OotRamReader> OotEvalContextBuilder<'a, R> {
         self
     }
 
-    /// Sets a setting.
+    /// Sets a legacy setting.
     #[must_use]
     pub fn with_setting(mut self, name: &str, value: bool) -> Self {
         self.ctx.set_setting(name, value);
+        self
+    }
+
+    /// Sets the randomizer settings.
+    #[must_use]
+    pub fn with_randomizer_settings(mut self, settings: &'a RandomizerSettings) -> Self {
+        self.ctx.set_randomizer_settings(settings);
         self
     }
 
@@ -1339,5 +1388,132 @@ mod tests {
         let ctx = OotEvalContext::new(&ram);
         assert!(ctx.has_item("NAYRUS_LOVE", 1));
         assert!(ctx.has_item("NAYRU", 1));
+    }
+
+    // --- RandomizerSettings integration tests ---
+
+    #[test]
+    fn test_setting_with_randomizer_settings_bool() {
+        use crate::settings::RandomizerSettings;
+
+        let ram = MockRam::new();
+        let mut rs = RandomizerSettings::new();
+        rs.ageless_boots = true;
+        rs.er_moon = false;
+
+        let ctx = OotEvalContextBuilder::new(&ram)
+            .with_randomizer_settings(&rs)
+            .build();
+
+        assert_eq!(ctx.setting("agelessBoots"), Some(true));
+        assert_eq!(ctx.setting("erMoon"), Some(false));
+        assert_eq!(ctx.setting("unknownSetting"), None);
+    }
+
+    #[test]
+    fn test_setting_value_with_randomizer_settings() {
+        use crate::settings::{OotDungeon, RandomizerSettings};
+
+        let ram = MockRam::new();
+        let mut rs = RandomizerSettings::new();
+        rs.open_dungeons_oot.insert(OotDungeon::DodongosCavern);
+        rs.open_dungeons_oot.insert(OotDungeon::Shadow);
+
+        let ctx = OotEvalContextBuilder::new(&ram)
+            .with_randomizer_settings(&rs)
+            .build();
+
+        assert!(ctx.setting_value("openDungeonsOot", "DC"));
+        assert!(ctx.setting_value("openDungeonsOot", "Shadow"));
+        assert!(!ctx.setting_value("openDungeonsOot", "Water"));
+        assert!(!ctx.setting_value("unknownSetting", "value"));
+    }
+
+    #[test]
+    fn test_setting_value_with_enum_settings() {
+        use crate::settings::{DekuTreeState, GanonBossKeyMode, RandomizerSettings};
+
+        let ram = MockRam::new();
+        let mut rs = RandomizerSettings::new();
+        rs.deku_tree = DekuTreeState::Open;
+        rs.ganon_boss_key = GanonBossKeyMode::Removed;
+
+        let ctx = OotEvalContextBuilder::new(&ram)
+            .with_randomizer_settings(&rs)
+            .build();
+
+        assert!(ctx.setting_value("dekuTree", "open"));
+        assert!(!ctx.setting_value("dekuTree", "closed"));
+        assert!(ctx.setting_value("ganonBossKey", "removed"));
+        assert!(!ctx.setting_value("ganonBossKey", "vanilla"));
+    }
+
+    #[test]
+    fn test_trick_with_randomizer_settings() {
+        use crate::settings::RandomizerSettings;
+
+        let ram = MockRam::new();
+        let mut rs = RandomizerSettings::new();
+        rs.enable_trick("OOT_LENS_WASTELAND");
+        rs.enable_trick("OOT_HOVER_BOOST");
+
+        let ctx = OotEvalContextBuilder::new(&ram)
+            .with_randomizer_settings(&rs)
+            .build();
+
+        assert!(ctx.trick("OOT_LENS_WASTELAND"));
+        assert!(ctx.trick("OOT_HOVER_BOOST"));
+        assert!(!ctx.trick("OOT_SOME_OTHER_TRICK"));
+    }
+
+    #[test]
+    fn test_trick_combined_sources() {
+        use crate::settings::RandomizerSettings;
+
+        let ram = MockRam::new();
+        let mut rs = RandomizerSettings::new();
+        rs.enable_trick("from_settings");
+
+        let ctx = OotEvalContextBuilder::new(&ram)
+            .with_trick("from_local")
+            .with_randomizer_settings(&rs)
+            .build();
+
+        // Should find tricks from both sources
+        assert!(ctx.trick("from_local"));
+        assert!(ctx.trick("from_settings"));
+        assert!(!ctx.trick("not_enabled"));
+    }
+
+    #[test]
+    fn test_setting_fallback_to_legacy() {
+        use crate::settings::RandomizerSettings;
+
+        let ram = MockRam::new();
+        let rs = RandomizerSettings::new();
+
+        let ctx = OotEvalContextBuilder::new(&ram)
+            .with_setting("legacySetting", true)
+            .with_randomizer_settings(&rs)
+            .build();
+
+        // Legacy setting should work when not in RandomizerSettings
+        assert_eq!(ctx.setting("legacySetting"), Some(true));
+        // RandomizerSettings booleans should also work
+        assert_eq!(ctx.setting("agelessBoots"), Some(false));
+    }
+
+    #[test]
+    fn test_builder_with_randomizer_settings() {
+        use crate::settings::RandomizerSettings;
+
+        let ram = MockRam::new();
+        let rs = RandomizerSettings::new();
+
+        let ctx = OotEvalContextBuilder::new(&ram)
+            .with_randomizer_settings(&rs)
+            .build();
+
+        assert!(ctx.randomizer_settings().is_some());
     }
 }
