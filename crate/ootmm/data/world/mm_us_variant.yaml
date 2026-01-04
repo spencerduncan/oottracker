@@ -1,0 +1,47 @@
+# MM Us Variant Regions
+# Imported from OoTMM randomizer project
+
+regions:
+- id: mm_deku_palace_near_us_beans_grotto
+  name: Deku Palace Near US Beans Grotto
+  game: mm
+  exits:
+  - target: mm_deku_palace_near_beans_grotto
+    exitType: grotto
+  - target: mm_deku_palace_main
+    exitType: overworld
+- id: mm_deku_palace_near_beans_grotto
+  name: Deku Palace Near Beans Grotto
+  game: mm
+  exits:
+  - target: mm_deku_palace_near_us_beans_grotto
+    exitType: grotto
+  - target: mm_deku_palace_beans_grotto
+    exitType: grotto
+- id: mm_deku_palace_near_jp_grotto_climb_left
+  name: Deku Palace Near JP Grotto Climb Left
+  game: mm
+  locations:
+  - id: mm_deku_palace_rupee_layout_dependant_1
+    name: Deku Palace Rupee Layout-Dependant 1
+    locationType: freestanding
+    logic: 'true'
+  - id: mm_deku_palace_rupee_layout_dependant_2
+    name: Deku Palace Rupee Layout-Dependant 2
+    locationType: freestanding
+    logic: 'true'
+- id: mm_deku_palace_near_jp_grotto_climb_right
+  name: Deku Palace Near JP Grotto Climb Right
+  game: mm
+- id: mm_deku_palace_near_jp_grotto_line_start
+  name: Deku Palace Near JP Grotto Line Start
+  game: mm
+- id: mm_deku_palace_corner_ledge_top
+  name: Deku Palace Corner Ledge Top
+  game: mm
+- id: mm_deku_palace_corner_ledge_middle
+  name: Deku Palace Corner Ledge Middle
+  game: mm
+- id: mm_deku_palace_corner_ledge_bottom
+  name: Deku Palace Corner Ledge Bottom
+  game: mm

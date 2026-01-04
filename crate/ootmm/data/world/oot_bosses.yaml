@@ -1,0 +1,252 @@
+# OOT Boss Rooms Regions
+# Imported from OoTMM randomizer project
+
+regions:
+- id: oot_jabu_jabu_boss
+  name: Jabu-Jabu Boss
+  game: oot
+  locations:
+  - id: oot_jabu_jabu_boss_pot_1
+    name: Jabu-Jabu Boss Pot 1
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_jabu_jabu_boss_pot_2
+    name: Jabu-Jabu Boss Pot 2
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_jabu_jabu_boss_pot_3
+    name: Jabu-Jabu Boss Pot 3
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_jabu_jabu_boss_pot_4
+    name: Jabu-Jabu Boss Pot 4
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_jabu_jabu_boss_pot_5
+    name: Jabu-Jabu Boss Pot 5
+    locationType: freestanding
+    logic: 'true'
+  - id: oot_jabu_jabu_boss_pot_6
+    name: Jabu-Jabu Boss Pot 6
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: oot_jabu_jabu_after_boss
+    exitType: overworld
+    logic: event(BOSS_BARINADE)
+  events:
+  - id: OOT_BOSS_BARINADE
+    name: Boss Barinade
+    logic: soul_boss(SOUL_BOSS_BARINADE) && can_boomerang && (can_use_sticks || can_use_sword)
+- id: oot_jabu_jabu_after_boss
+  name: Jabu-Jabu After Boss
+  game: oot
+  locations:
+  - id: oot_jabu_jabu_boss_container
+    name: Jabu-Jabu Boss Container
+    locationType: boss
+    logic: 'true'
+  - id: oot_jabu_jabu_boss
+    name: Jabu-Jabu Boss
+    locationType: boss
+    logic: 'true'
+- id: oot_shadow_temple_boss
+  name: Shadow Temple Boss
+  game: oot
+  exits:
+  - target: oot_shadow_temple_after_boss
+    exitType: overworld
+    logic: event(BOSS_BONGO_BONGO)
+  events:
+  - id: OOT_BOSS_BONGO_BONGO
+    name: Boss Bongo Bongo
+    logic: soul_boss(SOUL_BOSS_BONGO_BONGO) && can_use_sword && has_lens && (can_use_bow || can_use_slingshot)
+- id: oot_shadow_temple_after_boss
+  name: Shadow Temple After Boss
+  game: oot
+  locations:
+  - id: oot_shadow_temple_boss_hc
+    name: Shadow Temple Boss HC
+    locationType: boss
+    logic: 'true'
+  - id: oot_shadow_temple_boss
+    name: Shadow Temple Boss
+    locationType: boss
+    logic: 'true'
+- id: oot_deku_tree_boss
+  name: Deku Tree Boss
+  game: oot
+  locations:
+  - id: oot_deku_tree_boss_grass_1
+    name: Deku Tree Boss Grass 1
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_deku_tree_boss_grass_2
+    name: Deku Tree Boss Grass 2
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_deku_tree_boss_grass_3
+    name: Deku Tree Boss Grass 3
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_deku_tree_boss_grass_4
+    name: Deku Tree Boss Grass 4
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_deku_tree_boss_grass_5
+    name: Deku Tree Boss Grass 5
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_deku_tree_boss_grass_6
+    name: Deku Tree Boss Grass 6
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_deku_tree_boss_grass_7
+    name: Deku Tree Boss Grass 7
+    locationType: freestanding
+    logic: can_cut_grass
+  - id: oot_deku_tree_boss_grass_8
+    name: Deku Tree Boss Grass 8
+    locationType: freestanding
+    logic: can_cut_grass
+  exits:
+  - target: oot_deku_tree_after_boss
+    exitType: overworld
+    logic: event(BOSS_GOHMA)
+  events:
+  - id: OOT_BOSS_GOHMA
+    name: Boss Gohma
+    logic: soul_boss(SOUL_BOSS_QUEEN_GOHMA) && (has_nuts || can_use_slingshot) && (can_use_sticks || can_use_sword)
+- id: oot_deku_tree_after_boss
+  name: Deku Tree After Boss
+  game: oot
+  locations:
+  - id: oot_deku_tree_boss_container
+    name: Deku Tree Boss Container
+    locationType: boss
+    logic: 'true'
+  - id: oot_deku_tree_boss
+    name: Deku Tree Boss
+    locationType: boss
+    logic: 'true'
+- id: oot_dodongo_cavern_boss
+  name: Dodongo Cavern Boss
+  game: oot
+  locations:
+  - id: oot_dodongo_cavern_boss_chest
+    name: Dodongo Cavern Boss Chest
+    locationType: chest
+    logic: 'true'
+  exits:
+  - target: oot_dodongo_cavern_after_boss
+    exitType: overworld
+    logic: event(BOSS_KING_DODONGO)
+  events:
+  - id: OOT_BOSS_KING_DODONGO
+    name: Boss King Dodongo
+    logic: (has_bombs || (has_explosives && has_strength_raw(1))) && soul_boss(SOUL_BOSS_KING_DODONGO) && (can_use_sticks
+      || can_use_sword)
+- id: oot_dodongo_cavern_after_boss
+  name: Dodongo Cavern After Boss
+  game: oot
+  locations:
+  - id: oot_dodongo_cavern_boss_container
+    name: Dodongo Cavern Boss Container
+    locationType: boss
+    logic: 'true'
+  - id: oot_dodongo_cavern_boss
+    name: Dodongo Cavern Boss
+    locationType: boss
+    logic: 'true'
+- id: oot_water_temple_boss
+  name: Water Temple Boss
+  game: oot
+  exits:
+  - target: oot_water_temple_after_boss
+    exitType: overworld
+    logic: event(BOSS_MORPHA)
+  events:
+  - id: OOT_BOSS_MORPHA
+    name: Boss Morpha
+    logic: soul_boss(SOUL_BOSS_MORPHA) && can_hookshot && can_use_sword
+- id: oot_water_temple_after_boss
+  name: Water Temple After Boss
+  game: oot
+  locations:
+  - id: oot_water_temple_boss_hc
+    name: Water Temple Boss HC
+    locationType: boss
+    logic: 'true'
+  - id: oot_water_temple_boss
+    name: Water Temple Boss
+    locationType: boss
+    logic: 'true'
+- id: oot_forest_temple_boss
+  name: Forest Temple Boss
+  game: oot
+  exits:
+  - target: oot_forest_temple_after_boss
+    exitType: overworld
+    logic: event(BOSS_PHANTOM_GANON)
+  events:
+  - id: OOT_BOSS_PHANTOM_GANON
+    name: Boss Phantom Ganon
+    logic: soul_boss(SOUL_BOSS_PHANTOM_GANON) && (has_ranged_weapon_adult || can_use_slingshot) && can_use_sword
+- id: oot_forest_temple_after_boss
+  name: Forest Temple After Boss
+  game: oot
+  locations:
+  - id: oot_forest_temple_boss
+    name: Forest Temple Boss
+    locationType: boss
+    logic: 'true'
+  - id: oot_forest_temple_boss_container
+    name: Forest Temple Boss Container
+    locationType: boss
+    logic: 'true'
+- id: oot_spirit_temple_boss
+  name: Spirit Temple Boss
+  game: oot
+  exits:
+  - target: oot_spirit_temple_after_boss
+    exitType: overworld
+    logic: event(BOSS_TWINROVA)
+  events:
+  - id: OOT_BOSS_TWINROVA
+    name: Boss Twinrova
+    logic: soul_boss(SOUL_BOSS_TWINROVA) && soul_iron_knuckle && has_mirror_shield && can_use_sword
+- id: oot_spirit_temple_after_boss
+  name: Spirit Temple After Boss
+  game: oot
+  locations:
+  - id: oot_spirit_temple_boss_hc
+    name: Spirit Temple Boss HC
+    locationType: boss
+    logic: 'true'
+  - id: oot_spirit_temple_boss
+    name: Spirit Temple Boss
+    locationType: boss
+    logic: 'true'
+- id: oot_fire_temple_boss
+  name: Fire Temple Boss
+  game: oot
+  exits:
+  - target: oot_fire_temple_after_boss
+    exitType: overworld
+    logic: event(BOSS_VOLVAGIA)
+  events:
+  - id: OOT_BOSS_VOLVAGIA
+    name: Boss Volvagia
+    logic: soul_boss(SOUL_BOSS_VOLVAGIA) && can_hammer && has_tunic_goron_strict
+- id: oot_fire_temple_after_boss
+  name: Fire Temple After Boss
+  game: oot
+  locations:
+  - id: oot_fire_temple_boss_container
+    name: Fire Temple Boss Container
+    locationType: boss
+    logic: 'true'
+  - id: oot_fire_temple_boss
+    name: Fire Temple Boss
+    locationType: boss
+    logic: 'true'

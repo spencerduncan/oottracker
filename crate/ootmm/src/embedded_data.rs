@@ -14,8 +14,8 @@
 //! }
 //!
 //! // Get a specific world file by name
-//! if let Some(yaml) = embedded_data::get_world_data("oot_kokiri") {
-//!     println!("Found OoT Kokiri data");
+//! if let Some(yaml) = embedded_data::get_world_data("oot_overworld") {
+//!     println!("Found OoT overworld data");
 //! }
 //! ```
 
@@ -78,8 +78,8 @@ pub fn create_world_database() -> Result<WorldDatabase> {
 /// ```
 /// use ootmm::embedded_data;
 ///
-/// // Load only OoT data
-/// let db = embedded_data::create_world_database_from(["oot_kokiri"])
+/// // Load only OoT overworld data
+/// let db = embedded_data::create_world_database_from(["oot_overworld"])
 ///     .expect("Failed to load world data");
 /// ```
 pub fn create_world_database_from<'a>(
@@ -124,16 +124,19 @@ mod tests {
 
     #[test]
     fn test_world_file_count() {
-        // We should have at least our 2 test files
-        assert!(world_file_count() >= 2);
+        // We should have all our comprehensive world files
+        assert!(
+            world_file_count() >= 8,
+            "Expected at least 8 world files, got {}",
+            world_file_count()
+        );
     }
 
     #[test]
     fn test_get_world_data_exists() {
-        let data = get_world_data("oot_kokiri");
+        let data = get_world_data("oot_overworld");
         assert!(data.is_some());
         let content = data.unwrap();
-        assert!(content.contains("kokiri_forest"));
         assert!(content.contains("regions:"));
     }
 
@@ -163,29 +166,53 @@ mod tests {
     fn test_world_names() {
         let names: Vec<_> = world_names().collect();
         assert!(!names.is_empty());
-        assert!(names.contains(&"oot_kokiri"));
-        assert!(names.contains(&"mm_clock_town"));
+        assert!(names.contains(&"oot_overworld"));
+        assert!(names.contains(&"oot_dungeons"));
+        assert!(names.contains(&"mm_overworld"));
+        assert!(names.contains(&"mm_dungeons"));
     }
 
     #[test]
     fn test_create_world_database() {
         let db = create_world_database().expect("Failed to create world database");
-        // Embedded data has 4 regions: kokiri_forest, lost_woods (OoT) + clock_town_south, termina_field (MM)
-        assert_eq!(db.region_count(), 4, "Embedded data has 4 regions");
-        assert!(db.has_region("kokiri_forest"));
-        assert!(db.has_region("clock_town_south"));
+        // Comprehensive import has 1000+ regions from both games
+        assert!(
+            db.region_count() > 1000,
+            "Expected 1000+ regions, got {}",
+            db.region_count()
+        );
+        // Check some representative regions from OoT overworld (prefixed with oot_)
+        assert!(
+            db.has_region("oot_kokiri_forest"),
+            "Missing oot_kokiri_forest"
+        );
+        assert!(db.has_region("oot_lost_woods"), "Missing oot_lost_woods");
+        assert!(
+            db.has_region("oot_death_mountain"),
+            "Missing oot_death_mountain"
+        );
+        // Check some representative regions from MM overworld (prefixed with mm_)
+        assert!(
+            db.has_region("mm_clock_town_south"),
+            "Missing mm_clock_town_south"
+        );
+        assert!(
+            db.has_region("mm_termina_field"),
+            "Missing mm_termina_field"
+        );
     }
 
     #[test]
     fn test_create_world_database_from_specific() {
         let db =
-            create_world_database_from(["oot_kokiri"]).expect("Failed to create world database");
+            create_world_database_from(["oot_overworld"]).expect("Failed to create world database");
 
-        // Should have OoT regions
-        assert!(db.has_region("kokiri_forest"));
+        // Should have OoT overworld regions (prefixed with oot_)
+        assert!(db.has_region("oot_kokiri_forest"));
+        assert!(db.has_region("oot_lost_woods"));
 
-        // Should NOT have MM regions
-        assert!(!db.has_region("clock_town_south"));
+        // Should NOT have MM regions (from mm_overworld)
+        assert!(!db.has_region("mm_clock_town_south"));
     }
 
     #[test]
@@ -195,18 +222,61 @@ mod tests {
     }
 
     #[test]
-    fn test_embedded_oot_data_content() {
-        let content = world::OOT_KOKIRI;
-        assert!(content.contains("kokiri_forest"));
-        assert!(content.contains("lost_woods"));
-        assert!(content.contains("kf_midos_chest_top_left"));
+    fn test_embedded_oot_overworld_content() {
+        let content = world::OOT_OVERWORLD;
+        assert!(content.contains("oot_kokiri_forest"));
+        assert!(content.contains("oot_lost_woods"));
+        assert!(content.contains("oot_death_mountain"));
     }
 
     #[test]
-    fn test_embedded_mm_data_content() {
-        let content = world::MM_CLOCK_TOWN;
-        assert!(content.contains("clock_town_south"));
-        assert!(content.contains("termina_field"));
-        assert!(content.contains("ct_bank_reward_1"));
+    fn test_embedded_oot_dungeons_content() {
+        let content = world::OOT_DUNGEONS;
+        assert!(content.contains("oot_deku_tree"));
+        assert!(content.contains("oot_dodongo"));
+        assert!(content.contains("oot_forest_temple"));
+    }
+
+    #[test]
+    fn test_embedded_mm_overworld_content() {
+        let content = world::MM_OVERWORLD;
+        assert!(content.contains("mm_clock_town_south"));
+        assert!(content.contains("mm_termina_field"));
+        assert!(content.contains("mm_clock_town_north"));
+    }
+
+    #[test]
+    fn test_embedded_mm_dungeons_content() {
+        let content = world::MM_DUNGEONS;
+        assert!(content.contains("mm_woodfall_temple"));
+        assert!(content.contains("mm_snowhead_temple"));
+        assert!(content.contains("mm_great_bay_temple"));
+    }
+
+    #[test]
+    fn test_region_count_by_game() {
+        let db = create_world_database().expect("Failed to create world database");
+
+        let oot_count = db.regions_for_game(crate::region::Game::Oot).count();
+        let mm_count = db.regions_for_game(crate::region::Game::Mm).count();
+
+        assert!(
+            oot_count > 400,
+            "Expected 400+ OoT regions, got {}",
+            oot_count
+        );
+        assert!(mm_count > 400, "Expected 400+ MM regions, got {}", mm_count);
+    }
+
+    #[test]
+    fn test_location_count() {
+        let db = create_world_database().expect("Failed to create world database");
+
+        let loc_count = db.location_count();
+        assert!(
+            loc_count > 2000,
+            "Expected 2000+ locations, got {}",
+            loc_count
+        );
     }
 }

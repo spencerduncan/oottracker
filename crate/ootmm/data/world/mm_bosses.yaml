@@ -1,0 +1,277 @@
+# MM Boss Rooms Regions
+# Imported from OoTMM randomizer project
+
+regions:
+- id: mm_snowhead_temple_boss
+  name: Snowhead Temple Boss
+  game: mm
+  locations:
+  - id: mm_snowhead_temple_boss_pot_early_1
+    name: Snowhead Temple Boss Pot Early 1
+    locationType: freestanding
+    logic: 'true'
+  - id: mm_snowhead_temple_boss_pot_early_2
+    name: Snowhead Temple Boss Pot Early 2
+    locationType: freestanding
+    logic: 'true'
+  - id: mm_snowhead_temple_boss_pot_early_3
+    name: Snowhead Temple Boss Pot Early 3
+    locationType: freestanding
+    logic: 'true'
+  - id: mm_snowhead_temple_boss_pot_early_4
+    name: Snowhead Temple Boss Pot Early 4
+    locationType: freestanding
+    logic: 'true'
+  - id: mm_snowhead_temple_boss_pot_01
+    name: Snowhead Temple Boss Pot 01
+    locationType: freestanding
+    logic: can_use_fire_short_range || short_hook_anywhere
+  - id: mm_snowhead_temple_boss_pot_02
+    name: Snowhead Temple Boss Pot 02
+    locationType: freestanding
+    logic: can_use_fire_short_range || short_hook_anywhere
+  - id: mm_snowhead_temple_boss_pot_03
+    name: Snowhead Temple Boss Pot 03
+    locationType: freestanding
+    logic: can_use_fire_short_range || short_hook_anywhere
+  - id: mm_snowhead_temple_boss_pot_04
+    name: Snowhead Temple Boss Pot 04
+    locationType: freestanding
+    logic: can_use_fire_short_range || short_hook_anywhere
+  - id: mm_snowhead_temple_boss_pot_05
+    name: Snowhead Temple Boss Pot 05
+    locationType: freestanding
+    logic: can_use_fire_short_range || short_hook_anywhere
+  - id: mm_snowhead_temple_boss_pot_06
+    name: Snowhead Temple Boss Pot 06
+    locationType: freestanding
+    logic: can_use_fire_short_range || short_hook_anywhere
+  - id: mm_snowhead_temple_boss_pot_07
+    name: Snowhead Temple Boss Pot 07
+    locationType: freestanding
+    logic: can_use_fire_short_range || short_hook_anywhere
+  - id: mm_snowhead_temple_boss_pot_08
+    name: Snowhead Temple Boss Pot 08
+    locationType: freestanding
+    logic: can_use_fire_short_range || short_hook_anywhere
+  - id: mm_snowhead_temple_boss_pot_09
+    name: Snowhead Temple Boss Pot 09
+    locationType: freestanding
+    logic: can_use_fire_short_range || short_hook_anywhere
+  - id: mm_snowhead_temple_boss_pot_10
+    name: Snowhead Temple Boss Pot 10
+    locationType: freestanding
+    logic: can_use_fire_short_range || short_hook_anywhere
+  exits:
+  - target: mm_snowhead_temple_after_boss
+    exitType: overworld
+    logic: event(BOSS_GOHT)
+  - target: mm_warp_songs
+    exitType: overworld
+    logic: can_reset_time
+  events:
+  - id: MM_BOSS_GOHT
+    name: Boss Goht
+    logic: soul_boss(SOUL_BOSS_GOHT) && can_use_fire_short_range
+- id: mm_snowhead_temple_after_boss
+  name: Snowhead Temple After Boss
+  game: mm
+  locations:
+  - id: mm_snowhead_temple_boss_hc
+    name: Snowhead Temple Boss HC
+    locationType: boss
+    logic: 'true'
+  - id: mm_snowhead_temple_boss
+    name: Snowhead Temple Boss
+    locationType: boss
+    logic: 'true'
+  exits:
+  - target: mm_oath_to_order
+    exitType: overworld
+- id: mm_great_bay_temple_boss
+  name: Great Bay Temple Boss
+  game: mm
+  locations:
+  - id: mm_great_bay_temple_boss_pot_1
+    name: Great Bay Temple Boss Pot 1
+    locationType: freestanding
+    logic: 'true'
+  - id: mm_great_bay_temple_boss_pot_2
+    name: Great Bay Temple Boss Pot 2
+    locationType: freestanding
+    logic: 'true'
+  - id: mm_great_bay_temple_boss_pot_3
+    name: Great Bay Temple Boss Pot 3
+    locationType: freestanding
+    logic: 'true'
+  - id: mm_great_bay_temple_boss_pot_4
+    name: Great Bay Temple Boss Pot 4
+    locationType: freestanding
+    logic: 'true'
+  - id: mm_great_bay_temple_boss_pot_underwater_1
+    name: Great Bay Temple Boss Pot Underwater 1
+    locationType: freestanding
+    logic: underwater_walking
+  - id: mm_great_bay_temple_boss_pot_underwater_2
+    name: Great Bay Temple Boss Pot Underwater 2
+    locationType: freestanding
+    logic: underwater_walking
+  - id: mm_great_bay_temple_boss_pot_underwater_3
+    name: Great Bay Temple Boss Pot Underwater 3
+    locationType: freestanding
+    logic: underwater_walking
+  - id: mm_great_bay_temple_boss_pot_underwater_4
+    name: Great Bay Temple Boss Pot Underwater 4
+    locationType: freestanding
+    logic: underwater_walking
+  exits:
+  - target: mm_great_bay_temple_after_boss
+    exitType: overworld
+    logic: event(BOSS_GYORG)
+  - target: mm_warp_songs
+    exitType: overworld
+    logic: can_reset_time
+  events:
+  - id: MM_BOSS_GYORG
+    name: Boss Gyorg
+    logic: soul_boss(SOUL_BOSS_GYORG) && ((has_magic && ((has_mask_zora && has_arrows) || has(MASK_FIERCE_DEITY))) || (has_iron_boots
+      && has_tunic_zora_strict && can_hookshot_short && trick(MM_GYORG_IRONS)))
+- id: mm_great_bay_temple_after_boss
+  name: Great Bay Temple After Boss
+  game: mm
+  locations:
+  - id: mm_great_bay_temple_boss_hc
+    name: Great Bay Temple Boss HC
+    locationType: boss
+    logic: 'true'
+  - id: mm_great_bay_temple_boss
+    name: Great Bay Temple Boss
+    locationType: boss
+    logic: 'true'
+  exits:
+  - target: mm_oath_to_order
+    exitType: overworld
+- id: mm_woodfall_temple_boss
+  name: Woodfall Temple Boss
+  game: mm
+  locations:
+  - id: mm_woodfall_temple_boss_grass_01
+    name: Woodfall Temple Boss Grass 01
+    locationType: freestanding
+    logic: 'true'
+  - id: mm_woodfall_temple_boss_grass_02
+    name: Woodfall Temple Boss Grass 02
+    locationType: freestanding
+    logic: 'true'
+  - id: mm_woodfall_temple_boss_grass_03
+    name: Woodfall Temple Boss Grass 03
+    locationType: freestanding
+    logic: 'true'
+  - id: mm_woodfall_temple_boss_grass_04
+    name: Woodfall Temple Boss Grass 04
+    locationType: freestanding
+    logic: 'true'
+  - id: mm_woodfall_temple_boss_grass_05
+    name: Woodfall Temple Boss Grass 05
+    locationType: freestanding
+    logic: 'true'
+  - id: mm_woodfall_temple_boss_grass_06
+    name: Woodfall Temple Boss Grass 06
+    locationType: freestanding
+    logic: 'true'
+  - id: mm_woodfall_temple_boss_grass_07
+    name: Woodfall Temple Boss Grass 07
+    locationType: freestanding
+    logic: 'true'
+  - id: mm_woodfall_temple_boss_grass_08
+    name: Woodfall Temple Boss Grass 08
+    locationType: freestanding
+    logic: 'true'
+  - id: mm_woodfall_temple_boss_grass_09
+    name: Woodfall Temple Boss Grass 09
+    locationType: freestanding
+    logic: 'true'
+  - id: mm_woodfall_temple_boss_grass_10
+    name: Woodfall Temple Boss Grass 10
+    locationType: freestanding
+    logic: 'true'
+  - id: mm_woodfall_temple_boss_grass_11
+    name: Woodfall Temple Boss Grass 11
+    locationType: freestanding
+    logic: 'true'
+  - id: mm_woodfall_temple_boss_grass_12
+    name: Woodfall Temple Boss Grass 12
+    locationType: freestanding
+    logic: 'true'
+  - id: mm_woodfall_temple_boss_grass_13
+    name: Woodfall Temple Boss Grass 13
+    locationType: freestanding
+    logic: 'true'
+  - id: mm_woodfall_temple_boss_grass_14
+    name: Woodfall Temple Boss Grass 14
+    locationType: freestanding
+    logic: 'true'
+  - id: mm_woodfall_temple_boss_grass_15
+    name: Woodfall Temple Boss Grass 15
+    locationType: freestanding
+    logic: 'true'
+  - id: mm_woodfall_temple_boss_grass_16
+    name: Woodfall Temple Boss Grass 16
+    locationType: freestanding
+    logic: 'true'
+  exits:
+  - target: mm_woodfall_temple_after_boss
+    exitType: overworld
+    logic: event(BOSS_ODOLWA)
+  - target: mm_warp_songs
+    exitType: overworld
+    logic: can_reset_time
+  events:
+  - id: MM_BOSS_ODOLWA
+    name: Boss Odolwa
+    logic: soul_boss(SOUL_BOSS_ODOLWA) && ((has(MASK_FIERCE_DEITY) && has_magic) || (has_arrows && can_fight))
+- id: mm_woodfall_temple_after_boss
+  name: Woodfall Temple After Boss
+  game: mm
+  locations:
+  - id: mm_woodfall_temple_boss_container
+    name: Woodfall Temple Boss Container
+    locationType: boss
+    logic: 'true'
+  - id: mm_woodfall_temple_boss
+    name: Woodfall Temple Boss
+    locationType: boss
+    logic: 'true'
+  exits:
+  - target: mm_oath_to_order
+    exitType: overworld
+- id: mm_stone_tower_temple_boss
+  name: Stone Tower Temple Boss
+  game: mm
+  exits:
+  - target: mm_stone_tower_after_boss
+    exitType: overworld
+    logic: event(BOSS_TWINMOLD)
+  - target: mm_warp_songs
+    exitType: overworld
+    logic: can_reset_time
+  events:
+  - id: MM_BOSS_TWINMOLD
+    name: Boss Twinmold
+    logic: soul_boss(SOUL_BOSS_TWINMOLD) && ((has_arrows && trick(MM_TWINMOLD_BOW)) || (has_magic && ((has(MASK_GIANT) &&
+      has_sword) || has(MASK_FIERCE_DEITY))))
+- id: mm_stone_tower_after_boss
+  name: Stone Tower After Boss
+  game: mm
+  locations:
+  - id: mm_stone_tower_temple_inverted_boss_hc
+    name: Stone Tower Temple Inverted Boss HC
+    locationType: boss
+    logic: 'true'
+  - id: mm_stone_tower_temple_inverted_boss
+    name: Stone Tower Temple Inverted Boss
+    locationType: boss
+    logic: 'true'
+  exits:
+  - target: mm_oath_to_order
+    exitType: overworld
