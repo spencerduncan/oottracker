@@ -62,6 +62,7 @@ impl MwState {
                             ram: save.unwrap_or_default().into(),
                             knowledge: Default::default(),
                             tracker_ctx: Default::default(),
+                            check_tracker: None,
                         },
                         queue,
                         HashSet::default(),

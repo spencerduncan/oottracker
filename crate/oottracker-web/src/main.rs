@@ -7,6 +7,11 @@
     warnings
 )]
 #![allow(unused_extern_crates)] // apparently rocket-derive still uses `extern crate`
+#![allow(renamed_and_removed_lints)]
+// private_in_public was removed in recent Rust
+// Rocket's route macros generate code that uses route functions in ways the
+// compiler can't track before macro expansion, causing false "unused import" warnings.
+#![allow(unused_imports)]
 #![forbid(unsafe_code)]
 
 use {
@@ -206,6 +211,7 @@ async fn main() -> Result<(), Error> {
                     knowledge: room.knowledge.0,
                     ram: Ram::from_range_bufs(room.ram)?,
                     tracker_ctx: TrackerCtx::default(),
+                    check_tracker: None,
                 },
                 None, // Rooms loaded from database don't have tokens (backwards compatible)
             );
