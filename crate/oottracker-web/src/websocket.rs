@@ -912,3 +912,828 @@ pub(crate) async fn ws_handler(
 
     Ok(ws.on_upgrade(move |ws| client_connection(pool, rooms, restreams, mw_rooms, ws)))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use oottracker::websocket::ServerMessage;
+    use std::env;
+
+    // ============================================================================
+    // Origin Validation Tests
+    // ============================================================================
+
+    mod origin_validation {
+        use super::*;
+
+        #[test]
+        fn test_no_origin_is_allowed() {
+            // Requests without an Origin header should be allowed (same-origin or non-browser)
+            assert!(is_origin_allowed(None));
+        }
+
+        #[test]
+        fn test_default_allowed_origins() {
+            // Test all default allowed origins
+            let allowed = [
+                "http://localhost",
+                "http://localhost:8000",
+                "http://127.0.0.1",
+                "http://127.0.0.1:8000",
+                "https://oottracker.fenhl.net",
+            ];
+
+            for origin in allowed {
+                assert!(
+                    is_origin_allowed(Some(origin)),
+                    "Origin '{}' should be allowed",
+                    origin
+                );
+            }
+        }
+
+        #[test]
+        fn test_localhost_with_different_ports() {
+            // localhost with various ports should be allowed (prefix matching)
+            assert!(is_origin_allowed(Some("http://localhost:3000")));
+            assert!(is_origin_allowed(Some("http://localhost:5000")));
+            assert!(is_origin_allowed(Some("http://localhost:9090")));
+            assert!(is_origin_allowed(Some("http://127.0.0.1:3000")));
+            assert!(is_origin_allowed(Some("http://127.0.0.1:5000")));
+        }
+
+        #[test]
+        fn test_forbidden_origins() {
+            // Random external origins should be rejected
+            let forbidden = [
+                "http://evil.com",
+                "https://malicious-site.org",
+                "http://localhost.evil.com",
+                "http://not-localhost",
+                "http://192.168.1.1",
+                "https://example.com",
+            ];
+
+            for origin in forbidden {
+                assert!(
+                    !is_origin_allowed(Some(origin)),
+                    "Origin '{}' should be forbidden",
+                    origin
+                );
+            }
+        }
+
+        #[test]
+        fn test_env_var_override() {
+            // Save original env var if present
+            let original = env::var("WEBSOCKET_ALLOWED_ORIGINS").ok();
+
+            // Set custom allowed origins
+            env::set_var(
+                "WEBSOCKET_ALLOWED_ORIGINS",
+                "https://custom.example.com,http://test.local",
+            );
+
+            // Custom origins should now be allowed
+            assert!(is_origin_allowed(Some("https://custom.example.com")));
+            assert!(is_origin_allowed(Some("http://test.local")));
+            assert!(is_origin_allowed(Some("http://test.local:8080"))); // with port
+
+            // Default origins should now be forbidden (env var overrides defaults)
+            assert!(!is_origin_allowed(Some("http://localhost")));
+            assert!(!is_origin_allowed(Some("https://oottracker.fenhl.net")));
+
+            // Restore original env var
+            match original {
+                Some(val) => env::set_var("WEBSOCKET_ALLOWED_ORIGINS", val),
+                None => env::remove_var("WEBSOCKET_ALLOWED_ORIGINS"),
+            }
+        }
+
+        #[test]
+        fn test_env_var_with_whitespace() {
+            // Save original env var if present
+            let original = env::var("WEBSOCKET_ALLOWED_ORIGINS").ok();
+
+            // Set env var with whitespace around entries
+            env::set_var(
+                "WEBSOCKET_ALLOWED_ORIGINS",
+                "  https://spaced.example.com  ,  http://another.test  ",
+            );
+
+            // Should still match after trimming
+            assert!(is_origin_allowed(Some("https://spaced.example.com")));
+            assert!(is_origin_allowed(Some("http://another.test")));
+
+            // Restore original env var
+            match original {
+                Some(val) => env::set_var("WEBSOCKET_ALLOWED_ORIGINS", val),
+                None => env::remove_var("WEBSOCKET_ALLOWED_ORIGINS"),
+            }
+        }
+
+        #[test]
+        fn test_origin_case_sensitivity() {
+            // Origins are case-sensitive for the scheme and host
+            // Note: In practice, browsers normalize these, but our validation is exact
+            assert!(!is_origin_allowed(Some("HTTP://localhost")));
+            assert!(!is_origin_allowed(Some("http://LOCALHOST")));
+            assert!(!is_origin_allowed(Some("HTTPS://oottracker.fenhl.net")));
+        }
+    }
+
+    // ============================================================================
+    // Server Message Tests
+    // ============================================================================
+
+    mod server_message {
+        use super::*;
+
+        #[test]
+        fn test_from_error_with_string() {
+            let msg = ServerMessage::from_error("test error message");
+
+            match msg {
+                ServerMessage::Error { debug, display } => {
+                    assert!(debug.contains("test error message"));
+                    assert_eq!(display, "test error message");
+                }
+                _ => panic!("Expected Error variant"),
+            }
+        }
+
+        #[test]
+        fn test_from_error_with_custom_error() {
+            #[derive(Debug)]
+            struct TestError {
+                code: u32,
+                message: String,
+            }
+
+            impl std::fmt::Display for TestError {
+                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    write!(f, "Error {}: {}", self.code, self.message)
+                }
+            }
+
+            let err = TestError {
+                code: 404,
+                message: "not found".to_string(),
+            };
+            let msg = ServerMessage::from_error(&err);
+
+            match msg {
+                ServerMessage::Error { debug, display } => {
+                    // Debug format includes struct details
+                    assert!(debug.contains("TestError"));
+                    assert!(debug.contains("404"));
+                    // Display format is user-friendly
+                    assert_eq!(display, "Error 404: not found");
+                }
+                _ => panic!("Expected Error variant"),
+            }
+        }
+
+        #[test]
+        fn test_from_error_with_io_error() {
+            let io_err = std::io::Error::new(std::io::ErrorKind::NotFound, "file not found");
+            let msg = ServerMessage::from_error(&io_err);
+
+            match msg {
+                ServerMessage::Error { debug, display } => {
+                    assert!(!debug.is_empty());
+                    assert!(display.contains("file not found"));
+                }
+                _ => panic!("Expected Error variant"),
+            }
+        }
+    }
+
+    // ============================================================================
+    // ForbiddenOrigin Rejection Tests
+    // ============================================================================
+
+    mod forbidden_origin {
+        use super::*;
+
+        #[test]
+        fn test_forbidden_origin_is_debug() {
+            let rejection = ForbiddenOrigin;
+            let debug_str = format!("{:?}", rejection);
+            assert_eq!(debug_str, "ForbiddenOrigin");
+        }
+
+        #[test]
+        fn test_forbidden_origin_is_reject() {
+            // Verify ForbiddenOrigin implements warp::reject::Reject
+            fn assert_reject<T: warp::reject::Reject>() {}
+            assert_reject::<ForbiddenOrigin>();
+        }
+    }
+
+    // ============================================================================
+    // Message Serialization Tests
+    // ============================================================================
+
+    mod message_serialization {
+        use async_proto::Protocol;
+        use oottracker::ui::{
+            AccessibilityStatus, CellOverlay, CellRender, CellStyle, ImageInfo, TrackerLayout,
+        };
+        use oottracker::websocket::{ClientMessage, MwItem, RoomToken, ServerMessage};
+        use std::num::NonZeroU8;
+
+        #[test]
+        fn test_room_token_creation() {
+            let token = RoomToken::new("secret-token-123");
+            assert_eq!(token.as_str(), "secret-token-123");
+        }
+
+        #[test]
+        fn test_room_token_equality() {
+            let token1 = RoomToken::new("token-a");
+            let token2 = RoomToken::new("token-a");
+            let token3 = RoomToken::new("token-b");
+
+            assert_eq!(token1, token2);
+            assert_ne!(token1, token3);
+        }
+
+        #[test]
+        fn test_mw_item_creation() {
+            let item = MwItem {
+                source: NonZeroU8::new(1).unwrap(),
+                key: 12345,
+                kind: 42,
+            };
+
+            assert_eq!(item.source.get(), 1);
+            assert_eq!(item.key, 12345);
+            assert_eq!(item.kind, 42);
+        }
+
+        #[test]
+        fn test_mw_item_ordering() {
+            let item1 = MwItem {
+                source: NonZeroU8::new(1).unwrap(),
+                key: 100,
+                kind: 1,
+            };
+            let item2 = MwItem {
+                source: NonZeroU8::new(2).unwrap(),
+                key: 100,
+                kind: 1,
+            };
+            let item3 = MwItem {
+                source: NonZeroU8::new(1).unwrap(),
+                key: 200,
+                kind: 1,
+            };
+
+            // MwItem implements Ord - verify ordering works
+            assert!(item1 < item2); // source 1 < source 2
+            assert!(item1 < item3); // same source, key 100 < 200
+        }
+
+        #[tokio::test]
+        async fn test_server_message_ping_roundtrip() {
+            // Test that Ping message serializes and deserializes correctly
+            let original = ServerMessage::Ping;
+
+            // Serialize to bytes
+            let mut buffer = Vec::new();
+            original
+                .write(&mut buffer)
+                .await
+                .expect("Failed to serialize Ping");
+
+            // Deserialize back
+            let mut cursor = std::io::Cursor::new(buffer);
+            let deserialized = ServerMessage::read(&mut cursor)
+                .await
+                .expect("Failed to deserialize Ping");
+
+            match deserialized {
+                ServerMessage::Ping => {} // Success
+                _ => panic!("Expected Ping"),
+            }
+        }
+
+        #[tokio::test]
+        async fn test_server_message_error_roundtrip() {
+            let original = ServerMessage::Error {
+                debug: "Debug info here".to_string(),
+                display: "User-friendly message".to_string(),
+            };
+
+            let mut buffer = Vec::new();
+            original
+                .write(&mut buffer)
+                .await
+                .expect("Failed to serialize Error");
+
+            let mut cursor = std::io::Cursor::new(buffer);
+            let deserialized = ServerMessage::read(&mut cursor)
+                .await
+                .expect("Failed to deserialize Error");
+
+            match deserialized {
+                ServerMessage::Error { debug, display } => {
+                    assert_eq!(debug, "Debug info here");
+                    assert_eq!(display, "User-friendly message");
+                }
+                _ => panic!("Expected Error"),
+            }
+        }
+
+        #[tokio::test]
+        async fn test_server_message_unauthorized_roundtrip() {
+            let original = ServerMessage::Unauthorized {
+                room: "test-room-123".to_string(),
+            };
+
+            let mut buffer = Vec::new();
+            original
+                .write(&mut buffer)
+                .await
+                .expect("Failed to serialize Unauthorized");
+
+            let mut cursor = std::io::Cursor::new(buffer);
+            let deserialized = ServerMessage::read(&mut cursor)
+                .await
+                .expect("Failed to deserialize Unauthorized");
+
+            match deserialized {
+                ServerMessage::Unauthorized { room } => {
+                    assert_eq!(room, "test-room-123");
+                }
+                _ => panic!("Expected Unauthorized"),
+            }
+        }
+
+        #[tokio::test]
+        async fn test_server_message_init_roundtrip() {
+            let cells = vec![
+                CellRender::new(
+                    ImageInfo::new("test-image"),
+                    CellStyle::Normal,
+                    CellOverlay::None,
+                ),
+                CellRender::new(
+                    ImageInfo::new("another-image"),
+                    CellStyle::Dimmed,
+                    CellOverlay::Count {
+                        count: 5,
+                        count_img: ImageInfo::new("count-image"),
+                    },
+                ),
+            ];
+            let original = ServerMessage::Init(cells.clone());
+
+            let mut buffer = Vec::new();
+            original
+                .write(&mut buffer)
+                .await
+                .expect("Failed to serialize Init");
+
+            let mut cursor = std::io::Cursor::new(buffer);
+            let deserialized = ServerMessage::read(&mut cursor)
+                .await
+                .expect("Failed to deserialize Init");
+
+            match deserialized {
+                ServerMessage::Init(deserialized_cells) => {
+                    assert_eq!(deserialized_cells.len(), 2);
+                    assert_eq!(deserialized_cells[0], cells[0]);
+                    assert_eq!(deserialized_cells[1], cells[1]);
+                }
+                _ => panic!("Expected Init"),
+            }
+        }
+
+        #[tokio::test]
+        async fn test_server_message_update_roundtrip() {
+            let cell = CellRender::new(
+                ImageInfo::new("updated-cell"),
+                CellStyle::Normal,
+                CellOverlay::None,
+            )
+            .with_accessibility(AccessibilityStatus::Accessible);
+
+            let original = ServerMessage::Update {
+                cell_id: 42,
+                new_cell: cell.clone(),
+            };
+
+            let mut buffer = Vec::new();
+            original
+                .write(&mut buffer)
+                .await
+                .expect("Failed to serialize Update");
+
+            let mut cursor = std::io::Cursor::new(buffer);
+            let deserialized = ServerMessage::read(&mut cursor)
+                .await
+                .expect("Failed to deserialize Update");
+
+            match deserialized {
+                ServerMessage::Update { cell_id, new_cell } => {
+                    assert_eq!(cell_id, 42);
+                    assert_eq!(new_cell, cell);
+                    assert_eq!(
+                        new_cell.accessibility,
+                        Some(AccessibilityStatus::Accessible)
+                    );
+                }
+                _ => panic!("Expected Update"),
+            }
+        }
+
+        #[tokio::test]
+        async fn test_client_message_pong_roundtrip() {
+            let original = ClientMessage::Pong;
+
+            let mut buffer = Vec::new();
+            original
+                .write(&mut buffer)
+                .await
+                .expect("Failed to serialize Pong");
+
+            let mut cursor = std::io::Cursor::new(buffer);
+            let deserialized = ClientMessage::read(&mut cursor)
+                .await
+                .expect("Failed to deserialize Pong");
+
+            match deserialized {
+                ClientMessage::Pong => {} // Success
+                _ => panic!("Expected Pong"),
+            }
+        }
+
+        #[tokio::test]
+        async fn test_client_message_subscribe_raw_roundtrip() {
+            let original = ClientMessage::SubscribeRaw {
+                room: "my-test-room".to_string(),
+            };
+
+            let mut buffer = Vec::new();
+            original
+                .write(&mut buffer)
+                .await
+                .expect("Failed to serialize SubscribeRaw");
+
+            let mut cursor = std::io::Cursor::new(buffer);
+            let deserialized = ClientMessage::read(&mut cursor)
+                .await
+                .expect("Failed to deserialize SubscribeRaw");
+
+            match deserialized {
+                ClientMessage::SubscribeRaw { room } => {
+                    assert_eq!(room, "my-test-room");
+                }
+                _ => panic!("Expected SubscribeRaw"),
+            }
+        }
+
+        #[tokio::test]
+        async fn test_client_message_subscribe_room_roundtrip() {
+            let original = ClientMessage::SubscribeRoom {
+                room: "tracker-room".to_string(),
+                layout: TrackerLayout::default_auto(),
+            };
+
+            let mut buffer = Vec::new();
+            original
+                .write(&mut buffer)
+                .await
+                .expect("Failed to serialize SubscribeRoom");
+
+            let mut cursor = std::io::Cursor::new(buffer);
+            let deserialized = ClientMessage::read(&mut cursor)
+                .await
+                .expect("Failed to deserialize SubscribeRoom");
+
+            match deserialized {
+                ClientMessage::SubscribeRoom { room, layout: _ } => {
+                    assert_eq!(room, "tracker-room");
+                    // Layout comparison is complex, just verify it deserializes
+                }
+                _ => panic!("Expected SubscribeRoom"),
+            }
+        }
+
+        #[tokio::test]
+        async fn test_client_message_click_room_with_token_roundtrip() {
+            let original = ClientMessage::ClickRoom {
+                room: "click-test-room".to_string(),
+                layout: TrackerLayout::default_auto(),
+                cell_id: 5,
+                right: true,
+                token: Some(RoomToken::new("secret-click-token")),
+            };
+
+            let mut buffer = Vec::new();
+            original
+                .write(&mut buffer)
+                .await
+                .expect("Failed to serialize ClickRoom");
+
+            let mut cursor = std::io::Cursor::new(buffer);
+            let deserialized = ClientMessage::read(&mut cursor)
+                .await
+                .expect("Failed to deserialize ClickRoom");
+
+            match deserialized {
+                ClientMessage::ClickRoom {
+                    room,
+                    layout: _,
+                    cell_id,
+                    right,
+                    token,
+                } => {
+                    assert_eq!(room, "click-test-room");
+                    assert_eq!(cell_id, 5);
+                    assert!(right);
+                    assert_eq!(token, Some(RoomToken::new("secret-click-token")));
+                }
+                _ => panic!("Expected ClickRoom"),
+            }
+        }
+
+        #[tokio::test]
+        async fn test_client_message_mw_create_room_roundtrip() {
+            let worlds = vec![
+                (None, vec![]),
+                (
+                    None,
+                    vec![MwItem {
+                        source: NonZeroU8::new(1).unwrap(),
+                        key: 1,
+                        kind: 100,
+                    }],
+                ),
+            ];
+
+            let original = ClientMessage::MwCreateRoom {
+                room: "mw-room".to_string(),
+                worlds: worlds.clone(),
+                token: Some(RoomToken::new("mw-token")),
+            };
+
+            let mut buffer = Vec::new();
+            original
+                .write(&mut buffer)
+                .await
+                .expect("Failed to serialize MwCreateRoom");
+
+            let mut cursor = std::io::Cursor::new(buffer);
+            let deserialized = ClientMessage::read(&mut cursor)
+                .await
+                .expect("Failed to deserialize MwCreateRoom");
+
+            match deserialized {
+                ClientMessage::MwCreateRoom {
+                    room,
+                    worlds: deser_worlds,
+                    token,
+                } => {
+                    assert_eq!(room, "mw-room");
+                    assert_eq!(deser_worlds.len(), worlds.len());
+                    assert_eq!(token, Some(RoomToken::new("mw-token")));
+                }
+                _ => panic!("Expected MwCreateRoom"),
+            }
+        }
+
+        #[tokio::test]
+        async fn test_client_message_mw_queue_item_roundtrip() {
+            let original = ClientMessage::MwQueueItem {
+                room: "queue-room".to_string(),
+                source_world: NonZeroU8::new(1).unwrap(),
+                key: 42,
+                kind: 123,
+                target_world: NonZeroU8::new(2).unwrap(),
+                token: None,
+            };
+
+            let mut buffer = Vec::new();
+            original
+                .write(&mut buffer)
+                .await
+                .expect("Failed to serialize MwQueueItem");
+
+            let mut cursor = std::io::Cursor::new(buffer);
+            let deserialized = ClientMessage::read(&mut cursor)
+                .await
+                .expect("Failed to deserialize MwQueueItem");
+
+            match deserialized {
+                ClientMessage::MwQueueItem {
+                    room,
+                    source_world,
+                    key,
+                    kind,
+                    target_world,
+                    token,
+                } => {
+                    assert_eq!(room, "queue-room");
+                    assert_eq!(source_world.get(), 1);
+                    assert_eq!(key, 42);
+                    assert_eq!(kind, 123);
+                    assert_eq!(target_world.get(), 2);
+                    assert!(token.is_none());
+                }
+                _ => panic!("Expected MwQueueItem"),
+            }
+        }
+    }
+
+    // ============================================================================
+    // Subscription Logic Tests
+    // ============================================================================
+
+    mod subscription_logic {
+        use oottracker::ui::{CellOverlay, CellRender, CellStyle, ImageInfo};
+
+        #[test]
+        fn test_cell_render_equality_for_update_detection() {
+            // The subscription logic sends updates only when cells differ
+            // This test verifies the equality comparison works correctly
+
+            let cell1 = CellRender::new(
+                ImageInfo::new("sword"),
+                CellStyle::Normal,
+                CellOverlay::None,
+            );
+
+            let cell2 = CellRender::new(
+                ImageInfo::new("sword"),
+                CellStyle::Normal,
+                CellOverlay::None,
+            );
+
+            let cell3 = CellRender::new(
+                ImageInfo::new("sword"),
+                CellStyle::Dimmed, // Different style
+                CellOverlay::None,
+            );
+
+            let cell4 = CellRender::new(
+                ImageInfo::new("shield"), // Different image
+                CellStyle::Normal,
+                CellOverlay::None,
+            );
+
+            // Same cells should be equal (no update needed)
+            assert_eq!(cell1, cell2);
+
+            // Different style should not be equal (update needed)
+            assert_ne!(cell1, cell3);
+
+            // Different image should not be equal (update needed)
+            assert_ne!(cell1, cell4);
+        }
+
+        #[test]
+        fn test_cell_render_with_count_overlay() {
+            let cell1 = CellRender::new(
+                ImageInfo::new("skulltula"),
+                CellStyle::Normal,
+                CellOverlay::Count {
+                    count: 50,
+                    count_img: ImageInfo::new("count"),
+                },
+            );
+
+            let cell2 = CellRender::new(
+                ImageInfo::new("skulltula"),
+                CellStyle::Normal,
+                CellOverlay::Count {
+                    count: 50,
+                    count_img: ImageInfo::new("count"),
+                },
+            );
+
+            let cell3 = CellRender::new(
+                ImageInfo::new("skulltula"),
+                CellStyle::Normal,
+                CellOverlay::Count {
+                    count: 51,
+                    count_img: ImageInfo::new("count"),
+                }, // Different count
+            );
+
+            assert_eq!(cell1, cell2);
+            assert_ne!(cell1, cell3);
+        }
+
+        #[test]
+        fn test_update_detection_simulation() {
+            // Simulate the update detection logic used in client_session
+            let old_cells = vec![
+                CellRender::new(ImageInfo::new("a"), CellStyle::Normal, CellOverlay::None),
+                CellRender::new(ImageInfo::new("b"), CellStyle::Normal, CellOverlay::None),
+                CellRender::new(ImageInfo::new("c"), CellStyle::Normal, CellOverlay::None),
+            ];
+
+            let new_cells = vec![
+                CellRender::new(ImageInfo::new("a"), CellStyle::Normal, CellOverlay::None), // Same
+                CellRender::new(ImageInfo::new("b"), CellStyle::Dimmed, CellOverlay::None), // Changed
+                CellRender::new(ImageInfo::new("c"), CellStyle::Normal, CellOverlay::None), // Same
+            ];
+
+            // Find indices that need updates
+            let updates_needed: Vec<usize> = old_cells
+                .iter()
+                .zip(&new_cells)
+                .enumerate()
+                .filter_map(|(i, (old, new))| if old != new { Some(i) } else { None })
+                .collect();
+
+            assert_eq!(
+                updates_needed,
+                vec![1],
+                "Only cell at index 1 should need update"
+            );
+        }
+
+        #[test]
+        fn test_all_cells_changed() {
+            let old_cells = vec![
+                CellRender::new(ImageInfo::new("a"), CellStyle::Dimmed, CellOverlay::None),
+                CellRender::new(ImageInfo::new("b"), CellStyle::Dimmed, CellOverlay::None),
+            ];
+
+            let new_cells = vec![
+                CellRender::new(ImageInfo::new("a"), CellStyle::Normal, CellOverlay::None),
+                CellRender::new(ImageInfo::new("b"), CellStyle::Normal, CellOverlay::None),
+            ];
+
+            let updates_needed: Vec<usize> = old_cells
+                .iter()
+                .zip(&new_cells)
+                .enumerate()
+                .filter_map(|(i, (old, new))| if old != new { Some(i) } else { None })
+                .collect();
+
+            assert_eq!(updates_needed, vec![0, 1], "Both cells should need updates");
+        }
+
+        #[test]
+        fn test_no_cells_changed() {
+            let old_cells = vec![
+                CellRender::new(ImageInfo::new("x"), CellStyle::Normal, CellOverlay::None),
+                CellRender::new(ImageInfo::new("y"), CellStyle::Normal, CellOverlay::None),
+            ];
+
+            let new_cells = old_cells.clone();
+
+            let updates_needed: Vec<usize> = old_cells
+                .iter()
+                .zip(&new_cells)
+                .enumerate()
+                .filter_map(|(i, (old, new))| if old != new { Some(i) } else { None })
+                .collect();
+
+            assert!(updates_needed.is_empty(), "No updates should be needed");
+        }
+    }
+
+    // ============================================================================
+    // Broadcast Logic Tests (Cell ID Conversion)
+    // ============================================================================
+
+    mod broadcast_logic {
+        #[test]
+        fn test_cell_id_u8_conversion() {
+            // The websocket protocol uses u8 for cell IDs
+            // Verify the conversion works for valid ranges
+
+            // Valid cell IDs (0-255)
+            for i in 0u8..=255 {
+                let cell_id: u8 = i;
+                let index: usize = cell_id.into();
+                assert_eq!(index, i as usize);
+            }
+        }
+
+        #[test]
+        fn test_cell_id_from_index() {
+            // Test converting index to cell_id (used in ServerMessage::Update)
+            let indices: Vec<usize> = vec![0, 1, 42, 100, 255];
+
+            for idx in indices {
+                let cell_id: u8 = idx.try_into().expect("index should fit in u8");
+                assert_eq!(cell_id as usize, idx);
+            }
+        }
+
+        #[test]
+        #[should_panic(expected = "too many cells")]
+        fn test_cell_id_overflow_panics() {
+            // The code uses expect("too many cells") for conversion
+            // Indices >= 256 should panic
+            let _: u8 = 256usize.try_into().expect("too many cells");
+        }
+    }
+}
