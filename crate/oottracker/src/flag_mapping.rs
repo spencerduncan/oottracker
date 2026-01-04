@@ -2244,6 +2244,1214 @@ static OOT_MAPPINGS: Lazy<HashMap<&'static str, FlagMapping>> = Lazy::new(|| {
         0x0000_0002,
     );
 
+    // ========================================================================
+    // MASTER QUEST DUNGEON MAPPINGS
+    // ========================================================================
+    //
+    // Master Quest dungeons use the same scene IDs as vanilla but have
+    // different chest/collectible layouts with different flag bits.
+    // Location IDs use the "mq_oot_mq_" prefix to distinguish from vanilla.
+
+    // ========================================================================
+    // MQ DEKU TREE (Scene 0x00)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_deku_tree_map_chest",
+        scene::DEKU_TREE,
+        FlagType::Chest,
+        0x0000_0001,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_deku_tree_compass_chest",
+        scene::DEKU_TREE,
+        FlagType::Chest,
+        0x0000_0002,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_deku_tree_slingshot_chest",
+        scene::DEKU_TREE,
+        FlagType::Chest,
+        0x0000_0008,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_deku_tree_slingshot_room_far_chest",
+        scene::DEKU_TREE,
+        FlagType::Chest,
+        0x0000_0010,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_deku_tree_basement_chest",
+        scene::DEKU_TREE,
+        FlagType::Chest,
+        0x0000_0004,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_deku_tree_before_water_platform_chest",
+        scene::DEKU_TREE,
+        FlagType::Chest,
+        0x0000_0020,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_deku_tree_after_water_platform_chest",
+        scene::DEKU_TREE,
+        FlagType::Chest,
+        0x0000_0040,
+    );
+
+    // MQ Deku Tree Gold Skulltulas
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_deku_tree_gs_lobby_crate",
+        scene::DEKU_TREE,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_deku_tree_gs_compass_room",
+        scene::DEKU_TREE,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_deku_tree_gs_song_of_time_blocks",
+        scene::DEKU_TREE,
+        0x04,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_deku_tree_gs_back_room",
+        scene::DEKU_TREE,
+        0x08,
+    );
+
+    // ========================================================================
+    // MQ DODONGO'S CAVERN (Scene 0x01)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_dodongo_cavern_map_chest",
+        scene::DODONGOS_CAVERN,
+        FlagType::Chest,
+        0x0000_0001,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_dodongo_cavern_compass_chest",
+        scene::DODONGOS_CAVERN,
+        FlagType::Chest,
+        0x0000_0020,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_dodongo_cavern_bomb_bag_chest",
+        scene::DODONGOS_CAVERN,
+        FlagType::Chest,
+        0x0000_0010,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_dodongo_cavern_larvae_room_chest",
+        scene::DODONGOS_CAVERN,
+        FlagType::Chest,
+        0x0000_0002,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_dodongo_cavern_upper_ledge_chest",
+        scene::DODONGOS_CAVERN,
+        FlagType::Chest,
+        0x0000_0040,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_dodongo_cavern_chest_under_grave",
+        scene::DODONGOS_CAVERN,
+        FlagType::Chest,
+        0x0000_0004,
+    );
+
+    // MQ Dodongo's Cavern Gold Skulltulas
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_dodongo_cavern_gs_time_blocks",
+        scene::DODONGOS_CAVERN,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_dodongo_cavern_gs_larve_room",
+        scene::DODONGOS_CAVERN,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_dodongo_cavern_gs_upper_lizalfos",
+        scene::DODONGOS_CAVERN,
+        0x04,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_dodongo_cavern_gs_poe_room_side",
+        scene::DODONGOS_CAVERN,
+        0x08,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_dodongo_cavern_gs_near_boss",
+        scene::DODONGOS_CAVERN,
+        0x10,
+    );
+
+    // ========================================================================
+    // MQ JABU JABU'S BELLY (Scene 0x02)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_jabu_jabu_map_chest",
+        scene::JABU_JABU,
+        FlagType::Chest,
+        0x0000_0001,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_jabu_jabu_entry_chest",
+        scene::JABU_JABU,
+        FlagType::Chest,
+        0x0000_0080,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_jabu_jabu_second_room_b1_chest",
+        scene::JABU_JABU,
+        FlagType::Chest,
+        0x0000_0002,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_jabu_jabu_compass_chest",
+        scene::JABU_JABU,
+        FlagType::Chest,
+        0x0000_0008,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_jabu_jabu_second_room_1f_chest",
+        scene::JABU_JABU,
+        FlagType::Chest,
+        0x0000_0100,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_jabu_jabu_third_room_west_chest",
+        scene::JABU_JABU,
+        FlagType::Chest,
+        0x0000_0200,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_jabu_jabu_third_room_east_chest",
+        scene::JABU_JABU,
+        FlagType::Chest,
+        0x0000_0400,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_jabu_jabu_boomerang_chest",
+        scene::JABU_JABU,
+        FlagType::Chest,
+        0x0000_0004,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_jabu_jabu_sot_room_lower_chest",
+        scene::JABU_JABU,
+        FlagType::Chest,
+        0x0000_0800,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_jabu_jabu_back_chest",
+        scene::JABU_JABU,
+        FlagType::Chest,
+        0x0000_0020,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_jabu_jabu_pre_boss_chest",
+        scene::JABU_JABU,
+        FlagType::Chest,
+        0x0000_0040,
+    );
+
+    // MQ Jabu Jabu Gold Skulltulas
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_jabu_jabu_gs_sot_block",
+        scene::JABU_JABU,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_jabu_jabu_gs_back",
+        scene::JABU_JABU,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_jabu_jabu_gs_basement_side_room",
+        scene::JABU_JABU,
+        0x04,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_jabu_jabu_gs_pre_boss",
+        scene::JABU_JABU,
+        0x08,
+    );
+
+    // ========================================================================
+    // MQ FOREST TEMPLE (Scene 0x03)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_forest_temple_first_room_chest",
+        scene::FOREST_TEMPLE,
+        FlagType::Chest,
+        0x0000_0008,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_forest_temple_wolfos_chest",
+        scene::FOREST_TEMPLE,
+        FlagType::Chest,
+        0x0000_0001,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_forest_temple_boss_key_chest",
+        scene::FOREST_TEMPLE,
+        FlagType::Chest,
+        0x0000_4000,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_forest_temple_redead_chest",
+        scene::FOREST_TEMPLE,
+        FlagType::Chest,
+        0x0000_0004,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_forest_temple_well_chest",
+        scene::FOREST_TEMPLE,
+        FlagType::Chest,
+        0x0000_0200,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_forest_temple_east_garden_high_ledge_chest",
+        scene::FOREST_TEMPLE,
+        FlagType::Chest,
+        0x0000_0010,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_forest_temple_east_garden_ledge_chest",
+        scene::FOREST_TEMPLE,
+        FlagType::Chest,
+        0x0000_0020,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_forest_temple_map_chest",
+        scene::FOREST_TEMPLE,
+        FlagType::Chest,
+        0x0000_0002,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_forest_temple_bow_chest",
+        scene::FOREST_TEMPLE,
+        FlagType::Chest,
+        0x0000_1000,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_forest_temple_compass_chest",
+        scene::FOREST_TEMPLE,
+        FlagType::Chest,
+        0x0000_8000,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_forest_temple_falling_ceiling_chest",
+        scene::FOREST_TEMPLE,
+        FlagType::Chest,
+        0x0000_0040,
+    );
+
+    // MQ Forest Temple Gold Skulltulas
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_forest_temple_gs_entryway",
+        scene::FOREST_TEMPLE,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_forest_temple_gs_climb_room",
+        scene::FOREST_TEMPLE,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_forest_temple_gs_west_garden",
+        scene::FOREST_TEMPLE,
+        0x04,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_forest_temple_gs_east_garden",
+        scene::FOREST_TEMPLE,
+        0x08,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_forest_temple_gs_well",
+        scene::FOREST_TEMPLE,
+        0x10,
+    );
+
+    // ========================================================================
+    // MQ FIRE TEMPLE (Scene 0x04)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_fire_temple_early_lower_left_chest",
+        scene::FIRE_TEMPLE,
+        FlagType::Chest,
+        0x0000_0001,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_fire_temple_map_chest",
+        scene::FIRE_TEMPLE,
+        FlagType::Chest,
+        0x0000_0002,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_fire_temple_pre_boss_chest",
+        scene::FIRE_TEMPLE,
+        FlagType::Chest,
+        0x0000_0080,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_fire_temple_hammer_chest",
+        scene::FIRE_TEMPLE,
+        FlagType::Chest,
+        0x0000_0008,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_fire_temple_boss_key_chest",
+        scene::FIRE_TEMPLE,
+        FlagType::Chest,
+        0x0000_1000,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_fire_temple_1f_lava_room_goron_chest",
+        scene::FIRE_TEMPLE,
+        FlagType::Chest,
+        0x0000_0004,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_fire_temple_compass_chest",
+        scene::FIRE_TEMPLE,
+        FlagType::Chest,
+        0x0000_0040,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_fire_temple_maze_lower_chest",
+        scene::FIRE_TEMPLE,
+        FlagType::Chest,
+        0x0000_0010,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_fire_temple_maze_upper_chest",
+        scene::FIRE_TEMPLE,
+        FlagType::Chest,
+        0x0000_0020,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_fire_temple_maze_side_room_chest",
+        scene::FIRE_TEMPLE,
+        FlagType::Chest,
+        0x0000_0100,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_fire_temple_topmost_chest",
+        scene::FIRE_TEMPLE,
+        FlagType::Chest,
+        0x0000_2000,
+    );
+
+    // MQ Fire Temple Gold Skulltulas
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_fire_temple_gs_1f_lava_room",
+        scene::FIRE_TEMPLE,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_fire_temple_gs_burning_block",
+        scene::FIRE_TEMPLE,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_fire_temple_gs_fire_walls_side_room",
+        scene::FIRE_TEMPLE,
+        0x04,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_fire_temple_gs_fire_walls_middle",
+        scene::FIRE_TEMPLE,
+        0x08,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_fire_temple_gs_topmost",
+        scene::FIRE_TEMPLE,
+        0x10,
+    );
+
+    // ========================================================================
+    // MQ WATER TEMPLE (Scene 0x05)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_water_temple_compass_chest",
+        scene::WATER_TEMPLE,
+        FlagType::Chest,
+        0x0000_0001,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_water_temple_longshot_chest",
+        scene::WATER_TEMPLE,
+        FlagType::Chest,
+        0x0000_0002,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_water_temple_map_chest",
+        scene::WATER_TEMPLE,
+        FlagType::Chest,
+        0x0000_0004,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_water_temple_boss_key_chest",
+        scene::WATER_TEMPLE,
+        FlagType::Chest,
+        0x0000_0040,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_water_temple_central_pillar_chest",
+        scene::WATER_TEMPLE,
+        FlagType::Chest,
+        0x0000_0020,
+    );
+
+    // MQ Water Temple Gold Skulltulas
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_water_temple_gs_river",
+        scene::WATER_TEMPLE,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_water_temple_gs_three_torch",
+        scene::WATER_TEMPLE,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_water_temple_gs_side_loop",
+        scene::WATER_TEMPLE,
+        0x04,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_water_temple_gs_lizalfos_hallway",
+        scene::WATER_TEMPLE,
+        0x08,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_water_temple_gs_high_water_changer",
+        scene::WATER_TEMPLE,
+        0x10,
+    );
+
+    // ========================================================================
+    // MQ SPIRIT TEMPLE (Scene 0x06)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_spirit_temple_entrance_initial_chest",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_0001,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_spirit_temple_lobby_back_left_chest",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_0002,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_spirit_temple_lobby_back_right_chest",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_0004,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_spirit_temple_compass_chest",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_0008,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_spirit_temple_sun_block_room_chest",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_0010,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_spirit_temple_lobby_front_right_chest",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_0020,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_spirit_temple_map_chest",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_0040,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_spirit_temple_map_room_back_chest",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_0080,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_spirit_temple_paradox_chest",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_0100,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_spirit_temple_child_upper_ground_chest",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_0200,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_spirit_temple_child_upper_ledge_chest",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_0400,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_spirit_temple_silver_block_room_target_chest",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_0800,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_spirit_temple_chest_in_box",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_1000,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_spirit_temple_statue_room_ledge_chest",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_2000,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_spirit_temple_purple_leever_chest",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_4000,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_spirit_temple_symphony_room_chest",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_8000,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_spirit_temple_beamos_room_chest",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0001_0000,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_spirit_temple_dinolfos_room_chest",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0002_0000,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_spirit_temple_boss_key_chest",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0004_0000,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_spirit_temple_topmost_chest",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0008_0000,
+    );
+
+    // MQ Spirit Temple Gold Skulltulas
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_spirit_temple_gs_sun_block_room",
+        scene::SPIRIT_TEMPLE,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_spirit_temple_gs_leever_room",
+        scene::SPIRIT_TEMPLE,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_spirit_temple_gs_symphony_room",
+        scene::SPIRIT_TEMPLE,
+        0x04,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_spirit_temple_gs_top_floor_left_wall",
+        scene::SPIRIT_TEMPLE,
+        0x08,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_spirit_temple_gs_top_floor_back_wall",
+        scene::SPIRIT_TEMPLE,
+        0x10,
+    );
+
+    // ========================================================================
+    // MQ SHADOW TEMPLE (Scene 0x07)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_shadow_temple_compass_chest",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_0008,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_shadow_temple_hover_boots_chest",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_0080,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_shadow_temple_first_gibdos_chest",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_0001,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_shadow_temple_map_chest",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_0002,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_shadow_temple_boat_passage_chest",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_0004,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_shadow_temple_second_silver_rupee_visible_chest",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_0010,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_shadow_temple_second_silver_rupee_invisible_chest",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_0020,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_shadow_temple_huge_pit_silver_rupee_chest",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_0040,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_shadow_temple_spike_curtain_ground_chest",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_0100,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_shadow_temple_spike_curtain_upper_cage_chest",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_0200,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_shadow_temple_spike_curtain_upper_switch_chest",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_0400,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_shadow_temple_invisible_spike_floor_chest",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_0800,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_shadow_temple_stalfos_room_chest",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_1000,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_shadow_temple_wind_hint_chest",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0020_0000,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_shadow_temple_after_wind_gibdos_chest",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_2000,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_shadow_temple_after_wind_bomb_chest",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0010_0000,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_shadow_temple_hidden_dead_hand_chest",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_4000,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_shadow_temple_crushing_wall_left_chest",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_8000,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_shadow_temple_boss_key_chest",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0001_0000,
+    );
+
+    // MQ Shadow Temple Gold Skulltulas
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_shadow_temple_gs_spike_curtain",
+        scene::SHADOW_TEMPLE,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_shadow_temple_gs_wind_hint",
+        scene::SHADOW_TEMPLE,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_shadow_temple_gs_after_wind_bomb",
+        scene::SHADOW_TEMPLE,
+        0x04,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_shadow_temple_gs_after_boat",
+        scene::SHADOW_TEMPLE,
+        0x08,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_shadow_temple_gs_pre_boss",
+        scene::SHADOW_TEMPLE,
+        0x10,
+    );
+
+    // ========================================================================
+    // MQ BOTTOM OF THE WELL (Scene 0x08)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_bottom_of_the_well_map_chest",
+        scene::BOTTOM_OF_THE_WELL,
+        FlagType::Chest,
+        0x0000_0001,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_bottom_of_the_well_lens_chest",
+        scene::BOTTOM_OF_THE_WELL,
+        FlagType::Chest,
+        0x0000_0008,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_bottom_of_the_well_compass_chest",
+        scene::BOTTOM_OF_THE_WELL,
+        FlagType::Chest,
+        0x0000_0002,
+    );
+
+    // MQ Bottom of the Well Gold Skulltulas
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_bottom_of_the_well_gs_basement",
+        scene::BOTTOM_OF_THE_WELL,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_bottom_of_the_well_gs_west_middle_room",
+        scene::BOTTOM_OF_THE_WELL,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_bottom_of_the_well_gs_coffin_room",
+        scene::BOTTOM_OF_THE_WELL,
+        0x04,
+    );
+
+    // ========================================================================
+    // MQ ICE CAVERN (Scene 0x09)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_ice_cavern_map_chest",
+        scene::ICE_CAVERN,
+        FlagType::Chest,
+        0x0000_0001,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_ice_cavern_compass_chest",
+        scene::ICE_CAVERN,
+        FlagType::Chest,
+        0x0000_0002,
+    );
+
+    // MQ Ice Cavern Gold Skulltulas
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_ice_cavern_gs_compass_room",
+        scene::ICE_CAVERN,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_ice_cavern_gs_clear_blocks",
+        scene::ICE_CAVERN,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "mq_oot_mq_ice_cavern_gs_scarecrow",
+        scene::ICE_CAVERN,
+        0x04,
+    );
+
+    // ========================================================================
+    // MQ GERUDO TRAINING GROUND (Scene 0x0B)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_gerudo_training_grounds_entryway_left_chest",
+        scene::GERUDO_TRAINING_GROUND,
+        FlagType::Chest,
+        0x0000_0001,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_gerudo_training_grounds_entryway_right_chest",
+        scene::GERUDO_TRAINING_GROUND,
+        FlagType::Chest,
+        0x0000_0002,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_gerudo_training_grounds_maze_first_chest",
+        scene::GERUDO_TRAINING_GROUND,
+        FlagType::Chest,
+        0x0000_1000,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_gerudo_training_grounds_maze_second_chest",
+        scene::GERUDO_TRAINING_GROUND,
+        FlagType::Chest,
+        0x0002_0000,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_gerudo_training_grounds_maze_third_chest",
+        scene::GERUDO_TRAINING_GROUND,
+        FlagType::Chest,
+        0x0004_0000,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_gerudo_training_grounds_maze_fourth_chest",
+        scene::GERUDO_TRAINING_GROUND,
+        FlagType::Chest,
+        0x0010_0000,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_gerudo_training_grounds_maze_right_side_middle_chest",
+        scene::GERUDO_TRAINING_GROUND,
+        FlagType::Chest,
+        0x0000_0004,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_gerudo_training_grounds_maze_right_side_right_chest",
+        scene::GERUDO_TRAINING_GROUND,
+        FlagType::Chest,
+        0x0000_0008,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_gerudo_training_grounds_right_side_dinolfos_chest",
+        scene::GERUDO_TRAINING_GROUND,
+        FlagType::Chest,
+        0x0000_0010,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_gerudo_training_grounds_water_room_chest",
+        scene::GERUDO_TRAINING_GROUND,
+        FlagType::Chest,
+        0x0000_0020,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_gerudo_training_grounds_left_side_iron_knuckle_chest",
+        scene::GERUDO_TRAINING_GROUND,
+        FlagType::Chest,
+        0x0000_0040,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_gerudo_training_grounds_stalfos_room_chest",
+        scene::GERUDO_TRAINING_GROUND,
+        FlagType::Chest,
+        0x0000_0080,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_gerudo_training_grounds_silver_block_room_chest",
+        scene::GERUDO_TRAINING_GROUND,
+        FlagType::Chest,
+        0x0000_0100,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_gerudo_training_grounds_ice_arrows_chest",
+        scene::GERUDO_TRAINING_GROUND,
+        FlagType::Chest,
+        0x0000_0200,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_gerudo_training_grounds_spinning_statue_chest",
+        scene::GERUDO_TRAINING_GROUND,
+        FlagType::Chest,
+        0x0000_0400,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_gerudo_training_grounds_torch_slug_room_clear_chest",
+        scene::GERUDO_TRAINING_GROUND,
+        FlagType::Chest,
+        0x0000_0800,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_gerudo_training_grounds_torch_slug_room_switch_chest",
+        scene::GERUDO_TRAINING_GROUND,
+        FlagType::Chest,
+        0x0008_0000,
+    );
+
+    // ========================================================================
+    // MQ GANON'S CASTLE (Scene 0x0D)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_ganon_castle_light_trial_chest",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0001_0000,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_ganon_castle_forest_trial_first_chest",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0000_0200,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_ganon_castle_forest_trial_second_chest",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0000_0001,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_ganon_castle_water_trial_chest",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0000_0080,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_ganon_castle_spirit_trial_first_chest",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0004_0000,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_ganon_castle_spirit_trial_second_chest",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0010_0000,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_ganon_castle_spirit_trial_back_right_sun_chest",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0000_0002,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_ganon_castle_spirit_trial_back_left_sun_chest",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0000_0004,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_ganon_castle_spirit_trial_front_left_sun_chest",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0000_0008,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_ganon_castle_spirit_trial_gold_gauntlets_chest",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0000_0010,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_ganon_castle_shadow_trial_bomb_flower_chest",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0000_0100,
+    );
+    add_mapping(
+        &mut map,
+        "mq_oot_mq_ganon_castle_shadow_trial_switch_chest",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0000_0020,
+    );
+
     map
 });
 
