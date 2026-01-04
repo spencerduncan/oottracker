@@ -216,3 +216,165 @@ impl<R: Rando + 'static> State<R> {
             .into()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    // ==========================================================================
+    // SettingsInfo tests
+    // ==========================================================================
+
+    #[test]
+    fn test_settings_info_kind_string() {
+        let info = SettingsInfo::String("test".to_string());
+        assert_eq!(info.kind(), SettingsInfoKind::String);
+    }
+
+    #[test]
+    fn test_settings_info_kind_plando() {
+        let info = SettingsInfo::Plando(PathBuf::from("/path/to/plando"));
+        assert_eq!(info.kind(), SettingsInfoKind::Plando);
+    }
+
+    #[test]
+    fn test_settings_info_kind_weights() {
+        let info = SettingsInfo::Weights(PathBuf::from("/path/to/weights"));
+        assert_eq!(info.kind(), SettingsInfoKind::Weights);
+    }
+
+    #[test]
+    fn test_settings_info_default_is_string() {
+        let info = SettingsInfo::default();
+        assert_eq!(info.kind(), SettingsInfoKind::String);
+    }
+
+    #[test]
+    fn test_settings_info_set_kind_string_to_plando() {
+        let mut info = SettingsInfo::String("test".to_string());
+        info.set_kind(SettingsInfoKind::Plando);
+        assert_eq!(info.kind(), SettingsInfoKind::Plando);
+        // Verify it's a new default PathBuf
+        if let SettingsInfo::Plando(path) = info {
+            assert_eq!(path, PathBuf::default());
+        } else {
+            panic!("Expected Plando variant");
+        }
+    }
+
+    #[test]
+    fn test_settings_info_set_kind_string_to_weights() {
+        let mut info = SettingsInfo::String("test".to_string());
+        info.set_kind(SettingsInfoKind::Weights);
+        assert_eq!(info.kind(), SettingsInfoKind::Weights);
+        if let SettingsInfo::Weights(path) = info {
+            assert_eq!(path, PathBuf::default());
+        } else {
+            panic!("Expected Weights variant");
+        }
+    }
+
+    #[test]
+    fn test_settings_info_set_kind_plando_to_string() {
+        let mut info = SettingsInfo::Plando(PathBuf::from("/some/path"));
+        info.set_kind(SettingsInfoKind::String);
+        assert_eq!(info.kind(), SettingsInfoKind::String);
+        if let SettingsInfo::String(s) = info {
+            assert!(s.is_empty());
+        } else {
+            panic!("Expected String variant");
+        }
+    }
+
+    #[test]
+    fn test_settings_info_set_kind_same_kind_noop() {
+        let original_string = "preserved".to_string();
+        let mut info = SettingsInfo::String(original_string.clone());
+        info.set_kind(SettingsInfoKind::String);
+        // Should not change since kind is the same
+        if let SettingsInfo::String(s) = info {
+            assert_eq!(s, original_string);
+        } else {
+            panic!("Expected String variant");
+        }
+    }
+
+    #[test]
+    fn test_settings_info_set_kind_plando_same_noop() {
+        let original_path = PathBuf::from("/preserved/path");
+        let mut info = SettingsInfo::Plando(original_path.clone());
+        info.set_kind(SettingsInfoKind::Plando);
+        if let SettingsInfo::Plando(path) = info {
+            assert_eq!(path, original_path);
+        } else {
+            panic!("Expected Plando variant");
+        }
+    }
+
+    // ==========================================================================
+    // SettingsInfoKind tests
+    // ==========================================================================
+
+    #[test]
+    fn test_settings_info_kind_default_is_string() {
+        assert_eq!(SettingsInfoKind::default(), SettingsInfoKind::String);
+    }
+
+    #[test]
+    fn test_settings_info_kind_display_string() {
+        assert_eq!(SettingsInfoKind::String.to_string(), "Settings String");
+    }
+
+    #[test]
+    fn test_settings_info_kind_display_plando() {
+        assert_eq!(SettingsInfoKind::Plando.to_string(), "Plandomizer");
+    }
+
+    #[test]
+    fn test_settings_info_kind_display_weights() {
+        assert_eq!(SettingsInfoKind::Weights.to_string(), "Random Weights");
+    }
+
+    #[test]
+    fn test_settings_info_kind_equality() {
+        assert_eq!(SettingsInfoKind::String, SettingsInfoKind::String);
+        assert_eq!(SettingsInfoKind::Plando, SettingsInfoKind::Plando);
+        assert_eq!(SettingsInfoKind::Weights, SettingsInfoKind::Weights);
+        assert_ne!(SettingsInfoKind::String, SettingsInfoKind::Plando);
+        assert_ne!(SettingsInfoKind::Plando, SettingsInfoKind::Weights);
+        assert_ne!(SettingsInfoKind::String, SettingsInfoKind::Weights);
+    }
+
+    #[test]
+    fn test_settings_info_kind_clone() {
+        let kind = SettingsInfoKind::Plando;
+        let cloned = kind;
+        assert_eq!(kind, cloned);
+    }
+
+    // ==========================================================================
+    // SettingsInfo transition tests (all combinations)
+    // ==========================================================================
+
+    #[test]
+    fn test_settings_info_transition_weights_to_plando() {
+        let mut info = SettingsInfo::Weights(PathBuf::from("/weights"));
+        info.set_kind(SettingsInfoKind::Plando);
+        assert_eq!(info.kind(), SettingsInfoKind::Plando);
+    }
+
+    #[test]
+    fn test_settings_info_transition_weights_to_string() {
+        let mut info = SettingsInfo::Weights(PathBuf::from("/weights"));
+        info.set_kind(SettingsInfoKind::String);
+        assert_eq!(info.kind(), SettingsInfoKind::String);
+    }
+
+    #[test]
+    fn test_settings_info_transition_plando_to_weights() {
+        let mut info = SettingsInfo::Plando(PathBuf::from("/plando"));
+        info.set_kind(SettingsInfoKind::Weights);
+        assert_eq!(info.kind(), SettingsInfoKind::Weights);
+    }
+}
