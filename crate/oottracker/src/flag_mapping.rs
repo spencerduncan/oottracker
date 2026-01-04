@@ -1467,17 +1467,802 @@ static OOT_MAPPINGS: Lazy<HashMap<&'static str, FlagMapping>> = Lazy::new(|| {
     // Goron City doesn't have maze chests in YAML - different naming
 
     // ========================================================================
-    // Gold Skulltulas - these use a different flag system
+    // Gold Skulltulas
     // ========================================================================
-    add_global_mapping(
+    //
+    // Gold Skulltula flags are stored in a 24-byte (0x18) section at save
+    // offset 0x0E9C. Each scene that has skulltulas uses a specific byte,
+    // and each skulltula is a single bit within that byte.
+    //
+    // The byte offset within the GS section is calculated from scene ID:
+    //   byte_offset = (scene_id + 3) - 2 * (scene_id % 4)
+    //
+    // For GoldSkulltula mappings, scene_id identifies the area/dungeon,
+    // and flag_bit is the bit position (0x01, 0x02, 0x04, etc.) within
+    // that area's byte.
+
+    // --- Deku Tree (Scene 0x00) ---
+    add_skulltula_mapping(&mut map, "oot_deku_tree_gs_compass", scene::DEKU_TREE, 0x01);
+    add_skulltula_mapping(
         &mut map,
-        "oot_forest_temple_gs_level_island_courtyard",
-        FlagType::GoldSkulltula,
+        "oot_deku_tree_gs_basement_gate",
+        scene::DEKU_TREE,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_deku_tree_gs_basement_vines",
+        scene::DEKU_TREE,
         0x04,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_deku_tree_gs_basement_back_room",
+        scene::DEKU_TREE,
+        0x08,
+    );
+
+    // --- Dodongo's Cavern (Scene 0x01) ---
+    add_skulltula_mapping(
+        &mut map,
+        "oot_dodongo_cavern_gs_side_room",
+        scene::DODONGOS_CAVERN,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_dodongo_cavern_gs_stairs_vines",
+        scene::DODONGOS_CAVERN,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_dodongo_cavern_gs_stairs_top",
+        scene::DODONGOS_CAVERN,
+        0x04,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_dodongo_cavern_gs_scarecrow",
+        scene::DODONGOS_CAVERN,
+        0x08,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_dodongo_cavern_gs_near_boss",
+        scene::DODONGOS_CAVERN,
+        0x10,
+    );
+
+    // --- Jabu Jabu's Belly (Scene 0x02) ---
+    add_skulltula_mapping(
+        &mut map,
+        "oot_jabu_jabu_gs_bottom_lower",
+        scene::JABU_JABU,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_jabu_jabu_gs_bottom_upper",
+        scene::JABU_JABU,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_jabu_jabu_gs_water_switch",
+        scene::JABU_JABU,
+        0x04,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_jabu_jabu_gs_near_boss",
+        scene::JABU_JABU,
+        0x08,
+    );
+
+    // --- Forest Temple (Scene 0x03) ---
+    add_skulltula_mapping(
+        &mut map,
+        "oot_forest_temple_gs_entrance",
+        scene::FOREST_TEMPLE,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_forest_temple_gs_main",
+        scene::FOREST_TEMPLE,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_forest_temple_gs_garden_west",
+        scene::FOREST_TEMPLE,
+        0x04,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_forest_temple_gs_garden_east",
+        scene::FOREST_TEMPLE,
+        0x08,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_forest_temple_gs_antichamber",
+        scene::FOREST_TEMPLE,
+        0x10,
+    );
+
+    // --- Fire Temple (Scene 0x04) ---
+    add_skulltula_mapping(
+        &mut map,
+        "oot_fire_temple_gs_hammer_statues",
+        scene::FIRE_TEMPLE,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_fire_temple_gs_lava_side_room",
+        scene::FIRE_TEMPLE,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_fire_temple_gs_maze",
+        scene::FIRE_TEMPLE,
+        0x04,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_fire_temple_gs_scarecrow_wall",
+        scene::FIRE_TEMPLE,
+        0x08,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_fire_temple_gs_scarecrow_top",
+        scene::FIRE_TEMPLE,
+        0x10,
+    );
+
+    // --- Water Temple (Scene 0x05) ---
+    add_skulltula_mapping(
+        &mut map,
+        "oot_water_temple_gs_center",
+        scene::WATER_TEMPLE,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_water_temple_gs_waterfalls",
+        scene::WATER_TEMPLE,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_water_temple_gs_large_pit",
+        scene::WATER_TEMPLE,
+        0x04,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_water_temple_gs_river",
+        scene::WATER_TEMPLE,
+        0x08,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_water_temple_gs_cage",
+        scene::WATER_TEMPLE,
+        0x10,
+    );
+
+    // --- Spirit Temple (Scene 0x06) ---
+    add_skulltula_mapping(
+        &mut map,
+        "oot_spirit_temple_gs_child_fence",
+        scene::SPIRIT_TEMPLE,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_spirit_temple_gs_child_climb",
+        scene::SPIRIT_TEMPLE,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_spirit_temple_gs_iron_knuckle",
+        scene::SPIRIT_TEMPLE,
+        0x04,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_spirit_temple_gs_boulders",
+        scene::SPIRIT_TEMPLE,
+        0x08,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_spirit_temple_gs_statue",
+        scene::SPIRIT_TEMPLE,
+        0x10,
+    );
+
+    // --- Shadow Temple (Scene 0x07) ---
+    add_skulltula_mapping(
+        &mut map,
+        "oot_shadow_temple_gs_invisible_scythe",
+        scene::SHADOW_TEMPLE,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_shadow_temple_gs_falling_spikes",
+        scene::SHADOW_TEMPLE,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_shadow_temple_gs_skull_pot",
+        scene::SHADOW_TEMPLE,
+        0x04,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_shadow_temple_gs_near_boat",
+        scene::SHADOW_TEMPLE,
+        0x08,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_shadow_temple_gs_triple_skull_pot",
+        scene::SHADOW_TEMPLE,
+        0x10,
+    );
+
+    // --- Bottom of the Well (Scene 0x08) ---
+    add_skulltula_mapping(
+        &mut map,
+        "oot_bottom_of_the_well_gs_east_cage",
+        scene::BOTTOM_OF_THE_WELL,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_bottom_of_the_well_gs_inner_west",
+        scene::BOTTOM_OF_THE_WELL,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_bottom_of_the_well_gs_inner_east",
+        scene::BOTTOM_OF_THE_WELL,
+        0x04,
+    );
+
+    // --- Ice Cavern (Scene 0x09) ---
+    add_skulltula_mapping(
+        &mut map,
+        "oot_ice_cavern_gs_scythe_room",
+        scene::ICE_CAVERN,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_ice_cavern_gs_hp_room",
+        scene::ICE_CAVERN,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_ice_cavern_gs_block_room",
+        scene::ICE_CAVERN,
+        0x04,
+    );
+
+    // ========================================================================
+    // Overworld Gold Skulltulas
+    // ========================================================================
+    // Overworld skulltulas use scene IDs 0x0A-0x15 for GS flag bytes.
+    // These map to actual overworld areas via a special mapping.
+
+    // --- Hyrule Field area (GS Scene 0x0A) ---
+    // Note: Overworld GS use a remapped scene ID system for the GS byte offset
+    add_skulltula_mapping(
+        &mut map,
+        "oot_hyrule_castle_gs_tree",
+        scene::HYRULE_CASTLE,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_hyrule_castle_gs_grotto",
+        scene::HYRULE_CASTLE,
+        0x02,
+    );
+
+    // --- Kakariko Village area (GS Scene 0x10) ---
+    add_skulltula_mapping(
+        &mut map,
+        "oot_kakariko_gs_shooting_gallery",
+        scene::KAKARIKO_VILLAGE,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_kakariko_gs_tree",
+        scene::KAKARIKO_VILLAGE,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_kakariko_gs_house_of_skulltula",
+        scene::KAKARIKO_VILLAGE,
+        0x04,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_kakariko_gs_bazaar",
+        scene::KAKARIKO_VILLAGE,
+        0x08,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_kakariko_gs_ladder",
+        scene::KAKARIKO_VILLAGE,
+        0x10,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_kakariko_gs_roof",
+        scene::KAKARIKO_VILLAGE,
+        0x20,
+    );
+
+    // --- Graveyard (GS Scene 0x10) ---
+    add_skulltula_mapping(&mut map, "oot_graveyard_gs_soil", scene::GRAVEYARD, 0x01);
+    add_skulltula_mapping(&mut map, "oot_graveyard_gs_wall", scene::GRAVEYARD, 0x02);
+
+    // --- Death Mountain Trail (GS Scene 0x0F) ---
+    add_skulltula_mapping(
+        &mut map,
+        "oot_death_mountain_trail_gs_entrance",
+        scene::DEATH_MOUNTAIN_TRAIL,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_death_mountain_trail_gs_soil",
+        scene::DEATH_MOUNTAIN_TRAIL,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_death_mountain_trail_gs_above_dodongo",
+        scene::DEATH_MOUNTAIN_TRAIL,
+        0x04,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_death_mountain_trail_gs_before_climb",
+        scene::DEATH_MOUNTAIN_TRAIL,
+        0x08,
+    );
+
+    // --- Death Mountain Crater (GS Scene 0x0F) ---
+    add_skulltula_mapping(
+        &mut map,
+        "oot_death_mountain_crater_gs_crate",
+        scene::DEATH_MOUNTAIN_CRATER,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_death_mountain_crater_gs_soil",
+        scene::DEATH_MOUNTAIN_CRATER,
+        0x02,
+    );
+
+    // --- Goron City (GS Scene 0x0F) ---
+    add_skulltula_mapping(
+        &mut map,
+        "oot_goron_city_gs_platform",
+        scene::GORON_CITY,
+        0x01,
+    );
+    add_skulltula_mapping(&mut map, "oot_goron_city_gs_maze", scene::GORON_CITY, 0x02);
+
+    // --- Kokiri Forest (GS Scene 0x0C) ---
+    add_skulltula_mapping(
+        &mut map,
+        "oot_kokiri_forest_gs_soil",
+        scene::KOKIRI_FOREST,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_kokiri_forest_gs_night_adult",
+        scene::KOKIRI_FOREST,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_kokiri_forest_gs_night_child",
+        scene::KOKIRI_FOREST,
+        0x04,
+    );
+
+    // --- Lost Woods (GS Scene 0x0D) ---
+    add_skulltula_mapping(
+        &mut map,
+        "oot_lost_woods_gs_soil_bridge",
+        scene::LOST_WOODS,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_lost_woods_gs_soil_theater",
+        scene::LOST_WOODS,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_lost_woods_gs_bean_ride",
+        scene::LOST_WOODS,
+        0x04,
+    );
+
+    // --- Sacred Forest Meadow (GS Scene 0x0D) ---
+    add_skulltula_mapping(
+        &mut map,
+        "oot_sacred_meadow_gs_night_adult",
+        scene::SACRED_FOREST_MEADOW,
+        0x01,
+    );
+
+    // --- Lake Hylia (GS Scene 0x12) ---
+    add_skulltula_mapping(
+        &mut map,
+        "oot_lake_hylia_gs_lab_wall",
+        scene::LAKE_HYLIA,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_lake_hylia_gs_island",
+        scene::LAKE_HYLIA,
+        0x02,
+    );
+    add_skulltula_mapping(&mut map, "oot_lake_hylia_gs_soil", scene::LAKE_HYLIA, 0x04);
+    add_skulltula_mapping(
+        &mut map,
+        "oot_lake_hylia_gs_big_tree",
+        scene::LAKE_HYLIA,
+        0x08,
+    );
+
+    // --- Lakeside Laboratory (same scene as Lake Hylia) ---
+    add_skulltula_mapping(
+        &mut map,
+        "oot_laboratory_gs_crate",
+        scene::LAKESIDE_LABORATORY,
+        0x01,
+    );
+
+    // --- Zora River (GS Scene 0x11) ---
+    add_skulltula_mapping(&mut map, "oot_zora_river_gs_tree", scene::ZORA_RIVER, 0x01);
+    add_skulltula_mapping(
+        &mut map,
+        "oot_zora_river_gs_ladder",
+        scene::ZORA_RIVER,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_zora_river_gs_near_grotto",
+        scene::ZORA_RIVER,
+        0x04,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_zora_river_gs_near_bridge",
+        scene::ZORA_RIVER,
+        0x08,
+    );
+
+    // --- Zora's Domain (GS Scene 0x11) ---
+    add_skulltula_mapping(
+        &mut map,
+        "oot_zora_domain_gs_waterfall",
+        scene::ZORAS_DOMAIN,
+        0x01,
+    );
+
+    // --- Zora's Fountain (GS Scene 0x11) ---
+    add_skulltula_mapping(
+        &mut map,
+        "oot_zora_fountain_gs_wall",
+        scene::ZORAS_FOUNTAIN,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_zora_fountain_gs_tree",
+        scene::ZORAS_FOUNTAIN,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_zora_fountain_gs_upper",
+        scene::ZORAS_FOUNTAIN,
+        0x04,
+    );
+
+    // --- Gerudo Valley (GS Scene 0x13) ---
+    add_skulltula_mapping(
+        &mut map,
+        "oot_gerudo_valley_gs_soil",
+        scene::GERUDO_VALLEY,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_gerudo_valley_gs_wall",
+        scene::GERUDO_VALLEY,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_gerudo_valley_gs_tent",
+        scene::GERUDO_VALLEY,
+        0x04,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_gerudo_valley_gs_pillar",
+        scene::GERUDO_VALLEY,
+        0x08,
+    );
+
+    // --- Gerudo Fortress (GS Scene 0x14) ---
+    add_skulltula_mapping(
+        &mut map,
+        "oot_gerudo_fortress_gs_target",
+        scene::GERUDO_FORTRESS,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_gerudo_fortress_gs_wall",
+        scene::GERUDO_FORTRESS,
+        0x02,
+    );
+
+    // --- Desert Colossus (GS Scene 0x15) ---
+    add_skulltula_mapping(
+        &mut map,
+        "oot_desert_colossus_gs_soil",
+        scene::DESERT_COLOSSUS,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_desert_colossus_gs_tree",
+        scene::DESERT_COLOSSUS,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_desert_colossus_gs_plateau",
+        scene::DESERT_COLOSSUS,
+        0x04,
+    );
+
+    // --- Lon Lon Ranch (GS Scene 0x0B) ---
+    add_skulltula_mapping(
+        &mut map,
+        "oot_lon_lon_ranch_gs_tree",
+        scene::LON_LON_RANCH,
+        0x01,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_lon_lon_ranch_gs_house",
+        scene::LON_LON_RANCH,
+        0x02,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_lon_lon_ranch_gs_rain_shed",
+        scene::LON_LON_RANCH,
+        0x04,
+    );
+    add_skulltula_mapping(
+        &mut map,
+        "oot_lon_lon_ranch_gs_back_wall",
+        scene::LON_LON_RANCH,
+        0x08,
+    );
+
+    // ========================================================================
+    // Heart Pieces / Freestanding Collectibles
+    // ========================================================================
+    //
+    // Heart Pieces and other freestanding collectibles are tracked via the
+    // scene collectible flags (offset 0x0C within each scene's flag block).
+    // Each bit represents a collected item in that scene.
+
+    // --- Ice Cavern (Scene 0x09) ---
+    add_mapping(
+        &mut map,
+        "oot_ice_cavern_hp",
+        scene::ICE_CAVERN,
+        FlagType::Collectible,
+        0x0000_0002,
+    );
+
+    // --- Kakariko / Windmill area (Scene 0x48) ---
+    add_mapping(
+        &mut map,
+        "oot_kakariko_impa_house_hp",
+        scene::IMPAS_HOUSE,
+        FlagType::Collectible,
+        0x0000_0002,
+    );
+    add_mapping(
+        &mut map,
+        "oot_windmill_hp",
+        scene::WINDMILL_AND_DAMPES_GRAVE,
+        FlagType::Collectible,
+        0x0000_0002,
+    );
+
+    // --- Lon Lon Ranch Tower (Scene 0x4C) ---
+    add_mapping(
+        &mut map,
+        "oot_lon_lon_ranch_silo_hp",
+        scene::LON_LON_RANCH_TOWER,
+        FlagType::Collectible,
+        0x0000_0002,
+    );
+
+    // --- Graveyard (Scene 0x53) ---
+    add_mapping(
+        &mut map,
+        "oot_graveyard_crate_hp",
+        scene::GRAVEYARD,
+        FlagType::Collectible,
+        0x0000_0010,
+    );
+
+    // --- Zora River (Scene 0x54) ---
+    add_mapping(
+        &mut map,
+        "oot_zora_river_hp_pillar",
+        scene::ZORA_RIVER,
+        FlagType::Collectible,
+        0x0000_0800,
+    );
+    add_mapping(
+        &mut map,
+        "oot_zora_river_hp_platform",
+        scene::ZORA_RIVER,
+        FlagType::Collectible,
+        0x0000_0010,
+    );
+
+    // --- Lake Hylia (Scene 0x57) ---
+    add_mapping(
+        &mut map,
+        "oot_lake_hylia_hp",
+        scene::LAKE_HYLIA,
+        FlagType::Collectible,
+        0x4000_0000,
+    );
+
+    // --- Zora's Fountain (Scene 0x59) ---
+    add_mapping(
+        &mut map,
+        "oot_zora_fountain_iceberg_hp",
+        scene::ZORAS_FOUNTAIN,
+        FlagType::Collectible,
+        0x0000_0002,
+    );
+    add_mapping(
+        &mut map,
+        "oot_zora_fountain_bottom_hp",
+        scene::ZORAS_FOUNTAIN,
+        FlagType::Collectible,
+        0x0010_0000,
+    );
+
+    // --- Gerudo Valley (Scene 0x5A) ---
+    add_mapping(
+        &mut map,
+        "oot_gerudo_valley_crate_hp",
+        scene::GERUDO_VALLEY,
+        FlagType::Collectible,
+        0x0000_0004,
+    );
+    add_mapping(
+        &mut map,
+        "oot_gerudo_valley_waterfall_hp",
+        scene::GERUDO_VALLEY,
+        FlagType::Collectible,
+        0x0000_0002,
+    );
+
+    // --- Desert Colossus (Scene 0x5C) ---
+    add_mapping(
+        &mut map,
+        "oot_desert_colossus_hp",
+        scene::DESERT_COLOSSUS,
+        FlagType::Collectible,
+        0x0000_2000,
+    );
+
+    // --- Death Mountain Trail (Scene 0x60) ---
+    add_mapping(
+        &mut map,
+        "oot_death_mountain_trail_hp",
+        scene::DEATH_MOUNTAIN_TRAIL,
+        FlagType::Collectible,
+        0x4000_0000,
+    );
+
+    // --- Death Mountain Crater (Scene 0x61) ---
+    add_mapping(
+        &mut map,
+        "oot_death_mountain_crater_volcano_hp",
+        scene::DEATH_MOUNTAIN_CRATER,
+        FlagType::Collectible,
+        0x0000_0100,
+    );
+    add_mapping(
+        &mut map,
+        "oot_death_mountain_crater_alcove_hp",
+        scene::DEATH_MOUNTAIN_CRATER,
+        FlagType::Collectible,
+        0x0000_0004,
+    );
+
+    // --- Goron City (Scene 0x62) ---
+    add_mapping(
+        &mut map,
+        "oot_goron_city_big_pot_hp",
+        scene::GORON_CITY,
+        FlagType::Collectible,
+        0x8000_0000,
+    );
+
+    // --- Grottos (Scene 0x3E) - Hyrule Field Tektite Grotto ---
+    add_mapping(
+        &mut map,
+        "oot_hyrule_field_grotto_tektite_hp",
+        scene::GROTTOS,
+        FlagType::Collectible,
+        0x0000_0002,
     );
 
     map
 });
+
+/// Helper function to add a Gold Skulltula mapping.
+///
+/// Gold Skulltulas use a separate flag section from scene flags.
+/// The scene_id identifies which area/dungeon the skulltula is in,
+/// and flag_bit is the bit position within that area's byte.
+fn add_skulltula_mapping(
+    map: &mut HashMap<&'static str, FlagMapping>,
+    location_id: &'static str,
+    scene_id: u8,
+    flag_bit: u32,
+) {
+    map.insert(
+        location_id,
+        FlagMapping::mapped(location_id, scene_id, FlagType::GoldSkulltula, flag_bit),
+    );
+}
 
 /// Helper function to add a scene-based mapping.
 fn add_mapping(
@@ -1490,19 +2275,6 @@ fn add_mapping(
     map.insert(
         location_id,
         FlagMapping::mapped(location_id, scene_id, flag_type, flag_bit),
-    );
-}
-
-/// Helper function to add a global mapping.
-fn add_global_mapping(
-    map: &mut HashMap<&'static str, FlagMapping>,
-    location_id: &'static str,
-    flag_type: FlagType,
-    flag_bit: u32,
-) {
-    map.insert(
-        location_id,
-        FlagMapping::global(location_id, flag_type, flag_bit),
     );
 }
 
