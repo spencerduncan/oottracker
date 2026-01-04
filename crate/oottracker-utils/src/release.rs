@@ -727,6 +727,148 @@ impl Task<Result<(), Error>> for BuildPj64 {
 }
 
 #[cfg(windows)]
+enum BuildPj64Em {
+    CompileLua(reqwest::Client, Repo, broadcast::Receiver<Release>),
+    WaitRelease(reqwest::Client, Repo, broadcast::Receiver<Release>, Vec<u8>),
+    Upload(reqwest::Client, Repo, Release, Vec<u8>),
+}
+
+#[cfg(windows)]
+impl BuildPj64Em {
+    fn new(client: reqwest::Client, repo: Repo, release_rx: broadcast::Receiver<Release>) -> Self {
+        Self::CompileLua(client, repo, release_rx)
+    }
+}
+
+#[cfg(windows)]
+impl fmt::Display for BuildPj64Em {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::CompileLua(..) => write!(f, "compiling oottracker-pj64em.lua"),
+            Self::WaitRelease(..) => write!(f, "waiting for GitHub release to be created"),
+            Self::Upload(..) => write!(f, "uploading oottracker-pj64em.lua"),
+        }
+    }
+}
+
+#[cfg(windows)]
+impl Progress for BuildPj64Em {
+    fn progress(&self) -> Percent {
+        Percent::fraction(
+            match self {
+                Self::CompileLua(..) => 0,
+                Self::WaitRelease(..) => 1,
+                Self::Upload(..) => 2,
+            },
+            3,
+        )
+    }
+}
+
+#[cfg(windows)]
+#[async_trait]
+impl Task<Result<(), Error>> for BuildPj64Em {
+    async fn run(self) -> Result<Result<(), Error>, Self> {
+        match self {
+            Self::CompileLua(client, repo, release_rx) => {
+                gres::transpose(async move {
+                    let mut buf = Vec::default();
+                    // Lua constants use 'local' keyword and flat arrays
+                    writeln!(&mut buf, "local TCP_PORT = {}", oottracker::proto::TCP_PORT)?;
+                    // OoT constants
+                    writeln!(&mut buf, "local SAVE_ADDR = {}", oottracker::save::ADDR)?;
+                    writeln!(&mut buf, "local SAVE_SIZE = {}", oottracker::save::SIZE)?;
+                    // Lua arrays are flat: {addr1, size1, addr2, size2, ...}
+                    writeln!(
+                        &mut buf,
+                        "local RAM_RANGES = {{{}}}",
+                        oottracker::ram::RANGES
+                            .iter()
+                            .copied()
+                            .map(|n| n.to_string())
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    )?;
+                    // MM constants
+                    writeln!(
+                        &mut buf,
+                        "local MM_SAVE_ADDR = {}",
+                        oottracker::ram::MM_SAVE_ADDR
+                    )?;
+                    writeln!(
+                        &mut buf,
+                        "local MM_SAVE_SIZE = {}",
+                        oottracker::mm_save::MM_SIZE
+                    )?;
+                    writeln!(
+                        &mut buf,
+                        "local MM_RAM_RANGES = {{{}}}",
+                        oottracker::ram::MM_RANGES
+                            .iter()
+                            .copied()
+                            .map(|n| n.to_string())
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    )?;
+                    // Combo context addresses (for OoTMM game detection)
+                    writeln!(
+                        &mut buf,
+                        "local OOT_COMBO_CONTEXT_ADDR = {}",
+                        oottracker::ram::OOT_COMBO_CONTEXT_ADDR
+                    )?;
+                    writeln!(
+                        &mut buf,
+                        "local MM_COMBO_CONTEXT_ADDR = {}",
+                        oottracker::ram::MM_COMBO_CONTEXT_ADDR
+                    )?;
+                    writeln!(&mut buf)?; // Empty line before base script
+                    let mut base =
+                        BufReader::new(File::open("assets/oottracker-pj64em-base.lua").await?)
+                            .lines();
+                    while let Some(line) = base.next_line().await? {
+                        // Match Lua VERSION format: "local VERSION = N"
+                        if let Some((_, version)) =
+                            regex_captures!("^local VERSION = ([0-9]+)", &line)
+                        {
+                            if version.parse::<u8>()? != oottracker::proto::VERSION {
+                                return Err(Error::ProtocolVersionMismatch);
+                            }
+                            break;
+                        }
+                    }
+                    let mut base = base.into_inner();
+                    base.seek(SeekFrom::Start(0)).await?;
+                    io::copy(&mut base, &mut buf).await?;
+                    Ok(Err(Self::WaitRelease(client, repo, release_rx, buf)))
+                })
+                .await
+            }
+            Self::WaitRelease(client, repo, mut release_rx, buf) => {
+                gres::transpose(async move {
+                    let release = release_rx.recv().await?;
+                    Ok(Err(Self::Upload(client, repo, release, buf)))
+                })
+                .await
+            }
+            Self::Upload(client, repo, release, buf) => {
+                gres::transpose(async move {
+                    repo.release_attach(
+                        &client,
+                        &release,
+                        "oottracker-pj64em.lua",
+                        "text/x-lua",
+                        buf,
+                    )
+                    .await?;
+                    Ok(Ok(()))
+                })
+                .await
+            }
+        }
+    }
+}
+
+#[cfg(windows)]
 enum BuildWeb {
     UpdateRepo,
     Build,
@@ -1117,6 +1259,7 @@ async fn main(args: Args) -> Result<(), Error> {
     let release_rx_gui = release_tx.subscribe();
     let release_rx_macos = release_tx.subscribe();
     let release_rx_pj64 = release_tx.subscribe();
+    let release_rx_pj64em = release_tx.subscribe();
     let create_release_args = args.clone();
     let create_release_client = client.clone();
     let create_release_repo = repo.clone();
@@ -1200,6 +1343,21 @@ async fn main(args: Args) -> Result<(), Error> {
                     cli.run(
                         BuildPj64::new(client, repo, release_rx_pj64),
                         "Project64 build done",
+                    )
+                    .await?
+                })
+                .await?
+            }
+        },
+        {
+            let cli = Arc::clone(&cli);
+            let client = client.clone();
+            let repo = repo.clone();
+            async move {
+                tokio::spawn(async move {
+                    cli.run(
+                        BuildPj64Em::new(client, repo, release_rx_pj64em),
+                        "Project64-EM build done",
                     )
                     .await?
                 })
