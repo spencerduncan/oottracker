@@ -3,6 +3,7 @@ use {
     itertools::Itertools as _,
     ootr_utils::{PyModules, Version},
     oottracker::{
+        flag_mapping::{get_checked_locations_summary, CheckedLocationsSummary},
         ui::{DoubleTrackerLayout, TrackerCellId, TrackerLayout},
         websocket::MwItem,
         ModelState,
@@ -13,6 +14,7 @@ use {
         fs::{relative, FileServer},
         http::uri::Origin,
         response::{content::RawHtml, status::NotFound, Redirect},
+        serde::json::Json,
         uri, FromForm, FromFormField, Rocket, State, UriDisplayQuery,
     },
     rocket_util::{html, Doctype, ToHtml},
@@ -76,6 +78,7 @@ fn tracker_page<'a>(
                 meta(name = "viewport", content = "width=device-width, initial-scale=1");
                 link(rel = "icon", sizes = "512x512", type = "image/png", href = "/static/img/favicon.png");
                 link(rel = "stylesheet", href = "/static/common.css");
+                link(rel = "stylesheet", href = "/static/checked-locations.css");
                 @match theme {
                     Some(Theme::Light) => link(rel = "stylesheet", href = "/static/light.css");
                     None => link(rel = "stylesheet", href = "/static/light.css", media = "(prefers-color-scheme: light)");
@@ -91,6 +94,7 @@ fn tracker_page<'a>(
                     a(href = "https://fenhl.net/disc") : "disclaimer / Impressum";
                 }
                 script(src = "/static/proto.js");
+                script(src = "/static/checked-locations.js");
             }
         }
     }
@@ -445,6 +449,36 @@ async fn click(
     Ok(Redirect::to(rocket::uri!(room(name, _))))
 }
 
+// ============================================================================
+// API Endpoints for Checked Locations
+// ============================================================================
+
+/// Returns the checked locations for a room as JSON.
+///
+/// This endpoint provides the status of all mapped locations based on the
+/// current game state (memory flags). It can be used by the web UI to display
+/// which locations have been checked off.
+///
+/// # Response
+///
+/// Returns a JSON object with:
+/// - `total_mapped`: Total number of mapped locations
+/// - `checked_count`: Number of locations that have been checked
+/// - `unchecked_count`: Number of locations not yet checked
+/// - `unknown_count`: Number of locations with unknown status
+/// - `locations`: Array of individual location check results
+#[rocket::get("/api/room/<name>/checked-locations")]
+async fn api_checked_locations(
+    rooms: &State<Rooms>,
+    name: &str,
+) -> Result<Json<CheckedLocationsSummary>, Error> {
+    let summary = get_room(rooms, name.to_owned(), |room| {
+        get_checked_locations_summary(&room.model)
+    })
+    .await?;
+    Ok(Json(summary))
+}
+
 pub(crate) fn rocket(
     pool: PgPool,
     rooms: Rooms,
@@ -482,6 +516,7 @@ pub(crate) fn rocket(
             restream_double_room_layout,
             room,
             click,
+            api_checked_locations,
         ],
     )
 }
@@ -531,6 +566,7 @@ mod tests {
                 restream_double_room_layout,
                 room,
                 click,
+                api_checked_locations,
             ],
         )
     }

@@ -1,0 +1,200 @@
+/**
+ * Checked Locations Display Styles
+ */
+
+/* Status bar at the top */
+.checked-locations-status {
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    padding: 8px 16px;
+    text-align: center;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.checked-locations-status .loading {
+    color: #aaa;
+    font-style: italic;
+}
+
+.checked-locations-status .checked-count {
+    color: #4caf50;
+    font-weight: bold;
+}
+
+.checked-locations-status .checked-separator {
+    color: #888;
+    margin: 0 4px;
+}
+
+.checked-locations-status .total-count {
+    color: #fff;
+}
+
+.checked-locations-status .checked-percent {
+    color: #888;
+    margin-left: 8px;
+}
+
+.checked-locations-status.error {
+    background: rgba(139, 0, 0, 0.7);
+}
+
+.checked-locations-status .error-text {
+    color: #ffcdd2;
+}
+
+/* Locations panel */
+.checked-locations-panel {
+    position: fixed;
+    right: 0;
+    top: 50px;
+    bottom: 60px;
+    width: 320px;
+    background: rgba(0, 0, 0, 0.9);
+    color: #fff;
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease;
+    z-index: 100;
+}
+
+.checked-locations-panel.collapsed {
+    transform: translateX(280px);
+}
+
+.checked-locations-panel .panel-toggle {
+    background: #333;
+    color: #fff;
+    border: none;
+    padding: 10px 16px;
+    cursor: pointer;
+    text-align: left;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.checked-locations-panel .panel-toggle:hover {
+    background: #444;
+}
+
+.checked-locations-panel .locations-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.checked-locations-panel .location-group {
+    margin-bottom: 16px;
+}
+
+.checked-locations-panel .location-group h4 {
+    margin: 0 0 8px 0;
+    padding: 4px 8px;
+    background: #222;
+    border-radius: 4px;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #888;
+}
+
+.checked-locations-panel .location-group ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.checked-locations-panel .location-group li {
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 2px;
+}
+
+.checked-locations-panel .location-checked {
+    color: #4caf50;
+    text-decoration: line-through;
+    opacity: 0.7;
+}
+
+.checked-locations-panel .location-unchecked {
+    color: #fff;
+}
+
+/* Light theme overrides */
+@media (prefers-color-scheme: light) {
+    .checked-locations-status {
+        background: rgba(255, 255, 255, 0.95);
+        color: #333;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .checked-locations-status .checked-count {
+        color: #2e7d32;
+    }
+
+    .checked-locations-status .checked-separator {
+        color: #999;
+    }
+
+    .checked-locations-status .total-count {
+        color: #333;
+    }
+
+    .checked-locations-status .checked-percent {
+        color: #666;
+    }
+
+    .checked-locations-status.error {
+        background: rgba(255, 235, 238, 0.95);
+    }
+
+    .checked-locations-status .error-text {
+        color: #c62828;
+    }
+
+    .checked-locations-panel {
+        background: rgba(255, 255, 255, 0.98);
+        color: #333;
+        border-left: 1px solid #ddd;
+    }
+
+    .checked-locations-panel .panel-toggle {
+        background: #f5f5f5;
+        color: #333;
+    }
+
+    .checked-locations-panel .panel-toggle:hover {
+        background: #e0e0e0;
+    }
+
+    .checked-locations-panel .location-group h4 {
+        background: #f0f0f0;
+        color: #666;
+    }
+
+    .checked-locations-panel .location-checked {
+        color: #2e7d32;
+    }
+
+    .checked-locations-panel .location-unchecked {
+        color: #333;
+    }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .checked-locations-panel {
+        width: 100%;
+        top: auto;
+        bottom: 0;
+        height: 300px;
+        border-left: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .checked-locations-panel.collapsed {
+        transform: translateY(260px);
+    }
+}
