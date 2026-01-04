@@ -3556,6 +3556,109 @@ pub fn get_all_oot_location_ids() -> impl Iterator<Item = &'static str> {
 }
 
 // ============================================================================
+// Master Quest Integration
+// ============================================================================
+
+// Re-export MqDungeon for convenience
+pub use ootmm::settings::MqDungeon;
+
+/// Returns an iterator over active location mappings based on MQ settings.
+///
+/// This filters out locations that belong to dungeons where the MQ setting
+/// doesn't match the location type (vanilla vs MQ).
+///
+/// # Arguments
+///
+/// * `settings` - The randomizer settings containing MQ dungeon selections
+///
+/// # Example
+///
+/// ```ignore
+/// use oottracker::flag_mapping::get_active_mappings;
+/// use ootmm::settings::RandomizerSettings;
+///
+/// let settings = RandomizerSettings::default();
+/// for mapping in get_active_mappings(&settings) {
+///     println!("{}: {:?}", mapping.location_id, mapping.flag_type);
+/// }
+/// ```
+pub fn get_active_mappings(
+    settings: &ootmm::settings::RandomizerSettings,
+) -> impl Iterator<Item = &'static FlagMapping> + '_ {
+    OOT_MAPPINGS
+        .values()
+        .filter(move |m| settings.is_location_active(m.location_id))
+}
+
+/// Returns the flag mapping for a location, considering MQ settings.
+///
+/// This function checks if the location is in an MQ-able dungeon and
+/// returns the mapping only if the location matches the current MQ setting.
+///
+/// # Arguments
+///
+/// * `location_id` - The location ID to look up
+/// * `settings` - The randomizer settings containing MQ dungeon selections
+///
+/// # Returns
+///
+/// `Some(mapping)` if the location exists and is active for current settings,
+/// `None` if the location doesn't exist or is inactive due to MQ settings.
+#[must_use]
+pub fn get_active_mapping(
+    location_id: &str,
+    settings: &ootmm::settings::RandomizerSettings,
+) -> Option<&'static FlagMapping> {
+    let mapping = OOT_MAPPINGS.get(location_id)?;
+    if settings.is_location_active(location_id) {
+        Some(mapping)
+    } else {
+        None
+    }
+}
+
+/// Returns the count of active (non-MQ-filtered) locations for given settings.
+#[must_use]
+pub fn active_location_count(settings: &ootmm::settings::RandomizerSettings) -> usize {
+    OOT_MAPPINGS
+        .values()
+        .filter(|m| settings.is_location_active(m.location_id))
+        .count()
+}
+
+/// Returns the count of active mapped (non-stub) locations for given settings.
+#[must_use]
+pub fn active_mapped_count(settings: &ootmm::settings::RandomizerSettings) -> usize {
+    OOT_MAPPINGS
+        .values()
+        .filter(|m| m.is_mapped() && settings.is_location_active(m.location_id))
+        .count()
+}
+
+/// Returns an iterator over active mapped (non-stub) locations for given settings.
+pub fn get_active_mapped_locations(
+    settings: &ootmm::settings::RandomizerSettings,
+) -> impl Iterator<Item = &'static FlagMapping> + '_ {
+    OOT_MAPPINGS
+        .values()
+        .filter(move |m| m.is_mapped() && settings.is_location_active(m.location_id))
+}
+
+/// Returns all mappings for a specific dungeon based on its MQ status.
+///
+/// This returns either vanilla or MQ mappings depending on the dungeon's
+/// setting in the provided settings.
+pub fn get_dungeon_mappings(
+    dungeon: MqDungeon,
+    settings: &ootmm::settings::RandomizerSettings,
+) -> impl Iterator<Item = &'static FlagMapping> + '_ {
+    let prefix = settings.get_dungeon_location_prefix(dungeon);
+    OOT_MAPPINGS
+        .values()
+        .filter(move |m| m.location_id.starts_with(prefix))
+}
+
+// ============================================================================
 // Tests
 // ============================================================================
 
@@ -3681,5 +3784,106 @@ mod tests {
                 id
             );
         }
+    }
+
+    // === Master Quest Integration Tests ===
+
+    #[test]
+    fn test_mq_active_mappings_default() {
+        use ootmm::settings::RandomizerSettings;
+
+        let settings = RandomizerSettings::default();
+
+        // With default settings (no MQ), vanilla locations should be active
+        let active: Vec<_> = get_active_mappings(&settings).collect();
+        assert!(!active.is_empty());
+
+        // All active locations should be vanilla (not MQ)
+        for mapping in &active {
+            assert!(
+                !mapping.location_id.starts_with("mq_oot_"),
+                "Default settings should not include MQ locations: {}",
+                mapping.location_id
+            );
+        }
+    }
+
+    #[test]
+    fn test_mq_active_mapping_filters() {
+        use ootmm::settings::RandomizerSettings;
+
+        let mut settings = RandomizerSettings::default();
+
+        // Vanilla Deku Tree location should be active by default
+        assert!(get_active_mapping("oot_deku_tree_compass_chest", &settings).is_some());
+
+        // MQ Deku Tree location should NOT be active by default
+        assert!(get_active_mapping("mq_oot_mq_deku_tree_compass_chest", &settings).is_none());
+
+        // Set Deku Tree to MQ
+        settings.set_dungeon_mq(MqDungeon::DekuTree);
+
+        // Now vanilla should be inactive and MQ should be active
+        assert!(get_active_mapping("oot_deku_tree_compass_chest", &settings).is_none());
+        assert!(get_active_mapping("mq_oot_mq_deku_tree_compass_chest", &settings).is_some());
+    }
+
+    #[test]
+    fn test_mq_dungeon_mappings() {
+        use ootmm::settings::RandomizerSettings;
+
+        let mut settings = RandomizerSettings::default();
+
+        // Get vanilla Deku Tree mappings
+        let vanilla_mappings: Vec<_> =
+            get_dungeon_mappings(MqDungeon::DekuTree, &settings).collect();
+        assert!(!vanilla_mappings.is_empty());
+        for mapping in &vanilla_mappings {
+            assert!(
+                mapping.location_id.starts_with("oot_deku_tree_"),
+                "Expected vanilla Deku Tree location: {}",
+                mapping.location_id
+            );
+        }
+
+        // Set to MQ and get MQ mappings
+        settings.set_dungeon_mq(MqDungeon::DekuTree);
+        let mq_mappings: Vec<_> = get_dungeon_mappings(MqDungeon::DekuTree, &settings).collect();
+        assert!(!mq_mappings.is_empty());
+        for mapping in &mq_mappings {
+            assert!(
+                mapping.location_id.starts_with("mq_oot_mq_deku_tree_"),
+                "Expected MQ Deku Tree location: {}",
+                mapping.location_id
+            );
+        }
+    }
+
+    #[test]
+    fn test_active_counts_change_with_mq() {
+        use ootmm::settings::RandomizerSettings;
+
+        let mut settings = RandomizerSettings::default();
+
+        let vanilla_count = active_location_count(&settings);
+        assert!(vanilla_count > 0);
+
+        // Set all dungeons to MQ
+        settings.set_all_dungeons_mq();
+        let mq_count = active_location_count(&settings);
+        assert!(mq_count > 0);
+
+        // Counts might differ since MQ dungeons have different check counts
+        // The important thing is that we get different locations
+        let vanilla_settings = RandomizerSettings::default();
+        let vanilla_locs: std::collections::HashSet<_> = get_active_mappings(&vanilla_settings)
+            .map(|m| m.location_id)
+            .collect();
+        let mq_locs: std::collections::HashSet<_> = get_active_mappings(&settings)
+            .map(|m| m.location_id)
+            .collect();
+
+        // The sets should be different (vanilla vs MQ dungeon locations)
+        assert_ne!(vanilla_locs, mq_locs);
     }
 }

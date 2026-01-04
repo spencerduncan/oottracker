@@ -94,6 +94,39 @@ pub enum MmDungeon {
     Woodfall,
 }
 
+/// OoT dungeons that can be set to Master Quest.
+///
+/// These correspond to all dungeons in OoT that have Master Quest variants
+/// with different layouts, puzzles, and check locations.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum MqDungeon {
+    /// Deku Tree
+    DekuTree,
+    /// Dodongo's Cavern
+    DodongosCavern,
+    /// Jabu-Jabu's Belly
+    JabuJabu,
+    /// Forest Temple
+    ForestTemple,
+    /// Fire Temple
+    FireTemple,
+    /// Water Temple
+    WaterTemple,
+    /// Spirit Temple
+    SpiritTemple,
+    /// Shadow Temple
+    ShadowTemple,
+    /// Bottom of the Well
+    BottomOfTheWell,
+    /// Ice Cavern
+    IceCavern,
+    /// Gerudo Training Ground
+    GerudoTrainingGround,
+    /// Ganon's Castle
+    GanonsCastle,
+}
+
 impl MmDungeon {
     /// Returns the string identifier used in logic expressions.
     #[must_use]
@@ -112,6 +145,198 @@ impl MmDungeon {
             "WF" => Some(Self::Woodfall),
             _ => None,
         }
+    }
+}
+
+impl MqDungeon {
+    /// Returns the string identifier used in logic expressions and settings.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::DekuTree => "deku_tree",
+            Self::DodongosCavern => "dodongos_cavern",
+            Self::JabuJabu => "jabu_jabu",
+            Self::ForestTemple => "forest_temple",
+            Self::FireTemple => "fire_temple",
+            Self::WaterTemple => "water_temple",
+            Self::SpiritTemple => "spirit_temple",
+            Self::ShadowTemple => "shadow_temple",
+            Self::BottomOfTheWell => "bottom_of_the_well",
+            Self::IceCavern => "ice_cavern",
+            Self::GerudoTrainingGround => "gerudo_training_ground",
+            Self::GanonsCastle => "ganons_castle",
+        }
+    }
+
+    /// Returns the location ID prefix for this dungeon in its vanilla variant.
+    ///
+    /// Vanilla locations use the `oot_<dungeon>_` prefix.
+    #[must_use]
+    pub const fn vanilla_location_prefix(&self) -> &'static str {
+        match self {
+            Self::DekuTree => "oot_deku_tree_",
+            Self::DodongosCavern => "oot_dodongo_cavern_",
+            Self::JabuJabu => "oot_jabu_jabu_",
+            Self::ForestTemple => "oot_forest_temple_",
+            Self::FireTemple => "oot_fire_temple_",
+            Self::WaterTemple => "oot_water_temple_",
+            Self::SpiritTemple => "oot_spirit_temple_",
+            Self::ShadowTemple => "oot_shadow_temple_",
+            Self::BottomOfTheWell => "oot_bottom_of_the_well_",
+            Self::IceCavern => "oot_ice_cavern_",
+            Self::GerudoTrainingGround => "oot_gerudo_training_",
+            Self::GanonsCastle => "oot_ganon_castle_",
+        }
+    }
+
+    /// Returns the location ID prefix for this dungeon in its MQ variant.
+    ///
+    /// MQ locations use the `mq_oot_mq_<dungeon>_` prefix for checks,
+    /// or `mq_oot_<dungeon>_` for regions.
+    #[must_use]
+    pub const fn mq_location_prefix(&self) -> &'static str {
+        match self {
+            Self::DekuTree => "mq_oot_mq_deku_tree_",
+            Self::DodongosCavern => "mq_oot_mq_dodongo_cavern_",
+            Self::JabuJabu => "mq_oot_mq_jabu_jabu_",
+            Self::ForestTemple => "mq_oot_mq_forest_temple_",
+            Self::FireTemple => "mq_oot_mq_fire_temple_",
+            Self::WaterTemple => "mq_oot_mq_water_temple_",
+            Self::SpiritTemple => "mq_oot_mq_spirit_temple_",
+            Self::ShadowTemple => "mq_oot_mq_shadow_temple_",
+            Self::BottomOfTheWell => "mq_oot_mq_bottom_of_the_well_",
+            Self::IceCavern => "mq_oot_mq_ice_cavern_",
+            Self::GerudoTrainingGround => "mq_oot_mq_gerudo_training_",
+            Self::GanonsCastle => "mq_oot_mq_ganon_castle_",
+        }
+    }
+
+    /// Parses a string identifier into an MqDungeon.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "deku_tree" | "DekuTree" => Some(Self::DekuTree),
+            "dodongos_cavern" | "DodongosCavern" => Some(Self::DodongosCavern),
+            "jabu_jabu" | "JabuJabu" => Some(Self::JabuJabu),
+            "forest_temple" | "ForestTemple" => Some(Self::ForestTemple),
+            "fire_temple" | "FireTemple" => Some(Self::FireTemple),
+            "water_temple" | "WaterTemple" => Some(Self::WaterTemple),
+            "spirit_temple" | "SpiritTemple" => Some(Self::SpiritTemple),
+            "shadow_temple" | "ShadowTemple" => Some(Self::ShadowTemple),
+            "bottom_of_the_well" | "BottomOfTheWell" => Some(Self::BottomOfTheWell),
+            "ice_cavern" | "IceCavern" => Some(Self::IceCavern),
+            "gerudo_training_ground" | "GerudoTrainingGround" => Some(Self::GerudoTrainingGround),
+            "ganons_castle" | "GanonsCastle" => Some(Self::GanonsCastle),
+            _ => None,
+        }
+    }
+
+    /// Returns all MQ dungeon variants.
+    #[must_use]
+    pub const fn all() -> &'static [MqDungeon] {
+        &[
+            Self::DekuTree,
+            Self::DodongosCavern,
+            Self::JabuJabu,
+            Self::ForestTemple,
+            Self::FireTemple,
+            Self::WaterTemple,
+            Self::SpiritTemple,
+            Self::ShadowTemple,
+            Self::BottomOfTheWell,
+            Self::IceCavern,
+            Self::GerudoTrainingGround,
+            Self::GanonsCastle,
+        ]
+    }
+
+    /// Attempts to determine which dungeon a location ID belongs to.
+    ///
+    /// Returns `None` if the location is not in a dungeon that has MQ variants.
+    #[must_use]
+    pub fn from_location_id(location_id: &str) -> Option<Self> {
+        // Check MQ locations first (they have the mq_ prefix)
+        if location_id.starts_with("mq_oot_") {
+            // MQ dungeon locations
+            if location_id.contains("deku_tree") {
+                return Some(Self::DekuTree);
+            }
+            if location_id.contains("dodongo") {
+                return Some(Self::DodongosCavern);
+            }
+            if location_id.contains("jabu") {
+                return Some(Self::JabuJabu);
+            }
+            if location_id.contains("forest_temple") {
+                return Some(Self::ForestTemple);
+            }
+            if location_id.contains("fire_temple") {
+                return Some(Self::FireTemple);
+            }
+            if location_id.contains("water_temple") {
+                return Some(Self::WaterTemple);
+            }
+            if location_id.contains("spirit_temple") {
+                return Some(Self::SpiritTemple);
+            }
+            if location_id.contains("shadow_temple") {
+                return Some(Self::ShadowTemple);
+            }
+            if location_id.contains("bottom_of_the_well") {
+                return Some(Self::BottomOfTheWell);
+            }
+            if location_id.contains("ice_cavern") {
+                return Some(Self::IceCavern);
+            }
+            if location_id.contains("gerudo_training") {
+                return Some(Self::GerudoTrainingGround);
+            }
+            if location_id.contains("ganon_castle") {
+                return Some(Self::GanonsCastle);
+            }
+            return None;
+        }
+
+        // Check vanilla OoT dungeon locations
+        if location_id.starts_with("oot_deku_tree_") {
+            return Some(Self::DekuTree);
+        }
+        if location_id.starts_with("oot_dodongo_cavern_") || location_id.starts_with("oot_dodongo_")
+        {
+            return Some(Self::DodongosCavern);
+        }
+        if location_id.starts_with("oot_jabu_jabu_") {
+            return Some(Self::JabuJabu);
+        }
+        if location_id.starts_with("oot_forest_temple_") {
+            return Some(Self::ForestTemple);
+        }
+        if location_id.starts_with("oot_fire_temple_") {
+            return Some(Self::FireTemple);
+        }
+        if location_id.starts_with("oot_water_temple_") {
+            return Some(Self::WaterTemple);
+        }
+        if location_id.starts_with("oot_spirit_temple_") {
+            return Some(Self::SpiritTemple);
+        }
+        if location_id.starts_with("oot_shadow_temple_") {
+            return Some(Self::ShadowTemple);
+        }
+        if location_id.starts_with("oot_bottom_of_the_well_") {
+            return Some(Self::BottomOfTheWell);
+        }
+        if location_id.starts_with("oot_ice_cavern_") {
+            return Some(Self::IceCavern);
+        }
+        if location_id.starts_with("oot_gerudo_training_") {
+            return Some(Self::GerudoTrainingGround);
+        }
+        if location_id.starts_with("oot_ganon_castle_") {
+            return Some(Self::GanonsCastle);
+        }
+
+        None
     }
 }
 
@@ -830,6 +1055,14 @@ pub struct RandomizerSettings {
     #[serde(default)]
     pub open_dungeons_mm: HashSet<MmDungeon>,
 
+    /// Set of OoT dungeons that use Master Quest layouts.
+    ///
+    /// When a dungeon is in this set, its checks use MQ flag mappings
+    /// instead of vanilla mappings. This affects which locations are
+    /// tracked and their memory flag addresses.
+    #[serde(default)]
+    pub mq_dungeons: HashSet<MqDungeon>,
+
     /// Deku Tree entrance state.
     #[serde(default)]
     pub deku_tree: DekuTreeState,
@@ -938,6 +1171,7 @@ impl Default for RandomizerSettings {
             // Set settings default to empty
             open_dungeons_oot: HashSet::new(),
             open_dungeons_mm: HashSet::new(),
+            mq_dungeons: HashSet::new(),
             clear_state_dungeons_mm: HashSet::new(),
             jp_layouts: HashSet::new(),
             logic_tricks: HashSet::new(),
@@ -1008,6 +1242,9 @@ impl RandomizerSettings {
             "openDungeonsMm" => MmDungeon::parse(value)
                 .map(|d| self.open_dungeons_mm.contains(&d))
                 .unwrap_or(false),
+            "mqDungeons" => MqDungeon::parse(value)
+                .map(|d| self.mq_dungeons.contains(&d))
+                .unwrap_or(false),
             "dekuTree" => self.deku_tree.as_str() == value,
             "doorOfTime" => self.door_of_time.as_str() == value,
             "kakarikoGate" => self.kakariko_gate.as_str() == value,
@@ -1049,6 +1286,81 @@ impl RandomizerSettings {
     /// Disables a logic trick.
     pub fn disable_trick(&mut self, trick: &str) {
         self.logic_tricks.remove(trick);
+    }
+
+    // === Master Quest Dungeon Methods ===
+
+    /// Checks if a dungeon is set to Master Quest.
+    #[must_use]
+    pub fn is_dungeon_mq(&self, dungeon: MqDungeon) -> bool {
+        self.mq_dungeons.contains(&dungeon)
+    }
+
+    /// Checks if a dungeon is set to Master Quest by its string identifier.
+    #[must_use]
+    pub fn is_dungeon_mq_by_name(&self, name: &str) -> bool {
+        MqDungeon::parse(name)
+            .map(|d| self.mq_dungeons.contains(&d))
+            .unwrap_or(false)
+    }
+
+    /// Sets a dungeon to Master Quest mode.
+    pub fn set_dungeon_mq(&mut self, dungeon: MqDungeon) {
+        self.mq_dungeons.insert(dungeon);
+    }
+
+    /// Sets a dungeon to vanilla (non-MQ) mode.
+    pub fn set_dungeon_vanilla(&mut self, dungeon: MqDungeon) {
+        self.mq_dungeons.remove(&dungeon);
+    }
+
+    /// Sets all dungeons to Master Quest mode.
+    pub fn set_all_dungeons_mq(&mut self) {
+        for &dungeon in MqDungeon::all() {
+            self.mq_dungeons.insert(dungeon);
+        }
+    }
+
+    /// Sets all dungeons to vanilla (non-MQ) mode.
+    pub fn set_all_dungeons_vanilla(&mut self) {
+        self.mq_dungeons.clear();
+    }
+
+    /// Returns the location ID prefix for a dungeon based on its MQ status.
+    ///
+    /// This is used to determine which set of flag mappings to use.
+    #[must_use]
+    pub fn get_dungeon_location_prefix(&self, dungeon: MqDungeon) -> &'static str {
+        if self.is_dungeon_mq(dungeon) {
+            dungeon.mq_location_prefix()
+        } else {
+            dungeon.vanilla_location_prefix()
+        }
+    }
+
+    /// Determines if a location ID should be active based on MQ settings.
+    ///
+    /// Returns `true` if the location matches the current MQ/vanilla state
+    /// of its dungeon, or if the location is not in an MQ-able dungeon.
+    #[must_use]
+    pub fn is_location_active(&self, location_id: &str) -> bool {
+        // Check if this is an MQ dungeon location
+        if let Some(dungeon) = MqDungeon::from_location_id(location_id) {
+            let is_mq_location = location_id.starts_with("mq_oot_");
+            let dungeon_is_mq = self.is_dungeon_mq(dungeon);
+
+            // Location is active if its MQ status matches the dungeon's setting
+            is_mq_location == dungeon_is_mq
+        } else {
+            // Non-dungeon locations are always active
+            true
+        }
+    }
+
+    /// Returns the count of MQ dungeons.
+    #[must_use]
+    pub fn mq_dungeon_count(&self) -> usize {
+        self.mq_dungeons.len()
     }
 }
 
@@ -1220,5 +1532,168 @@ mod tests {
 
         assert!(settings.check_setting_value("smallKeyShuffleOot", "anywhere"));
         assert!(!settings.check_setting_value("smallKeyShuffleOot", "vanilla"));
+    }
+
+    // === Master Quest Dungeon Tests ===
+
+    #[test]
+    fn test_mq_dungeon_default() {
+        let settings = RandomizerSettings::default();
+        assert!(settings.mq_dungeons.is_empty());
+        assert_eq!(settings.mq_dungeon_count(), 0);
+    }
+
+    #[test]
+    fn test_mq_dungeon_set_and_check() {
+        let mut settings = RandomizerSettings::new();
+
+        assert!(!settings.is_dungeon_mq(MqDungeon::DekuTree));
+        settings.set_dungeon_mq(MqDungeon::DekuTree);
+        assert!(settings.is_dungeon_mq(MqDungeon::DekuTree));
+        assert!(!settings.is_dungeon_mq(MqDungeon::DodongosCavern));
+
+        settings.set_dungeon_vanilla(MqDungeon::DekuTree);
+        assert!(!settings.is_dungeon_mq(MqDungeon::DekuTree));
+    }
+
+    #[test]
+    fn test_mq_dungeon_check_by_name() {
+        let mut settings = RandomizerSettings::new();
+        settings.set_dungeon_mq(MqDungeon::ForestTemple);
+
+        assert!(settings.is_dungeon_mq_by_name("forest_temple"));
+        assert!(settings.is_dungeon_mq_by_name("ForestTemple"));
+        assert!(!settings.is_dungeon_mq_by_name("fire_temple"));
+        assert!(!settings.is_dungeon_mq_by_name("invalid"));
+    }
+
+    #[test]
+    fn test_mq_dungeon_set_all() {
+        let mut settings = RandomizerSettings::new();
+
+        settings.set_all_dungeons_mq();
+        assert_eq!(settings.mq_dungeon_count(), 12);
+        assert!(settings.is_dungeon_mq(MqDungeon::DekuTree));
+        assert!(settings.is_dungeon_mq(MqDungeon::GanonsCastle));
+
+        settings.set_all_dungeons_vanilla();
+        assert_eq!(settings.mq_dungeon_count(), 0);
+        assert!(!settings.is_dungeon_mq(MqDungeon::DekuTree));
+    }
+
+    #[test]
+    fn test_mq_dungeon_location_prefix() {
+        let mut settings = RandomizerSettings::new();
+
+        // Vanilla prefix by default
+        assert_eq!(
+            settings.get_dungeon_location_prefix(MqDungeon::DekuTree),
+            "oot_deku_tree_"
+        );
+
+        // MQ prefix when set
+        settings.set_dungeon_mq(MqDungeon::DekuTree);
+        assert_eq!(
+            settings.get_dungeon_location_prefix(MqDungeon::DekuTree),
+            "mq_oot_mq_deku_tree_"
+        );
+    }
+
+    #[test]
+    fn test_mq_dungeon_location_active() {
+        let mut settings = RandomizerSettings::new();
+
+        // By default, vanilla locations are active
+        assert!(settings.is_location_active("oot_deku_tree_compass_chest"));
+        assert!(!settings.is_location_active("mq_oot_mq_deku_tree_compass_chest"));
+
+        // When dungeon is MQ, MQ locations are active
+        settings.set_dungeon_mq(MqDungeon::DekuTree);
+        assert!(!settings.is_location_active("oot_deku_tree_compass_chest"));
+        assert!(settings.is_location_active("mq_oot_mq_deku_tree_compass_chest"));
+
+        // Non-dungeon locations are always active
+        assert!(settings.is_location_active("oot_kokiri_forest_sword"));
+    }
+
+    #[test]
+    fn test_mq_dungeon_check_setting_value() {
+        let mut settings = RandomizerSettings::new();
+        settings.set_dungeon_mq(MqDungeon::WaterTemple);
+        settings.set_dungeon_mq(MqDungeon::ShadowTemple);
+
+        assert!(settings.check_setting_value("mqDungeons", "water_temple"));
+        assert!(settings.check_setting_value("mqDungeons", "shadow_temple"));
+        assert!(!settings.check_setting_value("mqDungeons", "fire_temple"));
+        assert!(!settings.check_setting_value("mqDungeons", "invalid"));
+    }
+
+    #[test]
+    fn test_mq_dungeon_parse() {
+        assert_eq!(MqDungeon::parse("deku_tree"), Some(MqDungeon::DekuTree));
+        assert_eq!(MqDungeon::parse("DekuTree"), Some(MqDungeon::DekuTree));
+        assert_eq!(
+            MqDungeon::parse("dodongos_cavern"),
+            Some(MqDungeon::DodongosCavern)
+        );
+        assert_eq!(
+            MqDungeon::parse("gerudo_training_ground"),
+            Some(MqDungeon::GerudoTrainingGround)
+        );
+        assert_eq!(MqDungeon::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_mq_dungeon_from_location_id() {
+        // Vanilla locations
+        assert_eq!(
+            MqDungeon::from_location_id("oot_deku_tree_compass_chest"),
+            Some(MqDungeon::DekuTree)
+        );
+        assert_eq!(
+            MqDungeon::from_location_id("oot_fire_temple_boss_key"),
+            Some(MqDungeon::FireTemple)
+        );
+        assert_eq!(
+            MqDungeon::from_location_id("oot_ganon_castle_light_trial"),
+            Some(MqDungeon::GanonsCastle)
+        );
+
+        // MQ locations
+        assert_eq!(
+            MqDungeon::from_location_id("mq_oot_mq_deku_tree_compass_chest"),
+            Some(MqDungeon::DekuTree)
+        );
+        assert_eq!(
+            MqDungeon::from_location_id("mq_oot_dodongo_cavern_entrance"),
+            Some(MqDungeon::DodongosCavern)
+        );
+
+        // Non-dungeon locations
+        assert_eq!(MqDungeon::from_location_id("oot_kokiri_forest_sword"), None);
+        assert_eq!(MqDungeon::from_location_id("mm_clock_town_chest"), None);
+    }
+
+    #[test]
+    fn test_mq_dungeon_serde_roundtrip() {
+        let mut settings = RandomizerSettings::new();
+        settings.set_dungeon_mq(MqDungeon::ForestTemple);
+        settings.set_dungeon_mq(MqDungeon::SpiritTemple);
+
+        let json = serde_json::to_string(&settings).unwrap();
+        let parsed: RandomizerSettings = serde_json::from_str(&json).unwrap();
+
+        assert!(parsed.is_dungeon_mq(MqDungeon::ForestTemple));
+        assert!(parsed.is_dungeon_mq(MqDungeon::SpiritTemple));
+        assert!(!parsed.is_dungeon_mq(MqDungeon::ShadowTemple));
+        assert_eq!(parsed.mq_dungeon_count(), 2);
+    }
+
+    #[test]
+    fn test_mq_dungeon_all() {
+        let all = MqDungeon::all();
+        assert_eq!(all.len(), 12);
+        assert!(all.contains(&MqDungeon::DekuTree));
+        assert!(all.contains(&MqDungeon::GanonsCastle));
     }
 }
