@@ -45,6 +45,7 @@ pub type Result<T> = std::result::Result<T, LauncherError>;
 pub struct Pj64EmLauncher {
     wine_prefix: PathBuf,
     pj64_exe: PathBuf,
+    lua_scripts: Vec<PathBuf>,
     process: Option<Child>,
 }
 
@@ -59,8 +60,32 @@ impl Pj64EmLauncher {
         Self {
             wine_prefix,
             pj64_exe,
+            lua_scripts: Vec::new(),
             process: None,
         }
+    }
+
+    /// Adds a Lua script to be loaded when launching.
+    ///
+    /// Scripts are loaded in the order they are added.
+    ///
+    /// # Arguments
+    ///
+    /// * `script_path` - Path to the Lua script file
+    pub fn add_lua_script(&mut self, script_path: PathBuf) -> &mut Self {
+        self.lua_scripts.push(script_path);
+        self
+    }
+
+    /// Clears all configured Lua scripts.
+    pub fn clear_lua_scripts(&mut self) -> &mut Self {
+        self.lua_scripts.clear();
+        self
+    }
+
+    /// Returns the list of configured Lua scripts.
+    pub fn lua_scripts(&self) -> &[PathBuf] {
+        &self.lua_scripts
     }
 
     /// Launches Project64-EM with the specified ROM.
@@ -89,9 +114,19 @@ impl Pj64EmLauncher {
             return Err(LauncherError::Pj64NotFound(self.pj64_exe.clone()));
         }
 
-        let child = Command::new("wine")
-            .arg(&self.pj64_exe)
-            .arg(rom)
+        let mut cmd = Command::new("wine");
+        cmd.arg(&self.pj64_exe);
+
+        // Add Lua scripts with --lua flag
+        for script in &self.lua_scripts {
+            cmd.arg("--lua");
+            cmd.arg(script);
+        }
+
+        // Add the ROM as the final argument
+        cmd.arg(rom);
+
+        let child = cmd
             // Required for 512MB RDRAM allocation
             .env("WINEPREFIX", &self.wine_prefix)
             // Performance settings - disable vsync
@@ -229,7 +264,32 @@ mod tests {
 
         assert_eq!(launcher.wine_prefix(), wine_prefix);
         assert_eq!(launcher.pj64_exe(), pj64_exe);
-        assert!(!launcher.process.is_some());
+        assert!(launcher.lua_scripts().is_empty());
+        assert!(launcher.process.is_none());
+    }
+
+    #[test]
+    fn test_launcher_lua_scripts() {
+        let wine_prefix = PathBuf::from("/home/test/.wine");
+        let pj64_exe = PathBuf::from("/home/test/pj64/Project64.exe");
+
+        let mut launcher = Pj64EmLauncher::new(wine_prefix, pj64_exe);
+
+        launcher.add_lua_script(PathBuf::from("/path/to/harness.lua"));
+        launcher.add_lua_script(PathBuf::from("/path/to/tracker.lua"));
+
+        assert_eq!(launcher.lua_scripts().len(), 2);
+        assert_eq!(
+            launcher.lua_scripts()[0],
+            PathBuf::from("/path/to/harness.lua")
+        );
+        assert_eq!(
+            launcher.lua_scripts()[1],
+            PathBuf::from("/path/to/tracker.lua")
+        );
+
+        launcher.clear_lua_scripts();
+        assert!(launcher.lua_scripts().is_empty());
     }
 
     #[tokio::test]
