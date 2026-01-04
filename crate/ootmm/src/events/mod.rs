@@ -8,11 +8,16 @@
 //! - **Volatile events**: Computed at runtime (dungeon switches, water levels, etc.)
 
 pub mod mm;
+pub mod mm_flags;
 pub mod oot;
 
 pub use mm::{
-    offsets as mm_offsets, MmEvent, MmEventCategory, MmEventFlag, MmEventReadError, MmEventReader,
-    MmEventWriter,
+    offsets as mm_event_offsets, MmEvent, MmEventCategory, MmEventFlag, MmEventReadError,
+    MmEventReader, MmEventWriter,
+};
+pub use mm_flags::{
+    mm_all_mappings, mm_chest_mappings, mm_collectible_mappings, mm_special_mappings,
+    offsets as mm_flag_offsets, MmFlagMapping, MmFlagType, MmSceneFlag,
 };
 pub use oot::{
     offsets, EventReadError, OotEvent, OotEventCategory, OotEventFlag, OotEventReader,

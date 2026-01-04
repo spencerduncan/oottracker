@@ -48,8 +48,20 @@ pub use settings::{
     SmallKeyShuffleOot,
 };
 
-// Re-export event types
+// Re-export OoT event types
 pub use events::{
     offsets as event_offsets, EventReadError, OotEvent, OotEventCategory, OotEventFlag,
     OotEventReader, OotEventWriter,
+};
+
+// Re-export MM event types
+pub use events::{
+    mm_event_offsets, MmEvent, MmEventCategory, MmEventFlag, MmEventReadError, MmEventReader,
+    MmEventWriter,
+};
+
+// Re-export MM flag mapping types
+pub use events::{
+    mm_all_mappings, mm_chest_mappings, mm_collectible_mappings, mm_flag_offsets,
+    mm_special_mappings, MmFlagMapping, MmFlagType, MmSceneFlag,
 };
