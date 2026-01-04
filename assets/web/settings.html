@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>OoTMM Tracker Settings</title>
+        <meta name="author" content="Fenhl" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" sizes="512x512" type="image/png" href="/static/img/favicon.png" />
+        <link rel="stylesheet" href="/static/common.css" />
+        <link rel="stylesheet" href="/static/settings.css" />
+        <link rel="stylesheet" href="/static/light.css" media="(prefers-color-scheme: light)" />
+    </head>
+    <body>
+        <div class="settings-container">
+            <h1>OoTMM Tracker Settings</h1>
+            <p class="subtitle">Configure randomizer settings for logic evaluation</p>
+
+            <form id="settings-form">
+                <!-- Logic Mode Section -->
+                <section class="settings-section">
+                    <h2>Logic Mode</h2>
+                    <div class="setting-group">
+                        <label for="logicMode">Logic Rules</label>
+                        <select id="logicMode" name="logicMode">
+                            <option value="glitchless">Glitchless</option>
+                            <option value="glitched">Glitched</option>
+                            <option value="noLogic">No Logic</option>
+                        </select>
+                        <span class="setting-description">Determines what logic rules are used for check evaluation</span>
+                    </div>
+                </section>
+
+                <!-- Open Dungeons OoT Section -->
+                <section class="settings-section">
+                    <h2>Open Dungeons (OoT)</h2>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="openDungeonsOot" value="DC" />
+                            <span>Dodongo's Cavern (DC)</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="openDungeonsOot" value="BotW" />
+                            <span>Bottom of the Well (BotW)</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="openDungeonsOot" value="JJ" />
+                            <span>Jabu-Jabu's Belly (JJ)</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="openDungeonsOot" value="Shadow" />
+                            <span>Shadow Temple</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="openDungeonsOot" value="Water" />
+                            <span>Water Temple</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="openDungeonsOot" value="fireChild" />
+                            <span>Fire Temple (Child Access)</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="openDungeonsOot" value="wellAdult" />
+                            <span>Well (Adult Access)</span>
+                        </label>
+                    </div>
+                </section>
+
+                <!-- Open Dungeons MM Section -->
+                <section class="settings-section">
+                    <h2>Open Dungeons (MM)</h2>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="openDungeonsMm" value="ST" />
+                            <span>Stone Tower Temple (ST)</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="openDungeonsMm" value="WF" />
+                            <span>Woodfall Temple (WF)</span>
+                        </label>
+                    </div>
+                </section>
+
+                <!-- World State Settings Section -->
+                <section class="settings-section">
+                    <h2>World State</h2>
+
+                    <div class="setting-group">
+                        <label for="dekuTree">Deku Tree</label>
+                        <select id="dekuTree" name="dekuTree">
+                            <option value="closed">Closed</option>
+                            <option value="open">Open</option>
+                            <option value="vanilla">Vanilla</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="doorOfTime">Door of Time</label>
+                        <select id="doorOfTime" name="doorOfTime">
+                            <option value="closed">Closed</option>
+                            <option value="open">Open</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="kakarikoGate">Kakariko Gate</label>
+                        <select id="kakarikoGate" name="kakarikoGate">
+                            <option value="closed">Closed</option>
+                            <option value="open">Open</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="ganonBossKey">Ganon's Boss Key</label>
+                        <select id="ganonBossKey" name="ganonBossKey">
+                            <option value="vanilla">Vanilla</option>
+                            <option value="removed">Removed</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="lacs">Light Arrow Cutscene (LACS)</label>
+                        <select id="lacs" name="lacs">
+                            <option value="vanilla">Vanilla</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="beneathWell">Beneath the Well</label>
+                        <select id="beneathWell" name="beneathWell">
+                            <option value="vanilla">Vanilla</option>
+                            <option value="open">Open</option>
+                        </select>
+                    </div>
+                </section>
+
+                <!-- MM Settings Section -->
+                <section class="settings-section">
+                    <h2>Majora's Mask Settings</h2>
+
+                    <div class="setting-group">
+                        <label for="majoraChild">Majora Child Mode</label>
+                        <select id="majoraChild" name="majoraChild">
+                            <option value="vanilla">Vanilla</option>
+                            <option value="none">None</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="moonCrash">Moon Crash</label>
+                        <select id="moonCrash" name="moonCrash">
+                            <option value="vanilla">Vanilla</option>
+                            <option value="cycle">Cycle</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="bossWarpPads">Boss Warp Pads</label>
+                        <select id="bossWarpPads" name="bossWarpPads">
+                            <option value="vanilla">Vanilla</option>
+                            <option value="remains">Requires Remains</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="shufflePotsMm">Shuffle Pots (MM)</label>
+                        <select id="shufflePotsMm" name="shufflePotsMm">
+                            <option value="none">None</option>
+                            <option value="all">All</option>
+                        </select>
+                    </div>
+                </section>
+
+                <!-- Age & Time Settings Section -->
+                <section class="settings-section">
+                    <h2>Age & Time Settings</h2>
+
+                    <div class="setting-group">
+                        <label for="ageChange">Age Change Mode</label>
+                        <select id="ageChange" name="ageChange">
+                            <option value="templeOfTime">Temple of Time</option>
+                            <option value="none">None</option>
+                            <option value="oot">OoT Style</option>
+                        </select>
+                    </div>
+                </section>
+
+                <!-- Ageless Items Section -->
+                <section class="settings-section">
+                    <h2>Ageless Items</h2>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="agelessBoots" />
+                            <span>Ageless Boots</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="agelessHookshot" />
+                            <span>Ageless Hookshot</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="agelessStrength" />
+                            <span>Ageless Strength</span>
+                        </label>
+                    </div>
+                </section>
+
+                <!-- Entrance Randomizer Section -->
+                <section class="settings-section">
+                    <h2>Entrance Randomizer</h2>
+
+                    <div class="setting-group">
+                        <label for="erOverworld">Overworld ER</label>
+                        <select id="erOverworld" name="erOverworld">
+                            <option value="none">None</option>
+                            <option value="full">Full</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="erGrottos">Grottos ER</label>
+                        <select id="erGrottos" name="erGrottos">
+                            <option value="none">None</option>
+                            <option value="full">Full</option>
+                        </select>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="erIndoorsMajor" />
+                            <span>Indoors Major</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="erIndoorsExtra" />
+                            <span>Indoors Extra</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="erIndoorsGameLinks" />
+                            <span>Indoors Game Links</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="erMoon" />
+                            <span>Moon</span>
+                        </label>
+                    </div>
+                </section>
+
+                <!-- Key Shuffle Section -->
+                <section class="settings-section">
+                    <h2>Key Shuffle</h2>
+
+                    <div class="setting-group">
+                        <label for="smallKeyShuffleOot">Small Key Shuffle (OoT)</label>
+                        <select id="smallKeyShuffleOot" name="smallKeyShuffleOot">
+                            <option value="vanilla">Vanilla</option>
+                            <option value="dungeon">Within Dungeon</option>
+                            <option value="anywhere">Anywhere</option>
+                        </select>
+                    </div>
+                </section>
+
+                <!-- Other Settings Section -->
+                <section class="settings-section">
+                    <h2>Other Settings</h2>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="skipZelda" />
+                            <span>Skip Child Zelda</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="timeTravelSword" />
+                            <span>Time Travel Requires Sword</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="openMaskShop" />
+                            <span>Open Mask Shop</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="openMoon" />
+                            <span>Open Moon</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="openZdShortcut" />
+                            <span>Open Zora's Domain Shortcut</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="alterLostWoodsExits" />
+                            <span>Alter Lost Woods Exits</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="pondFishShuffle" />
+                            <span>Pond Fish Shuffle</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="restoreBrokenActors" />
+                            <span>Restore Broken Actors</span>
+                        </label>
+                    </div>
+                </section>
+
+                <!-- Glitch Settings Section -->
+                <section class="settings-section">
+                    <h2>Glitch Settings (OoT)</h2>
+
+                    <div class="setting-group">
+                        <label for="climbMostSurfacesOot">Climb Most Surfaces</label>
+                        <select id="climbMostSurfacesOot" name="climbMostSurfacesOot">
+                            <option value="on">On</option>
+                            <option value="off">Off</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="hookshotAnywhereOot">Hookshot Anywhere</label>
+                        <select id="hookshotAnywhereOot" name="hookshotAnywhereOot">
+                            <option value="on">On</option>
+                            <option value="off">Off</option>
+                        </select>
+                    </div>
+                </section>
+
+                <!-- Logic Tricks Section -->
+                <section class="settings-section">
+                    <h2>Logic Tricks</h2>
+                    <div class="setting-group">
+                        <label for="logicTricks">Enabled Tricks (comma-separated)</label>
+                        <textarea id="logicTricks" name="logicTricks" placeholder="e.g., hover_boost, damage_boost_simple"></textarea>
+                        <span class="setting-description">Enter trick names separated by commas</span>
+                    </div>
+                </section>
+
+                <!-- Action Buttons -->
+                <div class="button-group">
+                    <button type="button" id="loadSettings">Load from File</button>
+                    <button type="button" id="saveSettings">Save to File</button>
+                    <button type="button" id="resetSettings">Reset to Defaults</button>
+                    <button type="button" id="copyJson">Copy as JSON</button>
+                </div>
+
+                <input type="file" id="fileInput" accept=".json" style="display: none;" />
+            </form>
+
+            <div id="status-message" class="status-message"></div>
+
+            <footer>
+                <a href="/">Back to Tracker</a> |
+                <a href="https://github.com/fenhl/oottracker">Source Code</a> |
+                <a href="https://fenhl.net/disc">Disclaimer / Impressum</a>
+            </footer>
+        </div>
+
+        <script src="/static/settings.js"></script>
+    </body>
+</html>

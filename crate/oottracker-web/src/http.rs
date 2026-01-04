@@ -104,6 +104,11 @@ fn index() -> RawHtml<String> {
     ))
 }
 
+#[rocket::get("/settings")]
+fn settings() -> RawHtml<String> {
+    RawHtml(include_str!("../../../assets/web/settings.html").to_owned())
+}
+
 #[derive(FromForm)]
 struct GoRoomForm<'r> {
     #[field(validate = len(1..))]
@@ -466,6 +471,7 @@ pub(crate) fn rocket(
         rocket::routes![
             index,
             post_index,
+            settings,
             mw_room_input,
             mw_room_view,
             mw_click,
@@ -514,6 +520,7 @@ mod tests {
             rocket::routes![
                 index,
                 post_index,
+                settings,
                 mw_room_input,
                 mw_room_view,
                 mw_click,
@@ -572,6 +579,40 @@ mod tests {
         assert!(body.contains(r#"method="POST""#));
         assert!(body.contains(r#"action="/""#));
         assert!(body.contains(r#"name="room""#));
+    }
+
+    // ==========================================================================
+    // Settings Route Tests
+    // ==========================================================================
+
+    #[rocket::async_test]
+    async fn test_settings_returns_html() {
+        let client = Client::tracked(test_rocket().await)
+            .await
+            .expect("valid rocket instance");
+
+        let response = client.get("/settings").dispatch().await;
+        assert_eq!(response.status(), Status::Ok);
+
+        let body = response.into_string().await.expect("response body");
+        assert!(body.contains("OoTMM Tracker Settings"));
+        assert!(body.contains("<html>"));
+    }
+
+    #[rocket::async_test]
+    async fn test_settings_contains_form_elements() {
+        let client = Client::tracked(test_rocket().await)
+            .await
+            .expect("valid rocket instance");
+
+        let response = client.get("/settings").dispatch().await;
+        let body = response.into_string().await.expect("response body");
+
+        // Verify key form elements are present
+        assert!(body.contains(r#"id="settings-form""#));
+        assert!(body.contains(r#"name="logicMode""#));
+        assert!(body.contains(r#"name="openDungeonsOot""#));
+        assert!(body.contains(r#"name="agelessBoots""#));
     }
 
     // ==========================================================================
