@@ -3192,6 +3192,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "oottracker-e2e"
+version = "0.7.4"
+dependencies = [
+ "thiserror 1.0.44",
+ "tokio",
+]
+
+[[package]]
 name = "oottracker-gui"
 version = "0.7.4"
 dependencies = [

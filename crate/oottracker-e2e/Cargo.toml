@@ -1,0 +1,17 @@
+[package]
+name = "oottracker-e2e"
+version = "0.7.4"
+authors = ["Fenhl <fenhl@fenhl.net>"]
+edition = "2021"
+description = "E2E testing utilities for oottracker, including Wine+PJ64-EM launcher"
+
+[dependencies]
+thiserror = "1"
+
+[dependencies.tokio]
+version = "1"
+features = ["process", "time", "net", "sync"]
+
+[dev-dependencies.tokio]
+version = "1"
+features = ["macros", "rt-multi-thread"]
