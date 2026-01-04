@@ -23,7 +23,7 @@ Please check [the current racing rules](https://wiki.ootrandomizer.com/index.php
 For pre-built releases, see the [upstream releases](https://github.com/fenhl/oottracker/releases):
 
 - [BizHawk (Windows, 64-bit)](https://github.com/fenhl/oottracker/releases/latest/download/oottracker-bizhawk-win64.zip)
-- [Project64](https://github.com/fenhl/oottracker/releases/latest/download/oottracker-pj64.js) (requires the Windows app)
+- Project64-EM: Use the Lua script from `assets/oottracker-pj64em-base.lua` (see [setup guide](docs/PROJECT64_EM_SETUP.md))
 - [Windows (64-bit)](https://github.com/fenhl/oottracker/releases/latest/download/oottracker-win64.exe) (includes auto-tracker for RetroArch)
 - [macOS (Universal)](https://github.com/fenhl/oottracker/releases/latest/download/oottracker-mac.dmg) (includes auto-tracker for RetroArch)
 
