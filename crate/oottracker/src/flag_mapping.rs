@@ -394,10 +394,12 @@ static OOT_MAPPINGS: Lazy<HashMap<&'static str, FlagMapping>> = Lazy::new(|| {
     // Then, add known mappings that override the stubs
     // These are derived from the existing scene.rs definitions and OoTMM research
 
-    // Deku Tree chests
+    // ========================================================================
+    // DEKU TREE (Scene 0x00)
+    // ========================================================================
     add_mapping(
         &mut map,
-        "oot_deku_tree_compass_side_chest",
+        "oot_deku_tree_compass_room_side_chest",
         scene::DEKU_TREE,
         FlagType::Chest,
         0x0000_0040,
@@ -438,10 +440,12 @@ static OOT_MAPPINGS: Lazy<HashMap<&'static str, FlagMapping>> = Lazy::new(|| {
         0x0000_0002,
     );
 
-    // Dodongo's Cavern chests
+    // ========================================================================
+    // DODONGO'S CAVERN (Scene 0x01)
+    // ========================================================================
     add_mapping(
         &mut map,
-        "oot_dodongo_cavern_end_of_bridge_chest",
+        "oot_dodongo_cavern_bridge_chest",
         scene::DODONGOS_CAVERN,
         FlagType::Chest,
         0x0000_0400,
@@ -455,7 +459,7 @@ static OOT_MAPPINGS: Lazy<HashMap<&'static str, FlagMapping>> = Lazy::new(|| {
     );
     add_mapping(
         &mut map,
-        "oot_dodongo_cavern_bomb_flower_platform_chest",
+        "oot_dodongo_cavern_bomb_bag_side_chest",
         scene::DODONGOS_CAVERN,
         FlagType::Chest,
         0x0000_0040,
@@ -475,7 +479,9 @@ static OOT_MAPPINGS: Lazy<HashMap<&'static str, FlagMapping>> = Lazy::new(|| {
         0x0000_0010,
     );
 
-    // Jabu Jabu's Belly chests
+    // ========================================================================
+    // JABU JABU'S BELLY (Scene 0x02)
+    // ========================================================================
     add_mapping(
         &mut map,
         "oot_jabu_jabu_compass_chest",
@@ -498,197 +504,764 @@ static OOT_MAPPINGS: Lazy<HashMap<&'static str, FlagMapping>> = Lazy::new(|| {
         0x0000_0002,
     );
 
-    // Forest Temple chests
+    // ========================================================================
+    // FOREST TEMPLE (Scene 0x03)
+    // ========================================================================
     add_mapping(
         &mut map,
-        "oot_forest_temple_blue_poe_chest",
+        "oot_forest_temple_compass",
         scene::FOREST_TEMPLE,
         FlagType::Chest,
         0x0000_8000,
     );
     add_mapping(
         &mut map,
-        "oot_forest_temple_boss_key_chest",
+        "oot_forest_temple_boss_key",
         scene::FOREST_TEMPLE,
         FlagType::Chest,
         0x0000_4000,
     );
     add_mapping(
         &mut map,
-        "oot_forest_temple_red_poe_chest",
+        "oot_forest_temple_poe_key",
         scene::FOREST_TEMPLE,
         FlagType::Chest,
         0x0000_2000,
     );
     add_mapping(
         &mut map,
-        "oot_forest_temple_bow_chest",
+        "oot_forest_temple_bow",
         scene::FOREST_TEMPLE,
         FlagType::Chest,
         0x0000_1000,
     );
     add_mapping(
         &mut map,
-        "oot_forest_temple_basement_chest",
+        "oot_forest_temple_checkerboard",
         scene::FOREST_TEMPLE,
         FlagType::Chest,
         0x0000_0800,
     );
     add_mapping(
         &mut map,
-        "oot_forest_temple_well_chest",
+        "oot_forest_temple_well",
         scene::FOREST_TEMPLE,
         FlagType::Chest,
         0x0000_0200,
     );
     add_mapping(
         &mut map,
-        "oot_forest_temple_map_chest",
+        "oot_forest_temple_antichamber",
         scene::FOREST_TEMPLE,
         FlagType::Chest,
-        0x0000_0002,
+        0x0000_0080,
     );
     add_mapping(
         &mut map,
-        "oot_forest_temple_first_stalfos_chest",
+        "oot_forest_temple_garden",
         scene::FOREST_TEMPLE,
         FlagType::Chest,
-        0x0000_0001,
+        0x0000_0020,
     );
-
-    // Kokiri Forest
     add_mapping(
         &mut map,
-        "oot_kokiri_forest_kokiri_sword_chest",
-        scene::KOKIRI_FOREST,
+        "oot_forest_temple_maze",
+        scene::FOREST_TEMPLE,
         FlagType::Chest,
-        0x0000_0001,
+        0x0000_0010,
     );
-
-    // Mido's House chests
     add_mapping(
         &mut map,
-        "oot_kf_midos_chest_bottom_right",
-        scene::MIDOS_HOUSE,
+        "oot_forest_temple_tree_small_key",
+        scene::FOREST_TEMPLE,
         FlagType::Chest,
         0x0000_0008,
     );
     add_mapping(
         &mut map,
-        "oot_kf_midos_chest_bottom_left",
-        scene::MIDOS_HOUSE,
+        "oot_forest_temple_floormaster",
+        scene::FOREST_TEMPLE,
         FlagType::Chest,
         0x0000_0004,
     );
     add_mapping(
         &mut map,
-        "oot_kf_midos_chest_top_right",
-        scene::MIDOS_HOUSE,
+        "oot_forest_temple_map",
+        scene::FOREST_TEMPLE,
         FlagType::Chest,
         0x0000_0002,
     );
     add_mapping(
         &mut map,
-        "oot_kf_midos_chest_top_left",
-        scene::MIDOS_HOUSE,
+        "oot_forest_temple_mini_boss_key",
+        scene::FOREST_TEMPLE,
         FlagType::Chest,
         0x0000_0001,
     );
 
-    // Death Mountain chests
+    // ========================================================================
+    // FIRE TEMPLE (Scene 0x04)
+    // ========================================================================
     add_mapping(
         &mut map,
-        "oot_death_mountain_trail_chest",
-        scene::DEATH_MOUNTAIN_TRAIL,
+        "oot_fire_temple_scarecrow_chest",
+        scene::FIRE_TEMPLE,
         FlagType::Chest,
-        0x0000_0002,
-    );
-
-    // Lake Hylia
-    add_mapping(
-        &mut map,
-        "oot_lake_hylia_sun_chest",
-        scene::LAKE_HYLIA,
-        FlagType::Chest,
-        0x0000_0001,
-    );
-
-    // Zora's Domain
-    add_mapping(
-        &mut map,
-        "oot_zoras_domain_chest",
-        scene::ZORAS_DOMAIN,
-        FlagType::Chest,
-        0x0000_0001,
-    );
-
-    // Gerudo Valley
-    add_mapping(
-        &mut map,
-        "oot_gerudo_valley_chest",
-        scene::GERUDO_VALLEY,
-        FlagType::Chest,
-        0x0000_0001,
-    );
-
-    // Goron City chests
-    add_mapping(
-        &mut map,
-        "oot_goron_city_maze_center_chest",
-        scene::GORON_CITY,
-        FlagType::Chest,
-        0x0000_0004,
+        0x0000_2000,
     );
     add_mapping(
         &mut map,
-        "oot_goron_city_maze_right_chest",
-        scene::GORON_CITY,
+        "oot_fire_temple_boss_key_chest",
+        scene::FIRE_TEMPLE,
         FlagType::Chest,
-        0x0000_0002,
+        0x0000_1000,
     );
     add_mapping(
         &mut map,
-        "oot_goron_city_maze_left_chest",
-        scene::GORON_CITY,
-        FlagType::Chest,
-        0x0000_0001,
-    );
-
-    // Haunted Wasteland
-    add_mapping(
-        &mut map,
-        "oot_haunted_wasteland_chest",
-        scene::HAUNTED_WASTELAND,
-        FlagType::Chest,
-        0x0000_0001,
-    );
-
-    // Desert Colossus (Spirit Temple exterior chests)
-    add_mapping(
-        &mut map,
-        "oot_spirit_temple_silver_gauntlets_chest",
-        scene::DESERT_COLOSSUS,
+        "oot_fire_temple_above_maze_chest",
+        scene::FIRE_TEMPLE,
         FlagType::Chest,
         0x0000_0800,
     );
     add_mapping(
         &mut map,
-        "oot_spirit_temple_mirror_shield_chest",
-        scene::DESERT_COLOSSUS,
+        "oot_fire_temple_lava_room_south_jail_chest",
+        scene::FIRE_TEMPLE,
+        FlagType::Chest,
+        0x0000_0400,
+    );
+    add_mapping(
+        &mut map,
+        "oot_fire_temple_jail_1_chest",
+        scene::FIRE_TEMPLE,
         FlagType::Chest,
         0x0000_0200,
     );
-
-    // Gerudo Fortress
     add_mapping(
         &mut map,
-        "oot_gerudo_fortress_chest",
-        scene::GERUDO_FORTRESS,
+        "oot_fire_temple_maze_jail_chest",
+        scene::FIRE_TEMPLE,
+        FlagType::Chest,
+        0x0000_0100,
+    );
+    add_mapping(
+        &mut map,
+        "oot_fire_temple_lava_room_north_jail_chest",
+        scene::FIRE_TEMPLE,
+        FlagType::Chest,
+        0x0000_0080,
+    );
+    add_mapping(
+        &mut map,
+        "oot_fire_temple_below_maze_chest",
+        scene::FIRE_TEMPLE,
+        FlagType::Chest,
+        0x0000_0040,
+    );
+    add_mapping(
+        &mut map,
+        "oot_fire_temple_maze_chest",
+        scene::FIRE_TEMPLE,
+        FlagType::Chest,
+        0x0000_0020,
+    );
+    add_mapping(
+        &mut map,
+        "oot_fire_temple_boss_key_side_chest",
+        scene::FIRE_TEMPLE,
+        FlagType::Chest,
+        0x0000_0010,
+    );
+
+    // ========================================================================
+    // WATER TEMPLE (Scene 0x05)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "oot_water_temple_dragon_chest",
+        scene::WATER_TEMPLE,
+        FlagType::Chest,
+        0x0000_0400,
+    );
+    add_mapping(
+        &mut map,
+        "oot_water_temple_shell_chest",
+        scene::WATER_TEMPLE,
+        FlagType::Chest,
+        0x0000_0200,
+    );
+    add_mapping(
+        &mut map,
+        "oot_water_temple_corridor_chest",
+        scene::WATER_TEMPLE,
+        FlagType::Chest,
+        0x0000_0100,
+    );
+    add_mapping(
+        &mut map,
+        "oot_water_temple_bombable_chest",
+        scene::WATER_TEMPLE,
+        FlagType::Chest,
+        0x0000_0080,
+    );
+    add_mapping(
+        &mut map,
+        "oot_water_temple_boss_key_chest",
+        scene::WATER_TEMPLE,
+        FlagType::Chest,
+        0x0000_0040,
+    );
+    // Central Pillar Chest - 0x0000_0020 (Boss Key in scene.rs, but different in YAML)
+    add_mapping(
+        &mut map,
+        "oot_water_temple_river_chest",
+        scene::WATER_TEMPLE,
+        FlagType::Chest,
+        0x0000_0008,
+    );
+
+    // ========================================================================
+    // SPIRIT TEMPLE (Scene 0x06)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "oot_spirit_temple_adult_invisible_1",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0020_0000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_spirit_temple_adult_invisible_2",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0010_0000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_spirit_temple_adult_topmost_sun_on_wall",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0004_0000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_spirit_temple_statue_upper_right",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_8000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_spirit_temple_adult_suns_on_wall_1",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_4000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_spirit_temple_adult_suns_on_wall_2",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_2000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_spirit_temple_child_climb_2",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_1000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_spirit_temple_adult_boss_key_chest",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_0400,
+    );
+    add_mapping(
+        &mut map,
+        "oot_spirit_temple_child_second_chest",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_0100,
+    );
+    add_mapping(
+        &mut map,
+        "oot_spirit_temple_adult_lullaby",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_0080,
+    );
+    add_mapping(
+        &mut map,
+        "oot_spirit_temple_child_climb_1",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_0040,
+    );
+    add_mapping(
+        &mut map,
+        "oot_spirit_temple_statue_hands",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_0020,
+    );
+    add_mapping(
+        &mut map,
+        "oot_spirit_temple_adult_silver_rupees",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_0010,
+    );
+    add_mapping(
+        &mut map,
+        "oot_spirit_temple_statue_base",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_0008,
+    );
+    add_mapping(
+        &mut map,
+        "oot_spirit_temple_sun_block_room_torches",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_0004,
+    );
+    add_mapping(
+        &mut map,
+        "oot_spirit_temple_child_first_chest",
+        scene::SPIRIT_TEMPLE,
+        FlagType::Chest,
+        0x0000_0002,
+    );
+
+    // ========================================================================
+    // SHADOW TEMPLE (Scene 0x07)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "oot_shadow_temple_spinning_blades_invisible",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0040_0000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_shadow_temple_wind_room_hint",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0020_0000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_shadow_temple_after_wind_invisible",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0010_0000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_shadow_temple_invisible_floormaster",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_2000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_shadow_temple_spinning_blades_visible",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_1000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_shadow_temple_boss_key_room_2",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_0800,
+    );
+    add_mapping(
+        &mut map,
+        "oot_shadow_temple_boss_key_room_1",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_0400,
+    );
+    add_mapping(
+        &mut map,
+        "oot_shadow_temple_invisible_spike_room",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_0200,
+    );
+    add_mapping(
+        &mut map,
+        "oot_shadow_temple_after_wind",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_0100,
+    );
+    add_mapping(
+        &mut map,
+        "oot_shadow_temple_hover_boots",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_0080,
+    );
+    add_mapping(
+        &mut map,
+        "oot_shadow_temple_falling_spikes_upper_1",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_0040,
+    );
+    add_mapping(
+        &mut map,
+        "oot_shadow_temple_falling_spikes_lower",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_0020,
+    );
+    add_mapping(
+        &mut map,
+        "oot_shadow_temple_falling_spikes_upper_2",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_0010,
+    );
+    add_mapping(
+        &mut map,
+        "oot_shadow_temple_compass",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_0008,
+    );
+    add_mapping(
+        &mut map,
+        "oot_shadow_temple_silver_rupees",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_0004,
+    );
+    add_mapping(
+        &mut map,
+        "oot_shadow_temple_map",
+        scene::SHADOW_TEMPLE,
+        FlagType::Chest,
+        0x0000_0002,
+    );
+
+    // ========================================================================
+    // BOTTOM OF THE WELL (Scene 0x08)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "oot_bottom_of_the_well_blood_chest",
+        scene::BOTTOM_OF_THE_WELL,
+        FlagType::Chest,
+        0x0010_0000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_bottom_of_the_well_underwater_2",
+        scene::BOTTOM_OF_THE_WELL,
+        FlagType::Chest,
+        0x0001_0000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_bottom_of_the_well_east_cage",
+        scene::BOTTOM_OF_THE_WELL,
+        FlagType::Chest,
+        0x0000_4000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_bottom_of_the_well_pits",
+        scene::BOTTOM_OF_THE_WELL,
+        FlagType::Chest,
+        0x0000_1000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_bottom_of_the_well_east",
+        scene::BOTTOM_OF_THE_WELL,
+        FlagType::Chest,
+        0x0000_0400,
+    );
+    add_mapping(
+        &mut map,
+        "oot_bottom_of_the_well_underwater",
+        scene::BOTTOM_OF_THE_WELL,
+        FlagType::Chest,
+        0x0000_0200,
+    );
+    add_mapping(
+        &mut map,
+        "oot_bottom_of_the_well_front_west",
+        scene::BOTTOM_OF_THE_WELL,
+        FlagType::Chest,
+        0x0000_0100,
+    );
+    add_mapping(
+        &mut map,
+        "oot_bottom_of_the_well_map",
+        scene::BOTTOM_OF_THE_WELL,
+        FlagType::Chest,
+        0x0000_0080,
+    );
+    add_mapping(
+        &mut map,
+        "oot_bottom_of_the_well_back_west",
+        scene::BOTTOM_OF_THE_WELL,
+        FlagType::Chest,
+        0x0000_0020,
+    );
+    add_mapping(
+        &mut map,
+        "oot_bottom_of_the_well_under_debris",
+        scene::BOTTOM_OF_THE_WELL,
+        FlagType::Chest,
+        0x0000_0010,
+    );
+    add_mapping(
+        &mut map,
+        "oot_bottom_of_the_well_lens",
+        scene::BOTTOM_OF_THE_WELL,
+        FlagType::Chest,
+        0x0000_0008,
+    );
+    add_mapping(
+        &mut map,
+        "oot_bottom_of_the_well_lens_side_chest",
+        scene::BOTTOM_OF_THE_WELL,
+        FlagType::Chest,
+        0x0000_0004,
+    );
+    add_mapping(
+        &mut map,
+        "oot_bottom_of_the_well_compass",
+        scene::BOTTOM_OF_THE_WELL,
+        FlagType::Chest,
+        0x0000_0002,
+    );
+
+    // ========================================================================
+    // ICE CAVERN (Scene 0x09)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "oot_ice_cavern_rupee_ice",
+        scene::ICE_CAVERN,
+        FlagType::Chest,
+        0x0000_0004,
+    );
+    add_mapping(
+        &mut map,
+        "oot_ice_cavern_compass",
+        scene::ICE_CAVERN,
+        FlagType::Chest,
+        0x0000_0002,
+    );
+    add_mapping(
+        &mut map,
+        "oot_ice_cavern_map",
+        scene::ICE_CAVERN,
         FlagType::Chest,
         0x0000_0001,
     );
 
-    // Grottos (shared scene)
+    // ========================================================================
+    // GANON'S CASTLE TOWER (Scene 0x0A)
+    // ========================================================================
+    // Boss Key chest - scene.rs shows 0x0000_0800
+
+    // ========================================================================
+    // GERUDO TRAINING GROUND (Scene 0x0B)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "oot_gerudo_training_maze_chest_4",
+        scene::GERUDO_TRAINING_GROUND,
+        FlagType::Chest,
+        0x0010_0000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_gerudo_training_maze_side_chest_1",
+        scene::GERUDO_TRAINING_GROUND,
+        FlagType::Chest,
+        0x0008_0000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_gerudo_training_maze_chest_3",
+        scene::GERUDO_TRAINING_GROUND,
+        FlagType::Chest,
+        0x0004_0000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_gerudo_training_maze_chest_2",
+        scene::GERUDO_TRAINING_GROUND,
+        FlagType::Chest,
+        0x0002_0000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_gerudo_training_maze_side_chest_2",
+        scene::GERUDO_TRAINING_GROUND,
+        FlagType::Chest,
+        0x0001_0000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_gerudo_training_maze_chest_1",
+        scene::GERUDO_TRAINING_GROUND,
+        FlagType::Chest,
+        0x0000_1000,
+    );
+
+    // ========================================================================
+    // DODONGO'S CAVERN BOSS (Scene 0x12)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "oot_dodongo_cavern_boss_chest",
+        scene::DODONGOS_CAVERN_BOSS,
+        FlagType::Chest,
+        0x0000_0001,
+    );
+
+    // ========================================================================
+    // GANON'S CASTLE (Scene 0x0D)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "oot_ganon_castle_spirit_chest_2",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0010_0000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_ganon_castle_spirit_chest_1",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0004_0000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_ganon_castle_light_chest_lullaby",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0002_0000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_ganon_castle_light_chest_center",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0001_0000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_ganon_castle_light_chest_around_3",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0000_8000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_ganon_castle_light_chest_around_1",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0000_4000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_ganon_castle_light_chest_around_6",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0000_2000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_ganon_castle_light_chest_around_4",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0000_1000,
+    );
+    add_mapping(
+        &mut map,
+        "oot_ganon_castle_light_chest_around_5",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0000_0800,
+    );
+    add_mapping(
+        &mut map,
+        "oot_ganon_castle_light_chest_around_2",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0000_0400,
+    );
+    add_mapping(
+        &mut map,
+        "oot_ganon_castle_forest_chest",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0000_0200,
+    );
+    add_mapping(
+        &mut map,
+        "oot_ganon_castle_shadow_chest_1",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0000_0100,
+    );
+    add_mapping(
+        &mut map,
+        "oot_ganon_castle_water_chest_1",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0000_0080,
+    );
+    add_mapping(
+        &mut map,
+        "oot_ganon_castle_water_chest_2",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0000_0040,
+    );
+    add_mapping(
+        &mut map,
+        "oot_ganon_castle_shadow_chest_2",
+        scene::GANONS_CASTLE,
+        FlagType::Chest,
+        0x0000_0020,
+    );
+
+    // ========================================================================
+    // TREASURE CHEST GAME (Scene 0x10)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "oot_treasure_chest_game_hp",
+        scene::TREASURE_CHEST_GAME,
+        FlagType::Chest,
+        0x0000_0400,
+    );
+
+    // ========================================================================
+    // KF MIDO'S HOUSE (Scene 0x28)
+    // ========================================================================
+    // Mido's House chest IDs - checking YAML for exact naming
+
+    // ========================================================================
+    // GROTTOS (Scene 0x3E) - Shared scene for all grottos
+    // ========================================================================
     add_mapping(
         &mut map,
         "oot_dmc_upper_grotto_chest",
@@ -767,7 +1340,9 @@ static OOT_MAPPINGS: Lazy<HashMap<&'static str, FlagMapping>> = Lazy::new(|| {
         0x0000_0001,
     );
 
-    // Graveyard graves
+    // ========================================================================
+    // GRAVEYARD GRAVES (Scenes 0x3F, 0x40, 0x41, 0x48)
+    // ========================================================================
     add_mapping(
         &mut map,
         "oot_graveyard_heart_piece_grave_chest",
@@ -784,7 +1359,7 @@ static OOT_MAPPINGS: Lazy<HashMap<&'static str, FlagMapping>> = Lazy::new(|| {
     );
     add_mapping(
         &mut map,
-        "oot_graveyard_royal_familys_tomb_chest",
+        "oot_graveyard_royal_tomb_chest",
         scene::ROYAL_FAMILYS_TOMB,
         FlagType::Chest,
         0x0000_0001,
@@ -797,8 +1372,103 @@ static OOT_MAPPINGS: Lazy<HashMap<&'static str, FlagMapping>> = Lazy::new(|| {
         0x0000_0001,
     );
 
+    // ========================================================================
+    // KOKIRI FOREST (Scene 0x55)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "oot_kokiri_forest_kokiri_sword_chest",
+        scene::KOKIRI_FOREST,
+        FlagType::Chest,
+        0x0000_0001,
+    );
+
+    // ========================================================================
+    // LAKE HYLIA (Scene 0x57)
+    // ========================================================================
+    // LH Sun chest - scene 0x57
+
+    // ========================================================================
+    // ZORA'S DOMAIN (Scene 0x58)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "oot_zora_domain_waterfall_chest",
+        scene::ZORAS_DOMAIN,
+        FlagType::Chest,
+        0x0000_0001,
+    );
+
+    // ========================================================================
+    // GERUDO VALLEY (Scene 0x5A)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "oot_gerudo_valley_chest",
+        scene::GERUDO_VALLEY,
+        FlagType::Chest,
+        0x0000_0001,
+    );
+
+    // ========================================================================
+    // DESERT COLOSSUS (Scene 0x5C) - Spirit Temple exterior chests
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "oot_spirit_temple_silver_gauntlets",
+        scene::DESERT_COLOSSUS,
+        FlagType::Chest,
+        0x0000_0800,
+    );
+    add_mapping(
+        &mut map,
+        "oot_spirit_temple_mirror_shield",
+        scene::DESERT_COLOSSUS,
+        FlagType::Chest,
+        0x0000_0200,
+    );
+
+    // ========================================================================
+    // GERUDO FORTRESS (Scene 0x5D)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "oot_gerudo_fortress_chest",
+        scene::GERUDO_FORTRESS,
+        FlagType::Chest,
+        0x0000_0001,
+    );
+
+    // ========================================================================
+    // HAUNTED WASTELAND (Scene 0x5E)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "oot_haunted_wasteland_chest",
+        scene::HAUNTED_WASTELAND,
+        FlagType::Chest,
+        0x0000_0001,
+    );
+
+    // ========================================================================
+    // DEATH MOUNTAIN TRAIL (Scene 0x60)
+    // ========================================================================
+    add_mapping(
+        &mut map,
+        "oot_death_mountain_trail_chest",
+        scene::DEATH_MOUNTAIN_TRAIL,
+        FlagType::Chest,
+        0x0000_0002,
+    );
+
+    // ========================================================================
+    // GORON CITY (Scene 0x62)
+    // ========================================================================
+    // Goron City doesn't have maze chests in YAML - different naming
+
+    // ========================================================================
     // Gold Skulltulas - these use a different flag system
-    // Forest Temple example
+    // ========================================================================
     add_global_mapping(
         &mut map,
         "oot_forest_temple_gs_level_island_courtyard",
