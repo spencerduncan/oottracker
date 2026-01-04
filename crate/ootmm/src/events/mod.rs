@@ -7,8 +7,13 @@
 //! - **Persistent events**: Stored in save data (EventChkInf, InfTable, scene flags)
 //! - **Volatile events**: Computed at runtime (dungeon switches, water levels, etc.)
 
+pub mod mm;
 pub mod oot;
 
+pub use mm::{
+    offsets as mm_offsets, MmEvent, MmEventCategory, MmEventFlag, MmEventReadError, MmEventReader,
+    MmEventWriter,
+};
 pub use oot::{
     offsets, EventReadError, OotEvent, OotEventCategory, OotEventFlag, OotEventReader,
     OotEventWriter,
