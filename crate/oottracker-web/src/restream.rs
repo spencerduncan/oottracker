@@ -104,5 +104,6 @@ pub(crate) fn render_double_cell(
                 LocationStyle::Dimmed
             },
         },
+        accessibility: None,
     }
 }

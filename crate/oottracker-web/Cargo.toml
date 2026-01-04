@@ -47,7 +47,7 @@ branch = "main"
 [dependencies.sqlx]
 version = "0.6"
 default-features = false
-features = ["json", "macros", "postgres", "runtime-tokio-rustls"]
+features = ["json", "macros", "postgres", "runtime-tokio-rustls", "offline"]
 
 [dependencies.tokio]
 version = "1"
@@ -57,3 +57,6 @@ features = ["sync", "time"]
 git = "https://github.com/fenhl/wheel"
 branch = "main"
 features = ["rocket-beta"]
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt", "macros"] }
