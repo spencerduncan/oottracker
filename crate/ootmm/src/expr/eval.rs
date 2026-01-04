@@ -41,8 +41,21 @@ pub trait EvalContext {
     /// Check if a game event has occurred.
     fn event(&self, name: &str) -> bool;
 
-    /// Get the value of a setting. Returns `None` if the setting doesn't exist.
+    /// Get the value of a boolean setting. Returns `None` if the setting doesn't exist.
+    ///
+    /// This is used for `setting(name)` expressions that check if a setting is enabled.
     fn setting(&self, name: &str) -> Option<bool>;
+
+    /// Check if a setting has a specific value.
+    ///
+    /// This is used for `setting(name, value)` expressions that check if a setting
+    /// matches a specific value (e.g., `setting(openDungeonsOot, DC)`).
+    ///
+    /// Default implementation returns false for all queries.
+    fn setting_value(&self, name: &str, value: &str) -> bool {
+        let _ = (name, value);
+        false
+    }
 
     /// Check if a trick is enabled.
     fn trick(&self, name: &str) -> bool;
@@ -213,17 +226,26 @@ impl<'a, C: EvalContext> Evaluator<'a, C> {
     /// Checks the value of a game setting.
     ///
     /// # Syntax
-    /// - `setting(SETTING_NAME)` - true if the setting is enabled
+    /// - `setting(SETTING_NAME)` - true if the boolean setting is enabled
+    /// - `setting(SETTING_NAME, VALUE)` - true if the setting has the specified value
     fn eval_setting(&self, args: &[Expr]) -> Result<bool, EvalError> {
-        if args.len() != 1 {
-            return Err(EvalError::Error(format!(
-                "setting() expects 1 argument, got {}",
+        match args.len() {
+            1 => {
+                // Boolean setting check: setting(name)
+                let setting_name = self.extract_name(&args[0])?;
+                Ok(self.ctx.setting(&setting_name).unwrap_or(false))
+            }
+            2 => {
+                // Value setting check: setting(name, value)
+                let setting_name = self.extract_name(&args[0])?;
+                let setting_value = self.extract_name(&args[1])?;
+                Ok(self.ctx.setting_value(&setting_name, &setting_value))
+            }
+            _ => Err(EvalError::Error(format!(
+                "setting() expects 1 or 2 arguments, got {}",
                 args.len()
-            )));
+            ))),
         }
-
-        let setting_name = self.extract_name(&args[0])?;
-        Ok(self.ctx.setting(&setting_name).unwrap_or(false))
     }
 
     /// Evaluate the `trick` built-in function.
@@ -304,6 +326,8 @@ mod tests {
         items: HashMap<String, u32>,
         events: HashSet<String>,
         settings: HashMap<String, bool>,
+        /// Settings with values: key is "settingName:value", value is true if that combination is valid
+        setting_values: HashSet<String>,
         tricks: HashSet<String>,
         is_adult: bool,
     }
@@ -314,6 +338,7 @@ mod tests {
                 items: HashMap::new(),
                 events: HashSet::new(),
                 settings: HashMap::new(),
+                setting_values: HashSet::new(),
                 tricks: HashSet::new(),
                 is_adult: true,
             }
@@ -331,6 +356,12 @@ mod tests {
 
         fn with_setting(mut self, setting: &str, value: bool) -> Self {
             self.settings.insert(setting.to_string(), value);
+            self
+        }
+
+        /// Sets a setting to have a specific value (for 2-argument setting checks).
+        fn with_setting_value(mut self, setting: &str, value: &str) -> Self {
+            self.setting_values.insert(format!("{}:{}", setting, value));
             self
         }
 
@@ -364,6 +395,10 @@ mod tests {
 
         fn setting(&self, name: &str) -> Option<bool> {
             self.settings.get(name).copied()
+        }
+
+        fn setting_value(&self, name: &str, value: &str) -> bool {
+            self.setting_values.contains(&format!("{}:{}", name, value))
         }
 
         fn trick(&self, name: &str) -> bool {
@@ -834,5 +869,100 @@ mod tests {
             let result = eval_str(expr_str, &ctx).unwrap();
             assert_eq!(result, expected, "Expression '{}' failed", expr_str);
         }
+    }
+
+    // --- Two-argument setting() tests ---
+
+    #[test]
+    fn test_eval_setting_two_args_matches() {
+        let ctx = MockContext::new()
+            .with_setting_value("openDungeonsOot", "DC")
+            .with_setting_value("openDungeonsOot", "BotW");
+
+        assert!(eval_str("setting(openDungeonsOot, DC)", &ctx).unwrap());
+        assert!(eval_str("setting(openDungeonsOot, BotW)", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_eval_setting_two_args_no_match() {
+        let ctx = MockContext::new().with_setting_value("openDungeonsOot", "DC");
+
+        assert!(!eval_str("setting(openDungeonsOot, Shadow)", &ctx).unwrap());
+        assert!(!eval_str("setting(openDungeonsMm, ST)", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_eval_setting_two_args_enum_value() {
+        let ctx = MockContext::new()
+            .with_setting_value("ganonBossKey", "removed")
+            .with_setting_value("ageChange", "none");
+
+        assert!(eval_str("setting(ganonBossKey, removed)", &ctx).unwrap());
+        assert!(!eval_str("setting(ganonBossKey, custom)", &ctx).unwrap());
+        assert!(eval_str("setting(ageChange, none)", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_eval_setting_two_args_in_complex_expr() {
+        let ctx = MockContext::new()
+            .with_setting_value("openDungeonsOot", "DC")
+            .with_setting_value("beneathWell", "open")
+            .with_item("HOOKSHOT", 1);
+
+        // Test setting in AND expression
+        assert!(eval_str("setting(openDungeonsOot, DC) && has(HOOKSHOT)", &ctx).unwrap());
+        assert!(!eval_str("setting(openDungeonsOot, Shadow) && has(HOOKSHOT)", &ctx).unwrap());
+
+        // Test setting in OR expression
+        assert!(eval_str("setting(beneathWell, open) || has(BOMBS)", &ctx).unwrap());
+
+        // Test negated setting
+        assert!(eval_str("!setting(openDungeonsOot, Shadow)", &ctx).unwrap());
+        assert!(!eval_str("!setting(openDungeonsOot, DC)", &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_eval_setting_two_args_like_world_data() {
+        // Test expressions that match patterns from real world data files
+        let ctx = MockContext::new()
+            .with_setting_value("climbMostSurfacesOot", "off")
+            .with_setting_value("hookshotAnywhereOot", "off")
+            .with_setting_value("ageChange", "none");
+
+        // Pattern: !setting(climbMostSurfacesOot, off)
+        assert!(!eval_str("!setting(climbMostSurfacesOot, off)", &ctx).unwrap());
+
+        // Pattern: !setting(hookshotAnywhereOot, off) && !setting(ageChange, none)
+        assert!(!eval_str(
+            "!setting(hookshotAnywhereOot, off) && !setting(ageChange, none)",
+            &ctx
+        )
+        .unwrap());
+    }
+
+    #[test]
+    fn test_eval_setting_mixed_one_and_two_args() {
+        let ctx = MockContext::new()
+            .with_setting("agelessBoots", true)
+            .with_setting_value("openDungeonsOot", "DC");
+
+        // Mix of 1-arg and 2-arg settings
+        assert!(eval_str(
+            "setting(agelessBoots) && setting(openDungeonsOot, DC)",
+            &ctx
+        )
+        .unwrap());
+        assert!(!eval_str(
+            "setting(agelessBoots) && setting(openDungeonsOot, Shadow)",
+            &ctx
+        )
+        .unwrap());
+    }
+
+    #[test]
+    fn test_eval_setting_three_args_error() {
+        let ctx = MockContext::new();
+        let result = eval_str("setting(a, b, c)", &ctx);
+        assert!(result.is_err());
     }
 }

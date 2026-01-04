@@ -5,6 +5,7 @@
 
 use crate::expr::EvalContext;
 use crate::item::Item;
+use crate::settings::RandomizerSettings;
 use std::collections::{HashMap, HashSet};
 
 /// The player's current age state.
@@ -37,7 +38,7 @@ impl Age {
 /// - Current inventory (items and counts)
 /// - Current age (Child/Adult)
 /// - Enabled tricks
-/// - Game settings
+/// - Randomizer settings
 /// - Event flags
 /// - MM time
 ///
@@ -63,8 +64,10 @@ pub struct GameContext {
     age: Age,
     /// Set of enabled tricks.
     tricks: HashSet<String>,
-    /// Game settings with boolean values.
-    settings: HashMap<String, bool>,
+    /// Randomizer settings configuration.
+    randomizer_settings: RandomizerSettings,
+    /// Legacy boolean settings (for backward compatibility).
+    legacy_settings: HashMap<String, bool>,
     /// Set of triggered game events.
     events: HashSet<String>,
     /// Current MM time in minutes since Day 1 at 6:00 AM.
@@ -189,31 +192,49 @@ impl GameContext {
 
     // --- Setting methods ---
 
-    /// Sets a game setting value.
+    /// Sets a legacy boolean game setting value.
+    ///
+    /// For new code, prefer using `set_randomizer_settings` or `randomizer_settings_mut`.
     pub fn set_setting(&mut self, name: &str, value: bool) {
-        self.settings.insert(name.to_string(), value);
+        self.legacy_settings.insert(name.to_string(), value);
     }
 
-    /// Gets a game setting value.
+    /// Gets a legacy boolean game setting value.
     #[must_use]
     pub fn get_setting(&self, name: &str) -> Option<bool> {
-        self.settings.get(name).copied()
+        self.legacy_settings.get(name).copied()
     }
 
-    /// Removes a game setting.
+    /// Removes a legacy game setting.
     pub fn remove_setting(&mut self, name: &str) {
-        self.settings.remove(name);
+        self.legacy_settings.remove(name);
     }
 
-    /// Clears all settings.
+    /// Clears all legacy settings.
     pub fn clear_settings(&mut self) {
-        self.settings.clear();
+        self.legacy_settings.clear();
     }
 
-    /// Returns the settings as a reference to the internal HashMap.
+    /// Returns the legacy settings as a reference to the internal HashMap.
     #[must_use]
     pub fn settings(&self) -> &HashMap<String, bool> {
-        &self.settings
+        &self.legacy_settings
+    }
+
+    /// Returns a reference to the randomizer settings.
+    #[must_use]
+    pub fn randomizer_settings(&self) -> &RandomizerSettings {
+        &self.randomizer_settings
+    }
+
+    /// Returns a mutable reference to the randomizer settings.
+    pub fn randomizer_settings_mut(&mut self) -> &mut RandomizerSettings {
+        &mut self.randomizer_settings
+    }
+
+    /// Sets the randomizer settings.
+    pub fn set_randomizer_settings(&mut self, settings: RandomizerSettings) {
+        self.randomizer_settings = settings;
     }
 
     // --- Event methods ---
@@ -302,11 +323,21 @@ impl EvalContext for GameContext {
     }
 
     fn setting(&self, name: &str) -> Option<bool> {
-        self.settings.get(name).copied()
+        // First check randomizer settings
+        if let Some(value) = self.randomizer_settings.get_bool_setting(name) {
+            return Some(value);
+        }
+        // Fall back to legacy settings
+        self.legacy_settings.get(name).copied()
+    }
+
+    fn setting_value(&self, name: &str, value: &str) -> bool {
+        self.randomizer_settings.check_setting_value(name, value)
     }
 
     fn trick(&self, name: &str) -> bool {
-        self.tricks.contains(name)
+        // Check both the context tricks and randomizer settings tricks
+        self.tricks.contains(name) || self.randomizer_settings.has_trick(name)
     }
 
     fn is_adult(&self) -> bool {
@@ -395,10 +426,17 @@ impl GameContextBuilder {
         self
     }
 
-    /// Adds a setting.
+    /// Adds a legacy boolean setting.
     #[must_use]
     pub fn with_setting(mut self, name: &str, value: bool) -> Self {
         self.ctx.set_setting(name, value);
+        self
+    }
+
+    /// Sets the randomizer settings.
+    #[must_use]
+    pub fn with_randomizer_settings(mut self, settings: RandomizerSettings) -> Self {
+        self.ctx.set_randomizer_settings(settings);
         self
     }
 
@@ -434,19 +472,19 @@ mod tests {
     #[test]
     fn test_new_context() {
         let ctx = GameContext::new();
-        assert!(ctx.inventory.is_empty());
-        assert_eq!(ctx.age, Age::Child);
-        assert!(ctx.tricks.is_empty());
-        assert!(ctx.settings.is_empty());
-        assert!(ctx.events.is_empty());
-        assert_eq!(ctx.mm_time, 0);
+        assert!(ctx.inventory().is_empty());
+        assert_eq!(ctx.age(), Age::Child);
+        assert!(ctx.tricks().is_empty());
+        assert!(ctx.settings().is_empty());
+        assert!(ctx.events().is_empty());
+        assert_eq!(ctx.get_mm_time(), 0);
     }
 
     #[test]
     fn test_default_context() {
         let ctx = GameContext::default();
-        assert_eq!(ctx.age, Age::Child);
-        assert_eq!(ctx.mm_time, 0);
+        assert_eq!(ctx.age(), Age::Child);
+        assert_eq!(ctx.get_mm_time(), 0);
     }
 
     // --- Inventory tests ---
