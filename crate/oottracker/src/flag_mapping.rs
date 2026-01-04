@@ -3659,6 +3659,250 @@ pub fn get_dungeon_mappings(
 }
 
 // ============================================================================
+// Location Check Status
+// ============================================================================
+
+use crate::ModelState;
+
+/// Status of a location check.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub enum CheckStatus {
+    /// Location has been checked (item collected).
+    Checked,
+    /// Location has not been checked yet.
+    Unchecked,
+    /// Check status cannot be determined (unmapped or unknown).
+    Unknown,
+}
+
+/// Result of checking a location.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct LocationCheckResult {
+    /// The location ID.
+    pub location_id: String,
+    /// Whether the location has been checked.
+    pub status: CheckStatus,
+    /// Whether this location has a valid flag mapping.
+    pub is_mapped: bool,
+}
+
+/// Checks if a specific location has been checked based on the current game state.
+///
+/// # Arguments
+///
+/// * `mapping` - The flag mapping for the location
+/// * `model` - The current model state containing game memory
+///
+/// # Returns
+///
+/// `CheckStatus::Checked` if the location flag is set,
+/// `CheckStatus::Unchecked` if the flag is not set,
+/// `CheckStatus::Unknown` if the location is unmapped or cannot be determined.
+#[must_use]
+pub fn check_location_status(mapping: &FlagMapping, model: &ModelState) -> CheckStatus {
+    // If the mapping is a stub (unmapped), we can't determine the status
+    if mapping.is_stub() {
+        return CheckStatus::Unknown;
+    }
+
+    let flag_type = match mapping.flag_type {
+        Some(ft) => ft,
+        None => return CheckStatus::Unknown,
+    };
+
+    let flag_bit = match mapping.flag_bit {
+        Some(fb) => fb,
+        None => return CheckStatus::Unknown,
+    };
+
+    match flag_type {
+        FlagType::Chest => {
+            if let Some(scene_id) = mapping.scene_id {
+                let scene_flags = model.ram.scene_flags();
+                let chests = scene_flags.get_chest_flags(scene_id);
+                if chests & flag_bit != 0 {
+                    CheckStatus::Checked
+                } else {
+                    CheckStatus::Unchecked
+                }
+            } else {
+                CheckStatus::Unknown
+            }
+        }
+        FlagType::Switch => {
+            if let Some(scene_id) = mapping.scene_id {
+                let scene_flags = model.ram.scene_flags();
+                let switches = scene_flags.get_switch_flags(scene_id);
+                if switches & flag_bit != 0 {
+                    CheckStatus::Checked
+                } else {
+                    CheckStatus::Unchecked
+                }
+            } else {
+                CheckStatus::Unknown
+            }
+        }
+        FlagType::RoomClear => {
+            if let Some(scene_id) = mapping.scene_id {
+                let scene_flags = model.ram.scene_flags();
+                let room_clear = scene_flags.get_room_clear_flags(scene_id);
+                if room_clear & flag_bit != 0 {
+                    CheckStatus::Checked
+                } else {
+                    CheckStatus::Unchecked
+                }
+            } else {
+                CheckStatus::Unknown
+            }
+        }
+        FlagType::Collectible => {
+            if let Some(scene_id) = mapping.scene_id {
+                let scene_flags = model.ram.scene_flags();
+                let collectible = scene_flags.get_collectible_flags(scene_id);
+                if collectible & flag_bit != 0 {
+                    CheckStatus::Checked
+                } else {
+                    CheckStatus::Unchecked
+                }
+            } else {
+                CheckStatus::Unknown
+            }
+        }
+        FlagType::GoldSkulltula => {
+            // Gold Skulltulas use a different storage mechanism
+            // Check the gold_skulltulas field in save data
+            let gs_flags = model.ram.save.gold_skulltulas.get_raw_flags();
+            if gs_flags & flag_bit != 0 {
+                CheckStatus::Checked
+            } else {
+                CheckStatus::Unchecked
+            }
+        }
+        FlagType::EventChkInf => {
+            let event_flags = model.ram.save.event_chk_inf.get_raw_flags();
+            if event_flags & flag_bit != 0 {
+                CheckStatus::Checked
+            } else {
+                CheckStatus::Unchecked
+            }
+        }
+        FlagType::ItemGetInf => {
+            let item_flags = model.ram.save.item_get_inf.get_raw_flags();
+            if item_flags & flag_bit != 0 {
+                CheckStatus::Checked
+            } else {
+                CheckStatus::Unchecked
+            }
+        }
+        FlagType::InfTable => {
+            let inf_flags = model.ram.save.inf_table.get_raw_flags();
+            if inf_flags & flag_bit != 0 {
+                CheckStatus::Checked
+            } else {
+                CheckStatus::Unchecked
+            }
+        }
+        // These flag types need special handling or are not yet implemented
+        FlagType::Shop
+        | FlagType::Scrub
+        | FlagType::GreatFairy
+        | FlagType::Boss
+        | FlagType::Song
+        | FlagType::Fishing
+        | FlagType::Cow
+        | FlagType::GossipStone => CheckStatus::Unknown,
+    }
+}
+
+/// Returns all checked locations for the current game state.
+///
+/// # Arguments
+///
+/// * `model` - The current model state containing game memory
+///
+/// # Returns
+///
+/// A vector of `LocationCheckResult` for all mapped locations.
+pub fn get_all_checked_locations(model: &ModelState) -> Vec<LocationCheckResult> {
+    get_mapped_locations()
+        .map(|mapping| LocationCheckResult {
+            location_id: mapping.location_id.to_string(),
+            status: check_location_status(mapping, model),
+            is_mapped: mapping.is_mapped(),
+        })
+        .collect()
+}
+
+/// Returns all checked locations as a HashMap for efficient lookup.
+///
+/// # Arguments
+///
+/// * `model` - The current model state containing game memory
+///
+/// # Returns
+///
+/// A HashMap mapping location_id to CheckStatus.
+pub fn get_checked_locations_map(model: &ModelState) -> HashMap<String, CheckStatus> {
+    get_mapped_locations()
+        .map(|mapping| {
+            (
+                mapping.location_id.to_string(),
+                check_location_status(mapping, model),
+            )
+        })
+        .collect()
+}
+
+/// Summary of checked locations.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct CheckedLocationsSummary {
+    /// Total number of mapped locations.
+    pub total_mapped: usize,
+    /// Number of checked locations.
+    pub checked_count: usize,
+    /// Number of unchecked locations.
+    pub unchecked_count: usize,
+    /// Number of locations with unknown status.
+    pub unknown_count: usize,
+    /// List of location check results.
+    pub locations: Vec<LocationCheckResult>,
+}
+
+/// Returns a summary of checked locations for the current game state.
+///
+/// # Arguments
+///
+/// * `model` - The current model state containing game memory
+///
+/// # Returns
+///
+/// A `CheckedLocationsSummary` containing counts and individual location statuses.
+pub fn get_checked_locations_summary(model: &ModelState) -> CheckedLocationsSummary {
+    let locations = get_all_checked_locations(model);
+    let total_mapped = locations.len();
+    let checked_count = locations
+        .iter()
+        .filter(|l| l.status == CheckStatus::Checked)
+        .count();
+    let unchecked_count = locations
+        .iter()
+        .filter(|l| l.status == CheckStatus::Unchecked)
+        .count();
+    let unknown_count = locations
+        .iter()
+        .filter(|l| l.status == CheckStatus::Unknown)
+        .count();
+
+    CheckedLocationsSummary {
+        total_mapped,
+        checked_count,
+        unchecked_count,
+        unknown_count,
+        locations,
+    }
+}
+
+// ============================================================================
 // Tests
 // ============================================================================
 

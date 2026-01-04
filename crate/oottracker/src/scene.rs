@@ -506,3 +506,117 @@ impl fmt::Display for Scene {
         self.0.fmt(f)
     }
 }
+
+// ============================================================================
+// Raw Scene Flag Accessors
+// ============================================================================
+//
+// These methods provide raw flag access by scene ID for the flag_mapping module.
+
+impl SceneFlags {
+    /// Returns the chest flags for the specified scene ID.
+    ///
+    /// # Arguments
+    ///
+    /// * `scene_id` - The scene ID (0-100)
+    ///
+    /// # Returns
+    ///
+    /// The chest flags as a u32, or 0 if the scene ID is invalid.
+    #[must_use]
+    pub fn get_chest_flags(&self, scene_id: u8) -> u32 {
+        self.get_flags_for_scene(scene_id, |flags| flags.0)
+    }
+
+    /// Returns the switch flags for the specified scene ID.
+    #[must_use]
+    pub fn get_switch_flags(&self, scene_id: u8) -> u32 {
+        self.get_flags_for_scene(scene_id, |flags| flags.1)
+    }
+
+    /// Returns the room clear flags for the specified scene ID.
+    #[must_use]
+    pub fn get_room_clear_flags(&self, scene_id: u8) -> u32 {
+        self.get_flags_for_scene(scene_id, |flags| flags.2)
+    }
+
+    /// Returns the collectible flags for the specified scene ID.
+    #[must_use]
+    pub fn get_collectible_flags(&self, scene_id: u8) -> u32 {
+        self.get_flags_for_scene(scene_id, |flags| flags.3)
+    }
+
+    /// Helper to get raw flags for a scene by converting to raw bytes.
+    ///
+    /// This converts the SceneFlags struct back to raw bytes and extracts
+    /// the flags at the appropriate offset for the given scene.
+    fn get_flags_for_scene<F, T>(&self, scene_id: u8, extractor: F) -> T
+    where
+        F: FnOnce((u32, u32, u32, u32)) -> T,
+        T: Default,
+    {
+        // Convert to raw bytes
+        let bytes: Vec<u8> = Vec::from(self);
+
+        // Each scene is 0x1c (28) bytes
+        let scene_start = (scene_id as usize) * 0x1c;
+
+        // Make sure we're within bounds
+        if scene_start + 0x10 > bytes.len() {
+            return T::default();
+        }
+
+        // Extract the four u32 flag values
+        let chests = u32::from_be_bytes([
+            bytes[scene_start],
+            bytes[scene_start + 1],
+            bytes[scene_start + 2],
+            bytes[scene_start + 3],
+        ]);
+        let switches = u32::from_be_bytes([
+            bytes[scene_start + 0x04],
+            bytes[scene_start + 0x05],
+            bytes[scene_start + 0x06],
+            bytes[scene_start + 0x07],
+        ]);
+        let room_clear = u32::from_be_bytes([
+            bytes[scene_start + 0x08],
+            bytes[scene_start + 0x09],
+            bytes[scene_start + 0x0a],
+            bytes[scene_start + 0x0b],
+        ]);
+        let collectible = u32::from_be_bytes([
+            bytes[scene_start + 0x0c],
+            bytes[scene_start + 0x0d],
+            bytes[scene_start + 0x0e],
+            bytes[scene_start + 0x0f],
+        ]);
+
+        extractor((chests, switches, room_clear, collectible))
+    }
+}
+
+impl GoldSkulltulas {
+    /// Returns the raw gold skulltula flags as a u32 bitmap.
+    ///
+    /// This converts the Gold Skulltula data into a format that can be checked
+    /// against flag_bit values from FlagMapping.
+    #[must_use]
+    pub fn get_raw_flags(&self) -> u32 {
+        // The GoldSkulltulas struct has individual scene fields.
+        // For checking, we need to convert to raw bytes first and then read as u32.
+        // The struct is stored as 0x18 bytes (24 bytes).
+        let bytes: Vec<u8> = Vec::from(self);
+        let mut result = 0u32;
+        for (i, byte) in bytes.iter().take(4).enumerate() {
+            result |= (*byte as u32) << (i * 8);
+        }
+        result
+    }
+
+    /// Returns the full raw bytes for Gold Skulltula flags.
+    #[must_use]
+    pub fn get_all_raw_bytes(&self) -> Vec<u8> {
+        Vec::from(self)
+    }
+}

@@ -133,3 +133,66 @@ flags_list! {
         },
     }
 }
+
+// ============================================================================
+// Raw Flag Accessors
+// ============================================================================
+
+impl EventChkInf {
+    /// Returns the raw event flags as a u32 bitmap.
+    ///
+    /// This converts the struct back to raw bytes for flag checking.
+    #[must_use]
+    pub fn get_raw_flags(&self) -> u32 {
+        let bytes: Vec<u8> = Vec::from(self);
+        let mut result = 0u32;
+        for (i, byte) in bytes.iter().take(4).enumerate() {
+            result |= (*byte as u32) << (i * 8);
+        }
+        result
+    }
+
+    /// Returns the full raw bytes.
+    #[must_use]
+    pub fn get_raw_bytes(&self) -> Vec<u8> {
+        Vec::from(self)
+    }
+}
+
+impl ItemGetInf {
+    /// Returns the raw item flags as a u32 bitmap.
+    #[must_use]
+    pub fn get_raw_flags(&self) -> u32 {
+        let bytes: Vec<u8> = Vec::from(self);
+        let mut result = 0u32;
+        for (i, byte) in bytes.iter().take(4).enumerate() {
+            result |= (*byte as u32) << (i * 8);
+        }
+        result
+    }
+
+    /// Returns the full raw bytes.
+    #[must_use]
+    pub fn get_raw_bytes(&self) -> Vec<u8> {
+        Vec::from(self)
+    }
+}
+
+impl InfTable {
+    /// Returns the raw inf_table flags as a u32 bitmap.
+    #[must_use]
+    pub fn get_raw_flags(&self) -> u32 {
+        let bytes: Vec<u8> = Vec::from(self);
+        let mut result = 0u32;
+        for (i, byte) in bytes.iter().take(4).enumerate() {
+            result |= (*byte as u32) << (i * 8);
+        }
+        result
+    }
+
+    /// Returns the full raw bytes.
+    #[must_use]
+    pub fn get_raw_bytes(&self) -> Vec<u8> {
+        Vec::from(self)
+    }
+}
