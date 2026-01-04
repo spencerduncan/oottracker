@@ -21,6 +21,7 @@ pub mod item;
 pub mod items;
 pub mod rando;
 pub mod region;
+pub mod settings;
 pub mod world_database;
 
 // Re-export item types for convenience
@@ -36,3 +37,12 @@ pub use embedded_data::{create_world_database, create_world_database_from};
 
 // Re-export rando types
 pub use rando::{OotmmRando, OotmmRandoError, OotmmRegionName};
+
+// Re-export settings types
+pub use settings::{
+    AgeChangeMode, BeneathWellState, BossWarpPadsMode, ClearStateDungeonsMm,
+    ClimbMostSurfacesState, DekuTreeState, DoorOfTimeState, ErGrottosState, ErOverworldState,
+    GanonBossKeyMode, HookshotAnywhereState, JpLayout, KakarikoGateState, LacsMode, LogicMode,
+    MajoraChildMode, MmDungeon, MoonCrashMode, OotDungeon, RandomizerSettings, ShufflePotsMm,
+    SmallKeyShuffleOot,
+};
