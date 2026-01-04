@@ -6,6 +6,7 @@ edition = "2021"
 description = "E2E testing utilities for oottracker, including Wine+PJ64-EM launcher"
 
 [dependencies]
+dirs = "5"
 thiserror = "1"
 
 [dependencies.tokio]
