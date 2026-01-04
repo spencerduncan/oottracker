@@ -53,3 +53,9 @@ pub use events::{
     offsets as event_offsets, EventReadError, OotEvent, OotEventCategory, OotEventFlag,
     OotEventReader, OotEventWriter,
 };
+
+// Re-export MM flag types
+pub use events::{
+    mm_all_mappings, mm_chest_mappings, mm_collectible_mappings, mm_offsets, mm_special_mappings,
+    FlagMapping, MmFlagType, MmSceneFlag,
+};
