@@ -605,18 +605,24 @@ mod world_database_tests {
     #[test]
     fn test_world_database_has_oot_regions() {
         let db = world_database();
-        assert!(db.has_region("kokiri_forest"), "Should have Kokiri Forest");
-        assert!(db.has_region("lost_woods"), "Should have Lost Woods");
+        assert!(
+            db.has_region("oot_kokiri_forest"),
+            "Should have Kokiri Forest"
+        );
+        assert!(db.has_region("oot_lost_woods"), "Should have Lost Woods");
     }
 
     #[test]
     fn test_world_database_has_mm_regions() {
         let db = world_database();
         assert!(
-            db.has_region("clock_town_south"),
+            db.has_region("mm_clock_town_south"),
             "Should have Clock Town South"
         );
-        assert!(db.has_region("termina_field"), "Should have Termina Field");
+        assert!(
+            db.has_region("mm_termina_field"),
+            "Should have Termina Field"
+        );
     }
 
     #[test]
@@ -624,12 +630,12 @@ mod world_database_tests {
         let db = world_database();
         // Check OoT location
         assert!(
-            db.get_location("kf_midos_chest_top_left").is_some(),
+            db.get_location("oot_midos_house_top_left").is_some(),
             "Should have Mido's chest location"
         );
         // Check MM location
         assert!(
-            db.get_location("ct_bank_reward_1").is_some(),
+            db.get_location("mm_clock_town_bank_reward_1").is_some(),
             "Should have Clock Town Bank location"
         );
     }
@@ -654,8 +660,12 @@ mod world_database_tests {
     #[test]
     fn test_world_database_region_count() {
         let db = world_database();
-        // Embedded data has 4 regions: kokiri_forest, lost_woods (OoT) + clock_town_south, termina_field (MM)
-        assert_eq!(db.region_count(), 4, "Should have 4 embedded regions");
+        // Embedded data has 1000+ regions from OoT and MM world files
+        assert!(
+            db.region_count() > 1000,
+            "Should have 1000+ embedded regions, got {}",
+            db.region_count()
+        );
     }
 }
 
