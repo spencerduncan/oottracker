@@ -1556,6 +1556,634 @@ static MM_MAPPINGS: Lazy<HashMap<&'static str, MmFlagMapping>> = Lazy::new(|| {
         0x0000_0001,
     );
 
+    // Shop Item Mappings (Global Shop Flags)
+    // ========================================================================
+    // Shop items are tracked globally via shop purchase flags.
+    // The flag_bit corresponds to the shop_price() index from OoTMM logic.
+
+    // Bomb Shop (0x00-0x03)
+    add_mm_global_mapping(&mut map, "mm_bomb_shop_item_1", MmFlagType::Shop, 0x00);
+    add_mm_global_mapping(&mut map, "mm_bomb_shop_item_2", MmFlagType::Shop, 0x01);
+
+    // Trading Post (0x05-0x0C)
+    add_mm_global_mapping(&mut map, "mm_trading_post_item_1", MmFlagType::Shop, 0x05);
+    add_mm_global_mapping(&mut map, "mm_trading_post_item_2", MmFlagType::Shop, 0x06);
+    add_mm_global_mapping(&mut map, "mm_trading_post_item_3", MmFlagType::Shop, 0x07);
+    add_mm_global_mapping(&mut map, "mm_trading_post_item_4", MmFlagType::Shop, 0x08);
+    add_mm_global_mapping(&mut map, "mm_trading_post_item_5", MmFlagType::Shop, 0x09);
+    add_mm_global_mapping(&mut map, "mm_trading_post_item_6", MmFlagType::Shop, 0x0A);
+    add_mm_global_mapping(&mut map, "mm_trading_post_item_7", MmFlagType::Shop, 0x0B);
+    add_mm_global_mapping(&mut map, "mm_trading_post_item_8", MmFlagType::Shop, 0x0C);
+
+    // Goron Shop (0x10-0x12)
+    add_mm_global_mapping(&mut map, "mm_goron_shop_item_1", MmFlagType::Shop, 0x10);
+    add_mm_global_mapping(&mut map, "mm_goron_shop_item_2", MmFlagType::Shop, 0x11);
+    add_mm_global_mapping(&mut map, "mm_goron_shop_item_3", MmFlagType::Shop, 0x12);
+
+    // Zora Shop (0x13-0x15)
+    add_mm_global_mapping(&mut map, "mm_zora_shop_item_1", MmFlagType::Shop, 0x13);
+    add_mm_global_mapping(&mut map, "mm_zora_shop_item_2", MmFlagType::Shop, 0x14);
+    add_mm_global_mapping(&mut map, "mm_zora_shop_item_3", MmFlagType::Shop, 0x15);
+
+    // Milk Bar Purchases (tracked via week event flags)
+    add_mm_global_mapping(
+        &mut map,
+        "mm_milk_bar_purchase_milk",
+        MmFlagType::Shop,
+        0x16,
+    );
+    add_mm_global_mapping(
+        &mut map,
+        "mm_milk_bar_purchase_chateau",
+        MmFlagType::Shop,
+        0x17,
+    );
+
+    // Gorman Track Milk Purchase
+    add_mm_global_mapping(
+        &mut map,
+        "mm_gorman_track_milk_purchase",
+        MmFlagType::Shop,
+        0x18,
+    );
+
+    // ========================================================================
+    // Business Scrub Mappings (Global Scrub Flags)
+    // ========================================================================
+    // Business scrubs are tracked globally via scrub purchase flags.
+
+    // Clock Town Business Scrub - sells Moon's Tear trade item
+    add_mm_global_mapping(
+        &mut map,
+        "mm_clock_town_business_scrub",
+        MmFlagType::Scrub,
+        0x00,
+    );
+
+    // Southern Swamp Scrubs
+    add_mm_global_mapping(
+        &mut map,
+        "mm_southern_swamp_scrub_deed",
+        MmFlagType::Scrub,
+        0x01,
+    );
+    add_mm_global_mapping(
+        &mut map,
+        "mm_southern_swamp_scrub_shop",
+        MmFlagType::Scrub,
+        0x02,
+    );
+
+    // Goron Village Scrubs
+    add_mm_global_mapping(
+        &mut map,
+        "mm_goron_village_scrub_deed",
+        MmFlagType::Scrub,
+        0x03,
+    );
+    add_mm_global_mapping(
+        &mut map,
+        "mm_goron_village_scrub_bomb_bag",
+        MmFlagType::Scrub,
+        0x04,
+    );
+
+    // Zora Hall Scrubs
+    add_mm_global_mapping(&mut map, "mm_zora_hall_scrub_deed", MmFlagType::Scrub, 0x05);
+    add_mm_global_mapping(&mut map, "mm_zora_hall_scrub_shop", MmFlagType::Scrub, 0x06);
+
+    // Ikana Valley Scrub
+    add_mm_global_mapping(
+        &mut map,
+        "mm_ikana_valley_scrub_shop",
+        MmFlagType::Scrub,
+        0x07,
+    );
+
+    // Termina Field Scrub Grotto
+    add_mm_global_mapping(&mut map, "mm_termina_field_scrub", MmFlagType::Scrub, 0x08);
+    add_mm_global_mapping(
+        &mut map,
+        "mm_termina_field_scrub_crate",
+        MmFlagType::Scrub,
+        0x09,
+    );
+
+    // ========================================================================
+    // Wonder Item Mappings (Scene Collectible Flags)
+    // ========================================================================
+    // Wonder items are tracked per-scene as collectible flags.
+    // These are special items that appear when hitting targets or other triggers.
+
+    // Clock Town South Wonder Items (Scene: CLOCK_TOWN_SOUTH = 0x6C)
+    add_mm_mapping(
+        &mut map,
+        "mm_clock_town_south_wonder_item_1",
+        mm_scene::CLOCK_TOWN_SOUTH,
+        MmFlagType::Collectible,
+        0x01,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_clock_town_south_wonder_item_2",
+        mm_scene::CLOCK_TOWN_SOUTH,
+        MmFlagType::Collectible,
+        0x02,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_clock_town_south_wonder_item_3",
+        mm_scene::CLOCK_TOWN_SOUTH,
+        MmFlagType::Collectible,
+        0x03,
+    );
+
+    // Clock Town East Wonder Items - Target Left (Scene: CLOCK_TOWN_EAST = 0x6E)
+    add_mm_mapping(
+        &mut map,
+        "mm_clock_town_east_wonder_item_target_left_1",
+        mm_scene::CLOCK_TOWN_EAST,
+        MmFlagType::Collectible,
+        0x01,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_clock_town_east_wonder_item_target_left_2",
+        mm_scene::CLOCK_TOWN_EAST,
+        MmFlagType::Collectible,
+        0x02,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_clock_town_east_wonder_item_target_left_3",
+        mm_scene::CLOCK_TOWN_EAST,
+        MmFlagType::Collectible,
+        0x03,
+    );
+
+    // Clock Town East Wonder Items - Target Right
+    add_mm_mapping(
+        &mut map,
+        "mm_clock_town_east_wonder_item_target_right_1",
+        mm_scene::CLOCK_TOWN_EAST,
+        MmFlagType::Collectible,
+        0x04,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_clock_town_east_wonder_item_target_right_2",
+        mm_scene::CLOCK_TOWN_EAST,
+        MmFlagType::Collectible,
+        0x05,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_clock_town_east_wonder_item_target_right_3",
+        mm_scene::CLOCK_TOWN_EAST,
+        MmFlagType::Collectible,
+        0x06,
+    );
+
+    // Clock Town East Wonder Items - Basket
+    add_mm_mapping(
+        &mut map,
+        "mm_clock_town_east_wonder_item_basket_1",
+        mm_scene::CLOCK_TOWN_EAST,
+        MmFlagType::Collectible,
+        0x07,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_clock_town_east_wonder_item_basket_2",
+        mm_scene::CLOCK_TOWN_EAST,
+        MmFlagType::Collectible,
+        0x08,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_clock_town_east_wonder_item_basket_3",
+        mm_scene::CLOCK_TOWN_EAST,
+        MmFlagType::Collectible,
+        0x09,
+    );
+
+    // Ikana Graveyard Wonder Items (Scene: IKANA_GRAVEYARD = 0x09)
+    add_mm_mapping(
+        &mut map,
+        "mm_ikana_graveyard_wonder_item_01",
+        mm_scene::IKANA_GRAVEYARD,
+        MmFlagType::Collectible,
+        0x01,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_ikana_graveyard_wonder_item_02",
+        mm_scene::IKANA_GRAVEYARD,
+        MmFlagType::Collectible,
+        0x02,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_ikana_graveyard_wonder_item_03",
+        mm_scene::IKANA_GRAVEYARD,
+        MmFlagType::Collectible,
+        0x03,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_ikana_graveyard_wonder_item_04",
+        mm_scene::IKANA_GRAVEYARD,
+        MmFlagType::Collectible,
+        0x04,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_ikana_graveyard_wonder_item_05",
+        mm_scene::IKANA_GRAVEYARD,
+        MmFlagType::Collectible,
+        0x05,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_ikana_graveyard_wonder_item_06",
+        mm_scene::IKANA_GRAVEYARD,
+        MmFlagType::Collectible,
+        0x06,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_ikana_graveyard_wonder_item_07",
+        mm_scene::IKANA_GRAVEYARD,
+        MmFlagType::Collectible,
+        0x07,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_ikana_graveyard_wonder_item_08",
+        mm_scene::IKANA_GRAVEYARD,
+        MmFlagType::Collectible,
+        0x08,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_ikana_graveyard_wonder_item_09",
+        mm_scene::IKANA_GRAVEYARD,
+        MmFlagType::Collectible,
+        0x09,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_ikana_graveyard_wonder_item_10",
+        mm_scene::IKANA_GRAVEYARD,
+        MmFlagType::Collectible,
+        0x0A,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_ikana_graveyard_wonder_item_11",
+        mm_scene::IKANA_GRAVEYARD,
+        MmFlagType::Collectible,
+        0x0B,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_ikana_graveyard_wonder_item_12",
+        mm_scene::IKANA_GRAVEYARD,
+        MmFlagType::Collectible,
+        0x0C,
+    );
+
+    // Romani Ranch Wonder Items - Fence (Scene: ROMANI_RANCH = 0x64)
+    add_mm_mapping(
+        &mut map,
+        "mm_romani_ranch_wonder_item_fence_1",
+        mm_scene::ROMANI_RANCH,
+        MmFlagType::Collectible,
+        0x01,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_romani_ranch_wonder_item_fence_2",
+        mm_scene::ROMANI_RANCH,
+        MmFlagType::Collectible,
+        0x02,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_romani_ranch_wonder_item_fence_3",
+        mm_scene::ROMANI_RANCH,
+        MmFlagType::Collectible,
+        0x03,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_romani_ranch_wonder_item_fence_4",
+        mm_scene::ROMANI_RANCH,
+        MmFlagType::Collectible,
+        0x04,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_romani_ranch_wonder_item_fence_5",
+        mm_scene::ROMANI_RANCH,
+        MmFlagType::Collectible,
+        0x05,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_romani_ranch_wonder_item_fence_6",
+        mm_scene::ROMANI_RANCH,
+        MmFlagType::Collectible,
+        0x06,
+    );
+
+    // Romani Ranch Barn Wonder Items (Scene: uses ROMANI_RANCH for barn area)
+    add_mm_mapping(
+        &mut map,
+        "mm_romani_ranch_barn_wonder_item_1",
+        mm_scene::ROMANI_RANCH,
+        MmFlagType::Collectible,
+        0x10,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_romani_ranch_barn_wonder_item_2",
+        mm_scene::ROMANI_RANCH,
+        MmFlagType::Collectible,
+        0x11,
+    );
+
+    // Cucco Shack Wonder Items (Scene: CUCCO_SHACK = 0x5F)
+    add_mm_mapping(
+        &mut map,
+        "mm_cucco_shack_wonder_item_1",
+        mm_scene::CUCCO_SHACK,
+        MmFlagType::Collectible,
+        0x01,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_cucco_shack_wonder_item_2",
+        mm_scene::CUCCO_SHACK,
+        MmFlagType::Collectible,
+        0x02,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_cucco_shack_wonder_item_3",
+        mm_scene::CUCCO_SHACK,
+        MmFlagType::Collectible,
+        0x03,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_cucco_shack_wonder_item_4",
+        mm_scene::CUCCO_SHACK,
+        MmFlagType::Collectible,
+        0x04,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_cucco_shack_wonder_item_5",
+        mm_scene::CUCCO_SHACK,
+        MmFlagType::Collectible,
+        0x05,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_cucco_shack_wonder_item_6",
+        mm_scene::CUCCO_SHACK,
+        MmFlagType::Collectible,
+        0x06,
+    );
+
+    // Termina Field Wonder Items (Scene: TERMINA_FIELD = 0x54)
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_wonder_item_hollow_trunk",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x01,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_wonder_item_fountains_1",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x02,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_wonder_item_fountains_2",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x03,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_wonder_item_north_ramp",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x04,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_wonder_item_west_ramp",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x05,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_wonder_item_south_west_ramp",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x06,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_wonder_item_shell_1",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x07,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_wonder_item_shell_2",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x08,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_wonder_item_shell_3",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x09,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_wonder_item_shell_side_1",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x0A,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_wonder_item_shell_side_2",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x0B,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_wonder_item_shell_side_3",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x0C,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_wonder_item_graffiti_1",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x0D,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_wonder_item_graffiti_2",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x0E,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_wonder_item_graffiti_3",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x0F,
+    );
+
+    // ========================================================================
+    // Soil Item Mappings (Scene Collectible Flags)
+    // ========================================================================
+    // Soil items (bug drops) are tracked per-scene as collectible flags.
+
+    // Deku Palace Soil Items (Scene: DEKU_PALACE = 0x14)
+    add_mm_mapping(
+        &mut map,
+        "mm_deku_palace_soil_item_1",
+        mm_scene::DEKU_PALACE,
+        MmFlagType::Collectible,
+        0x10,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_deku_palace_soil_item_2",
+        mm_scene::DEKU_PALACE,
+        MmFlagType::Collectible,
+        0x11,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_deku_palace_soil_item_3",
+        mm_scene::DEKU_PALACE,
+        MmFlagType::Collectible,
+        0x12,
+    );
+
+    // Beans Grotto Soil Items (Grotto scene - uses TERMINA_FIELD base)
+    add_mm_mapping(
+        &mut map,
+        "mm_beans_grotto_soil_item_1",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x20,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_beans_grotto_soil_item_2",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x21,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_beans_grotto_soil_item_3",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x22,
+    );
+
+    // Romani Ranch Soil Items - Days 2-3 (Scene: ROMANI_RANCH)
+    add_mm_mapping(
+        &mut map,
+        "mm_romani_ranch_soil_days_2_3_item_1",
+        mm_scene::ROMANI_RANCH,
+        MmFlagType::Collectible,
+        0x20,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_romani_ranch_soil_days_2_3_item_2",
+        mm_scene::ROMANI_RANCH,
+        MmFlagType::Collectible,
+        0x21,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_romani_ranch_soil_days_2_3_item_3",
+        mm_scene::ROMANI_RANCH,
+        MmFlagType::Collectible,
+        0x22,
+    );
+
+    // Termina Field Soil Items - Observatory Area
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_soil_observatory_item_1",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x30,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_soil_observatory_item_2",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x31,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_soil_observatory_item_3",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x32,
+    );
+
+    // Termina Field Soil Items - Wall Area
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_soil_wall_item_1",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x33,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_soil_wall_item_2",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x34,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_soil_wall_item_3",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x35,
+    );
+
     map
 });
 
@@ -1915,5 +2543,121 @@ mod tests {
                 expected_bit
             );
         }
+    }
+
+    #[test]
+    fn test_shop_mappings() {
+        // Verify shop mappings are populated
+        let shop_mappings: Vec<_> = get_mm_mappings_by_flag_type(MmFlagType::Shop).collect();
+
+        // We should have 19 shop mappings:
+        // - 2 bomb shop items
+        // - 8 trading post items
+        // - 3 goron shop items
+        // - 3 zora shop items
+        // - 2 milk bar purchases
+        // - 1 gorman track milk purchase
+        assert_eq!(shop_mappings.len(), 19, "Should have 19 shop mappings");
+
+        // Verify all shop mappings are properly mapped (not stubs)
+        for mapping in &shop_mappings {
+            assert!(mapping.is_mapped(), "Shop mapping should not be a stub");
+            assert_eq!(
+                mapping.flag_type,
+                Some(MmFlagType::Shop),
+                "Should be Shop flag type"
+            );
+        }
+
+        // Verify specific shop items exist
+        assert!(get_mm_mapping("mm_bomb_shop_item_1").is_some());
+        assert!(get_mm_mapping("mm_trading_post_item_1").is_some());
+        assert!(get_mm_mapping("mm_goron_shop_item_1").is_some());
+        assert!(get_mm_mapping("mm_zora_shop_item_1").is_some());
+        assert!(get_mm_mapping("mm_milk_bar_purchase_milk").is_some());
+        assert!(get_mm_mapping("mm_gorman_track_milk_purchase").is_some());
+    }
+
+    #[test]
+    fn test_scrub_mappings() {
+        // Verify scrub mappings are populated
+        let scrub_mappings: Vec<_> = get_mm_mappings_by_flag_type(MmFlagType::Scrub).collect();
+
+        // We should have 10 scrub mappings:
+        // - 1 Clock Town business scrub
+        // - 2 Southern Swamp scrubs
+        // - 2 Goron Village scrubs
+        // - 2 Zora Hall scrubs
+        // - 1 Ikana Valley scrub
+        // - 2 Termina Field scrub grotto
+        assert_eq!(scrub_mappings.len(), 10, "Should have 10 scrub mappings");
+
+        // Verify all scrub mappings are properly mapped (not stubs)
+        for mapping in &scrub_mappings {
+            assert!(mapping.is_mapped(), "Scrub mapping should not be a stub");
+            assert_eq!(
+                mapping.flag_type,
+                Some(MmFlagType::Scrub),
+                "Should be Scrub flag type"
+            );
+        }
+
+        // Verify specific scrub locations exist
+        assert!(get_mm_mapping("mm_clock_town_business_scrub").is_some());
+        assert!(get_mm_mapping("mm_southern_swamp_scrub_deed").is_some());
+        assert!(get_mm_mapping("mm_goron_village_scrub_deed").is_some());
+        assert!(get_mm_mapping("mm_zora_hall_scrub_deed").is_some());
+        assert!(get_mm_mapping("mm_ikana_valley_scrub_shop").is_some());
+        assert!(get_mm_mapping("mm_termina_field_scrub").is_some());
+    }
+
+    #[test]
+    fn test_wonder_item_mappings() {
+        // Verify wonder item mappings (using Collectible flag type)
+        let collectible_mappings: Vec<_> =
+            get_mm_mappings_by_flag_type(MmFlagType::Collectible).collect();
+
+        // We should have many wonder items and soil items mapped as collectibles
+        // Clock Town South: 3, Clock Town East: 9, Ikana Graveyard: 12,
+        // Romani Ranch Fence: 6, Romani Ranch Barn: 2, Cucco Shack: 6,
+        // Termina Field: 15, Deku Palace Soil: 3, Beans Grotto Soil: 3,
+        // Romani Ranch Soil: 3, Termina Field Soil: 6
+        // Total: 68 collectible mappings
+        assert!(
+            collectible_mappings.len() >= 68,
+            "Should have at least 68 collectible (wonder/soil) mappings, got {}",
+            collectible_mappings.len()
+        );
+
+        // Verify specific wonder items exist
+        assert!(get_mm_mapping("mm_clock_town_south_wonder_item_1").is_some());
+        assert!(get_mm_mapping("mm_clock_town_east_wonder_item_target_left_1").is_some());
+        assert!(get_mm_mapping("mm_ikana_graveyard_wonder_item_01").is_some());
+        assert!(get_mm_mapping("mm_romani_ranch_wonder_item_fence_1").is_some());
+        assert!(get_mm_mapping("mm_cucco_shack_wonder_item_1").is_some());
+        assert!(get_mm_mapping("mm_termina_field_wonder_item_hollow_trunk").is_some());
+
+        // Verify specific soil items exist
+        assert!(get_mm_mapping("mm_deku_palace_soil_item_1").is_some());
+        assert!(get_mm_mapping("mm_beans_grotto_soil_item_1").is_some());
+        assert!(get_mm_mapping("mm_romani_ranch_soil_days_2_3_item_1").is_some());
+        assert!(get_mm_mapping("mm_termina_field_soil_observatory_item_1").is_some());
+    }
+
+    #[test]
+    fn test_total_shop_scrub_mappings() {
+        // Verify total number of mapped (non-stub) locations
+        let mapped_count = mm_mapped_count();
+
+        // We added:
+        // - 19 shop mappings
+        // - 10 scrub mappings
+        // - 68 wonder/soil item mappings (collectibles)
+        // Total: 97 mappings
+        assert!(
+            mapped_count >= 97,
+            "Should have at least 97 mapped locations, got {}",
+            mapped_count
+        );
     }
 }
