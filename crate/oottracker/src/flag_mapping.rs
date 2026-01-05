@@ -1246,6 +1246,79 @@ static OOT_MAPPINGS: Lazy<HashMap<&'static str, FlagMapping>> = Lazy::new(|| {
     // ========================================================================
     // TREASURE CHEST GAME (Scene 0x10)
     // ========================================================================
+    // The Treasure Chest Game has 5 rooms with 2 chests each, plus the final HP chest.
+    // Flags 0x01-0x200 are for room chests, 0x400 is the HP reward.
+    // Note: The "buy_key" location is handled separately (shop/NPC interaction).
+    add_mapping(
+        &mut map,
+        "oot_treasure_chest_game_room_1_chest_left",
+        scene::TREASURE_CHEST_GAME,
+        FlagType::Chest,
+        0x0000_0001,
+    );
+    add_mapping(
+        &mut map,
+        "oot_treasure_chest_game_room_1_chest_right",
+        scene::TREASURE_CHEST_GAME,
+        FlagType::Chest,
+        0x0000_0002,
+    );
+    add_mapping(
+        &mut map,
+        "oot_treasure_chest_game_room_2_chest_left",
+        scene::TREASURE_CHEST_GAME,
+        FlagType::Chest,
+        0x0000_0004,
+    );
+    add_mapping(
+        &mut map,
+        "oot_treasure_chest_game_room_2_chest_right",
+        scene::TREASURE_CHEST_GAME,
+        FlagType::Chest,
+        0x0000_0008,
+    );
+    add_mapping(
+        &mut map,
+        "oot_treasure_chest_game_room_3_chest_left",
+        scene::TREASURE_CHEST_GAME,
+        FlagType::Chest,
+        0x0000_0010,
+    );
+    add_mapping(
+        &mut map,
+        "oot_treasure_chest_game_room_3_chest_right",
+        scene::TREASURE_CHEST_GAME,
+        FlagType::Chest,
+        0x0000_0020,
+    );
+    add_mapping(
+        &mut map,
+        "oot_treasure_chest_game_room_4_chest_left",
+        scene::TREASURE_CHEST_GAME,
+        FlagType::Chest,
+        0x0000_0040,
+    );
+    add_mapping(
+        &mut map,
+        "oot_treasure_chest_game_room_4_chest_right",
+        scene::TREASURE_CHEST_GAME,
+        FlagType::Chest,
+        0x0000_0080,
+    );
+    add_mapping(
+        &mut map,
+        "oot_treasure_chest_game_room_5_chest_left",
+        scene::TREASURE_CHEST_GAME,
+        FlagType::Chest,
+        0x0000_0100,
+    );
+    add_mapping(
+        &mut map,
+        "oot_treasure_chest_game_room_5_chest_right",
+        scene::TREASURE_CHEST_GAME,
+        FlagType::Chest,
+        0x0000_0200,
+    );
     add_mapping(
         &mut map,
         "oot_treasure_chest_game_hp",
