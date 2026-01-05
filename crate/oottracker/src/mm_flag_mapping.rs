@@ -469,6 +469,137 @@ static MM_MAPPINGS: Lazy<HashMap<&'static str, MmFlagMapping>> = Lazy::new(|| {
     );
 
     // ========================================================================
+    // Stray Fairy Fountain Locations (15 total)
+    // ========================================================================
+    //
+    // MM has stray fairies tracked via:
+    // - Dedicated counters at save offset 0x00D0 (5 bytes: Clock Town, Woodfall,
+    //   Snowhead, Great Bay, Stone Tower)
+    // - Scene-based collectible flags for individual fairy pickups
+    //
+    // Great Fairy rewards are tracked by the StrayFairy counter:
+    // - flag_bit 0: Clock Town (1 fairy needed)
+    // - flag_bit 1: Woodfall (15 fairies needed)
+    // - flag_bit 2: Snowhead (15 fairies needed)
+    // - flag_bit 3: Great Bay (15 fairies needed)
+    // - flag_bit 4: Stone Tower/Ikana (15 fairies needed)
+
+    // Clock Town Great Fairy rewards (counter index 0)
+    add_mm_global_mapping(
+        &mut map,
+        "mm_clock_town_great_fairy",
+        MmFlagType::StrayFairy,
+        0, // Clock Town counter
+    );
+    add_mm_global_mapping(
+        &mut map,
+        "mm_clock_town_great_fairy_alt",
+        MmFlagType::StrayFairy,
+        0, // Clock Town counter (alternate form reward)
+    );
+
+    // Woodfall Great Fairy reward (counter index 1)
+    add_mm_global_mapping(
+        &mut map,
+        "mm_woodfall_great_fairy",
+        MmFlagType::StrayFairy,
+        1, // Woodfall counter
+    );
+
+    // Snowhead Great Fairy reward (counter index 2)
+    add_mm_global_mapping(
+        &mut map,
+        "mm_snowhead_great_fairy",
+        MmFlagType::StrayFairy,
+        2, // Snowhead counter
+    );
+
+    // Great Bay Great Fairy reward (counter index 3)
+    add_mm_global_mapping(
+        &mut map,
+        "mm_great_bay_great_fairy",
+        MmFlagType::StrayFairy,
+        3, // Great Bay counter
+    );
+
+    // Ikana (Stone Tower) Great Fairy reward (counter index 4)
+    add_mm_global_mapping(
+        &mut map,
+        "mm_ikana_great_fairy",
+        MmFlagType::StrayFairy,
+        4, // Stone Tower counter
+    );
+
+    // Clock Town stray fairy (collectible in Laundry Pool)
+    // This is the single stray fairy that appears in Clock Town during the day
+    add_mm_mapping(
+        &mut map,
+        "mm_clock_town_stray_fairy",
+        mm_scene::LAUNDRY_POOL,
+        MmFlagType::Collectible,
+        0x01, // Collectible flag bit
+    );
+
+    // Beneath the Well Fairy Fountain fairies (8 healing fairies)
+    // These use scene collectible flags in Beneath the Well
+    add_mm_mapping(
+        &mut map,
+        "mm_beneath_the_well_fairy_fountain_fairy_1",
+        mm_scene::BENEATH_THE_WELL,
+        MmFlagType::Collectible,
+        0x01,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_beneath_the_well_fairy_fountain_fairy_2",
+        mm_scene::BENEATH_THE_WELL,
+        MmFlagType::Collectible,
+        0x02,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_beneath_the_well_fairy_fountain_fairy_3",
+        mm_scene::BENEATH_THE_WELL,
+        MmFlagType::Collectible,
+        0x04,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_beneath_the_well_fairy_fountain_fairy_4",
+        mm_scene::BENEATH_THE_WELL,
+        MmFlagType::Collectible,
+        0x08,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_beneath_the_well_fairy_fountain_fairy_5",
+        mm_scene::BENEATH_THE_WELL,
+        MmFlagType::Collectible,
+        0x10,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_beneath_the_well_fairy_fountain_fairy_6",
+        mm_scene::BENEATH_THE_WELL,
+        MmFlagType::Collectible,
+        0x20,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_beneath_the_well_fairy_fountain_fairy_7",
+        mm_scene::BENEATH_THE_WELL,
+        MmFlagType::Collectible,
+        0x40,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_beneath_the_well_fairy_fountain_fairy_8",
+        mm_scene::BENEATH_THE_WELL,
+        MmFlagType::Collectible,
+        0x80,
+    );
+
+    // ========================================================================
     // DUNGEON CHESTS
     // ========================================================================
 
@@ -2658,6 +2789,153 @@ mod tests {
             mapped_count >= 97,
             "Should have at least 97 mapped locations, got {}",
             mapped_count
+        );
+    }
+
+    #[test]
+    fn test_stray_fairy_great_fairy_mappings() {
+        // Test that Great Fairy reward locations are mapped with StrayFairy type
+        let great_fairy_locations = [
+            ("mm_clock_town_great_fairy", 0),
+            ("mm_clock_town_great_fairy_alt", 0),
+            ("mm_woodfall_great_fairy", 1),
+            ("mm_snowhead_great_fairy", 2),
+            ("mm_great_bay_great_fairy", 3),
+            ("mm_ikana_great_fairy", 4),
+        ];
+
+        for (location_id, expected_bit) in great_fairy_locations {
+            let mapping = get_mm_mapping(location_id);
+            assert!(
+                mapping.is_some(),
+                "Great Fairy location {} should exist",
+                location_id
+            );
+            let mapping = mapping.unwrap();
+            assert!(
+                mapping.is_mapped(),
+                "Great Fairy location {} should be mapped",
+                location_id
+            );
+            assert_eq!(
+                mapping.flag_type,
+                Some(MmFlagType::StrayFairy),
+                "Great Fairy location {} should use StrayFairy flag type",
+                location_id
+            );
+            assert_eq!(
+                mapping.flag_bit,
+                Some(expected_bit),
+                "Great Fairy location {} should have flag_bit {}",
+                location_id,
+                expected_bit
+            );
+            // Great Fairy rewards are global (no scene_id)
+            assert_eq!(
+                mapping.scene_id, None,
+                "Great Fairy location {} should be global (no scene_id)",
+                location_id
+            );
+        }
+    }
+
+    #[test]
+    fn test_stray_fairy_collectible_mappings() {
+        // Test Clock Town stray fairy
+        let clock_town_fairy = get_mm_mapping("mm_clock_town_stray_fairy");
+        assert!(
+            clock_town_fairy.is_some(),
+            "Clock Town stray fairy should exist"
+        );
+        let mapping = clock_town_fairy.unwrap();
+        assert!(
+            mapping.is_mapped(),
+            "Clock Town stray fairy should be mapped"
+        );
+        assert_eq!(
+            mapping.flag_type,
+            Some(MmFlagType::Collectible),
+            "Clock Town stray fairy should use Collectible flag type"
+        );
+        assert_eq!(
+            mapping.scene_id,
+            Some(mm_scene::LAUNDRY_POOL),
+            "Clock Town stray fairy should be in Laundry Pool scene"
+        );
+    }
+
+    #[test]
+    fn test_beneath_the_well_fairy_mappings() {
+        // Test all 8 Beneath the Well fairy fountain fairies
+        for i in 1..=8 {
+            let location_id = format!("mm_beneath_the_well_fairy_fountain_fairy_{}", i);
+            let mapping = get_mm_mapping(&location_id);
+            assert!(
+                mapping.is_some(),
+                "Beneath the Well fairy {} should exist",
+                i
+            );
+            let mapping = mapping.unwrap();
+            assert!(
+                mapping.is_mapped(),
+                "Beneath the Well fairy {} should be mapped",
+                i
+            );
+            assert_eq!(
+                mapping.flag_type,
+                Some(MmFlagType::Collectible),
+                "Beneath the Well fairy {} should use Collectible flag type",
+                i
+            );
+            assert_eq!(
+                mapping.scene_id,
+                Some(mm_scene::BENEATH_THE_WELL),
+                "Beneath the Well fairy {} should be in Beneath the Well scene",
+                i
+            );
+            // Each fairy should have a unique bit (power of 2)
+            let expected_bit = 1u32 << (i - 1);
+            assert_eq!(
+                mapping.flag_bit,
+                Some(expected_bit),
+                "Beneath the Well fairy {} should have flag_bit 0x{:02X}",
+                i,
+                expected_bit
+            );
+        }
+    }
+
+    #[test]
+    fn test_stray_fairy_mappings_by_flag_type() {
+        // Verify we have StrayFairy mappings now
+        let stray_fairy_mappings: Vec<_> =
+            get_mm_mappings_by_flag_type(MmFlagType::StrayFairy).collect();
+        assert_eq!(
+            stray_fairy_mappings.len(),
+            6,
+            "Should have 6 StrayFairy mappings (Great Fairy rewards)"
+        );
+
+        // Verify all are properly mapped
+        for mapping in &stray_fairy_mappings {
+            assert!(
+                mapping.is_mapped(),
+                "All StrayFairy mappings should be complete"
+            );
+            assert_eq!(
+                mapping.scene_id, None,
+                "StrayFairy mappings should be global"
+            );
+        }
+    }
+
+    #[test]
+    fn test_fairy_mappings_count() {
+        // Total fairy mappings: 6 Great Fairy rewards + 1 Clock Town stray + 8 Beneath Well = 15
+        let mapped_count = mm_mapped_count();
+        assert!(
+            mapped_count >= 15,
+            "Should have at least 15 mapped locations (stray fairy fountains)"
         );
     }
 }
