@@ -3210,6 +3210,7 @@ name = "oottracker-e2e"
 version = "0.7.4"
 dependencies = [
  "dirs 5.0.1",
+ "ootmm",
  "thiserror 1.0.44",
  "tokio",
 ]
