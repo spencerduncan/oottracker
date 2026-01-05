@@ -1,0 +1,328 @@
+/**
+ * Location Filter Styles
+ *
+ * Search and filter component for tracker locations.
+ * Follows project conventions: dark theme default, light theme via media query.
+ */
+
+/* Container */
+.location-filter-container {
+    background: rgba(0, 0, 0, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 12px;
+    margin: 10px auto;
+    max-width: 500px;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    color: #fff;
+}
+
+/* Search row */
+.filter-search-row {
+    margin-bottom: 10px;
+}
+
+.search-input-wrapper {
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    padding: 0 8px;
+}
+
+.search-input-wrapper:focus-within {
+    border-color: #4caf50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+.search-icon {
+    font-size: 14px;
+    color: #888;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+#location-search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #fff;
+    padding: 10px 0;
+    font-size: 14px;
+    outline: none;
+    min-width: 0;
+}
+
+#location-search-input::placeholder {
+    color: #888;
+}
+
+.clear-search-btn {
+    background: transparent;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 14px;
+    line-height: 1;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.clear-search-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.clear-search-btn:focus {
+    outline: 2px solid #4caf50;
+    outline-offset: 2px;
+}
+
+/* Filter rows */
+.filter-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.filter-select-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.filter-select-wrapper label {
+    color: #aaa;
+    font-size: 12px;
+    white-space: nowrap;
+    min-width: 45px;
+}
+
+.filter-select-wrapper select {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    color: #fff;
+    padding: 6px 24px 6px 8px;
+    font-size: 13px;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M2 4l4 4 4-4z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    min-width: 0;
+}
+
+.filter-select-wrapper select:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.filter-select-wrapper select:focus {
+    outline: 2px solid #4caf50;
+    outline-offset: 2px;
+    border-color: #4caf50;
+}
+
+/* Results row */
+.filter-results-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.filter-count {
+    color: #aaa;
+    font-size: 12px;
+}
+
+.clear-filters-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #aaa;
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.clear-filters-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: #fff;
+}
+
+.clear-filters-btn:focus {
+    outline: 2px solid #4caf50;
+    outline-offset: 2px;
+}
+
+/* Light theme */
+@media (prefers-color-scheme: light) {
+    .location-filter-container {
+        background: rgba(255, 255, 255, 0.95);
+        border-color: #ddd;
+        color: #333;
+    }
+
+    .search-input-wrapper {
+        background: rgba(0, 0, 0, 0.05);
+        border-color: #ccc;
+    }
+
+    .search-input-wrapper:focus-within {
+        border-color: #2e7d32;
+        box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.2);
+    }
+
+    .search-icon {
+        color: #666;
+    }
+
+    #location-search-input {
+        color: #333;
+    }
+
+    #location-search-input::placeholder {
+        color: #999;
+    }
+
+    .clear-search-btn {
+        color: #666;
+    }
+
+    .clear-search-btn:hover {
+        background: rgba(0, 0, 0, 0.1);
+        color: #333;
+    }
+
+    .clear-search-btn:focus {
+        outline-color: #2e7d32;
+    }
+
+    .filter-select-wrapper label {
+        color: #666;
+    }
+
+    .filter-select-wrapper select {
+        background-color: #fff;
+        border-color: #ccc;
+        color: #333;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M2 4l4 4 4-4z'/%3E%3C/svg%3E");
+    }
+
+    .filter-select-wrapper select:hover {
+        border-color: #999;
+    }
+
+    .filter-select-wrapper select:focus {
+        outline-color: #2e7d32;
+        border-color: #2e7d32;
+    }
+
+    .filter-results-row {
+        border-top-color: #ddd;
+    }
+
+    .filter-count {
+        color: #666;
+    }
+
+    .clear-filters-btn {
+        border-color: #ccc;
+        color: #666;
+    }
+
+    .clear-filters-btn:hover {
+        background: rgba(0, 0, 0, 0.05);
+        border-color: #999;
+        color: #333;
+    }
+
+    .clear-filters-btn:focus {
+        outline-color: #2e7d32;
+    }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 480px) {
+    .location-filter-container {
+        margin: 8px;
+        padding: 10px;
+        max-width: none;
+        border-radius: 6px;
+    }
+
+    .filter-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .filter-select-wrapper {
+        width: 100%;
+    }
+
+    .filter-select-wrapper label {
+        min-width: 55px;
+    }
+
+    .filter-select-wrapper select {
+        flex: 1;
+    }
+
+    .filter-results-row {
+        flex-direction: column;
+        gap: 8px;
+        align-items: stretch;
+    }
+
+    .filter-count {
+        text-align: center;
+    }
+
+    .clear-filters-btn {
+        width: 100%;
+    }
+}
+
+/* Tablet - slightly wider filter rows */
+@media (min-width: 481px) and (max-width: 768px) {
+    .location-filter-container {
+        max-width: 90%;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .location-filter-container {
+        border-width: 2px;
+    }
+
+    .search-input-wrapper,
+    .filter-select-wrapper select,
+    .clear-filters-btn {
+        border-width: 2px;
+    }
+
+    .filter-select-wrapper select:focus,
+    .clear-search-btn:focus,
+    .clear-filters-btn:focus,
+    #location-search-input:focus {
+        outline-width: 3px;
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .clear-filters-btn {
+        transition: none;
+    }
+}
