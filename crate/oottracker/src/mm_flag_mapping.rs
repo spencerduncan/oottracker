@@ -400,7 +400,7 @@ static MM_MAPPINGS: Lazy<HashMap<&'static str, MmFlagMapping>> = Lazy::new(|| {
     }
 
     // Then, add known mappings that override the stubs
-    // These are derived from OoTMM research and will be populated incrementally
+    // These are derived from OoTMM research
 
     // ========================================================================
     // Owl Statue Mappings
@@ -466,6 +466,1094 @@ static MM_MAPPINGS: Lazy<HashMap<&'static str, MmFlagMapping>> = Lazy::new(|| {
         "mm_stone_tower_owl_statue",
         MmFlagType::OwlStatue,
         1 << owl_bits::OWL_STONE_TOWER,
+    );
+
+    // ========================================================================
+    // DUNGEON CHESTS
+    // ========================================================================
+
+    // Woodfall Temple (Scene 0x1F)
+    add_mm_mapping(
+        &mut map,
+        "mm_woodfall_temple_entrance_chest",
+        mm_scene::WOODFALL_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_woodfall_temple_water_chest",
+        mm_scene::WOODFALL_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0002,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_woodfall_temple_dark_chest",
+        mm_scene::WOODFALL_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0004,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_woodfall_temple_center_chest",
+        mm_scene::WOODFALL_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0008,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_woodfall_temple_boss_key_chest",
+        mm_scene::WOODFALL_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0010,
+    );
+
+    // Snowhead Temple (Scene 0x22)
+    add_mm_mapping(
+        &mut map,
+        "mm_snowhead_temple_map_chest",
+        mm_scene::SNOWHEAD_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_snowhead_temple_compass_chest",
+        mm_scene::SNOWHEAD_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0002,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_snowhead_temple_boss_key_chest",
+        mm_scene::SNOWHEAD_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0004,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_snowhead_temple_fire_arrow_chest",
+        mm_scene::SNOWHEAD_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0008,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_snowhead_temple_block_room_chest",
+        mm_scene::SNOWHEAD_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0010,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_snowhead_temple_icicle_room_chest",
+        mm_scene::SNOWHEAD_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0020,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_snowhead_temple_bridge_room_chest",
+        mm_scene::SNOWHEAD_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0040,
+    );
+
+    // Great Bay Temple (Scene 0x1E)
+    add_mm_mapping(
+        &mut map,
+        "mm_great_bay_temple_entrance_chest",
+        mm_scene::GREAT_BAY_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_great_bay_temple_baba_chest",
+        mm_scene::GREAT_BAY_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0002,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_great_bay_temple_green_pipe_1_chest",
+        mm_scene::GREAT_BAY_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0004,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_great_bay_temple_green_pipe_2_lower_chest",
+        mm_scene::GREAT_BAY_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0008,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_great_bay_temple_green_pipe_2_upper_chest",
+        mm_scene::GREAT_BAY_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0010,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_great_bay_temple_green_pipe_3_chest",
+        mm_scene::GREAT_BAY_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0020,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_great_bay_temple_map_chest",
+        mm_scene::GREAT_BAY_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0040,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_great_bay_temple_compass_chest",
+        mm_scene::GREAT_BAY_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0080,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_great_bay_temple_boss_key_chest",
+        mm_scene::GREAT_BAY_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0100,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_great_bay_temple_ice_arrow_chest",
+        mm_scene::GREAT_BAY_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0200,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_great_bay_temple_hookshot_chest",
+        mm_scene::GREAT_BAY_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0400,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_great_bay_temple_small_key_chest",
+        mm_scene::GREAT_BAY_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0800,
+    );
+
+    // Stone Tower Temple (Scene 0x18)
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_temple_entrance_chest",
+        mm_scene::STONE_TOWER_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_temple_entrance_switch_chest",
+        mm_scene::STONE_TOWER_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0002,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_temple_under_west_garden_ledge_chest",
+        mm_scene::STONE_TOWER_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0004,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_temple_under_west_garden_lava_chest",
+        mm_scene::STONE_TOWER_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0008,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_temple_center_sun_block_chest",
+        mm_scene::STONE_TOWER_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0010,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_temple_center_across_water_chest",
+        mm_scene::STONE_TOWER_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0020,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_temple_water_sun_switch_chest",
+        mm_scene::STONE_TOWER_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0040,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_temple_mirrors_room_center_chest",
+        mm_scene::STONE_TOWER_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0080,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_temple_mirrors_room_right_chest",
+        mm_scene::STONE_TOWER_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0100,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_temple_wind_room_ledge_chest",
+        mm_scene::STONE_TOWER_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0200,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_temple_wind_room_jail_chest",
+        mm_scene::STONE_TOWER_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0400,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_temple_before_water_bridge_chest",
+        mm_scene::STONE_TOWER_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_0800,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_temple_water_bridge_chest",
+        mm_scene::STONE_TOWER_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_1000,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_temple_map_chest",
+        mm_scene::STONE_TOWER_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_2000,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_temple_compass_chest",
+        mm_scene::STONE_TOWER_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_4000,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_temple_boss_key_chest",
+        mm_scene::STONE_TOWER_TEMPLE,
+        MmFlagType::Chest,
+        0x0000_8000,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_temple_light_arrow_chest",
+        mm_scene::STONE_TOWER_TEMPLE,
+        MmFlagType::Chest,
+        0x0001_0000,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_temple_giants_mask_chest",
+        mm_scene::STONE_TOWER_TEMPLE,
+        MmFlagType::Chest,
+        0x0002_0000,
+    );
+
+    // Stone Tower Temple Inverted (Scene 0x19)
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_temple_inverted_entrance_chest",
+        mm_scene::STONE_TOWER_TEMPLE_INVERTED,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_temple_inverted_east_lower_chest",
+        mm_scene::STONE_TOWER_TEMPLE_INVERTED,
+        MmFlagType::Chest,
+        0x0000_0002,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_temple_inverted_east_upper_chest",
+        mm_scene::STONE_TOWER_TEMPLE_INVERTED,
+        MmFlagType::Chest,
+        0x0000_0004,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_temple_inverted_east_middle_chest",
+        mm_scene::STONE_TOWER_TEMPLE_INVERTED,
+        MmFlagType::Chest,
+        0x0000_0008,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_temple_inverted_wizzrobe_chest",
+        mm_scene::STONE_TOWER_TEMPLE_INVERTED,
+        MmFlagType::Chest,
+        0x0000_0010,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_temple_inverted_death_armos_chest",
+        mm_scene::STONE_TOWER_TEMPLE_INVERTED,
+        MmFlagType::Chest,
+        0x0000_0020,
+    );
+
+    // ========================================================================
+    // MINI-DUNGEON CHESTS
+    // ========================================================================
+
+    // Beneath the Well (Scene 0x1B)
+    add_mm_mapping(
+        &mut map,
+        "mm_beneath_the_well_keese_chest",
+        mm_scene::BENEATH_THE_WELL,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_beneath_the_well_skulltulla_chest",
+        mm_scene::BENEATH_THE_WELL,
+        MmFlagType::Chest,
+        0x0000_0002,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_beneath_the_well_mirror_shield_chest",
+        mm_scene::BENEATH_THE_WELL,
+        MmFlagType::Chest,
+        0x0000_0004,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_beneath_the_well_compass_chest",
+        mm_scene::BENEATH_THE_WELL,
+        MmFlagType::Chest,
+        0x0000_0008,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_beneath_the_well_map_chest",
+        mm_scene::BENEATH_THE_WELL,
+        MmFlagType::Chest,
+        0x0000_0010,
+    );
+
+    // Ancient Castle of Ikana (Scene 0x11)
+    add_mm_mapping(
+        &mut map,
+        "mm_ancient_castle_of_ikana_powder_keg_chest",
+        mm_scene::ANCIENT_CASTLE_OF_IKANA,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_ancient_castle_of_ikana_compass_chest",
+        mm_scene::ANCIENT_CASTLE_OF_IKANA,
+        MmFlagType::Chest,
+        0x0000_0002,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_ancient_castle_of_ikana_map_chest",
+        mm_scene::ANCIENT_CASTLE_OF_IKANA,
+        MmFlagType::Chest,
+        0x0000_0004,
+    );
+
+    // Secret Shrine (Scene 0x13)
+    add_mm_mapping(
+        &mut map,
+        "mm_secret_shrine_dinolfos_chest",
+        mm_scene::IKANA_CANYON_SECRET_SHRINE,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_secret_shrine_wizzrobe_chest",
+        mm_scene::IKANA_CANYON_SECRET_SHRINE,
+        MmFlagType::Chest,
+        0x0000_0002,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_secret_shrine_wart_chest",
+        mm_scene::IKANA_CANYON_SECRET_SHRINE,
+        MmFlagType::Chest,
+        0x0000_0004,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_secret_shrine_garo_master_chest",
+        mm_scene::IKANA_CANYON_SECRET_SHRINE,
+        MmFlagType::Chest,
+        0x0000_0008,
+    );
+
+    // Pirates Fortress Exterior (Scene 0x29)
+    add_mm_mapping(
+        &mut map,
+        "mm_pirate_fortress_entrance_chest_1",
+        mm_scene::PIRATES_FORTRESS,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_pirate_fortress_entrance_chest_2",
+        mm_scene::PIRATES_FORTRESS,
+        MmFlagType::Chest,
+        0x0000_0002,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_pirate_fortress_entrance_chest_3",
+        mm_scene::PIRATES_FORTRESS,
+        MmFlagType::Chest,
+        0x0000_0004,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_pirate_fortress_sewers_chest_1",
+        mm_scene::PIRATES_FORTRESS,
+        MmFlagType::Chest,
+        0x0000_0008,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_pirate_fortress_sewers_chest_2",
+        mm_scene::PIRATES_FORTRESS,
+        MmFlagType::Chest,
+        0x0000_0010,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_pirate_fortress_sewers_chest_3",
+        mm_scene::PIRATES_FORTRESS,
+        MmFlagType::Chest,
+        0x0000_0020,
+    );
+
+    // Pirates Fortress Interior (Scene 0x2A)
+    add_mm_mapping(
+        &mut map,
+        "mm_pirate_fortress_interior_lower_chest",
+        mm_scene::PIRATES_FORTRESS_INTERIOR,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_pirate_fortress_interior_upper_chest",
+        mm_scene::PIRATES_FORTRESS_INTERIOR,
+        MmFlagType::Chest,
+        0x0000_0002,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_pirate_fortress_interior_pot_chest_aquarium_1",
+        mm_scene::PIRATES_FORTRESS_INTERIOR,
+        MmFlagType::Chest,
+        0x0000_0004,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_pirate_fortress_interior_pot_chest_aquarium_2",
+        mm_scene::PIRATES_FORTRESS_INTERIOR,
+        MmFlagType::Chest,
+        0x0000_0008,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_pirate_fortress_interior_pot_chest_aquarium_3",
+        mm_scene::PIRATES_FORTRESS_INTERIOR,
+        MmFlagType::Chest,
+        0x0000_0010,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_pirate_fortress_interior_silver_rupee_chest",
+        mm_scene::PIRATES_FORTRESS_INTERIOR,
+        MmFlagType::Chest,
+        0x0000_0020,
+    );
+
+    // Beneath the Graveyard (Scene 0x07)
+    add_mm_mapping(
+        &mut map,
+        "mm_beneath_the_graveyard_chest",
+        mm_scene::BENEATH_THE_GRAVEYARD,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_beneath_the_graveyard_dampe_chest",
+        mm_scene::BENEATH_THE_GRAVEYARD,
+        MmFlagType::Chest,
+        0x0000_0002,
+    );
+
+    // ========================================================================
+    // OVERWORLD CHESTS
+    // ========================================================================
+
+    // Clock Town South (Scene 0x6C)
+    add_mm_mapping(
+        &mut map,
+        "mm_clock_town_south_chest_lower",
+        mm_scene::CLOCK_TOWN_SOUTH,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_clock_town_south_chest_upper",
+        mm_scene::CLOCK_TOWN_SOUTH,
+        MmFlagType::Chest,
+        0x0000_0002,
+    );
+
+    // Clock Town East (Scene 0x6E)
+    add_mm_mapping(
+        &mut map,
+        "mm_clock_town_silver_rupee_chest",
+        mm_scene::CLOCK_TOWN_EAST,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+
+    // Astral Observatory (Scene 0x52)
+    add_mm_mapping(
+        &mut map,
+        "mm_astral_observatory_passage_chest",
+        mm_scene::ASTRAL_OBSERVATORY,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+
+    // Stock Pot Inn (Scene 0x4D)
+    add_mm_mapping(
+        &mut map,
+        "mm_stock_pot_inn_guest_room_chest",
+        mm_scene::STOCK_POT_INN,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stock_pot_inn_staff_room_chest",
+        mm_scene::STOCK_POT_INN,
+        MmFlagType::Chest,
+        0x0000_0002,
+    );
+
+    // Deku Palace Grotto (Scene 0x59)
+    add_mm_mapping(
+        &mut map,
+        "mm_deku_palace_grotto_chest",
+        0x59,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+
+    // Lone Peak Shrine / Lens of Truth Cave (Scene 0x17)
+    add_mm_mapping(
+        &mut map,
+        "mm_lone_peak_shrine_lens_chest",
+        0x17,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_lone_peak_shrine_boulder_chest",
+        0x17,
+        MmFlagType::Chest,
+        0x0000_0002,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_lone_peak_shrine_invisible_chest",
+        0x17,
+        MmFlagType::Chest,
+        0x0000_0004,
+    );
+
+    // Mountain Village (Scene 0x65)
+    add_mm_mapping(
+        &mut map,
+        "mm_mountain_village_waterfall_chest",
+        0x65,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+
+    // Twin Islands Spring (Scene 0x49)
+    add_mm_mapping(
+        &mut map,
+        "mm_twin_islands_underwater_chest_1",
+        0x49,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_twin_islands_underwater_chest_2",
+        0x49,
+        MmFlagType::Chest,
+        0x0000_0002,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_twin_islands_ramp_grotto_chest",
+        0x49,
+        MmFlagType::Chest,
+        0x0000_0004,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_twin_islands_frozen_grotto_chest",
+        0x49,
+        MmFlagType::Chest,
+        0x0000_0008,
+    );
+
+    // Great Bay Coast (Scene 0x37)
+    add_mm_mapping(
+        &mut map,
+        "mm_great_bay_coast_ledge_chest",
+        mm_scene::GREAT_BAY_COAST,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+
+    // Zora Cape (Scene 0x38)
+    add_mm_mapping(
+        &mut map,
+        "mm_zora_cape_underwater_chest",
+        mm_scene::ZORA_CAPE,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_zora_cape_ledge_chest_1",
+        mm_scene::ZORA_CAPE,
+        MmFlagType::Chest,
+        0x0000_0002,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_zora_cape_ledge_chest_2",
+        mm_scene::ZORA_CAPE,
+        MmFlagType::Chest,
+        0x0000_0004,
+    );
+
+    // Pinnacle Rock (Scene 0x3F)
+    add_mm_mapping(
+        &mut map,
+        "mm_pinnacle_rock_chest_1",
+        mm_scene::PINNACLE_ROCK,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_pinnacle_rock_chest_2",
+        mm_scene::PINNACLE_ROCK,
+        MmFlagType::Chest,
+        0x0000_0002,
+    );
+
+    // Road to Ikana (Scene 0x47)
+    add_mm_mapping(
+        &mut map,
+        "mm_road_to_ikana_chest",
+        mm_scene::ROAD_TO_IKANA,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+
+    // Termina Field (Scene 0x54)
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_water_chest",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_tall_grass_chest",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Chest,
+        0x0000_0002,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_tree_stump_chest",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Chest,
+        0x0000_0004,
+    );
+
+    // Woodfall (Scene 0x14)
+    add_mm_mapping(
+        &mut map,
+        "mm_woodfall_entrance_chest",
+        0x14,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_woodfall_near_owl_chest",
+        0x14,
+        MmFlagType::Chest,
+        0x0000_0002,
+    );
+
+    // Stone Tower Exterior Inverted (Scene 0x0F)
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_inverted_chest_1",
+        0x0F,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_inverted_chest_2",
+        0x0F,
+        MmFlagType::Chest,
+        0x0000_0002,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stone_tower_inverted_chest_3",
+        0x0F,
+        MmFlagType::Chest,
+        0x0000_0004,
+    );
+
+    // Doggy Racetrack (Scene 0x62)
+    add_mm_mapping(
+        &mut map,
+        "mm_doggy_racetrack_chest",
+        0x62,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+
+    // ========================================================================
+    // MOON TRIAL CHESTS
+    // ========================================================================
+    add_mm_mapping(
+        &mut map,
+        "mm_moon_trial_link_garo_master_chest",
+        0x66,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_moon_trial_link_iron_knuckle_chest",
+        0x66,
+        MmFlagType::Chest,
+        0x0000_0002,
+    );
+
+    // ========================================================================
+    // HEART PIECES (Collectible flags)
+    // ========================================================================
+
+    // Clock Town Heart Pieces
+    add_mm_mapping(
+        &mut map,
+        "mm_clock_town_platform_hp",
+        mm_scene::CLOCK_TOWN_SOUTH,
+        MmFlagType::Collectible,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_clock_town_tree_hp",
+        mm_scene::CLOCK_TOWN_NORTH,
+        MmFlagType::Collectible,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_clock_town_keaton_hp",
+        mm_scene::CLOCK_TOWN_NORTH,
+        MmFlagType::Collectible,
+        0x0000_0002,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_clock_town_rosa_sisters_hp",
+        mm_scene::CLOCK_TOWN_WEST,
+        MmFlagType::Collectible,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_post_office_hp",
+        mm_scene::POST_OFFICE,
+        MmFlagType::Collectible,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_swordsman_school_hp",
+        0x26,
+        MmFlagType::Collectible,
+        0x0000_0002,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_mayors_office_hp",
+        mm_scene::MAYORS_OFFICE,
+        MmFlagType::Collectible,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_chest_game_hp",
+        mm_scene::TREASURE_CHEST_SHOP,
+        MmFlagType::Collectible,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stock_pot_inn_grandma_hp_1",
+        mm_scene::STOCK_POT_INN,
+        MmFlagType::Collectible,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stock_pot_inn_grandma_hp_2",
+        mm_scene::STOCK_POT_INN,
+        MmFlagType::Collectible,
+        0x0000_0002,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_stock_pot_inn_hp",
+        mm_scene::STOCK_POT_INN,
+        MmFlagType::Collectible,
+        0x0000_0004,
+    );
+
+    // Termina Field Heart Pieces
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_gossip_stones_hp",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x0000_0001,
+    );
+
+    // Southern Swamp Area Heart Pieces
+    add_mm_mapping(
+        &mut map,
+        "mm_road_to_southern_swamp_hp",
+        mm_scene::ROAD_TO_SOUTHERN_SWAMP,
+        MmFlagType::Collectible,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_deku_palace_hp",
+        0x59,
+        MmFlagType::Collectible,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_southern_swamp_hp",
+        mm_scene::SOUTHERN_SWAMP,
+        MmFlagType::Collectible,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_woodfall_hp_chest",
+        0x14,
+        MmFlagType::Collectible,
+        0x0000_0001,
+    );
+
+    // Mountain Area Heart Pieces
+    add_mm_mapping(
+        &mut map,
+        "mm_goron_village_hp",
+        0x6A,
+        MmFlagType::Collectible,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_mountain_village_frog_choir_hp",
+        0x65,
+        MmFlagType::Collectible,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_path_to_snowhead_hp",
+        0x21,
+        MmFlagType::Collectible,
+        0x0000_0001,
+    );
+
+    // Great Bay Area Heart Pieces
+    add_mm_mapping(
+        &mut map,
+        "mm_great_bay_coast_hp",
+        mm_scene::GREAT_BAY_COAST,
+        MmFlagType::Collectible,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_great_bay_coast_fisherman_hp",
+        mm_scene::GREAT_BAY_COAST,
+        MmFlagType::Collectible,
+        0x0000_0002,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_laboratory_fish_hp",
+        mm_scene::GREAT_BAY_COAST,
+        MmFlagType::Collectible,
+        0x0000_0004,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_pinnacle_rock_hp",
+        mm_scene::PINNACLE_ROCK,
+        MmFlagType::Collectible,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_zora_cape_waterfall_hp",
+        mm_scene::ZORA_CAPE,
+        MmFlagType::Collectible,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_zora_hall_evan_hp",
+        0x39,
+        MmFlagType::Collectible,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_zora_hall_scrub_hp",
+        0x39,
+        MmFlagType::Collectible,
+        0x0000_0002,
+    );
+
+    // Ikana Area Heart Pieces
+    add_mm_mapping(
+        &mut map,
+        "mm_ikana_valley_scrub_hp",
+        0x46,
+        MmFlagType::Collectible,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_ghost_hut_hp",
+        0x46,
+        MmFlagType::Collectible,
+        0x0000_0002,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_beneath_the_graveyard_hp",
+        mm_scene::BENEATH_THE_GRAVEYARD,
+        MmFlagType::Collectible,
+        0x0000_0001,
+    );
+
+    // Romani Ranch Area Heart Pieces
+    add_mm_mapping(
+        &mut map,
+        "mm_doggy_racetrack_hp",
+        0x62,
+        MmFlagType::Collectible,
+        0x0000_0001,
+    );
+
+    // Moon Trial Heart Pieces (stored as chest flags)
+    add_mm_mapping(
+        &mut map,
+        "mm_moon_trial_deku_hp",
+        0x67,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_moon_trial_goron_hp",
+        0x68,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_moon_trial_zora_hp",
+        0x69,
+        MmFlagType::Chest,
+        0x0000_0001,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_moon_trial_link_hp",
+        0x66,
+        MmFlagType::Chest,
+        0x0000_0004,
+    );
+
+    // ========================================================================
+    // OCEANSIDE SPIDER HOUSE (Scene 0x28)
+    // ========================================================================
+    add_mm_mapping(
+        &mut map,
+        "mm_ocean_spider_house_chest_hp",
+        mm_scene::OCEANSIDE_SPIDER_HOUSE,
+        MmFlagType::Chest,
+        0x0000_0001,
     );
 
     map
@@ -660,7 +1748,7 @@ mod tests {
             "MM_MAPPINGS should have locations from world data"
         );
 
-        // All should be stubs initially since no mappings are added yet
+        // Verify stub + mapped counts match total
         let stub_count = mm_stub_count();
         let mapped_count = mm_mapped_count();
 
@@ -668,6 +1756,12 @@ mod tests {
             stub_count + mapped_count,
             count,
             "stub + mapped should equal total"
+        );
+
+        // Verify we have some mapped chest and collectible locations
+        assert!(
+            mapped_count > 100,
+            "Should have over 100 mapped locations (chests + heart pieces)"
         );
     }
 
@@ -718,21 +1812,26 @@ mod tests {
 
     #[test]
     fn test_get_mm_mappings_by_flag_type() {
-        // This should work even if all are stubs (returns empty iterator)
+        // Get all chest mappings
         let chest_mappings: Vec<_> = get_mm_mappings_by_flag_type(MmFlagType::Chest).collect();
-        // Initially all are stubs, so this should be empty
+        // All returned mappings should be properly mapped
+        assert!(!chest_mappings.is_empty(), "Should have chest mappings");
         assert!(
-            chest_mappings.is_empty() || chest_mappings.iter().all(|m| m.is_mapped()),
+            chest_mappings.iter().all(|m| m.is_mapped()),
             "All returned mappings should be mapped"
         );
     }
 
     #[test]
     fn test_get_mm_mappings_for_scene() {
-        // This should work even if all are stubs (returns empty iterator)
+        // Get Woodfall Temple mappings
         let woodfall_mappings: Vec<_> =
             get_mm_mappings_for_scene(mm_scene::WOODFALL_TEMPLE).collect();
-        // Initially all are stubs with no scene_id, so this should be empty
+        // Should have Woodfall Temple chest mappings
+        assert!(
+            !woodfall_mappings.is_empty(),
+            "Should have Woodfall Temple mappings"
+        );
         for mapping in &woodfall_mappings {
             assert_eq!(mapping.scene_id, Some(mm_scene::WOODFALL_TEMPLE));
         }
