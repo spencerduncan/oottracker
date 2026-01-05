@@ -79,6 +79,7 @@ fn tracker_page<'a>(
                 link(rel = "icon", sizes = "512x512", type = "image/png", href = "/static/img/favicon.png");
                 link(rel = "stylesheet", href = "/static/common.css");
                 link(rel = "stylesheet", href = "/static/checked-locations.css");
+                link(rel = "stylesheet", href = "/static/location-filter.css");
                 @match theme {
                     Some(Theme::Light) => link(rel = "stylesheet", href = "/static/light.css");
                     None => link(rel = "stylesheet", href = "/static/light.css", media = "(prefers-color-scheme: light)");
@@ -86,6 +87,7 @@ fn tracker_page<'a>(
                 }
             }
             body {
+                div(id = "location-filter-placeholder");
                 div(class = format!("items {layout_name}")) : items;
                 noscript {
                     p : "live update disabled (requires JavaScript)";
@@ -95,6 +97,7 @@ fn tracker_page<'a>(
                 }
                 script(src = "/static/proto.js");
                 script(src = "/static/checked-locations.js");
+                script(src = "/static/location-filter.js");
             }
         }
     }

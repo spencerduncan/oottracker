@@ -2,11 +2,104 @@
  * Location Filter Module
  *
  * Search and filter component for tracker locations.
- * This is a STUB implementation using mock data for testing.
- * The setDataSource API allows integration with real API endpoints later.
+ * Fetches data from the real checked-locations API and derives
+ * game/region/type metadata from location IDs.
  */
 
-// Filter state
+// ============================================================================
+// Region Data (shared with checked-locations.js)
+// ============================================================================
+
+/**
+ * Region name mapping from location ID prefixes to human-readable names.
+ * The order here determines display order (dungeons first, then overworld).
+ */
+const REGION_NAMES = {
+    // Child Dungeons
+    'deku_tree': 'Deku Tree',
+    'dodongo_cavern': "Dodongo's Cavern",
+    'jabu_jabu': "Jabu Jabu's Belly",
+    // Adult Dungeons
+    'forest_temple': 'Forest Temple',
+    'fire_temple': 'Fire Temple',
+    'water_temple': 'Water Temple',
+    'spirit_temple': 'Spirit Temple',
+    'shadow_temple': 'Shadow Temple',
+    // Mini Dungeons
+    'bottom_of_the_well': 'Bottom of the Well',
+    'ice_cavern': 'Ice Cavern',
+    'gerudo_training': 'Gerudo Training Ground',
+    'ganon_castle': "Ganon's Castle",
+    'treasure_chest_game': 'Treasure Chest Game',
+    // Overworld - Kokiri/Forest
+    'kokiri_forest': 'Kokiri Forest',
+    'kf': 'Kokiri Forest',
+    'lw': 'Lost Woods',
+    'sfm': 'Sacred Forest Meadow',
+    // Overworld - Hyrule
+    'hf': 'Hyrule Field',
+    'lon_lon_ranch': 'Lon Lon Ranch',
+    'market': 'Market',
+    'hyrule_castle': 'Hyrule Castle',
+    'temple_of_time': 'Temple of Time',
+    // Overworld - Kakariko
+    'kak': 'Kakariko Village',
+    'graveyard': 'Graveyard',
+    // Overworld - Death Mountain
+    'dmt': 'Death Mountain Trail',
+    'death_mountain_trail': 'Death Mountain Trail',
+    'goron_city': 'Goron City',
+    'dmc': 'Death Mountain Crater',
+    'death_mountain_crater': 'Death Mountain Crater',
+    // Overworld - Zora
+    'zr': "Zora's River",
+    'zora_domain': "Zora's Domain",
+    'zora_fountain': "Zora's Fountain",
+    'lake_hylia': 'Lake Hylia',
+    // Overworld - Gerudo
+    'gerudo_valley': 'Gerudo Valley',
+    'gerudo_fortress': 'Gerudo Fortress',
+    'haunted_wasteland': 'Haunted Wasteland',
+    'desert_colossus': 'Desert Colossus'
+};
+
+// Pre-sorted region keys for efficient matching (longest first)
+const SORTED_REGION_KEYS = Object.keys(REGION_NAMES).sort((a, b) => b.length - a.length);
+
+// ============================================================================
+// Type Inference Patterns
+// ============================================================================
+
+/**
+ * Patterns for inferring location type from location_id.
+ * Ordered by specificity (more specific patterns first).
+ */
+const TYPE_PATTERNS = [
+    { pattern: /_gs_/, type: 'Skulltula' },
+    { pattern: /_chest$/, type: 'Chest' },
+    { pattern: /_chest_/, type: 'Chest' },
+    { pattern: /_cow$/, type: 'Cow' },
+    { pattern: /_cow_/, type: 'Cow' },
+    { pattern: /_scrub/, type: 'Scrub' },
+    { pattern: /_great_fairy/, type: 'Fairy' },
+    { pattern: /_stray_fairy/, type: 'StrayFairy' },
+    { pattern: /_freestanding/, type: 'Freestanding' },
+    { pattern: /_pot_/, type: 'Pot' },
+    { pattern: /_beehive/, type: 'Beehive' },
+    { pattern: /_rupee/, type: 'Rupee' },
+    { pattern: /_heart/, type: 'Heart' },
+    { pattern: /_crate/, type: 'Crate' },
+    { pattern: /_wonderitem/, type: 'Wonderitem' },
+    { pattern: /_bean/, type: 'BeanPlant' },
+    { pattern: /_shop_/, type: 'Shop' },
+    { pattern: /_song_/, type: 'Song' },
+    { pattern: /_mask_/, type: 'Mask' },
+];
+
+// ============================================================================
+// Filter State
+// ============================================================================
+
 let filterState = {
     query: '',
     status: 'all',
@@ -23,7 +116,7 @@ let dataState = {
     error: null
 };
 
-// Custom data fetcher (null = use mock data)
+// Custom data fetcher (null = use real API)
 let customFetchFn = null;
 
 // Debounce timer
@@ -33,79 +126,116 @@ const DEBOUNCE_MS = 150;
 // DOM element references
 let containerElement = null;
 
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
 /**
- * Mock location data for testing
- * Will be replaced by real API data via setDataSource
- * Format matches real API: {game}_{region}_{location_name}
+ * Get the current room name from the URL
  */
-const mockLocations = [
-    // OoT Kokiri Forest
-    { location_id: 'oot_kf_mido_top_left_chest', status: 'Checked', game: 'OoT', type: 'Chest', region: 'Kokiri Forest' },
-    { location_id: 'oot_kf_mido_top_right_chest', status: 'Checked', game: 'OoT', type: 'Chest', region: 'Kokiri Forest' },
-    { location_id: 'oot_kf_mido_bottom_left_chest', status: 'Unchecked', game: 'OoT', type: 'Chest', region: 'Kokiri Forest' },
-    { location_id: 'oot_kf_mido_bottom_right_chest', status: 'Unchecked', game: 'OoT', type: 'Chest', region: 'Kokiri Forest' },
-    { location_id: 'oot_kf_kokiri_sword_chest', status: 'Checked', game: 'OoT', type: 'Chest', region: 'Kokiri Forest' },
-    { location_id: 'oot_kf_storms_grotto_chest', status: 'Unchecked', game: 'OoT', type: 'Chest', region: 'Kokiri Forest' },
-    { location_id: 'oot_kf_links_house_cow', status: 'Unchecked', game: 'OoT', type: 'Cow', region: 'Kokiri Forest' },
-    { location_id: 'oot_kf_gs_behind_mido_house', status: 'Checked', game: 'OoT', type: 'Skulltula', region: 'Kokiri Forest' },
-    { location_id: 'oot_kf_gs_know_it_all_house', status: 'Unchecked', game: 'OoT', type: 'Skulltula', region: 'Kokiri Forest' },
-    { location_id: 'oot_kf_gs_bean_patch', status: 'Unchecked', game: 'OoT', type: 'Skulltula', region: 'Kokiri Forest' },
-    // OoT Lost Woods
-    { location_id: 'oot_lw_skull_kid', status: 'Checked', game: 'OoT', type: 'NPC', region: 'Lost Woods' },
-    { location_id: 'oot_lw_ocarina_memory_game', status: 'Unchecked', game: 'OoT', type: 'Minigame', region: 'Lost Woods' },
-    { location_id: 'oot_lw_target_in_woods', status: 'Unchecked', game: 'OoT', type: 'Minigame', region: 'Lost Woods' },
-    { location_id: 'oot_lw_deku_scrub_near_bridge', status: 'Checked', game: 'OoT', type: 'Scrub', region: 'Lost Woods' },
-    { location_id: 'oot_lw_gs_bean_patch_near_bridge', status: 'Unchecked', game: 'OoT', type: 'Skulltula', region: 'Lost Woods' },
-    // OoT Hyrule Field
-    { location_id: 'oot_hf_near_kak_grotto_chest', status: 'Unchecked', game: 'OoT', type: 'Chest', region: 'Hyrule Field' },
-    { location_id: 'oot_hf_open_grotto_chest', status: 'Checked', game: 'OoT', type: 'Chest', region: 'Hyrule Field' },
-    { location_id: 'oot_hf_deku_scrub_grotto', status: 'Unchecked', game: 'OoT', type: 'Scrub', region: 'Hyrule Field' },
-    { location_id: 'oot_hf_ocarina_of_time', status: 'Checked', game: 'OoT', type: 'Event', region: 'Hyrule Field' },
-    // OoT Kakariko Village
-    { location_id: 'oot_kak_man_on_roof', status: 'Unchecked', game: 'OoT', type: 'NPC', region: 'Kakariko Village' },
-    { location_id: 'oot_kak_anju_as_child', status: 'Checked', game: 'OoT', type: 'NPC', region: 'Kakariko Village' },
-    { location_id: 'oot_kak_anju_as_adult', status: 'Unchecked', game: 'OoT', type: 'NPC', region: 'Kakariko Village' },
-    { location_id: 'oot_kak_10_gold_skulltula_reward', status: 'Checked', game: 'OoT', type: 'NPC', region: 'Kakariko Village' },
-    { location_id: 'oot_kak_20_gold_skulltula_reward', status: 'Unchecked', game: 'OoT', type: 'NPC', region: 'Kakariko Village' },
-    { location_id: 'oot_kak_shooting_sun_chest', status: 'Unchecked', game: 'OoT', type: 'Chest', region: 'Kakariko Village' },
-    // OoT Death Mountain
-    { location_id: 'oot_dmt_chest_above_dodongo', status: 'Checked', game: 'OoT', type: 'Chest', region: 'Death Mountain' },
-    { location_id: 'oot_dmt_biggoron', status: 'Unchecked', game: 'OoT', type: 'NPC', region: 'Death Mountain' },
-    { location_id: 'oot_dmt_gs_bean_patch', status: 'Unchecked', game: 'OoT', type: 'Skulltula', region: 'Death Mountain' },
-    { location_id: 'oot_dmc_great_fairy', status: 'Checked', game: 'OoT', type: 'Fairy', region: 'Death Mountain' },
-    // MM Clock Town
-    { location_id: 'mm_clock_town_platform_chest', status: 'Unchecked', game: 'MM', type: 'Chest', region: 'Clock Town' },
-    { location_id: 'mm_clock_town_stock_pot_inn', status: 'Checked', game: 'MM', type: 'NPC', region: 'Clock Town' },
-    { location_id: 'mm_clock_town_postman_game', status: 'Unchecked', game: 'MM', type: 'Minigame', region: 'Clock Town' },
-    { location_id: 'mm_clock_town_honey_and_darling', status: 'Unchecked', game: 'MM', type: 'Minigame', region: 'Clock Town' },
-    { location_id: 'mm_clock_town_treasure_chest_game', status: 'Checked', game: 'MM', type: 'Minigame', region: 'Clock Town' },
-    { location_id: 'mm_clock_town_archery_prize_1', status: 'Unchecked', game: 'MM', type: 'Minigame', region: 'Clock Town' },
-    { location_id: 'mm_clock_town_bomb_shop_lady', status: 'Checked', game: 'MM', type: 'NPC', region: 'Clock Town' },
-    { location_id: 'mm_clock_town_mayors_wife_mask', status: 'Unchecked', game: 'MM', type: 'NPC', region: 'Clock Town' },
-    { location_id: 'mm_clock_town_bank_reward_1', status: 'Checked', game: 'MM', type: 'NPC', region: 'Clock Town' },
-    { location_id: 'mm_clock_town_bank_reward_2', status: 'Unchecked', game: 'MM', type: 'NPC', region: 'Clock Town' },
-    // MM Woodfall
-    { location_id: 'mm_woodfall_chest_behind_owl', status: 'Unchecked', game: 'MM', type: 'Chest', region: 'Woodfall' },
-    { location_id: 'mm_woodfall_deku_princess', status: 'Checked', game: 'MM', type: 'Event', region: 'Woodfall' },
-    { location_id: 'mm_woodfall_great_fairy', status: 'Checked', game: 'MM', type: 'Fairy', region: 'Woodfall' },
-    { location_id: 'mm_woodfall_temple_stray_fairy_1', status: 'Checked', game: 'MM', type: 'StrayFairy', region: 'Woodfall' },
-    { location_id: 'mm_woodfall_temple_stray_fairy_2', status: 'Unchecked', game: 'MM', type: 'StrayFairy', region: 'Woodfall' },
-    // MM Snowhead
-    { location_id: 'mm_snowhead_chest_in_ice_cave', status: 'Unchecked', game: 'MM', type: 'Chest', region: 'Snowhead' },
-    { location_id: 'mm_snowhead_goron_race', status: 'Unchecked', game: 'MM', type: 'Minigame', region: 'Snowhead' },
-    { location_id: 'mm_snowhead_great_fairy', status: 'Checked', game: 'MM', type: 'Fairy', region: 'Snowhead' },
-    // MM Great Bay
-    { location_id: 'mm_great_bay_coast_chest', status: 'Checked', game: 'MM', type: 'Chest', region: 'Great Bay' },
-    { location_id: 'mm_great_bay_beaver_race', status: 'Unchecked', game: 'MM', type: 'Minigame', region: 'Great Bay' },
-    { location_id: 'mm_great_bay_pirates_fortress_chest_1', status: 'Unchecked', game: 'MM', type: 'Chest', region: 'Great Bay' },
-    { location_id: 'mm_great_bay_pirates_fortress_chest_2', status: 'Checked', game: 'MM', type: 'Chest', region: 'Great Bay' },
-    { location_id: 'mm_great_bay_great_fairy', status: 'Unchecked', game: 'MM', type: 'Fairy', region: 'Great Bay' },
-    // MM Ikana
-    { location_id: 'mm_ikana_graveyard_chest', status: 'Unchecked', game: 'MM', type: 'Chest', region: 'Ikana' },
-    { location_id: 'mm_ikana_dampe_dig', status: 'Checked', game: 'MM', type: 'Minigame', region: 'Ikana' },
-    { location_id: 'mm_ikana_stone_tower_chest', status: 'Unchecked', game: 'MM', type: 'Chest', region: 'Ikana' },
-    { location_id: 'mm_ikana_great_fairy', status: 'Checked', game: 'MM', type: 'Fairy', region: 'Ikana' }
-];
+function getRoomName() {
+    const match = window.location.pathname.match(/^\/room\/([0-9A-Za-z-]+)\/?$/);
+    return match ? match[1] : null;
+}
+
+/**
+ * Extract region from a location ID.
+ * Location IDs are in format: oot_<region>_<location_specific>
+ * Region may be 1-3 words separated by underscores.
+ */
+function extractRegion(locationId) {
+    // Remove 'oot_' or 'mm_' prefix
+    const withoutPrefix = locationId.replace(/^(oot|mm)_/, '');
+
+    // Try to match known regions (longest match first, using pre-sorted keys)
+    for (const region of SORTED_REGION_KEYS) {
+        if (withoutPrefix.startsWith(region + '_') || withoutPrefix === region) {
+            return region;
+        }
+    }
+
+    // Fallback: use first two words as region guess
+    const parts = withoutPrefix.split('_');
+    if (parts.length >= 2) {
+        // Try two-word region first
+        const twoWord = parts.slice(0, 2).join('_');
+        if (REGION_NAMES[twoWord]) {
+            return twoWord;
+        }
+        // Try three-word region
+        if (parts.length >= 3) {
+            const threeWord = parts.slice(0, 3).join('_');
+            if (REGION_NAMES[threeWord]) {
+                return threeWord;
+            }
+        }
+        // Return first word as fallback
+        return parts[0];
+    }
+
+    return 'unknown';
+}
+
+/**
+ * Get human-readable region name
+ */
+function getRegionDisplayName(regionKey) {
+    return REGION_NAMES[regionKey] || formatRegionKey(regionKey);
+}
+
+/**
+ * Format a region key into a readable name (fallback)
+ */
+function formatRegionKey(key) {
+    return key
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+}
+
+/**
+ * Extract game from location ID (OoT or MM)
+ */
+function extractGame(locationId) {
+    if (locationId.startsWith('oot_')) {
+        return 'OoT';
+    } else if (locationId.startsWith('mm_')) {
+        return 'MM';
+    }
+    return 'Unknown';
+}
+
+/**
+ * Infer location type from location ID
+ */
+function inferType(locationId) {
+    const lowerCaseId = locationId.toLowerCase();
+
+    for (const { pattern, type } of TYPE_PATTERNS) {
+        if (pattern.test(lowerCaseId)) {
+            return type;
+        }
+    }
+
+    return 'Other';
+}
+
+/**
+ * Transform API response to add derived fields
+ */
+function transformLocation(apiLocation) {
+    const locationId = apiLocation.location_id;
+    const regionKey = extractRegion(locationId);
+
+    return {
+        location_id: locationId,
+        status: apiLocation.status,
+        game: extractGame(locationId),
+        region: getRegionDisplayName(regionKey),
+        type: inferType(locationId),
+        is_mapped: apiLocation.is_mapped
+    };
+}
 
 /**
  * Get unique values for a field from locations
@@ -123,6 +253,10 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// ============================================================================
+// Filter Logic
+// ============================================================================
 
 /**
  * Apply filters to locations
@@ -237,6 +371,10 @@ function clearFilters() {
 
     updateFilteredResults();
 }
+
+// ============================================================================
+// Rendering
+// ============================================================================
 
 /**
  * Render the result count
@@ -428,6 +566,31 @@ function createFilterUI() {
     return container;
 }
 
+// ============================================================================
+// Data Loading
+// ============================================================================
+
+/**
+ * Fetch locations from the API
+ */
+async function fetchFromApi() {
+    const roomName = getRoomName();
+    if (!roomName) {
+        throw new Error('Not on a room page');
+    }
+
+    const response = await fetch(`/api/room/${encodeURIComponent(roomName)}/checked-locations`);
+
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    // Transform API response to add derived fields
+    return data.locations.map(transformLocation);
+}
+
 /**
  * Load location data
  */
@@ -440,8 +603,8 @@ async function loadLocations() {
             // Use custom data source
             dataState.locations = await customFetchFn();
         } else {
-            // Use mock data
-            dataState.locations = [...mockLocations];
+            // Use real API
+            dataState.locations = await fetchFromApi();
         }
 
         dataState.filteredLocations = applyFilters(dataState.locations);
@@ -452,6 +615,10 @@ async function loadLocations() {
         console.error('Failed to load locations:', error);
     }
 }
+
+// ============================================================================
+// Initialization
+// ============================================================================
 
 /**
  * Initialize the location filter
@@ -551,6 +718,10 @@ window.locationFilter = {
     getFilteredLocations: getFilteredLocations,
     refreshData: refreshData,
     // For testing/debugging
-    _getMockData: () => [...mockLocations],
-    _getState: () => ({ filter: { ...filterState }, data: { ...dataState } })
+    _getState: () => ({ filter: { ...filterState }, data: { ...dataState } }),
+    // Expose helper functions for potential reuse
+    _extractRegion: extractRegion,
+    _extractGame: extractGame,
+    _inferType: inferType,
+    _getRegionDisplayName: getRegionDisplayName
 };
