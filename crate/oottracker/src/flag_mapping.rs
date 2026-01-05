@@ -3562,6 +3562,34 @@ pub fn get_all_oot_location_ids() -> impl Iterator<Item = &'static str> {
 // Re-export MqDungeon for convenience
 pub use ootmm::settings::MqDungeon;
 
+/// Determines if an MQ location should be active based on settings.
+///
+/// This function handles MQ locations that `MqDungeon::from_location_id` might not
+/// recognize due to non-standard naming patterns (e.g., `mq_oot_mq_ganon_pot_*`
+/// instead of `mq_oot_mq_ganon_castle_*`).
+fn is_mq_location_active(
+    location_id: &str,
+    settings: &ootmm::settings::RandomizerSettings,
+) -> bool {
+    // First try the standard detection
+    if let Some(dungeon) = MqDungeon::from_location_id(location_id) {
+        return settings.is_dungeon_mq(dungeon);
+    }
+
+    // For MQ locations that from_location_id doesn't recognize,
+    // try additional pattern matching based on dungeon names in the location ID
+    // Pattern: mq_oot_mq_<dungeon_shortname>_*
+
+    // Ganon's Castle locations (handles mq_oot_mq_ganon_pot_* pattern)
+    if location_id.contains("_ganon_") {
+        return settings.is_dungeon_mq(MqDungeon::GanonsCastle);
+    }
+
+    // If we can't determine the dungeon, the MQ location should not be active
+    // with default settings (conservative approach)
+    false
+}
+
 /// Returns an iterator over active location mappings based on MQ settings.
 ///
 /// This filters out locations that belong to dungeons where the MQ setting
@@ -3587,7 +3615,7 @@ pub fn get_active_mappings(
 ) -> impl Iterator<Item = &'static FlagMapping> + '_ {
     OOT_MAPPINGS
         .values()
-        .filter(move |m| settings.is_location_active(m.location_id))
+        .filter(move |m| is_location_active_for_settings(m.location_id, settings))
 }
 
 /// Returns the flag mapping for a location, considering MQ settings.
@@ -3610,10 +3638,22 @@ pub fn get_active_mapping(
     settings: &ootmm::settings::RandomizerSettings,
 ) -> Option<&'static FlagMapping> {
     let mapping = OOT_MAPPINGS.get(location_id)?;
-    if settings.is_location_active(location_id) {
+    if is_location_active_for_settings(location_id, settings) {
         Some(mapping)
     } else {
         None
+    }
+}
+
+/// Helper to check if a location is active for given settings.
+fn is_location_active_for_settings(
+    location_id: &str,
+    settings: &ootmm::settings::RandomizerSettings,
+) -> bool {
+    if location_id.starts_with("mq_oot_") {
+        is_mq_location_active(location_id, settings)
+    } else {
+        settings.is_location_active(location_id)
     }
 }
 
@@ -3622,7 +3662,7 @@ pub fn get_active_mapping(
 pub fn active_location_count(settings: &ootmm::settings::RandomizerSettings) -> usize {
     OOT_MAPPINGS
         .values()
-        .filter(|m| settings.is_location_active(m.location_id))
+        .filter(|m| is_location_active_for_settings(m.location_id, settings))
         .count()
 }
 
@@ -3631,7 +3671,7 @@ pub fn active_location_count(settings: &ootmm::settings::RandomizerSettings) -> 
 pub fn active_mapped_count(settings: &ootmm::settings::RandomizerSettings) -> usize {
     OOT_MAPPINGS
         .values()
-        .filter(|m| m.is_mapped() && settings.is_location_active(m.location_id))
+        .filter(|m| m.is_mapped() && is_location_active_for_settings(m.location_id, settings))
         .count()
 }
 
@@ -3641,7 +3681,7 @@ pub fn get_active_mapped_locations(
 ) -> impl Iterator<Item = &'static FlagMapping> + '_ {
     OOT_MAPPINGS
         .values()
-        .filter(move |m| m.is_mapped() && settings.is_location_active(m.location_id))
+        .filter(move |m| m.is_mapped() && is_location_active_for_settings(m.location_id, settings))
 }
 
 /// Returns all mappings for a specific dungeon based on its MQ status.
