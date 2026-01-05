@@ -11,6 +11,7 @@
 //! - [`fixtures`] - Save state fixtures for various game states
 //! - [`scenarios`] - Test scenarios for event detection
 //! - [`config`] - ROM configuration helpers
+//! - [`ram_validation`] - RAM validation for comparing emulator state against fixtures
 //!
 //! # Example
 //!
@@ -38,11 +39,30 @@
 //!     // Execute step and verify expected events
 //! }
 //! ```
+//!
+//! # RAM Validation Example
+//!
+//! ```ignore
+//! use oottracker_e2e::{
+//!     HarnessBuilder,
+//!     fixtures::deku_tree_complete,
+//!     ram_validation::{RamValidator, RamValidationExt},
+//! };
+//!
+//! // Create validator from fixture
+//! let fixture = deku_tree_complete();
+//! let validator = RamValidator::from_fixture(&fixture);
+//!
+//! // Validate against emulator
+//! let report = harness.validate_ram(&validator).await?;
+//! println!("{}", report.summary());
+//! ```
 
 pub mod config;
 pub mod fixtures;
 pub mod harness;
 pub mod launcher;
+pub mod ram_validation;
 pub mod scenarios;
 
 // Re-export commonly used types
@@ -59,6 +79,12 @@ pub use harness::{
     TestHarness, DEFAULT_TRACKER_PORT, PROTOCOL_VERSION,
 };
 pub use launcher::{LauncherError, Pj64EmLauncher, Result};
+pub use ram_validation::{
+    read_ram, read_ram_batch, BatchSummary, BatchValidator, CompareMode, ExpectedValue,
+    FieldResult, RamReadRequest, RamReadResponse, RamValidationExt, RamValidator, ValidationReport,
+    CMD_READ_RAM, DEFAULT_READ_TIMEOUT, E2E_TEST_PORT, MM_SAVE_ADDR, MM_SAVE_SIZE, OOT_SAVE_ADDR,
+    OOT_SAVE_SIZE, RESP_ERROR, RESP_OK,
+};
 pub use scenarios::{
     all_scenarios, regression_scenarios, smoke_test_scenarios, ScenarioStep, TestScenario,
     TrackerEvent,
