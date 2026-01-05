@@ -3,6 +3,7 @@
  *
  * This module fetches and displays the checked locations status
  * from the API endpoint and updates the UI accordingly.
+ * Locations are grouped by region with collapsible sections.
  */
 
 // Checked locations state
@@ -10,11 +11,117 @@ let checkedLocationsState = {
     locations: {},
     lastUpdate: null,
     isLoading: false,
-    error: null
+    error: null,
+    collapsedRegions: new Set() // Track which regions are collapsed
 };
 
 // Status display element
 let statusElement = null;
+
+/**
+ * Region name mapping from location ID prefixes to human-readable names.
+ * The order here determines display order (dungeons first, then overworld).
+ */
+const REGION_DISPLAY_ORDER = [
+    // Child Dungeons
+    'deku_tree',
+    'dodongo_cavern',
+    'jabu_jabu',
+    // Adult Dungeons
+    'forest_temple',
+    'fire_temple',
+    'water_temple',
+    'spirit_temple',
+    'shadow_temple',
+    // Mini Dungeons
+    'bottom_of_the_well',
+    'ice_cavern',
+    'gerudo_training',
+    'ganon_castle',
+    'treasure_chest_game',
+    // Overworld - Kokiri/Forest
+    'kokiri_forest',
+    'kf',
+    'lw',
+    'sfm',
+    // Overworld - Hyrule
+    'hf',
+    'lon_lon_ranch',
+    'market',
+    'hyrule_castle',
+    'temple_of_time',
+    // Overworld - Kakariko
+    'kak',
+    'graveyard',
+    // Overworld - Death Mountain
+    'dmt',
+    'death_mountain_trail',
+    'goron_city',
+    'dmc',
+    'death_mountain_crater',
+    // Overworld - Zora
+    'zr',
+    'zora_domain',
+    'zora_fountain',
+    'lake_hylia',
+    // Overworld - Gerudo
+    'gerudo_valley',
+    'gerudo_fortress',
+    'haunted_wasteland',
+    'desert_colossus'
+];
+
+const REGION_NAMES = {
+    // Child Dungeons
+    'deku_tree': 'Deku Tree',
+    'dodongo_cavern': "Dodongo's Cavern",
+    'jabu_jabu': "Jabu Jabu's Belly",
+    // Adult Dungeons
+    'forest_temple': 'Forest Temple',
+    'fire_temple': 'Fire Temple',
+    'water_temple': 'Water Temple',
+    'spirit_temple': 'Spirit Temple',
+    'shadow_temple': 'Shadow Temple',
+    // Mini Dungeons
+    'bottom_of_the_well': 'Bottom of the Well',
+    'ice_cavern': 'Ice Cavern',
+    'gerudo_training': 'Gerudo Training Ground',
+    'ganon_castle': "Ganon's Castle",
+    'treasure_chest_game': 'Treasure Chest Game',
+    // Overworld - Kokiri/Forest
+    'kokiri_forest': 'Kokiri Forest',
+    'kf': 'Kokiri Forest',
+    'lw': 'Lost Woods',
+    'sfm': 'Sacred Forest Meadow',
+    // Overworld - Hyrule
+    'hf': 'Hyrule Field',
+    'lon_lon_ranch': 'Lon Lon Ranch',
+    'market': 'Market',
+    'hyrule_castle': 'Hyrule Castle',
+    'temple_of_time': 'Temple of Time',
+    // Overworld - Kakariko
+    'kak': 'Kakariko Village',
+    'graveyard': 'Graveyard',
+    // Overworld - Death Mountain
+    'dmt': 'Death Mountain Trail',
+    'death_mountain_trail': 'Death Mountain Trail',
+    'goron_city': 'Goron City',
+    'dmc': 'Death Mountain Crater',
+    'death_mountain_crater': 'Death Mountain Crater',
+    // Overworld - Zora
+    'zr': "Zora's River",
+    'zora_domain': "Zora's Domain",
+    'zora_fountain': "Zora's Fountain",
+    'lake_hylia': 'Lake Hylia',
+    // Overworld - Gerudo
+    'gerudo_valley': 'Gerudo Valley',
+    'gerudo_fortress': 'Gerudo Fortress',
+    'haunted_wasteland': 'Haunted Wasteland',
+    'desert_colossus': 'Desert Colossus'
+};
+
+// Pre-sorted region keys for efficient matching (longest first)
+const SORTED_REGION_KEYS = Object.keys(REGION_NAMES).sort((a, b) => b.length - a.length);
 
 /**
  * Get the current room name from the URL
@@ -22,6 +129,82 @@ let statusElement = null;
 function getRoomName() {
     const match = window.location.pathname.match(/^\/room\/([0-9A-Za-z-]+)\/?$/);
     return match ? match[1] : null;
+}
+
+/**
+ * Extract region from a location ID.
+ * Location IDs are in format: oot_<region>_<location_specific>
+ * Region may be 1-3 words separated by underscores.
+ */
+function extractRegion(locationId) {
+    // Remove 'oot_' or 'mm_' prefix
+    const withoutPrefix = locationId.replace(/^(oot|mm)_/, '');
+
+    // Try to match known regions (longest match first, using pre-sorted keys)
+    for (const region of SORTED_REGION_KEYS) {
+        if (withoutPrefix.startsWith(region + '_') || withoutPrefix === region) {
+            return region;
+        }
+    }
+
+    // Fallback: use first two words as region guess
+    const parts = withoutPrefix.split('_');
+    if (parts.length >= 2) {
+        // Try two-word region first
+        const twoWord = parts.slice(0, 2).join('_');
+        if (REGION_NAMES[twoWord]) {
+            return twoWord;
+        }
+        // Try three-word region
+        if (parts.length >= 3) {
+            const threeWord = parts.slice(0, 3).join('_');
+            if (REGION_NAMES[threeWord]) {
+                return threeWord;
+            }
+        }
+        // Return first word as fallback
+        return parts[0];
+    }
+
+    return 'unknown';
+}
+
+/**
+ * Get human-readable region name
+ */
+function getRegionDisplayName(regionKey) {
+    return REGION_NAMES[regionKey] || formatRegionKey(regionKey);
+}
+
+/**
+ * Format a region key into a readable name (fallback)
+ */
+function formatRegionKey(key) {
+    return key
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+}
+
+/**
+ * Format a location name for display
+ */
+function formatLocationName(locationId) {
+    // Remove prefix and region
+    const withoutPrefix = locationId.replace(/^(oot|mm)_/, '');
+    const region = extractRegion(locationId);
+
+    // Remove the region prefix from the location name
+    let name = withoutPrefix;
+    if (withoutPrefix.startsWith(region + '_')) {
+        name = withoutPrefix.slice(region.length + 1);
+    }
+
+    // Format the remaining name
+    return name
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
 }
 
 /**
@@ -130,6 +313,17 @@ function createCheckedLocationsPanel() {
     list.className = 'locations-list';
     list.id = 'checked-locations-list';
 
+    // Event delegation for region toggle buttons (prevents XSS from inline onclick)
+    list.addEventListener('click', (e) => {
+        const header = e.target.closest('.region-header');
+        if (header) {
+            const regionGroup = header.closest('.region-group');
+            if (regionGroup && regionGroup.dataset.region) {
+                toggleRegion(regionGroup.dataset.region);
+            }
+        }
+    });
+
     panel.appendChild(toggle);
     panel.appendChild(list);
 
@@ -145,45 +339,112 @@ function createCheckedLocationsPanel() {
 }
 
 /**
- * Update the locations list display
+ * Toggle region collapse state
+ */
+function toggleRegion(regionKey) {
+    if (checkedLocationsState.collapsedRegions.has(regionKey)) {
+        checkedLocationsState.collapsedRegions.delete(regionKey);
+    } else {
+        checkedLocationsState.collapsedRegions.add(regionKey);
+    }
+    // Re-render
+    const data = {
+        locations: Object.entries(checkedLocationsState.locations).map(([id, status]) => ({
+            location_id: id,
+            status: status
+        }))
+    };
+    updateLocationsList(data);
+}
+
+/**
+ * Update the locations list display with region-based grouping
  */
 function updateLocationsList(data) {
     const list = document.getElementById('checked-locations-list');
     if (!list || !data) return;
 
-    // Group locations by area (based on common prefix patterns)
-    const grouped = {
-        checked: [],
-        unchecked: [],
-        unknown: []
-    };
+    // Group locations by region
+    const regionGroups = {};
 
     for (const loc of data.locations) {
+        const region = extractRegion(loc.location_id);
+        if (!regionGroups[region]) {
+            regionGroups[region] = {
+                checked: [],
+                unchecked: [],
+                unknown: []
+            };
+        }
+
         if (loc.status === 'Checked') {
-            grouped.checked.push(loc.location_id);
+            regionGroups[region].checked.push(loc.location_id);
         } else if (loc.status === 'Unchecked') {
-            grouped.unchecked.push(loc.location_id);
+            regionGroups[region].unchecked.push(loc.location_id);
         } else {
-            grouped.unknown.push(loc.location_id);
+            regionGroups[region].unknown.push(loc.location_id);
         }
     }
+
+    // Sort regions by display order, then alphabetically for unknown regions
+    const sortedRegions = Object.keys(regionGroups).sort((a, b) => {
+        const indexA = REGION_DISPLAY_ORDER.indexOf(a);
+        const indexB = REGION_DISPLAY_ORDER.indexOf(b);
+
+        if (indexA !== -1 && indexB !== -1) {
+            return indexA - indexB;
+        }
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+
+        return getRegionDisplayName(a).localeCompare(getRegionDisplayName(b));
+    });
 
     let html = '';
 
-    if (grouped.checked.length > 0) {
-        html += '<div class="location-group"><h4>Checked</h4><ul>';
-        for (const loc of grouped.checked.sort()) {
-            html += `<li class="location-checked">${escapeHtml(loc)}</li>`;
-        }
-        html += '</ul></div>';
-    }
+    for (const region of sortedRegions) {
+        const group = regionGroups[region];
+        const total = group.checked.length + group.unchecked.length + group.unknown.length;
+        const checked = group.checked.length;
+        const isCollapsed = checkedLocationsState.collapsedRegions.has(region);
+        const collapsedClass = isCollapsed ? 'collapsed' : '';
+        const arrow = isCollapsed ? '&#9654;' : '&#9660;'; // Right arrow or down arrow
 
-    if (grouped.unchecked.length > 0) {
-        html += '<div class="location-group"><h4>Unchecked</h4><ul>';
-        for (const loc of grouped.unchecked.sort()) {
-            html += `<li class="location-unchecked">${escapeHtml(loc)}</li>`;
+        html += `<div class="region-group ${collapsedClass}" data-region="${escapeHtml(region)}">`;
+        html += `<button class="region-header" aria-expanded="${!isCollapsed}" aria-controls="region-${escapeHtml(region)}">`;
+        html += `<span class="region-arrow">${arrow}</span>`;
+        html += `<span class="region-name">${escapeHtml(getRegionDisplayName(region))}</span>`;
+        html += `<span class="region-count">(${checked}/${total})</span>`;
+        html += `</button>`;
+
+        html += `<div class="region-locations" id="region-${escapeHtml(region)}">`;
+
+        // Show unchecked first (what the player still needs to get)
+        for (const loc of group.unchecked.sort()) {
+            html += `<div class="location-item location-unchecked">`;
+            html += `<span class="location-icon">&#9744;</span>`; // Empty checkbox
+            html += `<span class="location-name">${escapeHtml(formatLocationName(loc))}</span>`;
+            html += `</div>`;
         }
-        html += '</ul></div>';
+
+        // Then checked (completed)
+        for (const loc of group.checked.sort()) {
+            html += `<div class="location-item location-checked">`;
+            html += `<span class="location-icon">&#9745;</span>`; // Checked checkbox
+            html += `<span class="location-name">${escapeHtml(formatLocationName(loc))}</span>`;
+            html += `</div>`;
+        }
+
+        // Unknown status
+        for (const loc of group.unknown.sort()) {
+            html += `<div class="location-item location-unknown">`;
+            html += `<span class="location-icon">?</span>`;
+            html += `<span class="location-name">${escapeHtml(formatLocationName(loc))}</span>`;
+            html += `</div>`;
+        }
+
+        html += `</div>`; // region-locations
+        html += `</div>`; // region-group
     }
 
     list.innerHTML = html;
