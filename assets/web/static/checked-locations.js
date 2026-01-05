@@ -120,6 +120,9 @@ const REGION_NAMES = {
     'desert_colossus': 'Desert Colossus'
 };
 
+// Pre-sorted region keys for efficient matching (longest first)
+const SORTED_REGION_KEYS = Object.keys(REGION_NAMES).sort((a, b) => b.length - a.length);
+
 /**
  * Get the current room name from the URL
  */
@@ -137,8 +140,8 @@ function extractRegion(locationId) {
     // Remove 'oot_' or 'mm_' prefix
     const withoutPrefix = locationId.replace(/^(oot|mm)_/, '');
 
-    // Try to match known regions (longest match first)
-    for (const region of Object.keys(REGION_NAMES).sort((a, b) => b.length - a.length)) {
+    // Try to match known regions (longest match first, using pre-sorted keys)
+    for (const region of SORTED_REGION_KEYS) {
         if (withoutPrefix.startsWith(region + '_') || withoutPrefix === region) {
             return region;
         }
@@ -310,6 +313,17 @@ function createCheckedLocationsPanel() {
     list.className = 'locations-list';
     list.id = 'checked-locations-list';
 
+    // Event delegation for region toggle buttons (prevents XSS from inline onclick)
+    list.addEventListener('click', (e) => {
+        const header = e.target.closest('.region-header');
+        if (header) {
+            const regionGroup = header.closest('.region-group');
+            if (regionGroup && regionGroup.dataset.region) {
+                toggleRegion(regionGroup.dataset.region);
+            }
+        }
+    });
+
     panel.appendChild(toggle);
     panel.appendChild(list);
 
@@ -396,14 +410,14 @@ function updateLocationsList(data) {
         const collapsedClass = isCollapsed ? 'collapsed' : '';
         const arrow = isCollapsed ? '&#9654;' : '&#9660;'; // Right arrow or down arrow
 
-        html += `<div class="region-group ${collapsedClass}">`;
-        html += `<button class="region-header" onclick="toggleRegion('${region}')">`;
+        html += `<div class="region-group ${collapsedClass}" data-region="${escapeHtml(region)}">`;
+        html += `<button class="region-header" aria-expanded="${!isCollapsed}" aria-controls="region-${escapeHtml(region)}">`;
         html += `<span class="region-arrow">${arrow}</span>`;
         html += `<span class="region-name">${escapeHtml(getRegionDisplayName(region))}</span>`;
         html += `<span class="region-count">(${checked}/${total})</span>`;
         html += `</button>`;
 
-        html += `<div class="region-locations">`;
+        html += `<div class="region-locations" id="region-${escapeHtml(region)}">`;
 
         // Show unchecked first (what the player still needs to get)
         for (const loc of group.unchecked.sort()) {
@@ -475,9 +489,6 @@ function initCheckedLocations() {
     // Set up periodic refresh (every 5 seconds)
     setInterval(refreshCheckedLocations, 5000);
 }
-
-// Make toggleRegion available globally for onclick handlers
-window.toggleRegion = toggleRegion;
 
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
