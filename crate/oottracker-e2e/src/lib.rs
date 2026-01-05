@@ -62,6 +62,7 @@ pub mod config;
 pub mod fixtures;
 pub mod harness;
 pub mod launcher;
+pub mod oot_flag_validation;
 pub mod ram_validation;
 pub mod scenarios;
 
@@ -79,6 +80,13 @@ pub use harness::{
     TestHarness, DEFAULT_TRACKER_PORT, PROTOCOL_VERSION,
 };
 pub use launcher::{LauncherError, Pj64EmLauncher, Result};
+pub use oot_flag_validation::{
+    deku_tree_chests_validator, dodongos_cavern_chests_validator, global_flag_address,
+    global_flag_offset, scene_flag_address, scene_flag_offset, skulltula_validator, GlobalFlagType,
+    OotFlagValidator, SceneFlagType, EVENT_CHK_INF_OFFSET, EVENT_CHK_INF_SIZE, INF_TABLE_OFFSET,
+    INF_TABLE_SIZE, ITEM_GET_INF_OFFSET, ITEM_GET_INF_SIZE, SCENE_FLAGS_OFFSET,
+    SCENE_FLAG_ENTRY_SIZE, SKULLTULA_FLAGS_OFFSET, SKULLTULA_FLAGS_SIZE,
+};
 pub use ram_validation::{
     read_ram, read_ram_batch, BatchSummary, BatchValidator, CompareMode, ExpectedValue,
     FieldResult, RamReadRequest, RamReadResponse, RamValidationExt, RamValidator, ValidationReport,
