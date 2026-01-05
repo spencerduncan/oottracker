@@ -111,7 +111,9 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       # Run tests for crates that don't need randomizer
       - name: Run tests
-        run: cargo test -p ootr -p oottracker-derive -p ootmm
+        run: |
+          cargo test -p ootr -p oottracker-derive -p ootmm
+          cargo test -p oottracker --lib
 
   coverage:
     name: Code Coverage
