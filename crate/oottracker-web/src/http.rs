@@ -524,6 +524,7 @@ pub(crate) fn rocket(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use oottracker::flag_mapping::CheckStatus;
     use rocket::{
         http::{ContentType, Status},
         local::asynchronous::Client,
@@ -817,15 +818,17 @@ mod tests {
 
     #[test]
     fn test_theme_from_form_field_light() {
-        use rocket::form::FromFormField;
-        let theme: Theme = Theme::from_value("Light".into()).unwrap();
+        use rocket::form::{FromFormField, ValueField};
+        let field = ValueField::from_value("Light");
+        let theme: Theme = Theme::from_value(field).unwrap();
         assert!(matches!(theme, Theme::Light));
     }
 
     #[test]
     fn test_theme_from_form_field_dark() {
-        use rocket::form::FromFormField;
-        let theme: Theme = Theme::from_value("Dark".into()).unwrap();
+        use rocket::form::{FromFormField, ValueField};
+        let field = ValueField::from_value("Dark");
+        let theme: Theme = Theme::from_value(field).unwrap();
         assert!(matches!(theme, Theme::Dark));
     }
 
@@ -1029,5 +1032,207 @@ mod tests {
         // NonZeroU8 cannot be 0
         let response = client.get("/mw/test-room/0").dispatch().await;
         assert_eq!(response.status(), Status::NotFound);
+    }
+
+    // ==========================================================================
+    // Checked Locations API Tests
+    // ==========================================================================
+
+    #[rocket::async_test]
+    async fn test_checked_locations_valid_room() {
+        let client = Client::tracked(test_rocket().await)
+            .await
+            .expect("valid rocket instance");
+
+        // Valid room name should return 200 OK with JSON
+        let response = client
+            .get("/api/room/test-room-432/checked-locations")
+            .dispatch()
+            .await;
+        assert_eq!(response.status(), Status::Ok);
+
+        // Verify we get valid JSON
+        let summary: CheckedLocationsSummary = response.into_json().await.unwrap();
+        assert!(summary.total_mapped >= 0);
+    }
+
+    #[rocket::async_test]
+    async fn test_checked_locations_response_structure() {
+        let client = Client::tracked(test_rocket().await)
+            .await
+            .expect("valid rocket instance");
+
+        let response = client
+            .get("/api/room/test-struct-check/checked-locations")
+            .dispatch()
+            .await;
+        assert_eq!(response.status(), Status::Ok);
+
+        let summary: CheckedLocationsSummary = response.into_json().await.unwrap();
+
+        // Verify all required fields are present and valid
+        // total_mapped should equal checked + unchecked + unknown
+        assert_eq!(
+            summary.total_mapped,
+            summary.checked_count + summary.unchecked_count + summary.unknown_count
+        );
+
+        // locations vector should exist (may be empty for new room)
+        assert!(summary.locations.len() <= summary.total_mapped);
+    }
+
+    #[rocket::async_test]
+    async fn test_checked_locations_array_structure() {
+        let client = Client::tracked(test_rocket().await)
+            .await
+            .expect("valid rocket instance");
+
+        let response = client
+            .get("/api/room/test-array-check/checked-locations")
+            .dispatch()
+            .await;
+        assert_eq!(response.status(), Status::Ok);
+
+        let summary: CheckedLocationsSummary = response.into_json().await.unwrap();
+
+        // Each location should have location_id and status fields
+        for location in &summary.locations {
+            // location_id should be a non-empty string
+            assert!(!location.location_id.is_empty());
+
+            // status should be one of the valid enum values
+            // (this is enforced by the type system, but we verify deserialization worked)
+            let _ = match location.status {
+                CheckStatus::Checked => "checked",
+                CheckStatus::Unchecked => "unchecked",
+                CheckStatus::Unknown => "unknown",
+            };
+
+            // is_mapped field should exist
+            let _ = location.is_mapped;
+        }
+    }
+
+    #[rocket::async_test]
+    async fn test_checked_locations_status_values_valid() {
+        let client = Client::tracked(test_rocket().await)
+            .await
+            .expect("valid rocket instance");
+
+        let response = client
+            .get("/api/room/test-status-check/checked-locations")
+            .dispatch()
+            .await;
+        assert_eq!(response.status(), Status::Ok);
+
+        let summary: CheckedLocationsSummary = response.into_json().await.unwrap();
+
+        // Count status values manually and verify they match summary counts
+        let mut checked = 0;
+        let mut unchecked = 0;
+        let mut unknown = 0;
+
+        for location in &summary.locations {
+            match location.status {
+                CheckStatus::Checked => checked += 1,
+                CheckStatus::Unchecked => unchecked += 1,
+                CheckStatus::Unknown => unknown += 1,
+            }
+        }
+
+        // The counts should match what we counted from the array
+        assert_eq!(summary.checked_count, checked);
+        assert_eq!(summary.unchecked_count, unchecked);
+        assert_eq!(summary.unknown_count, unknown);
+    }
+
+    #[rocket::async_test]
+    async fn test_checked_locations_empty_room() {
+        let client = Client::tracked(test_rocket().await)
+            .await
+            .expect("valid rocket instance");
+
+        // Fresh room should auto-create with default state
+        let response = client
+            .get("/api/room/brand-new-room-empty/checked-locations")
+            .dispatch()
+            .await;
+        assert_eq!(response.status(), Status::Ok);
+
+        let summary: CheckedLocationsSummary = response.into_json().await.unwrap();
+
+        // For a new room with default ModelState, checked_count should be 0
+        // (no locations have been checked yet)
+        assert_eq!(summary.checked_count, 0);
+    }
+
+    #[rocket::async_test]
+    async fn test_checked_locations_invalid_room_name_uppercase() {
+        let client = Client::tracked(test_rocket().await)
+            .await
+            .expect("valid rocket instance");
+
+        // Room names must match ^[0-9a-z]+(?:-[0-9a-z]+)*$
+        // Uppercase letters are invalid
+        let response = client
+            .get("/api/room/InvalidName/checked-locations")
+            .dispatch()
+            .await;
+        assert_eq!(response.status(), Status::NotFound);
+    }
+
+    #[rocket::async_test]
+    async fn test_checked_locations_invalid_room_name_special_chars() {
+        let client = Client::tracked(test_rocket().await)
+            .await
+            .expect("valid rocket instance");
+
+        // Special characters are invalid
+        let response = client
+            .get("/api/room/test_room/checked-locations")
+            .dispatch()
+            .await;
+        assert_eq!(response.status(), Status::NotFound);
+    }
+
+    #[rocket::async_test]
+    async fn test_checked_locations_invalid_room_name_leading_hyphen() {
+        let client = Client::tracked(test_rocket().await)
+            .await
+            .expect("valid rocket instance");
+
+        // Leading hyphen is invalid
+        let response = client
+            .get("/api/room/-invalid/checked-locations")
+            .dispatch()
+            .await;
+        assert_eq!(response.status(), Status::NotFound);
+    }
+
+    #[rocket::async_test]
+    async fn test_checked_locations_counts_match_array_length() {
+        let client = Client::tracked(test_rocket().await)
+            .await
+            .expect("valid rocket instance");
+
+        let response = client
+            .get("/api/room/test-counts-integration/checked-locations")
+            .dispatch()
+            .await;
+        assert_eq!(response.status(), Status::Ok);
+
+        let summary: CheckedLocationsSummary = response.into_json().await.unwrap();
+
+        // Integration check: locations array length should equal sum of counts
+        assert_eq!(
+            summary.locations.len(),
+            summary.checked_count + summary.unchecked_count + summary.unknown_count
+        );
+
+        // Also verify total_mapped equals the same sum
+        assert_eq!(
+            summary.total_mapped,
+            summary.checked_count + summary.unchecked_count + summary.unknown_count
+        );
     }
 }
