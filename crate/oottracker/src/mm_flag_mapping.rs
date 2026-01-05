@@ -46,6 +46,7 @@ use std::collections::HashMap;
 
 use once_cell::sync::Lazy;
 
+use ootmm::events::mm_flags::owl_bits;
 use ootmm::region::Game;
 
 // ============================================================================
@@ -400,10 +401,72 @@ static MM_MAPPINGS: Lazy<HashMap<&'static str, MmFlagMapping>> = Lazy::new(|| {
 
     // Then, add known mappings that override the stubs
     // These are derived from OoTMM research and will be populated incrementally
-    //
-    // Example mapping (to be added as research progresses):
-    // add_mm_mapping(&mut map, "mm_woodfall_temple_map_chest",
-    //     mm_scene::WOODFALL_TEMPLE, MmFlagType::Chest, 0x01);
+
+    // ========================================================================
+    // Owl Statue Mappings
+    // ========================================================================
+    // Owl statues are global flags stored in the quest status bitfield.
+    // Each owl statue has a unique bit position (bits 20-29).
+    add_mm_global_mapping(
+        &mut map,
+        "mm_clock_town_owl_statue",
+        MmFlagType::OwlStatue,
+        1 << owl_bits::OWL_CLOCK_TOWN,
+    );
+    add_mm_global_mapping(
+        &mut map,
+        "mm_milk_road_owl_statue",
+        MmFlagType::OwlStatue,
+        1 << owl_bits::OWL_MILK_ROAD,
+    );
+    add_mm_global_mapping(
+        &mut map,
+        "mm_southern_swamp_owl_statue",
+        MmFlagType::OwlStatue,
+        1 << owl_bits::OWL_SOUTHERN_SWAMP,
+    );
+    add_mm_global_mapping(
+        &mut map,
+        "mm_woodfall_owl_statue",
+        MmFlagType::OwlStatue,
+        1 << owl_bits::OWL_WOODFALL,
+    );
+    add_mm_global_mapping(
+        &mut map,
+        "mm_mountain_village_owl_statue",
+        MmFlagType::OwlStatue,
+        1 << owl_bits::OWL_MOUNTAIN_VILLAGE,
+    );
+    add_mm_global_mapping(
+        &mut map,
+        "mm_snowhead_owl_statue",
+        MmFlagType::OwlStatue,
+        1 << owl_bits::OWL_SNOWHEAD,
+    );
+    add_mm_global_mapping(
+        &mut map,
+        "mm_zora_cape_owl_statue",
+        MmFlagType::OwlStatue,
+        1 << owl_bits::OWL_ZORA_CAPE,
+    );
+    add_mm_global_mapping(
+        &mut map,
+        "mm_great_bay_coast_owl_statue",
+        MmFlagType::OwlStatue,
+        1 << owl_bits::OWL_GREAT_BAY,
+    );
+    add_mm_global_mapping(
+        &mut map,
+        "mm_ikana_canyon_owl_statue",
+        MmFlagType::OwlStatue,
+        1 << owl_bits::OWL_IKANA_CANYON,
+    );
+    add_mm_global_mapping(
+        &mut map,
+        "mm_stone_tower_owl_statue",
+        MmFlagType::OwlStatue,
+        1 << owl_bits::OWL_STONE_TOWER,
+    );
 
     map
 });
@@ -672,6 +735,86 @@ mod tests {
         // Initially all are stubs with no scene_id, so this should be empty
         for mapping in &woodfall_mappings {
             assert_eq!(mapping.scene_id, Some(mm_scene::WOODFALL_TEMPLE));
+        }
+    }
+
+    #[test]
+    fn test_owl_statue_mappings() {
+        // All 10 owl statues should be mapped
+        let owl_mappings: Vec<_> = get_mm_mappings_by_flag_type(MmFlagType::OwlStatue).collect();
+        assert_eq!(owl_mappings.len(), 10, "Should have 10 owl statue mappings");
+
+        // Verify all owl statues are properly mapped
+        let owl_ids = [
+            "mm_clock_town_owl_statue",
+            "mm_milk_road_owl_statue",
+            "mm_southern_swamp_owl_statue",
+            "mm_woodfall_owl_statue",
+            "mm_mountain_village_owl_statue",
+            "mm_snowhead_owl_statue",
+            "mm_zora_cape_owl_statue",
+            "mm_great_bay_coast_owl_statue",
+            "mm_ikana_canyon_owl_statue",
+            "mm_stone_tower_owl_statue",
+        ];
+
+        for owl_id in owl_ids {
+            let mapping = get_mm_mapping(owl_id);
+            assert!(mapping.is_some(), "Should find mapping for {}", owl_id);
+
+            let m = mapping.unwrap();
+            assert!(m.is_mapped(), "{} should be mapped", owl_id);
+            assert_eq!(
+                m.flag_type,
+                Some(MmFlagType::OwlStatue),
+                "{} should have OwlStatue flag type",
+                owl_id
+            );
+            assert!(
+                m.scene_id.is_none(),
+                "{} should be a global flag (no scene_id)",
+                owl_id
+            );
+        }
+    }
+
+    #[test]
+    fn test_owl_statue_flag_bits() {
+        // Verify each owl statue has a unique, correct bit mask
+        let expected_bits = [
+            ("mm_clock_town_owl_statue", 1 << owl_bits::OWL_CLOCK_TOWN),
+            ("mm_milk_road_owl_statue", 1 << owl_bits::OWL_MILK_ROAD),
+            (
+                "mm_southern_swamp_owl_statue",
+                1 << owl_bits::OWL_SOUTHERN_SWAMP,
+            ),
+            ("mm_woodfall_owl_statue", 1 << owl_bits::OWL_WOODFALL),
+            (
+                "mm_mountain_village_owl_statue",
+                1 << owl_bits::OWL_MOUNTAIN_VILLAGE,
+            ),
+            ("mm_snowhead_owl_statue", 1 << owl_bits::OWL_SNOWHEAD),
+            ("mm_zora_cape_owl_statue", 1 << owl_bits::OWL_ZORA_CAPE),
+            (
+                "mm_great_bay_coast_owl_statue",
+                1 << owl_bits::OWL_GREAT_BAY,
+            ),
+            (
+                "mm_ikana_canyon_owl_statue",
+                1 << owl_bits::OWL_IKANA_CANYON,
+            ),
+            ("mm_stone_tower_owl_statue", 1 << owl_bits::OWL_STONE_TOWER),
+        ];
+
+        for (loc_id, expected_bit) in expected_bits {
+            let mapping = get_mm_mapping(loc_id).expect("Mapping should exist");
+            assert_eq!(
+                mapping.flag_bit,
+                Some(expected_bit),
+                "{} should have flag_bit {}",
+                loc_id,
+                expected_bit
+            );
         }
     }
 }
