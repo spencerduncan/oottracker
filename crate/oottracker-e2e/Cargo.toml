@@ -16,3 +16,6 @@ features = ["process", "time", "net", "sync", "io-util"]
 [dev-dependencies.tokio]
 version = "1"
 features = ["macros", "rt-multi-thread"]
+
+[dev-dependencies.ootmm]
+path = "../ootmm"
