@@ -291,7 +291,8 @@ impl MqDungeon {
             if location_id.contains("gerudo_training") {
                 return Some(Self::GerudoTrainingGround);
             }
-            if location_id.contains("ganon_castle") {
+            // Match "ganon" broadly for MQ locations - covers both ganon_castle_* and ganon_pot_*
+            if location_id.contains("ganon") {
                 return Some(Self::GanonsCastle);
             }
             return None;
