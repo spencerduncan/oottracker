@@ -600,6 +600,465 @@ static MM_MAPPINGS: Lazy<HashMap<&'static str, MmFlagMapping>> = Lazy::new(|| {
     );
 
     // ========================================================================
+    // SONG LOCATIONS
+    // ========================================================================
+    // Songs are stored in quest_items bitfield at specific bit positions.
+    // The MmFlagType::Song flag_bit represents the bit position in quest_items.
+    //
+    // Song bit positions:
+    // - Sonata of Awakening: bit 6
+    // - Goron Lullaby: bit 7
+    // - New Wave Bossa Nova: bit 8
+    // - Elegy of Emptiness: bit 9
+    // - Oath to Order: bit 10
+    // - Song of Time: bit 12
+    // - Song of Healing: bit 13
+    // - Epona's Song: bit 14
+    // - Song of Soaring: bit 15
+    // - Song of Storms: bit 16
+    // - Lullaby Intro: bit 24
+
+    // Song of Healing - learned from Happy Mask Salesman in Clock Tower
+    add_mm_global_mapping(
+        &mut map,
+        "mm_initial_song_of_healing",
+        MmFlagType::Song,
+        1 << 13,
+    );
+
+    // Sonata of Awakening - learned from Deku Butler's Son in Deku Palace
+    add_mm_global_mapping(
+        &mut map,
+        "mm_deku_palace_sonata_of_awakening",
+        MmFlagType::Song,
+        1 << 6,
+    );
+
+    // Goron Lullaby (Intro) - learned from crying Goron Baby
+    add_mm_global_mapping(&mut map, "mm_goron_baby", MmFlagType::Song, 1 << 24);
+
+    // Goron Lullaby (Full) - learned from Goron Elder
+    add_mm_global_mapping(&mut map, "mm_goron_elder", MmFlagType::Song, 1 << 7);
+
+    // New Wave Bossa Nova - learned at Marine Research Lab
+    add_mm_global_mapping(
+        &mut map,
+        "mm_laboratory_zora_song",
+        MmFlagType::Song,
+        1 << 8,
+    );
+
+    // Elegy of Emptiness - learned from Igos du Ikana in Ancient Castle
+    add_mm_global_mapping(
+        &mut map,
+        "mm_ancient_castle_of_ikana_elegy",
+        MmFlagType::Song,
+        1 << 9,
+    );
+
+    // Song of Storms - learned from Flat's ghost beneath the graveyard
+    add_mm_global_mapping(
+        &mut map,
+        "mm_beneath_the_graveyard_song_of_storms",
+        MmFlagType::Song,
+        1 << 16,
+    );
+
+    // Epona's Song - learned from Romani at Romani Ranch
+    add_mm_global_mapping(
+        &mut map,
+        "mm_romani_ranch_epona_song",
+        MmFlagType::Song,
+        1 << 14,
+    );
+
+    // Song of Soaring - learned from Owl in Southern Swamp
+    add_mm_global_mapping(
+        &mut map,
+        "mm_southern_swamp_song_of_soaring",
+        MmFlagType::Song,
+        1 << 15,
+    );
+
+    // Oath to Order - learned after defeating all four bosses
+    // This is typically obtained during the game's finale sequence
+
+    // ========================================================================
+    // NPC MASK REWARDS
+    // ========================================================================
+    // Masks obtained from NPCs are tracked by EventInf or WeekEventReg flags.
+    // These flags are set when the player receives the mask.
+
+    // Blast Mask - from old lady saved from Sakon (Night 1)
+    add_mm_global_mapping(
+        &mut map,
+        "mm_clock_town_blast_mask",
+        MmFlagType::WeekEventReg,
+        0x01,
+    );
+
+    // Bremen Mask - from Guru-Guru in Laundry Pool
+    add_mm_global_mapping(
+        &mut map,
+        "mm_clock_town_guru_guru_mask_bremen",
+        MmFlagType::WeekEventReg,
+        0x02,
+    );
+
+    // Kafei's Mask - from Madame Aroma in Mayor's Office
+    add_mm_global_mapping(
+        &mut map,
+        "mm_mayors_office_kafeis_mask",
+        MmFlagType::EventInf,
+        0x01,
+    );
+
+    // Postman's Hat - from Postman after delivering mail
+    add_mm_global_mapping(
+        &mut map,
+        "mm_clock_town_postman_hat",
+        MmFlagType::WeekEventReg,
+        0x04,
+    );
+
+    // All-Night Mask - from Curiosity Shop (expensive purchase)
+    add_mm_global_mapping(
+        &mut map,
+        "mm_curiosity_shop_all_night_mask",
+        MmFlagType::WeekEventReg,
+        0x08,
+    );
+
+    // Troupe Leader's Mask - from Gorman Brothers at Milk Bar
+    add_mm_global_mapping(
+        &mut map,
+        "mm_milk_bar_troupe_leader_mask",
+        MmFlagType::WeekEventReg,
+        0x10,
+    );
+
+    // Bunny Hood - from Grog at Cucco Shack
+    add_mm_global_mapping(
+        &mut map,
+        "mm_cucco_shack_bunny_mask",
+        MmFlagType::WeekEventReg,
+        0x20,
+    );
+
+    // Don Gero's Mask - from hungry Goron in Mountain Village
+    add_mm_global_mapping(
+        &mut map,
+        "mm_mountain_village_don_gero_mask",
+        MmFlagType::WeekEventReg,
+        0x40,
+    );
+
+    // Mask of Scents - from Deku Butler in Deku Shrine
+    add_mm_global_mapping(
+        &mut map,
+        "mm_deku_shrine_mask_of_scents",
+        MmFlagType::EventInf,
+        0x02,
+    );
+
+    // Romani's Mask - from Cremia after escort mission
+    add_mm_global_mapping(
+        &mut map,
+        "mm_romani_ranch_cremia_escort",
+        MmFlagType::WeekEventReg,
+        0x80,
+    );
+
+    // Garo's Mask - from Gorman Brothers at Gorman Track
+    add_mm_global_mapping(
+        &mut map,
+        "mm_gorman_track_garo_mask",
+        MmFlagType::EventInf,
+        0x04,
+    );
+
+    // Captain's Hat - from Skull Keeta in Ikana Graveyard
+    add_mm_global_mapping(
+        &mut map,
+        "mm_ikana_graveyard_captain_mask",
+        MmFlagType::EventInf,
+        0x08,
+    );
+
+    // Gibdo Mask - from Pamela's Father in Music Box House
+    add_mm_global_mapping(
+        &mut map,
+        "mm_music_box_house_gibdo_mask",
+        MmFlagType::EventInf,
+        0x10,
+    );
+
+    // Stone Mask - from invisible soldier on Road to Ikana
+    add_mm_global_mapping(
+        &mut map,
+        "mm_road_to_ikana_stone_mask",
+        MmFlagType::EventInf,
+        0x20,
+    );
+
+    // Kamaro's Mask - from Kamaro ghost in Termina Field
+    add_mm_global_mapping(
+        &mut map,
+        "mm_termina_field_kamaro_mask",
+        MmFlagType::EventInf,
+        0x40,
+    );
+
+    // Goron Mask - from Darmani's ghost in Goron Graveyard
+    add_mm_global_mapping(
+        &mut map,
+        "mm_goron_graveyard_mask",
+        MmFlagType::EventInf,
+        0x80,
+    );
+
+    // Zora Mask - from Mikau on Great Bay Coast
+    add_mm_global_mapping(
+        &mut map,
+        "mm_great_bay_coast_zora_mask",
+        MmFlagType::EventInf,
+        0x0100,
+    );
+
+    // ========================================================================
+    // NPC ITEM REWARDS
+    // ========================================================================
+    // Other important items obtained from NPCs.
+
+    // Bomber's Notebook - from Jim after Hide and Seek
+    add_mm_global_mapping(
+        &mut map,
+        "mm_clock_town_bomber_notebook",
+        MmFlagType::EventInf,
+        0x0200,
+    );
+
+    // Pendant of Memories - from Kafei in his hideout
+    add_mm_global_mapping(
+        &mut map,
+        "mm_kafei_hideout_pendant_of_memories",
+        MmFlagType::WeekEventReg,
+        0x0100,
+    );
+
+    // Bottle from Madame Aroma - at Milk Bar
+    add_mm_global_mapping(
+        &mut map,
+        "mm_milk_bar_madame_aroma_bottle",
+        MmFlagType::WeekEventReg,
+        0x0200,
+    );
+
+    // Post Box reward - delivering mail
+    add_mm_global_mapping(
+        &mut map,
+        "mm_clock_town_post_box",
+        MmFlagType::WeekEventReg,
+        0x0400,
+    );
+
+    // Moon's Tear - from Astral Observatory
+    add_mm_global_mapping(
+        &mut map,
+        "mm_astral_observatory_moon_tear",
+        MmFlagType::MoonsTear,
+        0x01,
+    );
+
+    // Pictobox - from Tourist Information
+    add_mm_global_mapping(
+        &mut map,
+        "mm_tourist_information_pictobox",
+        MmFlagType::EventInf,
+        0x0400,
+    );
+
+    // Tingle Picture reward
+    add_mm_global_mapping(
+        &mut map,
+        "mm_tourist_information_tingle_picture",
+        MmFlagType::EventInf,
+        0x0800,
+    );
+
+    // ========================================================================
+    // MINIGAME REWARD LOCATIONS
+    // ========================================================================
+
+    // Romani Ranch - Aliens defense reward
+    add_mm_global_mapping(
+        &mut map,
+        "mm_romani_ranch_aliens",
+        MmFlagType::WeekEventReg,
+        0x0800,
+    );
+
+    // Beaver Race rewards
+    add_mm_global_mapping(
+        &mut map,
+        "mm_waterfall_rapids_beaver_race_1",
+        MmFlagType::EventInf,
+        0x8000,
+    );
+    add_mm_global_mapping(
+        &mut map,
+        "mm_waterfall_rapids_beaver_race_2",
+        MmFlagType::ItemGetInf,
+        0x01,
+    );
+
+    // Zora Hall Scene Lights minigame
+    add_mm_global_mapping(
+        &mut map,
+        "mm_zora_hall_scene_lights",
+        MmFlagType::WeekEventReg,
+        0x1000,
+    );
+
+    // ========================================================================
+    // GROTTO LOCATIONS
+    // ========================================================================
+    // Grottos typically contain collectibles or heart pieces.
+
+    add_mm_mapping(
+        &mut map,
+        "mm_road_to_southern_swamp_grotto",
+        mm_scene::ROAD_TO_SOUTHERN_SWAMP,
+        MmFlagType::Collectible,
+        0x01,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_southern_swamp_grotto",
+        mm_scene::SOUTHERN_SWAMP,
+        MmFlagType::Collectible,
+        0x01,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_woods_of_mystery_grotto",
+        0x59, // Woods of Mystery scene
+        MmFlagType::Collectible,
+        0x01,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_mountain_village_tunnel_grotto",
+        mm_scene::MOUNTAIN_VILLAGE,
+        MmFlagType::Collectible,
+        0x01,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_path_to_snowhead_grotto",
+        mm_scene::PATH_TO_SNOWHEAD,
+        MmFlagType::Collectible,
+        0x01,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_zora_cape_grotto",
+        mm_scene::ZORA_CAPE,
+        MmFlagType::Collectible,
+        0x01,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_road_to_ikana_grotto",
+        mm_scene::ROAD_TO_IKANA,
+        MmFlagType::Collectible,
+        0x01,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_ikana_graveyard_grotto",
+        mm_scene::IKANA_GRAVEYARD,
+        MmFlagType::Collectible,
+        0x01,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_ikana_valley_grotto",
+        mm_scene::IKANA_CANYON,
+        MmFlagType::Collectible,
+        0x02,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_peahat_grotto",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x01,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_bio_baba_grotto",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x02,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_dodongo_grotto",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x04,
+    );
+    add_mm_mapping(
+        &mut map,
+        "mm_termina_field_pillar_grotto",
+        mm_scene::TERMINA_FIELD,
+        MmFlagType::Collectible,
+        0x08,
+    );
+
+    // ========================================================================
+    // BOSS REWARDS
+    // ========================================================================
+    // Boss remains are obtained after defeating temple bosses.
+
+    add_mm_global_mapping(
+        &mut map,
+        "mm_woodfall_temple_boss_remains",
+        MmFlagType::Boss,
+        0x01,
+    );
+    add_mm_global_mapping(
+        &mut map,
+        "mm_snowhead_temple_boss_remains",
+        MmFlagType::Boss,
+        0x02,
+    );
+    add_mm_global_mapping(
+        &mut map,
+        "mm_great_bay_temple_boss_remains",
+        MmFlagType::Boss,
+        0x04,
+    );
+    add_mm_global_mapping(
+        &mut map,
+        "mm_stone_tower_temple_boss_remains",
+        MmFlagType::Boss,
+        0x08,
+    );
+
+    // ========================================================================
+    // COW LOCATIONS
+    // ========================================================================
+    // Cows give milk when Epona's Song is played.
+
+    add_mm_global_mapping(&mut map, "mm_romani_ranch_cow_1", MmFlagType::Cow, 0x01);
+    add_mm_global_mapping(&mut map, "mm_romani_ranch_cow_2", MmFlagType::Cow, 0x02);
+    add_mm_global_mapping(&mut map, "mm_romani_ranch_cow_3", MmFlagType::Cow, 0x04);
+    add_mm_global_mapping(&mut map, "mm_great_bay_coast_cow", MmFlagType::Cow, 0x08);
+    add_mm_global_mapping(&mut map, "mm_beneath_the_well_cow", MmFlagType::Cow, 0x10);
+
+    // ========================================================================
     // DUNGEON CHESTS
     // ========================================================================
 
