@@ -307,6 +307,26 @@ impl TestHarness {
     pub fn config(&self) -> &HarnessConfig {
         &self.config
     }
+
+    /// Returns a mutable reference to the TCP connection.
+    ///
+    /// This is used by the RAM validation module to send commands to the emulator.
+    /// Returns `None` if not connected.
+    pub fn connection_mut(&mut self) -> Option<&mut TcpStream> {
+        self.connection.as_mut()
+    }
+
+    /// Returns a reference to the TCP connection.
+    ///
+    /// Returns `None` if not connected.
+    pub fn connection(&self) -> Option<&TcpStream> {
+        self.connection.as_ref()
+    }
+
+    /// Returns true if the harness has an active connection.
+    pub fn is_connected(&self) -> bool {
+        self.connection.is_some()
+    }
 }
 
 impl Drop for TestHarness {
