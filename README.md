@@ -13,6 +13,19 @@ An item tracker for [the *Ocarina of Time* Randomizer](https://ootrandomizer.com
 - **Auto-tracking:** Real-time memory reading from [BizHawk](https://tasvideos.org/BizHawk), [Project64](https://www.pj64-emu.com/), or [RetroArch](https://retroarch.com/)
 - **Networked tracking:** Connect to external trackers including <https://oot-tracker.web.app/>, <https://ootr-tracker.web.app/>, and <https://ootr-random-settings-tracker.web.app/>
 - **Knowledge inference:** Extracts hints from text boxes, dungeon screens, and game state
+- **Randomizer tracking:** OoTMM logic evaluation with settings support and location check detection
+
+## Documentation
+
+**Getting Started:**
+- [**Quickstart Guide (PJ64-EM)**](docs/QUICKSTART_PJ64EM.md) - Get tracking in 5 minutes!
+
+**Setup Guides:**
+- [BizHawk Setup](docs/BIZHAWK_SETUP.md) - Windows BizHawk integration
+- [Project64-EM Setup](docs/PROJECT64_EM_SETUP.md) - PJ64-EM on Windows/Linux (detailed)
+
+**Technical Documentation:**
+- [Randomizer Tracking System](docs/RANDOMIZER_TRACKING.md) - Architecture, flag mapping, and development
 
 ## Racing Rules Notice
 
