@@ -4585,8 +4585,28 @@ impl TrackerLayout {
                         MmPictographBox,
                         MmMagicBean,
                         MmStrayFairyClockTown,
-                        MmGiantMask,
+                        // Row 8: MM Collectible Masks (1-12)
+                        MmPostmanHat,
+                        MmAllNightMask,
+                        MmBlastMask,
+                        MmStoneMask,
+                        MmGreatFairyMask,
+                        MmKeatonMask,
+                        MmBremenMask,
+                        MmBunnyHood,
+                        MmDonGeroMask,
+                        MmMaskOfScents,
+                        MmRomaniMask,
+                        MmCircusLeaderMask,
+                        // Row 9: MM Collectible Masks (13-20)
+                        MmKafeiMask,
+                        MmCouplesMask,
                         MmMaskOfTruth,
+                        MmKamaroMask,
+                        MmGibdoMask,
+                        MmGaroMask,
+                        MmCaptainHat,
+                        MmGiantMask,
                     ]
                 )
             }
