@@ -4,6 +4,10 @@ version = "0.7.4"
 authors = ["Fenhl <fenhl@fenhl.net>"]
 edition = "2021"
 
+[features]
+default = ["audio"]
+audio = ["dep:rodio"]
+
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1"
 
@@ -16,7 +20,7 @@ iced_futures = "0.4"
 iced_native = "0.5"
 image = "0.24"
 itertools = "0.10"
-rodio = "0.17"
+rodio = { version = "0.17", optional = true }
 semver = "1"
 url = "2"
 

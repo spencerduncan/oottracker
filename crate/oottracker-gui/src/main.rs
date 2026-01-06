@@ -61,6 +61,7 @@ use {
     tokio::{fs, fs::File, io::AsyncWriteExt as _, time::sleep},
 };
 
+#[cfg(feature = "audio")]
 mod audio;
 mod logic;
 mod subscriptions;
@@ -192,6 +193,7 @@ impl TrackerLayoutExt for TrackerLayout {
 #[derive(Derivative)]
 #[derivative(Debug(bound = ""), Clone(bound = ""))]
 enum Message<R: Rando> {
+    #[allow(dead_code)] // Preparatory for check panel feature
     CheckedLocationsUpdated(CheckedLocationsSummary),
     ClientDisconnected,
     CloseMenu,
@@ -360,6 +362,7 @@ struct State<R: Rando + 'static> {
     notification: Option<(bool, Message<R>)>,
     dismiss_notification_button: button::State,
     menu_state: Option<MenuState>,
+    #[cfg(feature = "audio")]
     audio_player: Option<audio::AudioPlayer>,
     /// Summary of checked locations from flag mapping.
     /// Updated whenever model state changes.
@@ -425,6 +428,7 @@ impl<R: Rando + 'static> State<R> {
     }
 
     /// Plays the item fanfare sound if configured.
+    #[cfg(feature = "audio")]
     fn play_fanfare(&self) {
         if let (Some(ref config), Some(ref player)) = (&self.config, &self.audio_player) {
             if let Some(ref path) = config.item_fanfare_path {
@@ -432,6 +436,10 @@ impl<R: Rando + 'static> State<R> {
             }
         }
     }
+
+    /// No-op when audio feature is disabled.
+    #[cfg(not(feature = "audio"))]
+    fn play_fanfare(&self) {}
 }
 
 impl Default for State<ootr_static::Rando> {
@@ -513,6 +521,7 @@ impl Default for State<ootr_static::Rando> {
             notification: None,
             dismiss_notification_button: button::State::default(),
             menu_state: None,
+            #[cfg(feature = "audio")]
             audio_player: audio::AudioPlayer::new(),
             checked_locations: None,
         }
