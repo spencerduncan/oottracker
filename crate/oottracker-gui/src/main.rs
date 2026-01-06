@@ -223,6 +223,7 @@ enum Message<R: Rando> {
     SetPort(String),
     SetUrl(String),
     SetWarpSongOrder(ElementOrder),
+    ToggleCheckPanel,
     UpdateCheck,
     UpdateCheckComplete(Option<Version>),
     UpdateCheckError(UpdateCheckError),
@@ -368,6 +369,8 @@ struct State<R: Rando + 'static> {
     /// Summary of checked locations from flag mapping.
     /// Updated whenever model state changes.
     checked_locations: Option<CheckedLocationsSummary>,
+    /// Whether to show the check panel on the right side of the tracker.
+    show_check_panel: bool,
 }
 
 impl<R: Rando + 'static> State<R> {
@@ -525,6 +528,7 @@ impl Default for State<ootr_static::Rando> {
             #[cfg(feature = "audio")]
             audio_player: audio::AudioPlayer::new(),
             checked_locations: None,
+            show_check_panel: false,
         }
     }
 }
@@ -845,6 +849,9 @@ impl Application for State<ootr_static::Rando> {
                     .warp_song_order = warp_song_order;
                 return self.save_config();
             }
+            Message::ToggleCheckPanel => {
+                self.show_check_panel = !self.show_check_panel;
+            }
             Message::UpdateCheck => {
                 self.update_check = UpdateCheckState::Checking;
                 let client = self.http_client.clone();
@@ -1094,6 +1101,7 @@ impl Application for State<ootr_static::Rando> {
         };
 
         // Use computed layout dimensions for container sizing
+        let show_side_panel = self.flags.show_logic_tracker || self.show_check_panel;
         let items_container = Container::new(
             Container::new(view.spacing(10).padding(5))
                 .width(Length::Units(layout_width as u16))
@@ -1101,7 +1109,7 @@ impl Application for State<ootr_static::Rando> {
         )
         .width(Length::Fill)
         .style(ContainerStyle)
-        .width(if self.flags.show_logic_tracker {
+        .width(if show_side_panel {
             Length::Units(layout_width as u16 + 2)
         } else {
             Length::Fill
@@ -1112,6 +1120,22 @@ impl Application for State<ootr_static::Rando> {
             Row::new()
                 .push(items_container)
                 .push(self.logic.view(&self.rando).map(Message::Logic))
+                .width(Length::Fill)
+                .into()
+        } else if self.show_check_panel {
+            // Placeholder check panel - will be replaced by actual widget from #482
+            let check_panel = Container::new(
+                Text::new("Check Panel")
+                    .color([1.0, 1.0, 1.0])
+                    .width(Length::Fill)
+                    .horizontal_alignment(alignment::Horizontal::Center),
+            )
+            .width(Length::Units(200))
+            .height(Length::Fill)
+            .style(ContainerStyle);
+            Row::new()
+                .push(items_container)
+                .push(check_panel)
                 .width(Length::Fill)
                 .into()
         } else {
@@ -1128,6 +1152,14 @@ impl Application for State<ootr_static::Rando> {
                     )),
                     _,
                 ) => Some(Message::KeyboardModifiers(modifiers)),
+                // Ctrl+L to toggle check panel
+                (
+                    iced_native::Event::Keyboard(iced_native::keyboard::Event::KeyPressed {
+                        key_code: iced_native::keyboard::KeyCode::L,
+                        modifiers,
+                    }),
+                    _,
+                ) if modifiers.control() => Some(Message::ToggleCheckPanel),
                 (
                     iced_native::Event::Mouse(iced_native::mouse::Event::CursorMoved { position }),
                     _,
