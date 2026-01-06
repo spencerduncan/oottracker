@@ -4584,9 +4584,32 @@ impl TrackerLayout {
                         MmGreatFairySword,
                         MmPictographBox,
                         MmMagicBean,
-                        MmStrayFairyClockTown,
                         MmGiantMask,
                         MmMaskOfTruth,
+                        KokiriSword, // complete row 7
+                        // Row 8: MM Dungeon Items - Boss Keys + Maps + Compasses
+                        MmWoodfallBossKey,
+                        MmSnowheadBossKey,
+                        MmGreatBayBossKey,
+                        MmStoneTowerBossKey,
+                        MmWoodfallMap,
+                        MmSnowheadMap,
+                        MmGreatBayMap,
+                        MmStoneTowerMap,
+                        MmWoodfallCompass,
+                        MmSnowheadCompass,
+                        MmGreatBayCompass,
+                        MmStoneTowerCompass,
+                        // Row 9: MM Dungeon Items - Small Keys + Stray Fairies
+                        MmWoodfallSmallKeys,
+                        MmSnowheadSmallKeys,
+                        MmGreatBaySmallKeys,
+                        MmStoneTowerSmallKeys,
+                        MmStrayFairyClockTown,
+                        MmStrayFairyWoodfall,
+                        MmStrayFairySnowhead,
+                        MmStrayFairyGreatBay,
+                        MmStrayFairyStoneTower,
                     ]
                 )
             }
