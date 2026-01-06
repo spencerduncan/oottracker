@@ -41,6 +41,7 @@ use {
     ootr::Rando,
     oottracker::{
         firebase,
+        flag_mapping::{get_checked_locations_summary, CheckedLocationsSummary},
         github::Repo,
         net::{self, Connection},
         proto::Packet,
@@ -191,6 +192,7 @@ impl TrackerLayoutExt for TrackerLayout {
 #[derive(Derivative)]
 #[derivative(Debug(bound = ""), Clone(bound = ""))]
 enum Message<R: Rando> {
+    CheckedLocationsUpdated(CheckedLocationsSummary),
     ClientDisconnected,
     CloseMenu,
     ConfigError(ui::Error),
@@ -359,6 +361,9 @@ struct State<R: Rando + 'static> {
     dismiss_notification_button: button::State,
     menu_state: Option<MenuState>,
     audio_player: Option<audio::AudioPlayer>,
+    /// Summary of checked locations from flag mapping.
+    /// Updated whenever model state changes.
+    checked_locations: Option<CheckedLocationsSummary>,
 }
 
 impl<R: Rando + 'static> State<R> {
@@ -506,6 +511,7 @@ impl Default for State<ootr_static::Rando> {
             dismiss_notification_button: button::State::default(),
             menu_state: None,
             audio_player: audio::AudioPlayer::new(),
+            checked_locations: None,
         }
     }
 }
@@ -560,6 +566,9 @@ impl Application for State<ootr_static::Rando> {
         message: Message<ootr_static::Rando>,
     ) -> Command<Message<ootr_static::Rando>> {
         match message {
+            Message::CheckedLocationsUpdated(summary) => {
+                self.checked_locations = Some(summary);
+            }
             Message::ClientDisconnected => {
                 if self
                     .notification
@@ -707,6 +716,8 @@ impl Application for State<ootr_static::Rando> {
                         self.model.update_knowledge();
                     }
                 }
+                // Update checked locations summary after model changes
+                self.checked_locations = Some(get_checked_locations_summary(&self.model));
             }
             Message::ResetUpdateState => {
                 self.update_check = UpdateCheckState::Unknown(button::State::default())
