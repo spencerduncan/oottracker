@@ -556,6 +556,26 @@ pub enum TrackerCellKind {
         set: MmSmallKeysSetter,
         max: u8,
     },
+    OotMap {
+        active: Box<dyn Fn(&AllDungeonItems) -> bool>,
+        toggle: Box<dyn Fn(&mut AllDungeonItems)>,
+    },
+    OotCompass {
+        active: Box<dyn Fn(&AllDungeonItems) -> bool>,
+        toggle: Box<dyn Fn(&mut AllDungeonItems)>,
+    },
+    MmBossKey {
+        active: Box<dyn Fn(&crate::mm_save::MmAllDungeonItems) -> bool>,
+        toggle: Box<dyn Fn(&mut crate::mm_save::MmAllDungeonItems)>,
+    },
+    MmMap {
+        active: Box<dyn Fn(&crate::mm_save::MmAllDungeonItems) -> bool>,
+        toggle: Box<dyn Fn(&mut crate::mm_save::MmAllDungeonItems)>,
+    },
+    MmCompass {
+        active: Box<dyn Fn(&crate::mm_save::MmAllDungeonItems) -> bool>,
+        toggle: Box<dyn Fn(&mut crate::mm_save::MmAllDungeonItems)>,
+    },
     Song {
         song: QuestItems,
         check: &'static str,
@@ -608,6 +628,71 @@ impl TrackerCellKind {
             BossKey { active, .. } => CellRender {
                 img: ImageInfo::extra("boss_key"),
                 style: if active(&state.ram.save.dungeon_items) {
+                    CellStyle::Normal
+                } else {
+                    CellStyle::Dimmed
+                },
+                overlay: CellOverlay::None,
+                accessibility: None,
+            },
+            OotMap { active, .. } => CellRender {
+                img: ImageInfo::extra("map"),
+                style: if active(&state.ram.save.dungeon_items) {
+                    CellStyle::Normal
+                } else {
+                    CellStyle::Dimmed
+                },
+                overlay: CellOverlay::None,
+                accessibility: None,
+            },
+            OotCompass { active, .. } => CellRender {
+                img: ImageInfo::extra("compass"),
+                style: if active(&state.ram.save.dungeon_items) {
+                    CellStyle::Normal
+                } else {
+                    CellStyle::Dimmed
+                },
+                overlay: CellOverlay::None,
+                accessibility: None,
+            },
+            MmBossKey { active, .. } => CellRender {
+                img: ImageInfo::extra("boss_key"),
+                style: if state
+                    .ram
+                    .mm_save
+                    .as_ref()
+                    .is_some_and(|mm| active(&mm.dungeon_items))
+                {
+                    CellStyle::Normal
+                } else {
+                    CellStyle::Dimmed
+                },
+                overlay: CellOverlay::None,
+                accessibility: None,
+            },
+            MmMap { active, .. } => CellRender {
+                img: ImageInfo::extra("map"),
+                style: if state
+                    .ram
+                    .mm_save
+                    .as_ref()
+                    .is_some_and(|mm| active(&mm.dungeon_items))
+                {
+                    CellStyle::Normal
+                } else {
+                    CellStyle::Dimmed
+                },
+                overlay: CellOverlay::None,
+                accessibility: None,
+            },
+            MmCompass { active, .. } => CellRender {
+                img: ImageInfo::extra("compass"),
+                style: if state
+                    .ram
+                    .mm_save
+                    .as_ref()
+                    .is_some_and(|mm| active(&mm.dungeon_items))
+                {
                     CellStyle::Normal
                 } else {
                     CellStyle::Dimmed
@@ -1414,6 +1499,23 @@ impl TrackerCellKind {
                 .dungeon_reward_locations
                 .increment(DungeonReward::Stone(*stone)),
             FreeReward => {}
+            OotMap { toggle, .. } => toggle(&mut state.ram.save.dungeon_items),
+            OotCompass { toggle, .. } => toggle(&mut state.ram.save.dungeon_items),
+            MmBossKey { toggle, .. } => {
+                if let Some(ref mut mm_save) = state.ram.mm_save {
+                    toggle(&mut mm_save.dungeon_items);
+                }
+            }
+            MmMap { toggle, .. } => {
+                if let Some(ref mut mm_save) = state.ram.mm_save {
+                    toggle(&mut mm_save.dungeon_items);
+                }
+            }
+            MmCompass { toggle, .. } => {
+                if let Some(ref mut mm_save) = state.ram.mm_save {
+                    toggle(&mut mm_save.dungeon_items);
+                }
+            }
             BigPoeTriforce | BossKey { .. } | SongCheck { .. } => unimplemented!(),
         }
     }
@@ -1619,6 +1721,11 @@ impl TrackerCellKind {
                     state.ram.save.quest_items.toggle(QuestItems::from(stone))
                 }
                 FreeReward | FortressMq | Mq(_) | Simple { .. } | Stone(_) => {}
+                OotMap { .. }
+                | OotCompass { .. }
+                | MmBossKey { .. }
+                | MmMap { .. }
+                | MmCompass { .. } => {}
                 BigPoeTriforce | BossKey { .. } | SongCheck { .. } => unimplemented!(),
             }
         }
@@ -2655,6 +2762,159 @@ cells! {
         small: TrackerCellId::GanonSmallKeys,
         boss: TrackerCellId::GanonBossKey,
     },
+
+    // ============================================================================
+    // OoT Dungeon Maps
+    // ============================================================================
+    DekuMap: OotMap {
+        active: Box::new(|keys| keys.deku_tree.contains(DungeonItems::MAP)),
+        toggle: Box::new(|keys| keys.deku_tree.toggle(DungeonItems::MAP)),
+    },
+    DcMap: OotMap {
+        active: Box::new(|keys| keys.dodongos_cavern.contains(DungeonItems::MAP)),
+        toggle: Box::new(|keys| keys.dodongos_cavern.toggle(DungeonItems::MAP)),
+    },
+    JabuMap: OotMap {
+        active: Box::new(|keys| keys.jabu_jabu.contains(DungeonItems::MAP)),
+        toggle: Box::new(|keys| keys.jabu_jabu.toggle(DungeonItems::MAP)),
+    },
+    ForestMap: OotMap {
+        active: Box::new(|keys| keys.forest_temple.contains(DungeonItems::MAP)),
+        toggle: Box::new(|keys| keys.forest_temple.toggle(DungeonItems::MAP)),
+    },
+    FireMap: OotMap {
+        active: Box::new(|keys| keys.fire_temple.contains(DungeonItems::MAP)),
+        toggle: Box::new(|keys| keys.fire_temple.toggle(DungeonItems::MAP)),
+    },
+    WaterMap: OotMap {
+        active: Box::new(|keys| keys.water_temple.contains(DungeonItems::MAP)),
+        toggle: Box::new(|keys| keys.water_temple.toggle(DungeonItems::MAP)),
+    },
+    ShadowMap: OotMap {
+        active: Box::new(|keys| keys.shadow_temple.contains(DungeonItems::MAP)),
+        toggle: Box::new(|keys| keys.shadow_temple.toggle(DungeonItems::MAP)),
+    },
+    SpiritMap: OotMap {
+        active: Box::new(|keys| keys.spirit_temple.contains(DungeonItems::MAP)),
+        toggle: Box::new(|keys| keys.spirit_temple.toggle(DungeonItems::MAP)),
+    },
+    WellMap: OotMap {
+        active: Box::new(|keys| keys.bottom_of_the_well.contains(DungeonItems::MAP)),
+        toggle: Box::new(|keys| keys.bottom_of_the_well.toggle(DungeonItems::MAP)),
+    },
+    IceMap: OotMap {
+        active: Box::new(|keys| keys.ice_cavern.contains(DungeonItems::MAP)),
+        toggle: Box::new(|keys| keys.ice_cavern.toggle(DungeonItems::MAP)),
+    },
+    GanonMap: OotMap {
+        active: Box::new(|keys| keys.ganons_castle.contains(DungeonItems::MAP)),
+        toggle: Box::new(|keys| keys.ganons_castle.toggle(DungeonItems::MAP)),
+    },
+
+    // ============================================================================
+    // OoT Dungeon Compasses
+    // ============================================================================
+    DekuCompass: OotCompass {
+        active: Box::new(|keys| keys.deku_tree.contains(DungeonItems::COMPASS)),
+        toggle: Box::new(|keys| keys.deku_tree.toggle(DungeonItems::COMPASS)),
+    },
+    DcCompass: OotCompass {
+        active: Box::new(|keys| keys.dodongos_cavern.contains(DungeonItems::COMPASS)),
+        toggle: Box::new(|keys| keys.dodongos_cavern.toggle(DungeonItems::COMPASS)),
+    },
+    JabuCompass: OotCompass {
+        active: Box::new(|keys| keys.jabu_jabu.contains(DungeonItems::COMPASS)),
+        toggle: Box::new(|keys| keys.jabu_jabu.toggle(DungeonItems::COMPASS)),
+    },
+    ForestCompass: OotCompass {
+        active: Box::new(|keys| keys.forest_temple.contains(DungeonItems::COMPASS)),
+        toggle: Box::new(|keys| keys.forest_temple.toggle(DungeonItems::COMPASS)),
+    },
+    FireCompass: OotCompass {
+        active: Box::new(|keys| keys.fire_temple.contains(DungeonItems::COMPASS)),
+        toggle: Box::new(|keys| keys.fire_temple.toggle(DungeonItems::COMPASS)),
+    },
+    WaterCompass: OotCompass {
+        active: Box::new(|keys| keys.water_temple.contains(DungeonItems::COMPASS)),
+        toggle: Box::new(|keys| keys.water_temple.toggle(DungeonItems::COMPASS)),
+    },
+    ShadowCompass: OotCompass {
+        active: Box::new(|keys| keys.shadow_temple.contains(DungeonItems::COMPASS)),
+        toggle: Box::new(|keys| keys.shadow_temple.toggle(DungeonItems::COMPASS)),
+    },
+    SpiritCompass: OotCompass {
+        active: Box::new(|keys| keys.spirit_temple.contains(DungeonItems::COMPASS)),
+        toggle: Box::new(|keys| keys.spirit_temple.toggle(DungeonItems::COMPASS)),
+    },
+    WellCompass: OotCompass {
+        active: Box::new(|keys| keys.bottom_of_the_well.contains(DungeonItems::COMPASS)),
+        toggle: Box::new(|keys| keys.bottom_of_the_well.toggle(DungeonItems::COMPASS)),
+    },
+    IceCompass: OotCompass {
+        active: Box::new(|keys| keys.ice_cavern.contains(DungeonItems::COMPASS)),
+        toggle: Box::new(|keys| keys.ice_cavern.toggle(DungeonItems::COMPASS)),
+    },
+
+    // ============================================================================
+    // MM Dungeon Boss Keys
+    // ============================================================================
+    MmWoodfallBossKey: MmBossKey {
+        active: Box::new(|keys| keys.woodfall.contains(crate::mm_save::MmDungeonItems::BOSS_KEY)),
+        toggle: Box::new(|keys| keys.woodfall.toggle(crate::mm_save::MmDungeonItems::BOSS_KEY)),
+    },
+    MmSnowheadBossKey: MmBossKey {
+        active: Box::new(|keys| keys.snowhead.contains(crate::mm_save::MmDungeonItems::BOSS_KEY)),
+        toggle: Box::new(|keys| keys.snowhead.toggle(crate::mm_save::MmDungeonItems::BOSS_KEY)),
+    },
+    MmGreatBayBossKey: MmBossKey {
+        active: Box::new(|keys| keys.great_bay.contains(crate::mm_save::MmDungeonItems::BOSS_KEY)),
+        toggle: Box::new(|keys| keys.great_bay.toggle(crate::mm_save::MmDungeonItems::BOSS_KEY)),
+    },
+    MmStoneTowerBossKey: MmBossKey {
+        active: Box::new(|keys| keys.stone_tower.contains(crate::mm_save::MmDungeonItems::BOSS_KEY)),
+        toggle: Box::new(|keys| keys.stone_tower.toggle(crate::mm_save::MmDungeonItems::BOSS_KEY)),
+    },
+
+    // ============================================================================
+    // MM Dungeon Maps
+    // ============================================================================
+    MmWoodfallMap: MmMap {
+        active: Box::new(|keys| keys.woodfall.contains(crate::mm_save::MmDungeonItems::MAP)),
+        toggle: Box::new(|keys| keys.woodfall.toggle(crate::mm_save::MmDungeonItems::MAP)),
+    },
+    MmSnowheadMap: MmMap {
+        active: Box::new(|keys| keys.snowhead.contains(crate::mm_save::MmDungeonItems::MAP)),
+        toggle: Box::new(|keys| keys.snowhead.toggle(crate::mm_save::MmDungeonItems::MAP)),
+    },
+    MmGreatBayMap: MmMap {
+        active: Box::new(|keys| keys.great_bay.contains(crate::mm_save::MmDungeonItems::MAP)),
+        toggle: Box::new(|keys| keys.great_bay.toggle(crate::mm_save::MmDungeonItems::MAP)),
+    },
+    MmStoneTowerMap: MmMap {
+        active: Box::new(|keys| keys.stone_tower.contains(crate::mm_save::MmDungeonItems::MAP)),
+        toggle: Box::new(|keys| keys.stone_tower.toggle(crate::mm_save::MmDungeonItems::MAP)),
+    },
+
+    // ============================================================================
+    // MM Dungeon Compasses
+    // ============================================================================
+    MmWoodfallCompass: MmCompass {
+        active: Box::new(|keys| keys.woodfall.contains(crate::mm_save::MmDungeonItems::COMPASS)),
+        toggle: Box::new(|keys| keys.woodfall.toggle(crate::mm_save::MmDungeonItems::COMPASS)),
+    },
+    MmSnowheadCompass: MmCompass {
+        active: Box::new(|keys| keys.snowhead.contains(crate::mm_save::MmDungeonItems::COMPASS)),
+        toggle: Box::new(|keys| keys.snowhead.toggle(crate::mm_save::MmDungeonItems::COMPASS)),
+    },
+    MmGreatBayCompass: MmCompass {
+        active: Box::new(|keys| keys.great_bay.contains(crate::mm_save::MmDungeonItems::COMPASS)),
+        toggle: Box::new(|keys| keys.great_bay.toggle(crate::mm_save::MmDungeonItems::COMPASS)),
+    },
+    MmStoneTowerCompass: MmCompass {
+        active: Box::new(|keys| keys.stone_tower.contains(crate::mm_save::MmDungeonItems::COMPASS)),
+        toggle: Box::new(|keys| keys.stone_tower.toggle(crate::mm_save::MmDungeonItems::COMPASS)),
+    },
+
     BiggoronSword: Simple {
         img: ImageInfo::new("UNIMPLEMENTED"),
         active: Box::new(|state| state.ram.save.biggoron_sword && state.ram.save.equipment.contains(Equipment::GIANTS_KNIFE)),
