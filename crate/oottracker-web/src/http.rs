@@ -18,7 +18,7 @@ use {
         uri, FromForm, FromFormField, Rocket, State, UriDisplayQuery,
     },
     rocket_util::{html, Doctype, ToHtml},
-    sqlx::PgPool,
+    sqlx::SqlitePool,
     std::{num::NonZeroU8, time::Duration},
 };
 
@@ -432,7 +432,7 @@ async fn room(
 
 #[rocket::post("/room/<name>/click/<cell_id>")]
 async fn click(
-    pool: &State<PgPool>,
+    pool: &State<SqlitePool>,
     rooms: &State<Rooms>,
     name: &str,
     cell_id: u8,
@@ -483,7 +483,7 @@ async fn api_checked_locations(
 }
 
 pub(crate) fn rocket(
-    pool: PgPool,
+    pool: SqlitePool,
     rooms: Rooms,
     restreams: Restreams,
     mw_rooms: MwRooms,

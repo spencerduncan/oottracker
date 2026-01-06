@@ -25,7 +25,7 @@ use {
     lazy_regex::regex_is_match,
     oottracker::{websocket::RoomToken, Knowledge, ModelState, Ram, TrackerCtx},
     rocket::http::Status,
-    sqlx::{postgres::PgConnectOptions, types::Json, PgPool},
+    sqlx::{Row, SqlitePool},
     std::{
         collections::hash_map::{self, HashMap},
         fmt,
@@ -87,21 +87,28 @@ impl RoomState {
         }
     }
 
-    pub(crate) async fn save(&mut self, pool: &PgPool) -> Result<(), Error> {
+    pub(crate) async fn save(&mut self, pool: &SqlitePool) -> Result<(), Error> {
         if self.last_saved.elapsed() >= Duration::from_secs(60) {
             self.force_save(pool).await?;
         }
         Ok(())
     }
 
-    pub(crate) async fn force_save(&mut self, pool: &PgPool) -> Result<(), Error> {
+    pub(crate) async fn force_save(&mut self, pool: &SqlitePool) -> Result<(), Error> {
         let ModelState {
             ref knowledge,
             ref ram,
             ..
         } = self.model; //TODO include tracker context
                         //TODO versioning (e.g. to recover RAM from previous versions)
-        sqlx::query!("INSERT INTO rooms (name, knowledge, ram) VALUES ($1, $2, $3) ON CONFLICT (name) DO UPDATE SET knowledge = EXCLUDED.knowledge, ram = EXCLUDED.ram", self.name, serde_json::to_value(knowledge)?, &ram.to_ranges()[..]).execute(pool).await?;
+        let knowledge_json = serde_json::to_string(knowledge)?;
+        let ram_json = serde_json::to_string(&ram.to_ranges())?;
+        sqlx::query("INSERT OR REPLACE INTO rooms (name, knowledge, ram) VALUES (?, ?, ?)")
+            .bind(&self.name)
+            .bind(&knowledge_json)
+            .bind(&ram_json)
+            .execute(pool)
+            .await?;
         self.last_saved = Instant::now();
         Ok(())
     }
@@ -120,7 +127,7 @@ async fn get_room<T>(
 }
 
 async fn edit_room(
-    pool: &PgPool,
+    pool: &SqlitePool,
     rooms: &Rooms,
     name: String,
     f: impl FnOnce(&mut RoomState) -> Result<(), Error>,
@@ -192,30 +199,44 @@ impl<'r> rocket::response::Responder<'r, 'static> for Error {
 
 #[wheel::main(rocket)]
 async fn main() -> Result<(), Error> {
-    let pool = PgPool::connect_with(
-        PgConnectOptions::default()
-            .database("oottracker")
-            .application_name("oottracker-web"),
+    // Connect to SQLite database (creates file if it doesn't exist)
+    let pool = SqlitePool::connect("sqlite:oottracker.db?mode=rwc").await?;
+
+    // Create schema if it doesn't exist
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS rooms (
+            name TEXT PRIMARY KEY,
+            knowledge TEXT NOT NULL,
+            ram TEXT NOT NULL
+        )",
     )
+    .execute(&pool)
     .await?;
+
+    // Load existing rooms from database
     let rooms = {
         let mut rooms = HashMap::default();
-        let mut query = sqlx::query!(
-            r#"SELECT name, knowledge AS "knowledge: Json<Knowledge>", ram FROM rooms"#
-        )
-        .fetch(&pool);
-        while let Some(room) = query.try_next().await? {
+        let mut query = sqlx::query("SELECT name, knowledge, ram FROM rooms").fetch(&pool);
+        while let Some(row) = query.try_next().await? {
+            let name: String = row.get("name");
+            let knowledge_json: String = row.get("knowledge");
+            let ram_json: String = row.get("ram");
+
+            let knowledge: Knowledge = serde_json::from_str(&knowledge_json)?;
+            let ram_ranges: Vec<Vec<u8>> = serde_json::from_str(&ram_json)?;
+            let ram = Ram::from_range_bufs(ram_ranges)?;
+
             let state = RoomState::from_model(
-                &room.name,
+                &name,
                 ModelState {
-                    knowledge: room.knowledge.0,
-                    ram: Ram::from_range_bufs(room.ram)?,
+                    knowledge,
+                    ram,
                     tracker_ctx: TrackerCtx::default(),
                     check_tracker: None,
                 },
                 None, // Rooms loaded from database don't have tokens (backwards compatible)
             );
-            rooms.insert(room.name, state);
+            rooms.insert(name, state);
         }
         Rooms::new(Mutex::new(rooms))
     };

@@ -9,7 +9,7 @@ use {
     futures::stream::{SplitSink, Stream, StreamExt as _},
     iced_core::keyboard::Modifiers as KeyboardModifiers,
     oottracker::websocket::{ClientMessage, MwItem, ServerMessage},
-    sqlx::PgPool,
+    sqlx::SqlitePool,
     std::{env, sync::Arc, time::Duration},
     tokio::{sync::Mutex, time::sleep},
     tracing::{error, warn},
@@ -57,7 +57,7 @@ fn is_origin_allowed(origin: Option<&str>) -> bool {
 type WsSink = Arc<Mutex<SplitSink<WebSocket, Message>>>;
 
 async fn client_session(
-    pool: &PgPool,
+    pool: &SqlitePool,
     rooms: Rooms,
     restreams: Restreams,
     mw_rooms: MwRooms,
@@ -863,7 +863,7 @@ async fn client_session(
 }
 
 async fn client_connection(
-    pool: PgPool,
+    pool: SqlitePool,
     rooms: Rooms,
     restreams: Restreams,
     mw_rooms: MwRooms,
@@ -898,7 +898,7 @@ pub(crate) struct ForbiddenOrigin;
 impl warp::reject::Reject for ForbiddenOrigin {}
 
 pub(crate) async fn ws_handler(
-    pool: PgPool,
+    pool: SqlitePool,
     rooms: Rooms,
     restreams: Restreams,
     mw_rooms: MwRooms,

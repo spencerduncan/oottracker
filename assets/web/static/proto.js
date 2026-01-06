@@ -1,4 +1,5 @@
-const sock = new WebSocket("wss://oottracker.fenhl.net/websocket");
+const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const sock = new WebSocket(`${wsProtocol}//${window.location.hostname}:24808`);
 const utf8decoder = new TextDecoder();
 const utf8encoder = new TextEncoder();
 
