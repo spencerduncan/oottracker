@@ -22,8 +22,7 @@ use {
     std::{
         any::TypeId,
         collections::{hash_map::DefaultHasher, BTreeMap},
-        env,
-        fmt,
+        env, fmt,
         hash::{Hash, Hasher},
         iter,
         pin::Pin,
@@ -44,8 +43,7 @@ static OLD_RESTREAM_API_KEY: Lazy<String> =
     Lazy::new(|| env::var("OLD_RESTREAM_API_KEY").unwrap_or_default());
 static RESTREAM_API_KEY: Lazy<String> =
     Lazy::new(|| env::var("RESTREAM_API_KEY").unwrap_or_default());
-static RSL_API_KEY: Lazy<String> =
-    Lazy::new(|| env::var("RSL_API_KEY").unwrap_or_default());
+static RSL_API_KEY: Lazy<String> = Lazy::new(|| env::var("RSL_API_KEY").unwrap_or_default());
 
 macro_rules! cells {
     ($($cell_name:literal: $id:ident),*$(,)?) => {
