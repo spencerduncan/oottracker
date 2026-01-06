@@ -2,6 +2,187 @@ const sock = new WebSocket("wss://oottracker.fenhl.net/websocket");
 const utf8decoder = new TextDecoder();
 const utf8encoder = new TextEncoder();
 
+// ========== Audio System for Item Fanfares ==========
+
+// Track cell states to detect item collection (dimmed -> normal transition)
+const cellStates = new Map();
+
+// Audio context (created on first user interaction due to autoplay restrictions)
+let audioContext = null;
+let audioEnabled = localStorage.getItem('oottracker_sound_enabled') !== 'false';
+let audioUnlocked = false;
+
+// Optional: Custom audio file (users can place fanfare.mp3 or fanfare.wav in /static/sounds/)
+let customAudioBuffer = null;
+
+function initAudioContext() {
+    if (audioContext) return;
+    try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        tryLoadCustomSound();
+    } catch (e) {
+        console.warn('Web Audio API not supported:', e);
+    }
+}
+
+function tryLoadCustomSound() {
+    // Try to load custom sound file (optional - falls back to generated sound)
+    const soundUrls = ['/static/sounds/fanfare.mp3', '/static/sounds/fanfare.wav'];
+
+    function tryLoad(index) {
+        if (index >= soundUrls.length) return;
+
+        fetch(soundUrls[index])
+            .then(response => {
+                if (!response.ok) throw new Error('Not found');
+                return response.arrayBuffer();
+            })
+            .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
+            .then(buffer => {
+                customAudioBuffer = buffer;
+                console.log('Loaded custom fanfare sound from ' + soundUrls[index]);
+            })
+            .catch(() => tryLoad(index + 1));
+    }
+
+    tryLoad(0);
+}
+
+function unlockAudio() {
+    if (audioUnlocked) return;
+    initAudioContext();
+    if (audioContext && audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
+    audioUnlocked = true;
+}
+
+function playFanfare() {
+    if (!audioEnabled || !audioContext) return;
+
+    // Resume context if suspended (browser autoplay policy)
+    if (audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
+
+    if (customAudioBuffer) {
+        // Play custom sound file
+        const source = audioContext.createBufferSource();
+        source.buffer = customAudioBuffer;
+        const gainNode = audioContext.createGain();
+        gainNode.gain.value = 0.3;
+        source.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        source.start();
+    } else {
+        // Generate OoT-style fanfare using Web Audio API
+        playGeneratedFanfare();
+    }
+}
+
+function playGeneratedFanfare() {
+    // OoT "item get" style ascending notes: D5 - F#5 - A5 - D6
+    const notes = [587.33, 739.99, 880.00, 1174.66]; // D5, F#5, A5, D6
+    const noteDuration = 0.12;
+    const now = audioContext.currentTime;
+
+    notes.forEach((freq, i) => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.type = 'square'; // NES/SNES style square wave
+        oscillator.frequency.value = freq;
+
+        // Apply envelope for cleaner sound
+        const startTime = now + i * noteDuration;
+        const endTime = startTime + noteDuration * 1.5;
+
+        gainNode.gain.setValueAtTime(0, startTime);
+        gainNode.gain.linearRampToValueAtTime(0.15, startTime + 0.01);
+        gainNode.gain.setValueAtTime(0.15, endTime - 0.02);
+        gainNode.gain.linearRampToValueAtTime(0, endTime);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.start(startTime);
+        oscillator.stop(endTime);
+    });
+
+    // Final sustained note
+    const finalOsc = audioContext.createOscillator();
+    const finalGain = audioContext.createGain();
+    finalOsc.type = 'square';
+    finalOsc.frequency.value = 1174.66; // D6
+
+    const finalStart = now + notes.length * noteDuration;
+    const finalEnd = finalStart + 0.3;
+
+    finalGain.gain.setValueAtTime(0, finalStart);
+    finalGain.gain.linearRampToValueAtTime(0.12, finalStart + 0.01);
+    finalGain.gain.exponentialRampToValueAtTime(0.01, finalEnd);
+
+    finalOsc.connect(finalGain);
+    finalGain.connect(audioContext.destination);
+    finalOsc.start(finalStart);
+    finalOsc.stop(finalEnd);
+}
+
+function toggleSound() {
+    audioEnabled = !audioEnabled;
+    localStorage.setItem('oottracker_sound_enabled', audioEnabled);
+    updateSoundButtonState();
+
+    // Play a test sound when enabling
+    if (audioEnabled) {
+        initAudioContext();
+        playFanfare();
+    }
+}
+
+function updateSoundButtonState() {
+    const btn = document.getElementById('sound-toggle-btn');
+    if (btn) {
+        btn.textContent = audioEnabled ? '🔊' : '🔇';
+        btn.title = audioEnabled ? 'Sound enabled (click to disable)' : 'Sound disabled (click to enable)';
+    }
+}
+
+function createSoundToggleButton() {
+    // Check if button already exists
+    if (document.getElementById('sound-toggle-btn')) return;
+
+    const btn = document.createElement('button');
+    btn.id = 'sound-toggle-btn';
+    btn.style.cssText = 'position: fixed; bottom: 10px; right: 10px; z-index: 9999; ' +
+        'width: 40px; height: 40px; border-radius: 50%; border: none; ' +
+        'background: rgba(0, 0, 0, 0.7); color: white; font-size: 20px; ' +
+        'cursor: pointer; opacity: 0.7; transition: opacity 0.2s;';
+    btn.onmouseover = function() { this.style.opacity = '1'; };
+    btn.onmouseout = function() { this.style.opacity = '0.7'; };
+    btn.onclick = function(e) {
+        e.preventDefault();
+        unlockAudio();
+        toggleSound();
+    };
+
+    document.body.appendChild(btn);
+    updateSoundButtonState();
+}
+
+// Unlock audio on first user interaction (required by browser autoplay policies)
+document.addEventListener('click', unlockAudio, { once: true });
+document.addEventListener('keydown', unlockAudio, { once: true });
+
+// Create sound toggle button when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', createSoundToggleButton);
+} else {
+    createSoundToggleButton();
+}
+
+// ========== End Audio System ==========
+
 sock.binaryType = "arraybuffer";
 
 function readImgDir(discrim, overlay) {
@@ -119,7 +300,7 @@ function sendClick(cellID, right) {
     }
 }
 
-function updateCell(cellID, data, offset) {
+function updateCell(cellID, data, offset, isInitialLoad) {
     const view = new DataView(data);
     const elt = document.getElementById('cell' + cellID);
     //elt.replaceChildren(); //TODO use this instead of the elt.append calls below once OBS browser source updates to Chrome 86+
@@ -131,7 +312,21 @@ function updateCell(cellID, data, offset) {
     const imgFilename = utf8decoder.decode(data.slice(offset, offset + imgFilenameLen));
     offset += imgFilenameLen;
     mainImg.setAttribute('src', '/static/img/' + imgDir + '/' + imgFilename + '.png');
-    switch (view.getUint8(offset++)) { // style
+
+    // Get the new style value
+    const newStyle = view.getUint8(offset++);
+    const prevStyle = cellStates.get(cellID);
+
+    // Check for item collection: transition from dimmed (1) to normal (0)
+    // Only play sound on updates, not on initial load
+    if (!isInitialLoad && prevStyle === 1 && newStyle === 0) {
+        playFanfare();
+    }
+
+    // Store the new style for future comparisons
+    cellStates.set(cellID, newStyle);
+
+    switch (newStyle) { // style
         case 0:
             // Normal
             break;
@@ -309,13 +504,13 @@ sock.addEventListener('message', function(event) {
             const numCells = Number(view.getBigUint64(offset));
             offset += 8;
             for (let cellID = 0; cellID < numCells; cellID++) {
-                offset = updateCell(cellID, data, offset);
+                offset = updateCell(cellID, data, offset, true); // isInitialLoad = true
             }
             break;
         case 3:
             // Update
             const cellID = view.getUint8(offset++);
-            updateCell(cellID, data, offset);
+            updateCell(cellID, data, offset, false); // isInitialLoad = false
             break;
         default:
             throw 'unexpected ServerMessage variant';
