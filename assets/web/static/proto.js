@@ -77,10 +77,11 @@ function sendClick(cellID, right) {
         const world = new ArrayBuffer(1);
         new DataView(world).setUint8(0, parseInt(mwRoomMatch[2]));
         const mwLayoutBuf = makeLayoutBuf(mwRoomMatch[3]);
-        buf = new ArrayBuffer(2);
+        buf = new ArrayBuffer(3);
         bufView = new DataView(buf);
         bufView.setUint8(0, cellID);
         bufView.setUint8(1, right ? 1 : 0);
+        bufView.setUint8(2, 0); // Option<RoomToken>: None
         sock.send(new Blob([clickMw, mwRoomLen, mwRoom, world, mwLayoutBuf, buf]));
     } else if (roomMatch) {
         const clickRoom = new ArrayBuffer(1);
@@ -88,7 +89,7 @@ function sendClick(cellID, right) {
         const room = utf8encoder.encode(roomMatch[1]);
         const roomLen = new ArrayBuffer(8);
         new DataView(roomLen).setBigUint64(0, BigInt(room.length));
-        buf = new ArrayBuffer(6);
+        buf = new ArrayBuffer(7);
         bufView = new DataView(buf);
         bufView.setUint8(0, 0); // TrackerLayout variant: Default
         bufView.setUint8(1, 0); // TrackerLayout::Default field: auto: false
@@ -96,6 +97,7 @@ function sendClick(cellID, right) {
         bufView.setUint8(3, 3); // TrackerLayout::Default field: warp_songs: SpiritShadowLight
         bufView.setUint8(4, cellID);
         bufView.setUint8(5, right ? 1 : 0);
+        bufView.setUint8(6, 0); // Option<RoomToken>: None
         sock.send(new Blob([clickRoom, roomLen, room, buf]));
     } else if (restreamMatch) {
         const clickRestream = new ArrayBuffer(1);
