@@ -4249,6 +4249,61 @@ impl TrackerLayout {
             }
         }
     }
+
+    /// Returns the number of columns in this layout based on cell positions.
+    ///
+    /// Columns are computed from the maximum x-position of cells,
+    /// assuming cells are placed on a 60px grid starting at x=5.
+    pub fn column_count(&self) -> usize {
+        let cells = self.cells();
+        if cells.is_empty() {
+            return 0;
+        }
+        // Cells are on a 60px grid, starting at x=5
+        // Column index = (x - 5) / 60, so column_count = max_column_index + 1
+        cells
+            .iter()
+            .map(|c| ((c.pos[0].saturating_sub(5)) / 60) as usize + 1)
+            .max()
+            .unwrap_or(0)
+    }
+
+    /// Returns the number of rows in this layout based on cell positions.
+    ///
+    /// Rows are counted as distinct y-position bands where cells are placed.
+    pub fn row_count(&self) -> usize {
+        let cells = self.cells();
+        if cells.is_empty() {
+            return 0;
+        }
+        // Count distinct y positions (rows may not be evenly spaced)
+        let mut y_positions: Vec<u16> = cells.iter().map(|c| c.pos[1]).collect();
+        y_positions.sort_unstable();
+        y_positions.dedup();
+        y_positions.len()
+    }
+
+    /// Returns the pixel dimensions (width, height) of this layout.
+    ///
+    /// The dimensions include a 5px padding on the right and bottom edges.
+    pub fn pixel_dimensions(&self) -> (u32, u32) {
+        let cells = self.cells();
+        if cells.is_empty() {
+            return (0, 0);
+        }
+        let max_x = cells
+            .iter()
+            .map(|c| c.pos[0] as u32 + c.size[0] as u32)
+            .max()
+            .unwrap_or(0);
+        let max_y = cells
+            .iter()
+            .map(|c| c.pos[1] as u32 + c.size[1] as u32)
+            .max()
+            .unwrap_or(0);
+        // Add 5px padding on right and bottom to match left/top padding
+        (max_x + 5, max_y + 5)
+    }
 }
 
 impl Default for TrackerLayout {
@@ -5700,6 +5755,112 @@ mod tests {
         let config = Config::default();
         let layout = TrackerLayout::from(&config);
         assert!(matches!(layout, TrackerLayout::Default { .. }));
+    }
+
+    #[test]
+    fn test_tracker_layout_column_count_default() {
+        let layout = TrackerLayout::default();
+        // Default layout has 6 columns
+        assert_eq!(layout.column_count(), 6);
+    }
+
+    #[test]
+    fn test_tracker_layout_column_count_various() {
+        // MultiworldExpanded uses 4 columns
+        assert_eq!(TrackerLayout::MultiworldExpanded.column_count(), 4);
+        // MultiworldCollapsed uses 10 columns
+        assert_eq!(TrackerLayout::MultiworldCollapsed.column_count(), 10);
+        // TriforcePieces uses 1 column
+        assert_eq!(TrackerLayout::TriforcePieces.column_count(), 1);
+        // Combo uses 12 columns
+        assert_eq!(TrackerLayout::Combo.column_count(), 12);
+    }
+
+    #[test]
+    fn test_tracker_layout_row_count_default() {
+        let layout = TrackerLayout::default();
+        // Default layout has multiple rows with varying positions
+        let row_count = layout.row_count();
+        assert!(row_count > 0, "Default layout should have rows");
+    }
+
+    #[test]
+    fn test_tracker_layout_row_count_various() {
+        // TriforcePieces has 1 row
+        assert_eq!(TrackerLayout::TriforcePieces.row_count(), 1);
+        // MmBossRemains has 1 row (4 cells in 4 columns)
+        assert_eq!(TrackerLayout::MmBossRemains.row_count(), 1);
+        // MmSongs has 2 rows (10 cells in 5 columns)
+        assert_eq!(TrackerLayout::MmSongs.row_count(), 2);
+    }
+
+    #[test]
+    fn test_tracker_layout_pixel_dimensions_default() {
+        let layout = TrackerLayout::default();
+        let (width, height) = layout.pixel_dimensions();
+        // Default layout is 6 columns wide (6 * 60 = 360)
+        assert_eq!(width, 360);
+        // Height depends on number of rows and their positioning
+        assert!(height > 0, "Default layout should have non-zero height");
+    }
+
+    #[test]
+    fn test_tracker_layout_pixel_dimensions_various() {
+        // TriforcePieces: 1 column (1 * 60 = 60), 1 row
+        let (width, height) = TrackerLayout::TriforcePieces.pixel_dimensions();
+        assert_eq!(width, 60);
+        assert_eq!(height, 60);
+
+        // MultiworldExpanded: 4 columns (4 * 60 = 240)
+        let (width, _) = TrackerLayout::MultiworldExpanded.pixel_dimensions();
+        assert_eq!(width, 240);
+
+        // Combo: 12 columns (12 * 60 = 720)
+        let (width, _) = TrackerLayout::Combo.pixel_dimensions();
+        assert_eq!(width, 720);
+    }
+
+    #[test]
+    fn test_tracker_layout_dimensions_consistency() {
+        // Test that all layout variants have valid dimensions
+        let layouts = [
+            TrackerLayout::default(),
+            TrackerLayout::MultiworldExpanded,
+            TrackerLayout::MultiworldCollapsed,
+            TrackerLayout::MultiworldEdit,
+            TrackerLayout::RslLeft,
+            TrackerLayout::RslRight,
+            TrackerLayout::RslEdit,
+            TrackerLayout::Rsl3Player,
+            TrackerLayout::TsgMainWithRewardLocations,
+            TrackerLayout::TsgMainWithRewardLocationsEdit,
+            TrackerLayout::TriforcePieces,
+            TrackerLayout::MmDefault,
+            TrackerLayout::MmMasks,
+            TrackerLayout::MmBossRemains,
+            TrackerLayout::MmStrayFairies,
+            TrackerLayout::MmSongs,
+            TrackerLayout::MmEquipment,
+            TrackerLayout::Combo,
+        ];
+
+        for layout in layouts {
+            let cols = layout.column_count();
+            let rows = layout.row_count();
+            let (width, height) = layout.pixel_dimensions();
+
+            assert!(cols > 0, "Layout should have at least one column");
+            assert!(rows > 0, "Layout should have at least one row");
+            assert!(width > 0, "Layout should have non-zero width");
+            assert!(height > 0, "Layout should have non-zero height");
+
+            // Width should be columns * 60 (grid spacing)
+            assert_eq!(
+                width,
+                (cols * 60) as u32,
+                "Width should match column count * 60"
+            );
+        }
     }
 
     // ==========================================================================
