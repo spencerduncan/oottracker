@@ -433,7 +433,12 @@ pub trait App: fmt::Debug + Send + Sync + 'static {
             | MagicLens
             | MedallionWithLocation(_)
             | StoneWithLocation(_)
-            | MmSmallKeys { .. } => {
+            | MmSmallKeys { .. }
+            | OotMap { .. }
+            | OotCompass { .. }
+            | MmBossKey { .. }
+            | MmMap { .. }
+            | MmCompass { .. } => {
                 return Err(Error::NotImplemented(
                     "cell type not supported for set_cell",
                 ))
@@ -1067,7 +1072,12 @@ fn render_cell(cell_kind: TrackerCellKind, state: &ModelState) -> Result<Json, E
         | MagicLens
         | MedallionWithLocation(_)
         | StoneWithLocation(_)
-        | MmSmallKeys { .. } => {
+        | MmSmallKeys { .. }
+        | OotMap { .. }
+        | OotCompass { .. }
+        | MmBossKey { .. }
+        | MmMap { .. }
+        | MmCompass { .. } => {
             return Err(Error::NotImplemented(
                 "cell type not supported for render_cell",
             ))
