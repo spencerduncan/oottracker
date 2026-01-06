@@ -11,6 +11,7 @@ use {
     collect_mac::collect,
     eventsource_client::{Client as _, SSE},
     futures::stream::{Stream, TryStreamExt as _},
+    once_cell::sync::Lazy,
     ootr::{
         check::Check,
         model::{DungeonReward, DungeonRewardLocation, MainDungeon},
@@ -21,6 +22,7 @@ use {
     std::{
         any::TypeId,
         collections::{hash_map::DefaultHasher, BTreeMap},
+        env,
         fmt,
         hash::{Hash, Hasher},
         iter,
@@ -35,8 +37,15 @@ use {
 pub type SubscriptionStream =
     Pin<Box<dyn Stream<Item = Result<(TrackerCellId, Json), Error>> + Send>>;
 
-// to obtain a Firebase web tracker's API key, open a room in the tracker and copy the element `apiKey` from the local storage entry starting with `firebase:authUser`.
-include!("../../../assets/firebase-api-keys.rs");
+// API keys loaded from environment variables.
+// To obtain a Firebase web tracker's API key, open a room in the tracker and copy the element
+// `apiKey` from the local storage entry starting with `firebase:authUser`.
+static OLD_RESTREAM_API_KEY: Lazy<String> =
+    Lazy::new(|| env::var("OLD_RESTREAM_API_KEY").unwrap_or_default());
+static RESTREAM_API_KEY: Lazy<String> =
+    Lazy::new(|| env::var("RESTREAM_API_KEY").unwrap_or_default());
+static RSL_API_KEY: Lazy<String> =
+    Lazy::new(|| env::var("RSL_API_KEY").unwrap_or_default());
 
 macro_rules! cells {
     ($($cell_name:literal: $id:ident),*$(,)?) => {
@@ -459,7 +468,7 @@ impl App for OldRestreamTracker {
         "https://oot-tracker.firebaseio.com"
     }
     fn api_key(&self) -> &'static str {
-        OLD_RESTREAM_API_KEY
+        &OLD_RESTREAM_API_KEY
     }
 
     //TODO other collections (presumably medallions and chestsopened)
@@ -524,7 +533,7 @@ impl App for RestreamTracker {
         "https://ootr-tracker.firebaseio.com"
     }
     fn api_key(&self) -> &'static str {
-        RESTREAM_API_KEY
+        &RESTREAM_API_KEY
     }
 
     //TODO medallions, chestsopened
@@ -597,7 +606,7 @@ impl App for RslItemTracker {
         "https://ootr-random-settings-tracker.firebaseio.com"
     }
     fn api_key(&self) -> &'static str {
-        RSL_API_KEY
+        &RSL_API_KEY
     }
 
     cells! {
