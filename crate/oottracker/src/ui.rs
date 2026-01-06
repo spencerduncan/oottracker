@@ -18,7 +18,7 @@ use {
         region::Mq,
     },
     serde::{Deserialize, Serialize},
-    std::{borrow::Cow, collections::HashMap, fmt, io, iter, sync::Arc, vec},
+    std::{borrow::Cow, collections::HashMap, fmt, io, iter, path::PathBuf, sync::Arc, vec},
     tokio::{
         fs::{self, File},
         io::AsyncReadExt as _,
@@ -290,6 +290,9 @@ pub struct Config {
     #[serde(default)]
     pub layout_preference: LayoutPreference,
     pub auto_update_check: Option<bool>,
+    /// Path to an MP3 file to play when items are collected
+    #[serde(default)]
+    pub item_fanfare_path: Option<PathBuf>,
     #[derivative(Default(value = "VERSION"))]
     pub version: u8,
 }
