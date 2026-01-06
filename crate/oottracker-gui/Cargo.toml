@@ -16,6 +16,7 @@ iced_futures = "0.4"
 iced_native = "0.5"
 image = "0.24"
 itertools = "0.10"
+rodio = "0.17"
 semver = "1"
 url = "2"
 

@@ -45,7 +45,7 @@ use {
         net::{self, Connection},
         proto::Packet,
         save::*,
-        ui::{self, LayoutPreference, *},
+        ui::{self, CellStyle, LayoutPreference, *},
         ModelState,
     },
     semver::Version,
@@ -60,6 +60,7 @@ use {
     tokio::{fs, fs::File, io::AsyncWriteExt as _, time::sleep},
 };
 
+mod audio;
 mod logic;
 mod subscriptions;
 
@@ -208,6 +209,7 @@ enum Message<R: Rando> {
     ResetUpdateState,
     RightClick,
     SetAutoUpdateCheck(bool),
+    SetItemFanfarePath(String),
     SetLayoutPreference(LayoutPreference),
     SetMedOrder(ElementOrder),
     SetPasscode(String),
@@ -238,6 +240,7 @@ struct MenuState {
     layout_preference: pick_list::State<LayoutPreference>,
     med_order: pick_list::State<ElementOrder>,
     warp_song_order: pick_list::State<ElementOrder>,
+    item_fanfare_path: text_input::State,
     connection_kind: pick_list::State<ConnectionKind>,
     connection_params: ConnectionParams,
     connect_btn: button::State,
@@ -355,6 +358,7 @@ struct State<R: Rando + 'static> {
     notification: Option<(bool, Message<R>)>,
     dismiss_notification_button: button::State,
     menu_state: Option<MenuState>,
+    audio_player: Option<audio::AudioPlayer>,
 }
 
 impl<R: Rando + 'static> State<R> {
@@ -423,6 +427,15 @@ impl<R: Rando + 'static> State<R> {
             ))
         } else {
             Command::none()
+        }
+    }
+
+    /// Plays the item fanfare sound if configured.
+    fn play_fanfare(&self) {
+        if let (Some(ref config), Some(ref player)) = (&self.config, &self.audio_player) {
+            if let Some(ref path) = config.item_fanfare_path {
+                player.play(path);
+            }
         }
     }
 }
@@ -506,6 +519,7 @@ impl Default for State<ootr_static::Rando> {
             notification: None,
             dismiss_notification_button: button::State::default(),
             menu_state: None,
+            audio_player: audio::AudioPlayer::new(),
         }
     }
 }
@@ -610,7 +624,13 @@ impl Application for State<ootr_static::Rando> {
             }
             Message::KeyboardModifiers(modifiers) => self.keyboard_modifiers = modifiers,
             Message::LeftClick(cell) => {
-                if cell.kind().left_click(
+                let kind = cell.kind();
+                // Check if item was dimmed (not collected) before click
+                let was_dimmed = matches!(
+                    kind.render(&self.model).style,
+                    CellStyle::Dimmed | CellStyle::LeftDimmed | CellStyle::RightDimmed
+                );
+                if kind.left_click(
                     self.connection
                         .as_ref()
                         .is_none_or(|connection| connection.can_change_state()),
@@ -618,18 +638,29 @@ impl Application for State<ootr_static::Rando> {
                     &mut self.model,
                 ) {
                     self.menu_state = Some(MenuState::default());
-                } else if let Some(ref connection) = self.connection {
-                    if connection.can_change_state() {
-                        let send_fut = connection.set_state(&self.model);
-                        return Command::single(Action::Future(
-                            async move {
-                                match send_fut.await {
-                                    Ok(()) => Message::Nop,
-                                    Err(e) => Message::ConnectionError(e.into()),
+                } else {
+                    // Check if item is now collected (not dimmed)
+                    let is_collected = matches!(
+                        kind.render(&self.model).style,
+                        CellStyle::Normal | CellStyle::LeftDimmed | CellStyle::RightDimmed
+                    );
+                    // Play fanfare if item changed from not-collected to collected
+                    if was_dimmed && is_collected {
+                        self.play_fanfare();
+                    }
+                    if let Some(ref connection) = self.connection {
+                        if connection.can_change_state() {
+                            let send_fut = connection.set_state(&self.model);
+                            return Command::single(Action::Future(
+                                async move {
+                                    match send_fut.await {
+                                        Ok(()) => Message::Nop,
+                                        Err(e) => Message::ConnectionError(e.into()),
+                                    }
                                 }
-                            }
-                            .boxed(),
-                        ));
+                                .boxed(),
+                            ));
+                        }
                     }
                 }
             }
@@ -730,6 +761,15 @@ impl Application for State<ootr_static::Rando> {
                     .as_mut()
                     .expect("config not yet loaded")
                     .auto_update_check = Some(enable);
+                return self.save_config();
+            }
+            Message::SetItemFanfarePath(path) => {
+                let config = self.config.as_mut().expect("config not yet loaded");
+                config.item_fanfare_path = if path.is_empty() {
+                    None
+                } else {
+                    Some(path.into())
+                };
                 return self.save_config();
             }
             Message::SetConnection(connection) => self.connection = Some(connection),
@@ -879,6 +919,18 @@ impl Application for State<ootr_static::Rando> {
                     all().collect_vec(),
                     self.config.as_ref().map(|cfg| cfg.warp_song_order),
                     Message::SetWarpSongOrder,
+                ))
+                .push(Text::new("Item fanfare sound (MP3 path):"))
+                .push(TextInput::new(
+                    &mut menu_state.item_fanfare_path,
+                    "Path to MP3 file",
+                    self.config
+                        .as_ref()
+                        .and_then(|cfg| cfg.item_fanfare_path.as_ref())
+                        .map(|p| p.to_string_lossy())
+                        .as_deref()
+                        .unwrap_or(""),
+                    Message::SetItemFanfarePath,
                 ))
                 .push(
                     Text::new("Connect")
