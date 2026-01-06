@@ -392,6 +392,9 @@ impl<R: Rando + 'static> State<R> {
             }
             LayoutPreference::Mm => TrackerLayout::MmDefault,
             LayoutPreference::Combo => TrackerLayout::Combo,
+            LayoutPreference::DungeonItems => TrackerLayout::DungeonItems,
+            LayoutPreference::MmDungeonItems => TrackerLayout::MmDungeonItems,
+            LayoutPreference::MmStrayFairies => TrackerLayout::MmStrayFairies,
         }
     }
 

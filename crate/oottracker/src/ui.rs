@@ -398,6 +398,12 @@ pub enum LayoutPreference {
     Mm,
     /// Combined OoT/MM tracker layout
     Combo,
+    /// OoT dungeon items (maps, compasses)
+    DungeonItems,
+    /// MM dungeon items (maps, compasses, keys)
+    MmDungeonItems,
+    /// MM stray fairy counters
+    MmStrayFairies,
 }
 
 impl fmt::Display for LayoutPreference {
@@ -406,6 +412,9 @@ impl fmt::Display for LayoutPreference {
             LayoutPreference::Oot => write!(f, "Ocarina of Time"),
             LayoutPreference::Mm => write!(f, "Majora's Mask"),
             LayoutPreference::Combo => write!(f, "Combo (OoT + MM)"),
+            LayoutPreference::DungeonItems => write!(f, "OoT Dungeon Items"),
+            LayoutPreference::MmDungeonItems => write!(f, "MM Dungeon Items"),
+            LayoutPreference::MmStrayFairies => write!(f, "MM Stray Fairies"),
         }
     }
 }
@@ -5541,6 +5550,18 @@ mod tests {
         assert_eq!(format!("{}", LayoutPreference::Oot), "Ocarina of Time");
         assert_eq!(format!("{}", LayoutPreference::Mm), "Majora's Mask");
         assert_eq!(format!("{}", LayoutPreference::Combo), "Combo (OoT + MM)");
+        assert_eq!(
+            format!("{}", LayoutPreference::DungeonItems),
+            "OoT Dungeon Items"
+        );
+        assert_eq!(
+            format!("{}", LayoutPreference::MmDungeonItems),
+            "MM Dungeon Items"
+        );
+        assert_eq!(
+            format!("{}", LayoutPreference::MmStrayFairies),
+            "MM Stray Fairies"
+        );
     }
 
     // ==========================================================================
