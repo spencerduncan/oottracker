@@ -23,12 +23,12 @@ use {
         stream::TryStreamExt as _,
     },
     lazy_regex::regex_is_match,
-    oottracker::{websocket::RoomToken, Knowledge, ModelState, Ram, TrackerCtx},
+    oottracker::{proto, websocket::RoomToken, Knowledge, ModelState, Ram, TrackerCtx},
     rocket::http::Status,
     sqlx::{postgres::PgConnectOptions, types::Json, PgPool},
     std::{
         collections::hash_map::{self, HashMap},
-        fmt,
+        fmt, io,
         sync::Arc,
         time::{Duration, Instant},
     },
@@ -39,6 +39,7 @@ use {
 mod http;
 mod mw;
 mod restream;
+mod tcp;
 mod websocket;
 
 type MwRooms = Arc<RwLock<HashMap<String, Arc<RwLock<MwState>>>>>;
@@ -141,7 +142,9 @@ async fn edit_room(
 #[derive(Debug, From)]
 enum Error {
     CellId,
+    Io(io::Error),
     Json(serde_json::Error),
+    ProtoRead(proto::ReadError),
     RamDecode(oottracker::ram::DecodeError),
     Read(ReadError),
     Rocket(rocket::error::Error),
@@ -157,7 +160,9 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::CellId => write!(f, "no such cell"),
+            Self::Io(e) => write!(f, "I/O error: {e}"),
             Self::Json(e) => write!(f, "JSON error: {e}"),
+            Self::ProtoRead(e) => write!(f, "protocol read error: {e}"),
             Self::RamDecode(e) => write!(f, "error decoding RAM: {e}"),
             Self::Read(e) => write!(f, "read error: {e}"),
             Self::Rocket(e) => write!(f, "rocket error: {e}"),
@@ -177,7 +182,9 @@ impl<'r> rocket::response::Responder<'r, 'static> for Error {
     fn respond_to(self, _: &rocket::Request<'_>) -> rocket::response::Result<'static> {
         match self {
             Self::CellId => Err(Status::NotFound),
+            Self::Io(_) => Err(Status::InternalServerError),
             Self::Json(_) => Err(Status::InternalServerError),
+            Self::ProtoRead(_) => Err(Status::InternalServerError),
             Self::RamDecode(_) => Err(Status::InternalServerError),
             Self::Read(_) => Err(Status::InternalServerError),
             Self::Rocket(_) => Err(Status::InternalServerError),
@@ -247,6 +254,15 @@ async fn main() -> Result<(), Error> {
             });
         tokio::spawn(warp::serve(handler).run(([127, 0, 0, 1], 24808))).err_into()
     };
+    let tcp_task = {
+        let pool = pool.clone();
+        let rooms = Rooms::clone(&rooms);
+        tokio::spawn(tcp::run_tcp_listener(pool, rooms)).map(|res| match res {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(e)) => Err(e),
+            Err(e) => Err(Error::from(e)),
+        })
+    };
     let rocket_task = tokio::spawn(http::rocket(pool, rooms, restreams, mw_rooms).launch()).map(
         |res| match res {
             Ok(Ok(_)) => Ok(()),
@@ -254,6 +270,6 @@ async fn main() -> Result<(), Error> {
             Err(e) => Err(Error::from(e)),
         },
     );
-    let ((), ()) = tokio::try_join!(websocket_task, rocket_task)?;
+    let ((), (), ()) = tokio::try_join!(websocket_task, tcp_task, rocket_task)?;
     Ok(())
 }

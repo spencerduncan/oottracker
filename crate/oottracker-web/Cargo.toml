@@ -51,7 +51,11 @@ features = ["json", "macros", "postgres", "runtime-tokio-rustls", "offline"]
 
 [dependencies.tokio]
 version = "1"
-features = ["sync", "time"]
+features = ["net", "sync", "time"]
+
+[dependencies.tokio-stream]
+version = "0.1"
+features = ["net"]
 
 [dependencies.wheel]
 git = "https://github.com/fenhl/wheel"
