@@ -63,6 +63,7 @@ use {
 
 #[cfg(feature = "audio")]
 mod audio;
+mod check_panel;
 mod logic;
 mod subscriptions;
 
