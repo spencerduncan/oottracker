@@ -368,21 +368,7 @@ impl<R: Rando + 'static> State<R> {
                 }
             }
             LayoutPreference::Mm => TrackerLayout::MmDefault,
-            LayoutPreference::Combo => {
-                // For combo mode, use OoT layout for now
-                // TODO: Implement true combo layout that shows both OoT and MM items
-                if self
-                    .connection
-                    .as_ref()
-                    .is_none_or(|connection| connection.can_change_state())
-                {
-                    TrackerLayout::from(&self.config)
-                } else if let Some(ref config) = self.config {
-                    TrackerLayout::new_auto(config)
-                } else {
-                    TrackerLayout::default_auto()
-                }
-            }
+            LayoutPreference::Combo => TrackerLayout::Combo,
         }
     }
 

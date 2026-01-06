@@ -5884,6 +5884,8 @@ pub mod images {
     oottracker_derive::embed_images!("assets/img/extra-images-overlay");
     oottracker_derive::embed_images!("assets/img/extra-images-overlay-dimmed");
     oottracker_derive::embed_images!("assets/img/extra-overlays");
+    oottracker_derive::embed_images!("assets/img/mm-images");
+    oottracker_derive::embed_images!("assets/img/mm-images-dimmed");
     oottracker_derive::embed_images!("assets/img/xopar-images");
     oottracker_derive::embed_images!("assets/img/xopar-images-count");
     oottracker_derive::embed_images!("assets/img/xopar-images-dimmed");
