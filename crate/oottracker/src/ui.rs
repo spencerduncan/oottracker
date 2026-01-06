@@ -4585,9 +4585,29 @@ impl TrackerLayout {
                         MmPictographBox,
                         MmMagicBean,
                         MmStrayFairyClockTown,
-                        MmGiantMask,
+                        // Row 8: MM Collectible Masks (1-12)
+                        MmPostmanHat,
+                        MmAllNightMask,
+                        MmBlastMask,
+                        MmStoneMask,
+                        MmGreatFairyMask,
+                        MmKeatonMask,
+                        MmBremenMask,
+                        MmBunnyHood,
+                        MmDonGeroMask,
+                        MmMaskOfScents,
+                        MmRomaniMask,
+                        MmCircusLeaderMask,
+                        // Row 9: MM Collectible Masks (13-20)
+                        MmKafeiMask,
+                        MmCouplesMask,
                         MmMaskOfTruth,
-                        // Row 8: OoT Dungeon Maps
+                        MmKamaroMask,
+                        MmGibdoMask,
+                        MmGaroMask,
+                        MmCaptainHat,
+                        MmGiantMask,
+                        // Row 10: OoT Dungeon Maps
                         DekuMap,
                         DcMap,
                         JabuMap,
@@ -4600,7 +4620,7 @@ impl TrackerLayout {
                         IceMap,
                         GanonMap,
                         Blank,
-                        // Row 9: OoT Dungeon Compasses
+                        // Row 11: OoT Dungeon Compasses
                         DekuCompass,
                         DcCompass,
                         JabuCompass,
@@ -4613,7 +4633,7 @@ impl TrackerLayout {
                         IceCompass,
                         Blank,
                         Blank,
-                        // Row 10: OoT Boss Keys
+                        // Row 12: OoT Boss Keys
                         ForestBossKey,
                         FireBossKey,
                         WaterBossKey,
