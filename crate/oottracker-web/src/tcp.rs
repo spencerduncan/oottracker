@@ -11,7 +11,7 @@ use {
         proto::{self, Packet, TCP_PORT},
         save::GameMode,
     },
-    sqlx::PgPool,
+    sqlx::SqlitePool,
     std::{env, net::Ipv4Addr},
     tokio::net::TcpListener,
     tokio_stream::wrappers::TcpListenerStream,
@@ -25,7 +25,7 @@ const DEFAULT_PJ64_ROOM: &str = "pj64";
 ///
 /// The room name can be configured via the `PJ64_ROOM` environment variable.
 /// If not set, defaults to "pj64".
-pub async fn run_tcp_listener(pool: PgPool, rooms: Rooms) -> Result<(), Error> {
+pub async fn run_tcp_listener(pool: SqlitePool, rooms: Rooms) -> Result<(), Error> {
     let room_name = env::var("PJ64_ROOM").unwrap_or_else(|_| DEFAULT_PJ64_ROOM.to_string());
 
     let listener = TcpListener::bind((Ipv4Addr::LOCALHOST, TCP_PORT)).await?;
@@ -60,7 +60,7 @@ pub async fn run_tcp_listener(pool: PgPool, rooms: Rooms) -> Result<(), Error> {
 
 /// Handles a single PJ64 connection, reading packets and updating room state.
 async fn handle_pj64_connection(
-    pool: PgPool,
+    pool: SqlitePool,
     rooms: Rooms,
     room_name: String,
     tcp_stream: tokio::net::TcpStream,
