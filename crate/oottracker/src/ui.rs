@@ -3634,6 +3634,9 @@ pub enum TrackerLayout {
     MmStrayFairies,
     MmSongs,
     MmEquipment,
+    // Dungeon item layouts (maps, compasses)
+    DungeonItems,
+    MmDungeonItems,
     // Combo layout for OoTMM randomizer
     Combo,
 }
@@ -4398,6 +4401,74 @@ impl TrackerLayout {
                 )
             }
 
+            Self::DungeonItems => {
+                // OoT dungeon items: maps and compasses for all dungeons
+                // 6 columns, organized by dungeon
+                columns!(
+                    6,
+                    [
+                        // Row 1: Child dungeon maps
+                        DekuMap,
+                        DcMap,
+                        JabuMap,
+                        ForestMap,
+                        FireMap,
+                        WaterMap,
+                        // Row 2: Adult dungeon maps
+                        ShadowMap,
+                        SpiritMap,
+                        WellMap,
+                        IceMap,
+                        GanonMap,
+                        Blank,
+                        // Row 3: Child dungeon compasses
+                        DekuCompass,
+                        DcCompass,
+                        JabuCompass,
+                        ForestCompass,
+                        FireCompass,
+                        WaterCompass,
+                        // Row 4: Adult dungeon compasses
+                        ShadowCompass,
+                        SpiritCompass,
+                        WellCompass,
+                        IceCompass,
+                        Blank,
+                        Blank,
+                    ]
+                )
+            }
+
+            Self::MmDungeonItems => {
+                // MM dungeon items: maps, compasses, small keys, boss keys
+                // 4 columns (one per dungeon)
+                columns!(
+                    4,
+                    [
+                        // Row 1: Maps
+                        MmWoodfallMap,
+                        MmSnowheadMap,
+                        MmGreatBayMap,
+                        MmStoneTowerMap,
+                        // Row 2: Compasses
+                        MmWoodfallCompass,
+                        MmSnowheadCompass,
+                        MmGreatBayCompass,
+                        MmStoneTowerCompass,
+                        // Row 3: Small Keys
+                        MmWoodfallSmallKeys,
+                        MmSnowheadSmallKeys,
+                        MmGreatBaySmallKeys,
+                        MmStoneTowerSmallKeys,
+                        // Row 4: Boss Keys
+                        MmWoodfallBossKey,
+                        MmSnowheadBossKey,
+                        MmGreatBayBossKey,
+                        MmStoneTowerBossKey,
+                    ]
+                )
+            }
+
             Self::Combo => {
                 // Combo layout for OoTMM randomizer
                 // Shows important items from both OoT and MM in a unified view
@@ -4610,6 +4681,8 @@ impl fmt::Display for TrackerLayout {
             Self::MmStrayFairies => write!(f, "mm-stray-fairies"),
             Self::MmSongs => write!(f, "mm-songs"),
             Self::MmEquipment => write!(f, "mm-equipment"),
+            Self::DungeonItems => write!(f, "dungeon-items"),
+            Self::MmDungeonItems => write!(f, "mm-dungeon-items"),
             Self::Combo => write!(f, "combo"),
         }
     }
@@ -4639,6 +4712,8 @@ impl<'a> FromParam<'a> for TrackerLayout {
             "mm-stray-fairies" => Self::MmStrayFairies,
             "mm-songs" => Self::MmSongs,
             "mm-equipment" => Self::MmEquipment,
+            "dungeon-items" => Self::DungeonItems,
+            "mm-dungeon-items" => Self::MmDungeonItems,
             "combo" => Self::Combo,
             _ => return Err(()),
         })
