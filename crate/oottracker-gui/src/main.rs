@@ -65,10 +65,10 @@ mod subscriptions;
 
 const CELL_SIZE: u16 = 50;
 const STONE_SIZE: u16 = 30;
-const MEDALLION_LOCATION_HEIGHT: u16 = 18;
-//const STONE_LOCATION_HEIGHT: u16 = 10;
-const WIDTH: u32 = (CELL_SIZE as u32 + 10) * 6; // 6 images, each 50px wide, plus 10px spacing
-const HEIGHT: u32 = (MEDALLION_LOCATION_HEIGHT as u32 + 10) + (CELL_SIZE as u32 + 10) * 7; // dungeon reward location text, 18px high, and 7 images, each 50px high, plus 10px spacing
+
+/// Default dimensions for window initialization (OoT default layout)
+const DEFAULT_WIDTH: u32 = 360; // 6 columns * 60px
+const DEFAULT_HEIGHT: u32 = 448; // medallion row + 7 cell rows
 
 struct ContainerStyle;
 
@@ -152,12 +152,26 @@ trait TrackerLayoutExt {
 
 impl TrackerLayoutExt for TrackerLayout {
     fn cell_at(&self, [x, y]: [f32; 2], include_songs: bool) -> Option<TrackerCellId> {
-        if !include_songs
-            && y >= (MEDALLION_LOCATION_HEIGHT as f32 + 10.0) + (CELL_SIZE as f32 + 10.0) * 5.0
-        {
-            return None;
+        let cells = self.cells();
+
+        // If not including songs, calculate the y-threshold based on row positions
+        // For OoT layouts, songs are typically in the last 2 rows (rows 6 and 7)
+        if !include_songs {
+            // Get sorted unique y positions to find row boundaries
+            let mut y_positions: Vec<u16> = cells.iter().map(|c| c.pos[1]).collect();
+            y_positions.sort_unstable();
+            y_positions.dedup();
+
+            // If we have more than 5 rows, exclude the last 2 rows (songs area)
+            if y_positions.len() > 5 {
+                let songs_start_y = y_positions[5];
+                if y >= songs_start_y as f32 {
+                    return None;
+                }
+            }
         }
-        self.cells()
+
+        cells
             .into_iter()
             .find(
                 |CellLayout {
@@ -816,6 +830,7 @@ impl Application for State<ootr_static::Rando> {
 
     fn view(&mut self) -> Element<'_, Message<ootr_static::Rando>> {
         let layout = self.layout();
+        let (layout_width, layout_height) = layout.pixel_dimensions();
         let mut cell_buttons = self.cell_buttons.iter_mut();
 
         macro_rules! cell {
@@ -871,7 +886,7 @@ impl Application for State<ootr_static::Rando> {
                         .width(Length::Fill)
                         .horizontal_alignment(alignment::Horizontal::Center),
                 )
-                //TODO replace connection options with “current connection” info when connected
+                //TODO replace connection options with "current connection" info when connected
                 .push(PickList::new(
                     &mut menu_state.connection_kind,
                     all().collect_vec(),
@@ -893,28 +908,45 @@ impl Application for State<ootr_static::Rando> {
                 .padding(5)
                 .into();
         }
-        let mut cells = layout.cells().into_iter();
-        let view = Column::new()
-            .push(
-                Row::new()
-                    .push(cell!(cells.next().unwrap()))
-                    .push(cell!(cells.next().unwrap()))
-                    .push(cell!(cells.next().unwrap()))
-                    .push(cell!(cells.next().unwrap()))
-                    .push(cell!(cells.next().unwrap()))
-                    .push(cell!(cells.next().unwrap()))
-                    .spacing(10),
-            )
-            .push(
-                Row::new()
-                    .push(cell!(cells.next().unwrap()))
-                    .push(cell!(cells.next().unwrap()))
-                    .push(cell!(cells.next().unwrap()))
-                    .push(cell!(cells.next().unwrap()))
-                    .push(cell!(cells.next().unwrap()))
-                    .push(cell!(cells.next().unwrap()))
-                    .spacing(10),
-            );
+
+        // Build rows dynamically based on layout
+        let cells = layout.cells();
+
+        // Group cells by y-position to form rows
+        let mut y_positions: Vec<u16> = cells.iter().map(|c| c.pos[1]).collect();
+        y_positions.sort_unstable();
+        y_positions.dedup();
+
+        // Build rows dynamically
+        let mut view = Column::new();
+        let mut cells_iter = cells.into_iter().peekable();
+
+        for (row_idx, &y_pos) in y_positions.iter().enumerate() {
+            // Collect cells for this row (same y position)
+            let mut row_cells: Vec<CellLayout> = Vec::new();
+            while cells_iter.peek().is_some_and(|c| c.pos[1] == y_pos) {
+                row_cells.push(cells_iter.next().unwrap());
+            }
+
+            // Sort by x position
+            row_cells.sort_by_key(|c| c.pos[0]);
+
+            // Build the row
+            let mut row = Row::new();
+            for cell_layout in row_cells {
+                row = row.push(cell!(cell_layout));
+            }
+            row = row.spacing(10);
+
+            // For the normal tracker view (after first 2 rows), check if we should stop for notification
+            if row_idx >= 5 && self.notification.is_some() {
+                break;
+            }
+
+            view = view.push(row);
+        }
+
+        // Handle special UI elements (update check, welcome screen, etc.)
         let view = if let Some(ref config) = self.config {
             if let UpdateCheckState::UpdateAvailable {
                 ref new_ver,
@@ -945,56 +977,6 @@ impl Application for State<ootr_static::Rando> {
                         .spacing(5),
                 )
             } else if config.auto_update_check.is_some() {
-                let mut row2 = Vec::with_capacity(4);
-                let mut stone_locs = Vec::with_capacity(3);
-                row2.push(cells.next().unwrap());
-                row2.push(cells.next().unwrap());
-                stone_locs.push(cells.next().unwrap());
-                stone_locs.push(cells.next().unwrap());
-                stone_locs.push(cells.next().unwrap());
-                row2.push(cells.next().unwrap());
-                row2.push(cells.next().unwrap());
-                let mut view = view.push(
-                    Row::new()
-                        .push(cell!(row2[0]))
-                        .push(cell!(row2[1]))
-                        .push(
-                            Column::new()
-                                .push(cell!(stone_locs[0]))
-                                .push(cell!(cells.next().unwrap()))
-                                .spacing(10),
-                        )
-                        .push(
-                            Column::new()
-                                .push(cell!(stone_locs[1]))
-                                .push(cell!(cells.next().unwrap()))
-                                .spacing(10),
-                        )
-                        .push(
-                            Column::new()
-                                .push(cell!(stone_locs[2]))
-                                .push(cell!(cells.next().unwrap()))
-                                .spacing(10),
-                        )
-                        .push(cell!(row2[2]))
-                        .push(cell!(row2[3]))
-                        .spacing(10),
-                );
-                for i in 0..5 {
-                    if i == 3 && self.notification.is_some() {
-                        break;
-                    }
-                    view = view.push(
-                        Row::new()
-                            .push(cell!(cells.next().unwrap()))
-                            .push(cell!(cells.next().unwrap()))
-                            .push(cell!(cells.next().unwrap()))
-                            .push(cell!(cells.next().unwrap()))
-                            .push(cell!(cells.next().unwrap()))
-                            .push(cell!(cells.next().unwrap()))
-                            .spacing(10),
-                    );
-                }
                 if let Some((is_temp, ref notification)) = self.notification {
                     let mut row = Row::new().push(
                         Text::new(format!("{}", notification))
@@ -1048,15 +1030,17 @@ impl Application for State<ootr_static::Rando> {
                     .on_press(Message::DismissWelcomeScreen),
             )
         };
+
+        // Use computed layout dimensions for container sizing
         let items_container = Container::new(
             Container::new(view.spacing(10).padding(5))
-                .width(Length::Units(WIDTH as u16))
-                .height(Length::Units(HEIGHT as u16)),
+                .width(Length::Units(layout_width as u16))
+                .height(Length::Units(layout_height as u16)),
         )
         .width(Length::Fill)
         .style(ContainerStyle)
         .width(if self.flags.show_logic_tracker {
-            Length::Units(WIDTH as u16 + 2)
+            Length::Units(layout_width as u16 + 2)
         } else {
             Length::Fill
         })
@@ -1442,14 +1426,14 @@ fn main(args: Args) -> Result<(), Error> {
     State::run(Settings {
         window: window::Settings {
             size: (
-                WIDTH + if args.show_logic_tracker { 800 } else { 0 },
-                HEIGHT + if args.show_logic_tracker { 400 } else { 0 },
+                DEFAULT_WIDTH + if args.show_logic_tracker { 800 } else { 0 },
+                DEFAULT_HEIGHT + if args.show_logic_tracker { 400 } else { 0 },
             ),
-            min_size: Some((WIDTH, HEIGHT)),
+            min_size: Some((DEFAULT_WIDTH, DEFAULT_HEIGHT)),
             max_size: if args.show_logic_tracker {
                 None
             } else {
-                Some((WIDTH, HEIGHT))
+                Some((DEFAULT_WIDTH, DEFAULT_HEIGHT))
             },
             resizable: args.show_logic_tracker,
             icon: Some(Icon::from_rgba(
@@ -1639,9 +1623,10 @@ mod tests {
     #[test]
     fn test_cell_at_excludes_songs_when_flag_false() {
         let layout = TrackerLayout::default();
-        // Position in the songs area (bottom rows, y > 5 rows of cells)
-        let songs_y = (MEDALLION_LOCATION_HEIGHT as f32 + 10.0) + (CELL_SIZE as f32 + 10.0) * 5.0;
-        let result = layout.cell_at([10.0, songs_y + 10.0], false);
+        // Get the layout height to find a position in the songs area (bottom of layout)
+        let (_, height) = layout.pixel_dimensions();
+        // Position near the bottom of the layout (in the songs area)
+        let result = layout.cell_at([10.0, height as f32 - 10.0], false);
         assert!(result.is_none());
     }
 
@@ -1740,20 +1725,41 @@ mod tests {
     }
 
     #[test]
-    fn test_medallion_location_height_constant() {
-        assert_eq!(MEDALLION_LOCATION_HEIGHT, 18);
+    fn test_default_width_constant() {
+        // DEFAULT_WIDTH = 6 columns * 60px = 360
+        assert_eq!(DEFAULT_WIDTH, 360);
     }
 
     #[test]
-    fn test_width_calculation() {
-        // WIDTH = (CELL_SIZE + 10) * 6 = 60 * 6 = 360
-        assert_eq!(WIDTH, 360);
+    fn test_default_height_constant() {
+        // DEFAULT_HEIGHT = medallion row + 7 cell rows = 448
+        assert_eq!(DEFAULT_HEIGHT, 448);
+    }
+
+    // ==========================================================================
+    // Layout dimension tests
+    // ==========================================================================
+
+    #[test]
+    fn test_default_layout_pixel_dimensions() {
+        let layout = TrackerLayout::default();
+        let (width, height) = layout.pixel_dimensions();
+        assert_eq!(width, DEFAULT_WIDTH);
+        // Height varies based on layout content
+        assert!(height > 0);
     }
 
     #[test]
-    fn test_height_calculation() {
-        // HEIGHT = (MEDALLION_LOCATION_HEIGHT + 10) + (CELL_SIZE + 10) * 7
-        // HEIGHT = 28 + 60 * 7 = 28 + 420 = 448
-        assert_eq!(HEIGHT, 448);
+    fn test_layout_column_count() {
+        let layout = TrackerLayout::default();
+        // Default OoT layout has 6 columns
+        assert_eq!(layout.column_count(), 6);
+    }
+
+    #[test]
+    fn test_layout_row_count() {
+        let layout = TrackerLayout::default();
+        // Default layout has multiple rows
+        assert!(layout.row_count() > 0);
     }
 }
