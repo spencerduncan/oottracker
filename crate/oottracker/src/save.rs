@@ -1178,6 +1178,10 @@ pub enum DecodeError {
 pub struct Save {
     pub time_of_day: TimeOfDay,
     pub is_adult: bool,
+    /// Health capacity in 16ths of a heart (3 hearts = 0x30, max 20 hearts = 0x140)
+    pub health_capacity: u16,
+    /// Heart pieces collected (0-3, resets to 0 when 4th piece adds a heart container)
+    pub heart_pieces: u8,
     pub magic: MagicCapacity,
     pub biggoron_sword: bool,
     pub dmt_biggoron_checked: bool,
@@ -1273,6 +1277,10 @@ impl Save {
             return Err(DecodeError::Size(save_data.len()));
         }
         try_eq!(0x001c..0x0022, b"ZELDAZ");
+        // Parse quest items raw value to extract heart pieces from bits 24-27
+        let quest_items_raw = BigEndian::read_u32(get_offset!("quest_items_raw", 0x00a4, 0x4));
+        let heart_pieces = ((quest_items_raw >> 24) & 0x0F) as u8;
+
         Ok(Save {
             is_adult: match BigEndian::read_i32(get_offset!("is_adult", 0x0004, 0x4)) {
                 0 => true,
@@ -1287,6 +1295,8 @@ impl Save {
                 }
             },
             time_of_day: try_get_offset!("time_of_day", 0x000c, 0x2),
+            health_capacity: BigEndian::read_u16(get_offset!("health_capacity", 0x002e, 0x2)),
+            heart_pieces,
             magic: if get_offset!("has single magic", 0x003a) == 0 {
                 try_eq!(0x003c, 0);
                 MagicCapacity::None
@@ -1367,6 +1377,8 @@ impl Save {
         let Save {
             is_adult,
             time_of_day,
+            health_capacity,
+            heart_pieces,
             magic,
             biggoron_sword,
             dmt_biggoron_checked,
@@ -1394,6 +1406,7 @@ impl Save {
         );
         buf.splice(0x000c..0x000e, Vec::from(time_of_day));
         buf.splice(0x001c..0x0022, b"ZELDAZ".iter().copied());
+        buf.splice(0x002e..0x0030, health_capacity.to_be_bytes());
         buf[0x0032] = magic.into();
         buf[0x003a] = match magic {
             MagicCapacity::None => 0,
@@ -1409,7 +1422,9 @@ impl Save {
         buf.splice(0x008c..0x009b, Vec::from(inv_amounts));
         buf.splice(0x009c..0x009e, Vec::from(equipment));
         buf.splice(0x00a0..0x00a4, Vec::from(upgrades));
-        buf.splice(0x00a4..0x00a8, Vec::from(quest_items));
+        // Combine quest_items bits with heart_pieces in bits 24-27
+        let quest_items_with_hearts = quest_items.bits() | ((*heart_pieces as u32) << 24);
+        buf.splice(0x00a4..0x00a8, quest_items_with_hearts.to_be_bytes());
         buf.splice(0x00a8..0x00bc, Vec::from(dungeon_items));
         buf.splice(0x00bc..0x00cf, Vec::from(small_keys));
         buf.splice(0x00d0..0x00d2, i16::from(*skull_tokens).to_be_bytes());
@@ -1423,6 +1438,13 @@ impl Save {
         buf[0x12c5] = if *scarecrow_song_child { 1 } else { 0 };
         buf.splice(0x135c..0x1360, Vec::from(game_mode));
         buf
+    }
+
+    /// Returns the number of heart containers (full hearts).
+    /// OoT starts with 3 hearts, max is 20.
+    pub fn heart_containers(&self) -> u8 {
+        // health_capacity is in 16ths of a heart (0x10 per heart)
+        (self.health_capacity / 0x10) as u8
     }
 
     pub fn triforce_pieces(&self) -> u8 {

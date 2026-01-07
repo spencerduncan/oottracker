@@ -1191,6 +1191,17 @@ impl MmSave {
     }
 
     // ========================================================================
+    // Heart Accessors
+    // ========================================================================
+
+    /// Returns the number of heart containers (full hearts).
+    /// MM starts with 3 hearts, max is 20.
+    pub fn heart_containers(&self) -> u8 {
+        // health_capacity is in 16ths of a heart (0x10 per heart)
+        (self.health_capacity / 0x10) as u8
+    }
+
+    // ========================================================================
     // Transformation Mask Accessors
     // ========================================================================
 
