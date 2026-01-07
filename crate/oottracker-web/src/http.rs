@@ -533,7 +533,7 @@ struct ToggleSkipRequest {
 }
 
 /// Response for toggle skip endpoint.
-#[derive(Debug, serde::Serialize)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 struct ToggleSkipResponse {
     /// The location ID that was toggled.
     location_id: String,
@@ -1216,7 +1216,8 @@ mod tests {
 
         // Verify we get valid JSON
         let summary: CheckedLocationsSummary = response.into_json().await.unwrap();
-        assert!(summary.total_mapped >= 0);
+        // Verify we got a valid response (total_mapped is usize, always >= 0)
+        let _ = summary.total_mapped;
     }
 
     #[rocket::async_test]
@@ -1234,10 +1235,13 @@ mod tests {
         let summary: CheckedLocationsSummary = response.into_json().await.unwrap();
 
         // Verify all required fields are present and valid
-        // total_mapped should equal checked + unchecked + unknown
+        // total_mapped should equal checked + unchecked + skipped + unknown
         assert_eq!(
             summary.total_mapped,
-            summary.checked_count + summary.unchecked_count + summary.unknown_count
+            summary.checked_count
+                + summary.unchecked_count
+                + summary.skipped_count
+                + summary.unknown_count
         );
 
         // locations vector should exist (may be empty for new room)
@@ -1268,6 +1272,7 @@ mod tests {
             let _ = match location.status {
                 CheckStatus::Checked => "checked",
                 CheckStatus::Unchecked => "unchecked",
+                CheckStatus::Skipped => "skipped",
                 CheckStatus::Unknown => "unknown",
             };
 
@@ -1293,12 +1298,14 @@ mod tests {
         // Count status values manually and verify they match summary counts
         let mut checked = 0;
         let mut unchecked = 0;
+        let mut skipped = 0;
         let mut unknown = 0;
 
         for location in &summary.locations {
             match location.status {
                 CheckStatus::Checked => checked += 1,
                 CheckStatus::Unchecked => unchecked += 1,
+                CheckStatus::Skipped => skipped += 1,
                 CheckStatus::Unknown => unknown += 1,
             }
         }
@@ -1306,6 +1313,7 @@ mod tests {
         // The counts should match what we counted from the array
         assert_eq!(summary.checked_count, checked);
         assert_eq!(summary.unchecked_count, unchecked);
+        assert_eq!(summary.skipped_count, skipped);
         assert_eq!(summary.unknown_count, unknown);
     }
 
@@ -1389,13 +1397,178 @@ mod tests {
         // Integration check: locations array length should equal sum of counts
         assert_eq!(
             summary.locations.len(),
-            summary.checked_count + summary.unchecked_count + summary.unknown_count
+            summary.checked_count
+                + summary.unchecked_count
+                + summary.skipped_count
+                + summary.unknown_count
         );
 
         // Also verify total_mapped equals the same sum
         assert_eq!(
             summary.total_mapped,
-            summary.checked_count + summary.unchecked_count + summary.unknown_count
+            summary.checked_count
+                + summary.unchecked_count
+                + summary.skipped_count
+                + summary.unknown_count
         );
+    }
+
+    // ==========================================================================
+    // Skip Location API Tests
+    // ==========================================================================
+
+    #[rocket::async_test]
+    async fn test_toggle_skip_location() {
+        let client = Client::tracked(test_rocket().await)
+            .await
+            .expect("valid rocket instance");
+
+        // Toggle skip on a location
+        let response = client
+            .post("/api/room/test-skip-room/toggle-skip")
+            .header(ContentType::JSON)
+            .body(r#"{"location_id": "KF GS Know It All House"}"#)
+            .dispatch()
+            .await;
+        assert_eq!(response.status(), Status::Ok);
+
+        let toggle_response: ToggleSkipResponse = response.into_json().await.unwrap();
+        // First toggle should set it to skipped
+        assert!(toggle_response.skipped);
+        assert_eq!(toggle_response.location_id, "KF GS Know It All House");
+    }
+
+    #[rocket::async_test]
+    async fn test_toggle_skip_location_twice() {
+        let client = Client::tracked(test_rocket().await)
+            .await
+            .expect("valid rocket instance");
+
+        // Toggle skip on a location (first time - should skip)
+        let response = client
+            .post("/api/room/test-skip-room-twice/toggle-skip")
+            .header(ContentType::JSON)
+            .body(r#"{"location_id": "KF GS Know It All House"}"#)
+            .dispatch()
+            .await;
+        assert_eq!(response.status(), Status::Ok);
+
+        let toggle_response: ToggleSkipResponse = response.into_json().await.unwrap();
+        assert!(toggle_response.skipped);
+
+        // Toggle again (should unskip)
+        let response = client
+            .post("/api/room/test-skip-room-twice/toggle-skip")
+            .header(ContentType::JSON)
+            .body(r#"{"location_id": "KF GS Know It All House"}"#)
+            .dispatch()
+            .await;
+        assert_eq!(response.status(), Status::Ok);
+
+        let toggle_response: ToggleSkipResponse = response.into_json().await.unwrap();
+        assert!(!toggle_response.skipped);
+    }
+
+    #[rocket::async_test]
+    async fn test_set_skip_location_true() {
+        let client = Client::tracked(test_rocket().await)
+            .await
+            .expect("valid rocket instance");
+
+        // Set skip to true
+        let response = client
+            .post("/api/room/test-set-skip-room/set-skip")
+            .header(ContentType::JSON)
+            .body(r#"{"location_id": "KF GS Know It All House", "skip": true}"#)
+            .dispatch()
+            .await;
+        assert_eq!(response.status(), Status::Ok);
+
+        let toggle_response: ToggleSkipResponse = response.into_json().await.unwrap();
+        assert!(toggle_response.skipped);
+        assert_eq!(toggle_response.location_id, "KF GS Know It All House");
+    }
+
+    #[rocket::async_test]
+    async fn test_set_skip_location_false() {
+        let client = Client::tracked(test_rocket().await)
+            .await
+            .expect("valid rocket instance");
+
+        // First set skip to true
+        let response = client
+            .post("/api/room/test-set-skip-false-room/set-skip")
+            .header(ContentType::JSON)
+            .body(r#"{"location_id": "KF GS Know It All House", "skip": true}"#)
+            .dispatch()
+            .await;
+        assert_eq!(response.status(), Status::Ok);
+
+        // Then set skip to false
+        let response = client
+            .post("/api/room/test-set-skip-false-room/set-skip")
+            .header(ContentType::JSON)
+            .body(r#"{"location_id": "KF GS Know It All House", "skip": false}"#)
+            .dispatch()
+            .await;
+        assert_eq!(response.status(), Status::Ok);
+
+        let toggle_response: ToggleSkipResponse = response.into_json().await.unwrap();
+        assert!(!toggle_response.skipped);
+    }
+
+    #[rocket::async_test]
+    async fn test_skip_location_invalid_room() {
+        let client = Client::tracked(test_rocket().await)
+            .await
+            .expect("valid rocket instance");
+
+        // Invalid room name (uppercase)
+        let response = client
+            .post("/api/room/InvalidRoom/toggle-skip")
+            .header(ContentType::JSON)
+            .body(r#"{"location_id": "KF GS Know It All House"}"#)
+            .dispatch()
+            .await;
+        assert_eq!(response.status(), Status::NotFound);
+    }
+
+    #[rocket::async_test]
+    async fn test_skipped_location_reflected_in_checked_locations() {
+        let client = Client::tracked(test_rocket().await)
+            .await
+            .expect("valid rocket instance");
+
+        // Skip a location
+        let response = client
+            .post("/api/room/test-skip-reflection/set-skip")
+            .header(ContentType::JSON)
+            .body(r#"{"location_id": "KF GS Know It All House", "skip": true}"#)
+            .dispatch()
+            .await;
+        assert_eq!(response.status(), Status::Ok);
+
+        // Verify it shows up as skipped in checked-locations
+        let response = client
+            .get("/api/room/test-skip-reflection/checked-locations")
+            .dispatch()
+            .await;
+        assert_eq!(response.status(), Status::Ok);
+
+        let summary: CheckedLocationsSummary = response.into_json().await.unwrap();
+
+        // Should have at least one skipped location
+        assert!(summary.skipped_count >= 1);
+
+        // Find the skipped location in the array
+        let skipped_location = summary
+            .locations
+            .iter()
+            .find(|loc| loc.location_id == "KF GS Know It All House");
+        assert!(skipped_location.is_some());
+        assert!(matches!(
+            skipped_location.unwrap().status,
+            CheckStatus::Skipped
+        ));
     }
 }
