@@ -103,6 +103,11 @@ table td {
     grid-template-columns: 10px 10px 10px 10px 10px 10px 10px 10px 10px 10px 10px 10px 10px 10px 10px 10px 10px 10px 10px 10px 10px 10px 10px 10px 10px 10px 10px 10px 10px 10px;
 }
 
+/* 12-column layouts (OoTMM Combo) */
+.items.combo {
+    grid-template-columns: repeat(36, 10px);
+}
+
 .items > a {
     /* style JS fake links as links */
     cursor: pointer;

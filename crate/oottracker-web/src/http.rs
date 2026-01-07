@@ -430,6 +430,23 @@ async fn room(
     }).await?)
 }
 
+#[rocket::get("/room/<name>/<layout>?<theme>")]
+async fn room_with_layout(
+    rooms: &State<Rooms>,
+    name: &str,
+    layout: TrackerLayout,
+    theme: Option<Theme>,
+) -> Result<RawHtml<String>, Error> {
+    Ok(get_room(rooms, name.to_owned(), |room| {
+        tracker_page(&layout.to_string(), theme, html! {
+            @for cell in layout.cells() {
+                @let cell_id = cell.idx.try_into().expect("too many cells");
+                : cell.id.view(rocket::uri!(click_with_layout(name, &layout, cell_id)), cell_id, &room.model, (cell.size[0] / 20 + 1) as u8, cell.size[1] < 30);
+            }
+        })
+    }).await?)
+}
+
 #[rocket::post("/room/<name>/click/<cell_id>")]
 async fn click(
     pool: &State<SqlitePool>,
@@ -450,6 +467,28 @@ async fn click(
     })
     .await?;
     Ok(Redirect::to(rocket::uri!(room(name, _))))
+}
+
+#[rocket::post("/room/<name>/<layout>/click/<cell_id>")]
+async fn click_with_layout(
+    pool: &State<SqlitePool>,
+    rooms: &State<Rooms>,
+    name: &str,
+    layout: TrackerLayout,
+    cell_id: u8,
+) -> Result<Redirect, Error> {
+    edit_room(pool, rooms, name.to_owned(), |room| {
+        layout
+            .cells()
+            .get(usize::from(cell_id))
+            .ok_or(Error::CellId)?
+            .id
+            .kind()
+            .click(&mut room.model);
+        Ok(())
+    })
+    .await?;
+    Ok(Redirect::to(rocket::uri!(room_with_layout(name, layout, Option::<Theme>::None))))
 }
 
 // ============================================================================
@@ -518,7 +557,9 @@ pub(crate) fn rocket(
             restream_click,
             restream_double_room_layout,
             room,
+            room_with_layout,
             click,
+            click_with_layout,
             api_checked_locations,
         ],
     )
@@ -569,7 +610,9 @@ mod tests {
                 restream_click,
                 restream_double_room_layout,
                 room,
+                room_with_layout,
                 click,
+                click_with_layout,
                 api_checked_locations,
             ],
         )
