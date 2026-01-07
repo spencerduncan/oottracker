@@ -742,11 +742,15 @@ function handleWebSocketMessage(event) {
             for (let cellID = 0; cellID < numCells; cellID++) {
                 offset = updateCell(cellID, data, offset, true); // isInitialLoad = true
             }
+            // Dispatch event to notify other modules (e.g., checked-locations.js) of state change
+            window.dispatchEvent(new CustomEvent('trackerStateChanged', { detail: { type: 'init' } }));
             break;
         case 3:
             // Update
             const cellID = view.getUint8(offset++);
             updateCell(cellID, data, offset, false); // isInitialLoad = false
+            // Dispatch event to notify other modules (e.g., checked-locations.js) of state change
+            window.dispatchEvent(new CustomEvent('trackerStateChanged', { detail: { type: 'update', cellID: cellID } }));
             break;
         default:
             throw 'unexpected ServerMessage variant';

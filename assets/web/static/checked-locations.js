@@ -4,6 +4,9 @@
  * This module fetches and displays the checked locations status
  * from the API endpoint and updates the UI accordingly.
  * Locations are grouped by region with collapsible sections.
+ *
+ * Updates are triggered via WebSocket events from proto.js rather than
+ * polling, providing immediate refresh when tracker state changes.
  */
 
 // Checked locations state
@@ -705,8 +708,12 @@ function initCheckedLocations() {
     // Initial fetch
     refreshCheckedLocations();
 
-    // Set up periodic refresh (every 5 seconds)
-    setInterval(refreshCheckedLocations, 5000);
+    // Listen for WebSocket state changes from proto.js instead of polling
+    // This provides immediate updates when the tracker state changes
+    window.addEventListener('trackerStateChanged', function(event) {
+        // Refresh checked locations when tracker state changes
+        refreshCheckedLocations();
+    });
 }
 
 // Initialize when DOM is ready
