@@ -1191,6 +1191,134 @@ impl<R: Rando> CheckExt for Check<R> {
 
                 "Ganondorf Hint" => None, //TODO check knowledge
 
+                // Trade Quest Locations - tracked via adult_trade_item progression
+                // If we have the next item in sequence, the trade location was checked
+                "Kak Trade Pocket Cucco" => Some(matches!(
+                    model.ram.save.inv.adult_trade_item,
+                    crate::save::AdultTradeItem::Cojiro
+                        | crate::save::AdultTradeItem::OddMushroom
+                        | crate::save::AdultTradeItem::OddPotion
+                        | crate::save::AdultTradeItem::PoachersSaw
+                        | crate::save::AdultTradeItem::BrokenSword
+                        | crate::save::AdultTradeItem::Prescription
+                        | crate::save::AdultTradeItem::EyeballFrog
+                        | crate::save::AdultTradeItem::Eyedrops
+                        | crate::save::AdultTradeItem::ClaimCheck
+                )),
+                "Kak Anju Trade" => Some(matches!(
+                    model.ram.save.inv.adult_trade_item,
+                    crate::save::AdultTradeItem::Cojiro
+                        | crate::save::AdultTradeItem::OddMushroom
+                        | crate::save::AdultTradeItem::OddPotion
+                        | crate::save::AdultTradeItem::PoachersSaw
+                        | crate::save::AdultTradeItem::BrokenSword
+                        | crate::save::AdultTradeItem::Prescription
+                        | crate::save::AdultTradeItem::EyeballFrog
+                        | crate::save::AdultTradeItem::Eyedrops
+                        | crate::save::AdultTradeItem::ClaimCheck
+                )),
+                "LW Trade Cojiro" => Some(matches!(
+                    model.ram.save.inv.adult_trade_item,
+                    crate::save::AdultTradeItem::OddMushroom
+                        | crate::save::AdultTradeItem::OddPotion
+                        | crate::save::AdultTradeItem::PoachersSaw
+                        | crate::save::AdultTradeItem::BrokenSword
+                        | crate::save::AdultTradeItem::Prescription
+                        | crate::save::AdultTradeItem::EyeballFrog
+                        | crate::save::AdultTradeItem::Eyedrops
+                        | crate::save::AdultTradeItem::ClaimCheck
+                )),
+                "Kak Trade Odd Mushroom" => Some(matches!(
+                    model.ram.save.inv.adult_trade_item,
+                    crate::save::AdultTradeItem::OddPotion
+                        | crate::save::AdultTradeItem::PoachersSaw
+                        | crate::save::AdultTradeItem::BrokenSword
+                        | crate::save::AdultTradeItem::Prescription
+                        | crate::save::AdultTradeItem::EyeballFrog
+                        | crate::save::AdultTradeItem::Eyedrops
+                        | crate::save::AdultTradeItem::ClaimCheck
+                )),
+                "LW Trade Odd Potion" => Some(matches!(
+                    model.ram.save.inv.adult_trade_item,
+                    crate::save::AdultTradeItem::PoachersSaw
+                        | crate::save::AdultTradeItem::BrokenSword
+                        | crate::save::AdultTradeItem::Prescription
+                        | crate::save::AdultTradeItem::EyeballFrog
+                        | crate::save::AdultTradeItem::Eyedrops
+                        | crate::save::AdultTradeItem::ClaimCheck
+                )),
+                "GV Trade Saw" => Some(matches!(
+                    model.ram.save.inv.adult_trade_item,
+                    crate::save::AdultTradeItem::BrokenSword
+                        | crate::save::AdultTradeItem::Prescription
+                        | crate::save::AdultTradeItem::EyeballFrog
+                        | crate::save::AdultTradeItem::Eyedrops
+                        | crate::save::AdultTradeItem::ClaimCheck
+                )),
+                "ZD Trade Prescription" => Some(matches!(
+                    model.ram.save.inv.adult_trade_item,
+                    crate::save::AdultTradeItem::EyeballFrog
+                        | crate::save::AdultTradeItem::Eyedrops
+                        | crate::save::AdultTradeItem::ClaimCheck
+                )),
+                "LH Trade Frog" => Some(matches!(
+                    model.ram.save.inv.adult_trade_item,
+                    crate::save::AdultTradeItem::Eyedrops | crate::save::AdultTradeItem::ClaimCheck
+                )),
+                "DMT Trade Eyedrops" => Some(matches!(
+                    model.ram.save.inv.adult_trade_item,
+                    crate::save::AdultTradeItem::ClaimCheck
+                )),
+                "DMT Trade Claim Check" => Some(model.ram.save.dmt_biggoron_checked),
+
+                // Reward Locations
+                "ToT Reward from Rauru" => Some(
+                    model
+                        .ram
+                        .save
+                        .quest_items
+                        .contains(crate::save::QuestItems::LIGHT_MEDALLION),
+                ),
+                "Gift from Sages" => None, //TODO: requires checking all medallions/stones depending on settings
+                "Kak 100 Gold Skulltula Reward" => None, //TODO: need EventChkInf flag for 100 skulltulas
+
+                // King Zora Thawed - uses the King Zora Thawed event from inf_table
+                "ZD King Zora Thawed" => Some(
+                    model
+                        .ram
+                        .save
+                        .inf_table
+                        .38
+                        .contains(crate::info_tables::InfTable38::KING_ZORA_THAWED),
+                ),
+
+                // Dampe's Grave rewards - tracked via hookshot (imperfect but best available)
+                "Graveyard Dampe Race Hookshot" => Some(
+                    model.ram.save.inv.hookshot != crate::save::Hookshot::None,
+                ),
+
+                // Granny's Potion Shop - tracked via adult trade item progression
+                "Kak Grannys Potion" => Some(matches!(
+                    model.ram.save.inv.adult_trade_item,
+                    crate::save::AdultTradeItem::OddPotion
+                        | crate::save::AdultTradeItem::PoachersSaw
+                        | crate::save::AdultTradeItem::BrokenSword
+                        | crate::save::AdultTradeItem::Prescription
+                        | crate::save::AdultTradeItem::EyeballFrog
+                        | crate::save::AdultTradeItem::Eyedrops
+                        | crate::save::AdultTradeItem::ClaimCheck
+                )),
+
+                // HC Zeldas Lullaby - same as Song from Impa
+                "HC Zeldas Lullaby" => Some(
+                    model
+                        .ram
+                        .save
+                        .event_chk_inf
+                        .checked(&Check::<R>::Location("Song from Impa".into()))
+                        .unwrap_or(false),
+                ),
+
                 _ => return Err(CheckError::UnknownLocation(loc.clone())),
             },
             Check::LogicHelper(_) => return Err(CheckError::LogicHelperNotCheckable),

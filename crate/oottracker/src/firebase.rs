@@ -125,7 +125,7 @@ pub trait App: fmt::Debug + Send + Sync + 'static {
         value: Json,
     ) -> Result<(), Error> {
         match cell_id.kind() {
-            BossKey { active, toggle } => {
+            BossKey { active, toggle, .. } => {
                 if active(&state.ram.save.dungeon_items)
                     != value
                         .as_bool()
