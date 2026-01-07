@@ -503,6 +503,7 @@ pub enum TrackerCellKind {
     BossKey {
         active: Box<dyn Fn(&AllDungeonItems) -> bool>,
         toggle: Box<dyn Fn(&mut AllDungeonItems)>,
+        label: &'static str,
     },
     Composite {
         left_img: ImageInfo,
@@ -562,11 +563,13 @@ pub enum TrackerCellKind {
         set: SmallKeysSetter,
         max_vanilla: u8,
         max_mq: u8,
+        label: &'static str,
     },
     MmSmallKeys {
         get: Box<dyn Fn(&crate::mm_save::MmSmallKeys) -> u8>,
         set: MmSmallKeysSetter,
         max: u8,
+        label: &'static str,
     },
     OotMap {
         active: Box<dyn Fn(&AllDungeonItems) -> bool>,
@@ -579,6 +582,7 @@ pub enum TrackerCellKind {
     MmBossKey {
         active: Box<dyn Fn(&crate::mm_save::MmAllDungeonItems) -> bool>,
         toggle: Box<dyn Fn(&mut crate::mm_save::MmAllDungeonItems)>,
+        label: &'static str,
     },
     MmMap {
         active: Box<dyn Fn(&crate::mm_save::MmAllDungeonItems) -> bool>,
@@ -616,6 +620,7 @@ impl TrackerCellKind {
                             count_img: ImageInfo::new("force"),
                         },
                         accessibility: None,
+                        label: None,
                     }
                 } else if state.ram.save.big_poes > 0 {
                     //TODO show dimmed Triforce icon if it's known that it's TH
@@ -627,6 +632,7 @@ impl TrackerCellKind {
                             count_img: ImageInfo::extra("poes"),
                         },
                         accessibility: None,
+                        label: None,
                     }
                 } else {
                     CellRender {
@@ -634,10 +640,11 @@ impl TrackerCellKind {
                         style: CellStyle::Dimmed,
                         overlay: CellOverlay::None,
                         accessibility: None,
+                        label: None,
                     }
                 }
             }
-            BossKey { active, .. } => CellRender {
+            BossKey { active, label, .. } => CellRender {
                 img: ImageInfo::extra("boss_key"),
                 style: if active(&state.ram.save.dungeon_items) {
                     CellStyle::Normal
@@ -646,6 +653,7 @@ impl TrackerCellKind {
                 },
                 overlay: CellOverlay::None,
                 accessibility: None,
+                label: Some(label.to_string()),
             },
             OotMap { active, .. } => CellRender {
                 img: ImageInfo::extra("map"),
@@ -656,6 +664,7 @@ impl TrackerCellKind {
                 },
                 overlay: CellOverlay::None,
                 accessibility: None,
+                label: None,
             },
             OotCompass { active, .. } => CellRender {
                 img: ImageInfo::extra("compass"),
@@ -666,8 +675,9 @@ impl TrackerCellKind {
                 },
                 overlay: CellOverlay::None,
                 accessibility: None,
+                label: None,
             },
-            MmBossKey { active, .. } => CellRender {
+            MmBossKey { active, label, .. } => CellRender {
                 img: ImageInfo::extra("boss_key"),
                 style: if state
                     .ram
@@ -681,6 +691,7 @@ impl TrackerCellKind {
                 },
                 overlay: CellOverlay::None,
                 accessibility: None,
+                label: Some(label.to_string()),
             },
             MmMap { active, .. } => CellRender {
                 img: ImageInfo::extra("map"),
@@ -696,6 +707,7 @@ impl TrackerCellKind {
                 },
                 overlay: CellOverlay::None,
                 accessibility: None,
+                label: None,
             },
             MmCompass { active, .. } => CellRender {
                 img: ImageInfo::extra("compass"),
@@ -711,6 +723,7 @@ impl TrackerCellKind {
                 },
                 overlay: CellOverlay::None,
                 accessibility: None,
+                label: None,
             },
             Composite {
                 left_img,
@@ -735,20 +748,23 @@ impl TrackerCellKind {
                     },
                     overlay: CellOverlay::None,
                     accessibility: None,
+                    label: None,
                 }
             }
             CompositeKeys { boss, small } => {
-                let (has_boss_key, num_small_keys) =
-                    if let (BossKey { active, .. }, TrackerCellKind::SmallKeys { get, .. }) =
-                        (boss.kind(), small.kind())
-                    {
-                        (
-                            active(&state.ram.save.dungeon_items),
-                            get(&state.ram.save.small_keys),
-                        )
-                    } else {
-                        unimplemented!("CompositeKeys that aren't SmallKeys + BossKey")
-                    };
+                let (has_boss_key, num_small_keys, label) = if let (
+                    BossKey { active, label, .. },
+                    TrackerCellKind::SmallKeys { get, .. },
+                ) = (boss.kind(), small.kind())
+                {
+                    (
+                        active(&state.ram.save.dungeon_items),
+                        get(&state.ram.save.small_keys),
+                        label,
+                    )
+                } else {
+                    unimplemented!("CompositeKeys that aren't SmallKeys + BossKey")
+                };
                 CellRender {
                     img: ImageInfo::extra("keys"),
                     style: match (has_boss_key, num_small_keys) {
@@ -766,6 +782,7 @@ impl TrackerCellKind {
                         CellOverlay::None
                     },
                     accessibility: None,
+                    label: Some(label.to_string()),
                 }
             }
             Count {
@@ -791,6 +808,7 @@ impl TrackerCellKind {
                     style,
                     overlay,
                     accessibility: None,
+                    label: None,
                 }
             }
             FortressMq => {
@@ -811,6 +829,7 @@ impl TrackerCellKind {
                         }, //TODO dim if unknown?
                     },
                     accessibility: None,
+                    label: None,
                 }
             }
             FreeReward => {
@@ -857,6 +876,7 @@ impl TrackerCellKind {
                         style: LocationStyle::Normal,
                     },
                     accessibility: None,
+                    label: None,
                 }
             }
             GoBk => CellRender {
@@ -872,6 +892,7 @@ impl TrackerCellKind {
                 },
                 overlay: CellOverlay::None, //TODO overlay with finish time?
                 accessibility: None,
+                label: None,
             },
             MagicLens => CellRender {
                 img: if state.ram.save.magic == MagicCapacity::Large {
@@ -890,6 +911,7 @@ impl TrackerCellKind {
                     CellOverlay::None
                 },
                 accessibility: None,
+                label: None,
             },
             Medallion(med) => CellRender {
                 img: ImageInfo::new(format!("{}_medallion", med.element().to_ascii_lowercase())),
@@ -900,6 +922,7 @@ impl TrackerCellKind {
                 },
                 overlay: CellOverlay::None,
                 accessibility: None,
+                label: None,
             },
             MedallionLocation(med) => {
                 let location = state
@@ -938,6 +961,7 @@ impl TrackerCellKind {
                     },
                     overlay: CellOverlay::None,
                     accessibility: None,
+                    label: None,
                 }
             }
             MedallionWithLocation(med) => {
@@ -991,6 +1015,7 @@ impl TrackerCellKind {
                         },
                     },
                     accessibility: None,
+                    label: None,
                 }
             }
             Mq(dungeon) => {
@@ -1069,6 +1094,7 @@ impl TrackerCellKind {
                         },
                     },
                     accessibility: None,
+                    label: None,
                 }
             }
             OptionalOverlay {
@@ -1097,6 +1123,7 @@ impl TrackerCellKind {
                         CellOverlay::None
                     },
                     accessibility: None,
+                    label: None,
                 }
             }
             Sequence { img, .. } => {
@@ -1110,6 +1137,7 @@ impl TrackerCellKind {
                     },
                     overlay: CellOverlay::None,
                     accessibility: None,
+                    label: None,
                 }
             }
             Simple { img, active, .. } => CellRender {
@@ -1121,8 +1149,9 @@ impl TrackerCellKind {
                 },
                 overlay: CellOverlay::None,
                 accessibility: None,
+                label: None,
             },
-            TrackerCellKind::SmallKeys { get, .. } => {
+            TrackerCellKind::SmallKeys { get, label, .. } => {
                 let num_small_keys = get(&state.ram.save.small_keys);
                 CellRender {
                     img: ImageInfo::extra("small_key"),
@@ -1140,9 +1169,10 @@ impl TrackerCellKind {
                         CellOverlay::None
                     },
                     accessibility: None,
+                    label: Some(label.to_string()),
                 }
             }
-            TrackerCellKind::MmSmallKeys { get, .. } => {
+            TrackerCellKind::MmSmallKeys { get, label, .. } => {
                 let num_small_keys = state
                     .ram
                     .mm_save
@@ -1165,6 +1195,7 @@ impl TrackerCellKind {
                         CellOverlay::None
                     },
                     accessibility: None,
+                    label: Some(label.to_string()),
                 }
             }
             Song { song, check, .. } => CellRender {
@@ -1199,6 +1230,7 @@ impl TrackerCellKind {
                     CellOverlay::None
                 },
                 accessibility: None,
+                label: None,
             },
             SongCheck { check, .. } => CellRender {
                 img: ImageInfo::extra("blank"),
@@ -1214,6 +1246,7 @@ impl TrackerCellKind {
                     CellOverlay::None
                 },
                 accessibility: None,
+                label: None,
             },
             Spells => CellRender {
                 img: match (
@@ -1241,6 +1274,7 @@ impl TrackerCellKind {
                 },
                 overlay: CellOverlay::None,
                 accessibility: None,
+                label: None,
             },
             Stone(stone) => CellRender {
                 img: ImageInfo::new(match *stone {
@@ -1255,6 +1289,7 @@ impl TrackerCellKind {
                 },
                 overlay: CellOverlay::None,
                 accessibility: None,
+                label: None,
             },
             StoneLocation(stone) => {
                 let location = state
@@ -1293,6 +1328,7 @@ impl TrackerCellKind {
                     },
                     overlay: CellOverlay::None,
                     accessibility: None,
+                    label: None,
                 }
             }
             StoneWithLocation(stone) => {
@@ -1347,6 +1383,7 @@ impl TrackerCellKind {
                         },
                     },
                     accessibility: None,
+                    label: None,
                 }
             }
         }
@@ -1386,6 +1423,7 @@ impl TrackerCellKind {
                         set,
                         max_vanilla,
                         max_mq,
+                        ..
                     },
                 ) =
                     (boss.kind(), small.kind())
@@ -1473,6 +1511,7 @@ impl TrackerCellKind {
                 set,
                 max_vanilla,
                 max_mq,
+                ..
             } => {
                 let num = get(&state.ram.save.small_keys);
                 if num == *max_vanilla.max(max_mq) {
@@ -1482,7 +1521,7 @@ impl TrackerCellKind {
                     set(&mut state.ram.save.small_keys, num + 1);
                 }
             }
-            TrackerCellKind::MmSmallKeys { get, set, max } => {
+            TrackerCellKind::MmSmallKeys { get, set, max, .. } => {
                 if let Some(ref mut mm_save) = state.ram.mm_save {
                     let num = get(&mm_save.small_keys);
                     if num == *max {
@@ -1646,6 +1685,7 @@ impl TrackerCellKind {
                         set,
                         max_vanilla,
                         max_mq,
+                        ..
                     } = small.kind()
                     {
                         let num = get(&state.ram.save.small_keys);
@@ -1705,6 +1745,7 @@ impl TrackerCellKind {
                     set,
                     max_vanilla,
                     max_mq,
+                    ..
                 } => {
                     let num = get(&state.ram.save.small_keys);
                     if num == 0 {
@@ -1714,7 +1755,7 @@ impl TrackerCellKind {
                         set(&mut state.ram.save.small_keys, num - 1);
                     }
                 }
-                TrackerCellKind::MmSmallKeys { get, set, max } => {
+                TrackerCellKind::MmSmallKeys { get, set, max, .. } => {
                     if let Some(ref mut mm_save) = state.ram.mm_save {
                         let num = get(&mm_save.small_keys);
                         if num == 0 {
@@ -2677,10 +2718,12 @@ cells! {
         set: Box::new(|keys, value| keys.forest_temple = value),
         max_vanilla: 5,
         max_mq: 6,
+        label: "Frst",
     },
     ForestBossKey: BossKey {
         active: Box::new(|keys| keys.forest_temple.contains(DungeonItems::BOSS_KEY)),
         toggle: Box::new(|keys| keys.forest_temple.toggle(DungeonItems::BOSS_KEY)),
+        label: "Frst",
     },
     ForestKeys: CompositeKeys {
         small: TrackerCellId::ForestSmallKeys,
@@ -2692,10 +2735,12 @@ cells! {
         set: Box::new(|keys, value| keys.fire_temple = value),
         max_vanilla: 8,
         max_mq: 5,
+        label: "Fire",
     },
     FireBossKey: BossKey {
         active: Box::new(|keys| keys.fire_temple.contains(DungeonItems::BOSS_KEY)),
         toggle: Box::new(|keys| keys.fire_temple.toggle(DungeonItems::BOSS_KEY)),
+        label: "Fire",
     },
     FireKeys: CompositeKeys {
         small: TrackerCellId::FireSmallKeys,
@@ -2707,10 +2752,12 @@ cells! {
         set: Box::new(|keys, value| keys.water_temple = value),
         max_vanilla: 6,
         max_mq: 2,
+        label: "Watr",
     },
     WaterBossKey: BossKey {
         active: Box::new(|keys| keys.water_temple.contains(DungeonItems::BOSS_KEY)),
         toggle: Box::new(|keys| keys.water_temple.toggle(DungeonItems::BOSS_KEY)),
+        label: "Watr",
     },
     WaterKeys: CompositeKeys {
         small: TrackerCellId::WaterSmallKeys,
@@ -2722,10 +2769,12 @@ cells! {
         set: Box::new(|keys, value| keys.shadow_temple = value),
         max_vanilla: 5,
         max_mq: 6,
+        label: "Shdw",
     },
     ShadowBossKey: BossKey {
         active: Box::new(|keys| keys.shadow_temple.contains(DungeonItems::BOSS_KEY)),
         toggle: Box::new(|keys| keys.shadow_temple.toggle(DungeonItems::BOSS_KEY)),
+        label: "Shdw",
     },
     ShadowKeys: CompositeKeys {
         small: TrackerCellId::ShadowSmallKeys,
@@ -2737,10 +2786,12 @@ cells! {
         set: Box::new(|keys, value| keys.spirit_temple = value),
         max_vanilla: 5,
         max_mq: 7,
+        label: "Sprt",
     },
     SpiritBossKey: BossKey {
         active: Box::new(|keys| keys.spirit_temple.contains(DungeonItems::BOSS_KEY)),
         toggle: Box::new(|keys| keys.spirit_temple.toggle(DungeonItems::BOSS_KEY)),
+        label: "Sprt",
     },
     SpiritKeys: CompositeKeys {
         small: TrackerCellId::SpiritSmallKeys,
@@ -2753,6 +2804,7 @@ cells! {
         set: Box::new(|keys, value| keys.bottom_of_the_well = value),
         max_vanilla: 3,
         max_mq: 2,
+        label: "Well",
     },
     FortressMq: FortressMq,
     FortressSmallKeys: TrackerCellKind::SmallKeys {
@@ -2760,6 +2812,7 @@ cells! {
         set: Box::new(|keys, value| keys.thieves_hideout = value),
         max_vanilla: 4,
         max_mq: 4,
+        label: "Fort",
     },
     GtgMq: Mq(Dungeon::GerudoTrainingGround),
     GtgSmallKeys: TrackerCellKind::SmallKeys {
@@ -2767,6 +2820,7 @@ cells! {
         set: Box::new(|keys, value| keys.gerudo_training_ground = value),
         max_vanilla: 9,
         max_mq: 3,
+        label: "GTG",
     },
     GanonMq: Mq(Dungeon::GanonsCastle),
     GanonSmallKeys: TrackerCellKind::SmallKeys {
@@ -2774,10 +2828,12 @@ cells! {
         set: Box::new(|keys, value| keys.ganons_castle = value),
         max_vanilla: 2,
         max_mq: 3,
+        label: "Ganon",
     },
     GanonBossKey: BossKey {
         active: Box::new(|keys| keys.ganons_castle.contains(DungeonItems::BOSS_KEY)),
         toggle: Box::new(|keys| keys.ganons_castle.toggle(DungeonItems::BOSS_KEY)),
+        label: "Ganon",
     },
     GanonKeys: CompositeKeys {
         small: TrackerCellId::GanonSmallKeys,
@@ -2882,18 +2938,22 @@ cells! {
     MmWoodfallBossKey: MmBossKey {
         active: Box::new(|keys| keys.woodfall.contains(crate::mm_save::MmDungeonItems::BOSS_KEY)),
         toggle: Box::new(|keys| keys.woodfall.toggle(crate::mm_save::MmDungeonItems::BOSS_KEY)),
+        label: "WF",
     },
     MmSnowheadBossKey: MmBossKey {
         active: Box::new(|keys| keys.snowhead.contains(crate::mm_save::MmDungeonItems::BOSS_KEY)),
         toggle: Box::new(|keys| keys.snowhead.toggle(crate::mm_save::MmDungeonItems::BOSS_KEY)),
+        label: "SH",
     },
     MmGreatBayBossKey: MmBossKey {
         active: Box::new(|keys| keys.great_bay.contains(crate::mm_save::MmDungeonItems::BOSS_KEY)),
         toggle: Box::new(|keys| keys.great_bay.toggle(crate::mm_save::MmDungeonItems::BOSS_KEY)),
+        label: "GB",
     },
     MmStoneTowerBossKey: MmBossKey {
         active: Box::new(|keys| keys.stone_tower.contains(crate::mm_save::MmDungeonItems::BOSS_KEY)),
         toggle: Box::new(|keys| keys.stone_tower.toggle(crate::mm_save::MmDungeonItems::BOSS_KEY)),
+        label: "ST",
     },
 
     // ============================================================================
@@ -3502,21 +3562,25 @@ cells! {
         get: Box::new(|keys| keys.woodfall),
         set: Box::new(|keys, value| keys.woodfall = value),
         max: 1,
+        label: "WF",
     },
     MmSnowheadSmallKeys: TrackerCellKind::MmSmallKeys {
         get: Box::new(|keys| keys.snowhead()),
         set: Box::new(|keys, value| keys.snowhead = value),
         max: 3,
+        label: "SH",
     },
     MmGreatBaySmallKeys: TrackerCellKind::MmSmallKeys {
         get: Box::new(|keys| keys.great_bay()),
         set: Box::new(|keys, value| keys.great_bay = value),
         max: 1,
+        label: "GB",
     },
     MmStoneTowerSmallKeys: TrackerCellKind::MmSmallKeys {
         get: Box::new(|keys| keys.stone_tower()),
         set: Box::new(|keys, value| keys.stone_tower = value),
         max: 4,
+        label: "ST",
     },
 
     // ============================================================================
@@ -4946,22 +5010,31 @@ pub struct CellRender {
     /// Optional accessibility status for the cell.
     /// When set, adds a visual border indicator showing if the location is accessible.
     pub accessibility: Option<AccessibilityStatus>,
+    /// Optional text label for the cell (e.g., dungeon abbreviation for keys).
+    pub label: Option<String>,
 }
 
 impl CellRender {
-    /// Creates a new CellRender without accessibility information.
+    /// Creates a new CellRender without accessibility information or label.
     pub fn new(img: ImageInfo, style: CellStyle, overlay: CellOverlay) -> Self {
         Self {
             img,
             style,
             overlay,
             accessibility: None,
+            label: None,
         }
     }
 
     /// Sets the accessibility status for this cell.
     pub fn with_accessibility(mut self, status: AccessibilityStatus) -> Self {
         self.accessibility = Some(status);
+        self
+    }
+
+    /// Sets the text label for this cell.
+    pub fn with_label(mut self, label: impl Into<String>) -> Self {
+        self.label = Some(label.into());
         self
     }
 
@@ -4992,6 +5065,9 @@ impl ToHtml for CellRender {
                 CellOverlay::Count { count, .. } => span(class = "count") : count;
                 CellOverlay::Image(ref overlay) => img(src = format!("/static/img/{}.png", overlay.to_string('/', ImageDirContext::OverlayOnly)));
                 CellOverlay::Location { ref loc, style } => img(class = style.css_classes(), src = format!("/static/img/{}.png", loc.to_string('/', ImageDirContext::Normal)));
+            }
+            @if let Some(ref label) = self.label {
+                span(class = "key-label") : label;
             }
         }
     }
