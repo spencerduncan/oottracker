@@ -231,3 +231,20 @@ footer,
 footer a {
     color: gray;
 }
+
+/* Accessibility status indicators */
+.accessibility-accessible {
+    box-shadow: 0 0 0 2px #22cc22;
+}
+
+.accessibility-inaccessible {
+    box-shadow: 0 0 0 2px #cc2222;
+}
+
+.accessibility-checked {
+    box-shadow: 0 0 0 2px #666666;
+}
+
+.accessibility-unknown {
+    box-shadow: 0 0 0 2px #cc8822;
+}

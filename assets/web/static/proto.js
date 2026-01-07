@@ -349,6 +349,8 @@ function updateCell(cellID, data, offset, isInitialLoad) {
     const elt = document.getElementById('cell' + cellID);
     //elt.replaceChildren(); //TODO use this instead of the elt.append calls below once OBS browser source updates to Chrome 86+
     elt.innerHTML = '';
+    // Remove any existing accessibility classes
+    elt.classList.remove('accessibility-accessible', 'accessibility-inaccessible', 'accessibility-checked', 'accessibility-unknown');
     let mainImg = document.createElement('img');
     const imgDir = readImgDir(view.getUint8(offset++));
     const imgFilenameLen = Number(view.getBigUint64(offset));
@@ -463,6 +465,29 @@ function updateCell(cellID, data, offset, isInitialLoad) {
             break;
         default:
             throw 'unexpected CellOverlay variant';
+    }
+    // Read accessibility status (Option<AccessibilityStatus>)
+    const hasAccessibility = view.getUint8(offset++);
+    if (hasAccessibility === 1) {
+        const accessibilityStatus = view.getUint8(offset++);
+        let accessibilityClass;
+        switch (accessibilityStatus) {
+            case 0:
+                accessibilityClass = 'accessibility-accessible';
+                break;
+            case 1:
+                accessibilityClass = 'accessibility-inaccessible';
+                break;
+            case 2:
+                accessibilityClass = 'accessibility-checked';
+                break;
+            case 3:
+                accessibilityClass = 'accessibility-unknown';
+                break;
+            default:
+                throw 'unexpected AccessibilityStatus variant';
+        }
+        elt.classList.add(accessibilityClass);
     }
     if (elt.tagName === 'FORM') {
         elt.addEventListener('submit', function(event) { event.preventDefault(); sendClick(cellID, false); return false; }, false);
