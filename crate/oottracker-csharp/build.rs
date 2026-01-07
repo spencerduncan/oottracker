@@ -5,13 +5,15 @@ fn main() {
 
     #[cfg(windows)]
     {
-        let [major, minor, patch, _] = winver::get_file_version_info(
+        let version_str = match winver::get_file_version_info(
             "../oottracker-bizhawk/OotAutoTracker/BizHawk/EmuHawk.exe",
-        )
-        .unwrap();
+        ) {
+            Ok([major, minor, patch, _]) => format!("{}.{}.{}", major, minor, patch),
+            Err(_) => "0.0.0".to_string(), // Fallback when BizHawk not present
+        };
         fs::write(
             Path::new(&env::var("OUT_DIR").unwrap()).join("bizhawk-version.txt"),
-            format!("{}.{}.{}", major, minor, patch),
+            version_str,
         )
         .unwrap();
     }

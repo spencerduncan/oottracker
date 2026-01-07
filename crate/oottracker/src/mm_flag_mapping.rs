@@ -3021,11 +3021,17 @@ mod tests {
     #[test]
     fn test_scene_constants() {
         // Verify scene constants are reasonable
-        assert!(mm_scene::WOODFALL_TEMPLE < mm_scene::MAX_SCENE_ID);
-        assert!(mm_scene::SNOWHEAD_TEMPLE < mm_scene::MAX_SCENE_ID);
-        assert!(mm_scene::GREAT_BAY_TEMPLE < mm_scene::MAX_SCENE_ID);
-        assert!(mm_scene::STONE_TOWER_TEMPLE < mm_scene::MAX_SCENE_ID);
-        assert!(mm_scene::CLOCK_TOWN_SOUTH < mm_scene::MAX_SCENE_ID);
+        // Note: Using runtime check to avoid clippy's const evaluation warnings
+        let scenes: [u8; 5] = [
+            mm_scene::WOODFALL_TEMPLE,
+            mm_scene::SNOWHEAD_TEMPLE,
+            mm_scene::GREAT_BAY_TEMPLE,
+            mm_scene::STONE_TOWER_TEMPLE,
+            mm_scene::CLOCK_TOWN_SOUTH,
+        ];
+        for scene in scenes {
+            assert!(scene < mm_scene::MAX_SCENE_ID);
+        }
     }
 
     #[test]

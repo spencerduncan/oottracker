@@ -1911,10 +1911,16 @@ mod tests {
     #[test]
     fn test_logic_ids_exist() {
         // Verify all logic IDs are non-empty strings
-        assert!(!logic_ids::OCARINA_OF_TIME.is_empty());
-        assert!(!logic_ids::DEKU_MASK.is_empty());
-        assert!(!logic_ids::SONG_OF_TIME.is_empty());
-        assert!(!logic_ids::HOOKSHOT.is_empty());
+        // Note: These are compile-time constants, so the assertions are always true
+        let ids: [&str; 4] = [
+            logic_ids::OCARINA_OF_TIME,
+            logic_ids::DEKU_MASK,
+            logic_ids::SONG_OF_TIME,
+            logic_ids::HOOKSHOT,
+        ];
+        for id in ids {
+            assert!(!id.is_empty());
+        }
     }
 
     // ========================================================================
@@ -2121,10 +2127,11 @@ mod tests {
         perm_flags: Vec<MmPermanentSceneFlags>,
         cycle_flags: Vec<MmCycleSceneFlags>,
     ) -> MmSave {
-        let mut save = MmSave::default();
-        save.permanent_scene_flags = perm_flags;
-        save.cycle_scene_flags = cycle_flags;
-        save
+        MmSave {
+            permanent_scene_flags: perm_flags,
+            cycle_scene_flags: cycle_flags,
+            ..Default::default()
+        }
     }
 
     #[test]
