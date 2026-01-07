@@ -6856,6 +6856,106 @@ mod tests {
             .woodfall
             .contains(crate::mm_save::MmDungeonItems::COMPASS));
     }
+
+    // ==========================================================================
+    // Accessibility Rendering Tests
+    // ==========================================================================
+
+    #[test]
+    fn test_medallion_with_location_accessibility_none_when_not_possessed() {
+        let state = ModelState::default();
+        let cell = TrackerCellId::ForestMedallionWithLocation.kind();
+        let render = cell.render(&state);
+
+        // When medallion is not possessed, accessibility should be None
+        assert!(
+            render.accessibility.is_none(),
+            "Accessibility should be None when medallion is not possessed"
+        );
+        assert_eq!(render.style, CellStyle::Dimmed);
+    }
+
+    #[test]
+    fn test_medallion_with_location_accessibility_checked_when_possessed() {
+        let mut state = ModelState::default();
+        state
+            .ram
+            .save
+            .quest_items
+            .insert(QuestItems::FOREST_MEDALLION);
+
+        let cell = TrackerCellId::ForestMedallionWithLocation.kind();
+        let render = cell.render(&state);
+
+        // When medallion is possessed, accessibility should be Checked
+        assert_eq!(
+            render.accessibility,
+            Some(AccessibilityStatus::Checked),
+            "Accessibility should be Checked when medallion is possessed"
+        );
+        assert_eq!(render.style, CellStyle::Normal);
+    }
+
+    #[test]
+    fn test_stone_with_location_accessibility_none_when_not_possessed() {
+        let state = ModelState::default();
+        let cell = TrackerCellId::KokiriEmeraldWithLocation.kind();
+        let render = cell.render(&state);
+
+        // When stone is not possessed, accessibility should be None
+        assert!(
+            render.accessibility.is_none(),
+            "Accessibility should be None when stone is not possessed"
+        );
+        assert_eq!(render.style, CellStyle::Dimmed);
+    }
+
+    #[test]
+    fn test_stone_with_location_accessibility_checked_when_possessed() {
+        let mut state = ModelState::default();
+        state
+            .ram
+            .save
+            .quest_items
+            .insert(QuestItems::KOKIRI_EMERALD);
+
+        let cell = TrackerCellId::KokiriEmeraldWithLocation.kind();
+        let render = cell.render(&state);
+
+        // When stone is possessed, accessibility should be Checked
+        assert_eq!(
+            render.accessibility,
+            Some(AccessibilityStatus::Checked),
+            "Accessibility should be Checked when stone is possessed"
+        );
+        assert_eq!(render.style, CellStyle::Normal);
+    }
+
+    #[test]
+    fn test_song_accessibility_none_when_check_not_completed() {
+        let state = ModelState::default();
+        let cell = TrackerCellId::ZeldasLullaby.kind();
+        let render = cell.render(&state);
+
+        // When song check is not completed, accessibility should be None
+        assert!(
+            render.accessibility.is_none(),
+            "Accessibility should be None when song check is not completed"
+        );
+    }
+
+    #[test]
+    fn test_song_check_accessibility_none_when_not_completed() {
+        let state = ModelState::default();
+        let cell = TrackerCellId::ZeldasLullabyCheck.kind();
+        let render = cell.render(&state);
+
+        // When check is not completed, accessibility should be None
+        assert!(
+            render.accessibility.is_none(),
+            "Accessibility should be None when check is not completed"
+        );
+    }
 }
 
 #[cfg(feature = "embed-images")]
