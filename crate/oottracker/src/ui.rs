@@ -975,12 +975,13 @@ impl TrackerCellKind {
                     .knowledge
                     .dungeon_reward_locations
                     .get(&DungeonReward::Medallion(*med));
+                let has_medallion = state.ram.save.quest_items.has(*med);
                 CellRender {
                     img: ImageInfo::new(format!(
                         "{}_medallion",
                         med.element().to_ascii_lowercase()
                     )),
-                    style: if state.ram.save.quest_items.has(*med) {
+                    style: if has_medallion {
                         CellStyle::Normal
                     } else {
                         CellStyle::Dimmed
@@ -1020,7 +1021,12 @@ impl TrackerCellKind {
                             LocationStyle::Dimmed
                         },
                     },
-                    accessibility: None,
+                    // Show accessibility status: Checked if medallion obtained
+                    accessibility: if has_medallion {
+                        Some(AccessibilityStatus::Checked)
+                    } else {
+                        None
+                    },
                     label: None,
                 }
             }
@@ -1204,56 +1210,70 @@ impl TrackerCellKind {
                     label: Some(label.to_string()),
                 }
             }
-            Song { song, check, .. } => CellRender {
-                img: ImageInfo::new(match *song {
-                    QuestItems::ZELDAS_LULLABY => "lullaby",
-                    QuestItems::EPONAS_SONG => "epona",
-                    QuestItems::SARIAS_SONG => "saria",
-                    QuestItems::SUNS_SONG => "sun",
-                    QuestItems::SONG_OF_TIME => "time",
-                    QuestItems::SONG_OF_STORMS => "storms",
-                    QuestItems::MINUET_OF_FOREST => "minuet",
-                    QuestItems::BOLERO_OF_FIRE => "bolero",
-                    QuestItems::SERENADE_OF_WATER => "serenade",
-                    QuestItems::NOCTURNE_OF_SHADOW => "nocturne",
-                    QuestItems::REQUIEM_OF_SPIRIT => "requiem",
-                    QuestItems::PRELUDE_OF_LIGHT => "prelude",
-                    _ => unreachable!(),
-                }),
-                style: if state.ram.save.quest_items.contains(*song) {
-                    CellStyle::Normal
-                } else {
-                    CellStyle::Dimmed
-                },
-                overlay: if Check::<ootr_static::Rando>::Location(check.to_string())
+            Song { song, check, .. } => {
+                let is_check_completed = Check::<ootr_static::Rando>::Location(check.to_string())
                     .checked(state)
                     .unwrap_or(None)
-                    .unwrap_or(false)
-                {
-                    //TODO allow ootr_dynamic::Rando
-                    CellOverlay::Image(ImageInfo::new("check"))
-                } else {
-                    CellOverlay::None
-                },
-                accessibility: None,
-                label: None,
-            },
-            SongCheck { check, .. } => CellRender {
-                img: ImageInfo::extra("blank"),
-                style: CellStyle::Normal,
-                overlay: if Check::<ootr_static::Rando>::Location(check.to_string())
+                    .unwrap_or(false);
+                CellRender {
+                    img: ImageInfo::new(match *song {
+                        QuestItems::ZELDAS_LULLABY => "lullaby",
+                        QuestItems::EPONAS_SONG => "epona",
+                        QuestItems::SARIAS_SONG => "saria",
+                        QuestItems::SUNS_SONG => "sun",
+                        QuestItems::SONG_OF_TIME => "time",
+                        QuestItems::SONG_OF_STORMS => "storms",
+                        QuestItems::MINUET_OF_FOREST => "minuet",
+                        QuestItems::BOLERO_OF_FIRE => "bolero",
+                        QuestItems::SERENADE_OF_WATER => "serenade",
+                        QuestItems::NOCTURNE_OF_SHADOW => "nocturne",
+                        QuestItems::REQUIEM_OF_SPIRIT => "requiem",
+                        QuestItems::PRELUDE_OF_LIGHT => "prelude",
+                        _ => unreachable!(),
+                    }),
+                    style: if state.ram.save.quest_items.contains(*song) {
+                        CellStyle::Normal
+                    } else {
+                        CellStyle::Dimmed
+                    },
+                    overlay: if is_check_completed {
+                        //TODO allow ootr_dynamic::Rando
+                        CellOverlay::Image(ImageInfo::new("check"))
+                    } else {
+                        CellOverlay::None
+                    },
+                    // Show accessibility status: Checked if song location has been collected
+                    accessibility: if is_check_completed {
+                        Some(AccessibilityStatus::Checked)
+                    } else {
+                        None
+                    },
+                    label: None,
+                }
+            }
+            SongCheck { check, .. } => {
+                let is_checked = Check::<ootr_static::Rando>::Location(check.to_string())
                     .checked(state)
                     .unwrap_or(None)
-                    .unwrap_or(false)
-                {
-                    //TODO allow ootr_dynamic::Rando
-                    CellOverlay::Image(ImageInfo::new("check"))
-                } else {
-                    CellOverlay::None
-                },
-                accessibility: None,
-                label: None,
-            },
+                    .unwrap_or(false);
+                CellRender {
+                    img: ImageInfo::extra("blank"),
+                    style: CellStyle::Normal,
+                    overlay: if is_checked {
+                        //TODO allow ootr_dynamic::Rando
+                        CellOverlay::Image(ImageInfo::new("check"))
+                    } else {
+                        CellOverlay::None
+                    },
+                    // Show accessibility status: Checked if song location has been collected
+                    accessibility: if is_checked {
+                        Some(AccessibilityStatus::Checked)
+                    } else {
+                        None
+                    },
+                    label: None,
+                }
+            }
             Spells => CellRender {
                 img: match (
                     state.ram.save.inv.dins_fire,
@@ -1342,13 +1362,14 @@ impl TrackerCellKind {
                     .knowledge
                     .dungeon_reward_locations
                     .get(&DungeonReward::Stone(*stone));
+                let has_stone = state.ram.save.quest_items.has(*stone);
                 CellRender {
                     img: ImageInfo::new(match *stone {
                         Stone::KokiriEmerald => "kokiri_emerald",
                         Stone::GoronRuby => "goron_ruby",
                         Stone::ZoraSapphire => "zora_sapphire",
                     }),
-                    style: if state.ram.save.quest_items.has(*stone) {
+                    style: if has_stone {
                         CellStyle::Normal
                     } else {
                         CellStyle::Dimmed
@@ -1388,7 +1409,12 @@ impl TrackerCellKind {
                             LocationStyle::Dimmed
                         },
                     },
-                    accessibility: None,
+                    // Show accessibility status: Checked if stone obtained
+                    accessibility: if has_stone {
+                        Some(AccessibilityStatus::Checked)
+                    } else {
+                        None
+                    },
                     label: None,
                 }
             }
