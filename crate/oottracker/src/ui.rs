@@ -6737,6 +6737,99 @@ mod tests {
         let render = cell.render(&state);
         assert_eq!(render.style, CellStyle::Normal);
     }
+
+    // ==========================================================================
+    // MM Items Toggle Tests (Issue #515)
+    // ==========================================================================
+
+    #[test]
+    fn test_mm_small_keys_click_creates_mm_save_when_none() {
+        let mut state = ModelState::default();
+
+        // Verify mm_save is initially None
+        assert!(state.ram.mm_save.is_none());
+
+        let cell = TrackerCellId::MmWoodfallSmallKeys.kind();
+
+        // Click to increment small keys
+        cell.click(&mut state);
+
+        // mm_save should now be Some and key count should be 1
+        assert!(state.ram.mm_save.is_some());
+        assert_eq!(state.ram.mm_save.as_ref().unwrap().small_keys.woodfall, 1);
+    }
+
+    #[test]
+    fn test_mm_boss_key_click_creates_mm_save_when_none() {
+        let mut state = ModelState::default();
+
+        // Verify mm_save is initially None
+        assert!(state.ram.mm_save.is_none());
+
+        let cell = TrackerCellId::MmWoodfallBossKey.kind();
+
+        // Click to toggle boss key
+        cell.click(&mut state);
+
+        // mm_save should now be Some and boss key should be set
+        assert!(state.ram.mm_save.is_some());
+        assert!(state
+            .ram
+            .mm_save
+            .as_ref()
+            .unwrap()
+            .dungeon_items
+            .woodfall
+            .contains(crate::mm_save::MmDungeonItems::BOSS_KEY));
+    }
+
+    #[test]
+    fn test_mm_map_click_creates_mm_save_when_none() {
+        let mut state = ModelState::default();
+
+        // Verify mm_save is initially None
+        assert!(state.ram.mm_save.is_none());
+
+        let cell = TrackerCellId::MmWoodfallMap.kind();
+
+        // Click to toggle map
+        cell.click(&mut state);
+
+        // mm_save should now be Some and map should be set
+        assert!(state.ram.mm_save.is_some());
+        assert!(state
+            .ram
+            .mm_save
+            .as_ref()
+            .unwrap()
+            .dungeon_items
+            .woodfall
+            .contains(crate::mm_save::MmDungeonItems::MAP));
+    }
+
+    #[test]
+    fn test_mm_compass_click_creates_mm_save_when_none() {
+        let mut state = ModelState::default();
+
+        // Verify mm_save is initially None
+        assert!(state.ram.mm_save.is_none());
+
+        let cell = TrackerCellId::MmWoodfallCompass.kind();
+
+        // Click to toggle compass
+        cell.click(&mut state);
+
+        // mm_save should now be Some and compass should be set
+        assert!(state.ram.mm_save.is_some());
+        assert!(state
+            .ram
+            .mm_save
+            .as_ref()
+            .unwrap()
+            .dungeon_items
+            .woodfall
+            .contains(crate::mm_save::MmDungeonItems::COMPASS));
+    }
 }
 
 #[cfg(feature = "embed-images")]
