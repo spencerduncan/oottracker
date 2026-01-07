@@ -2886,6 +2886,184 @@ pub fn get_all_mm_location_ids() -> impl Iterator<Item = &'static str> {
 }
 
 // ============================================================================
+// Location Status Checking
+// ============================================================================
+
+use crate::flag_mapping::{CheckStatus, LocationCheckResult};
+use crate::mm_save::MmSave;
+
+/// Checks if a specific MM location has been checked based on the save data.
+///
+/// # Arguments
+///
+/// * `mapping` - The flag mapping for the location
+/// * `mm_save` - The MM save data
+///
+/// # Returns
+///
+/// `CheckStatus::Checked` if the location flag is set,
+/// `CheckStatus::Unchecked` if the flag is not set,
+/// `CheckStatus::Unknown` if the location is unmapped or cannot be determined.
+#[must_use]
+pub fn check_mm_location_status(mapping: &MmFlagMapping, mm_save: &MmSave) -> CheckStatus {
+    // If the mapping is a stub (unmapped), we can't determine the status
+    if mapping.is_stub() {
+        return CheckStatus::Unknown;
+    }
+
+    let flag_type = match mapping.flag_type {
+        Some(ft) => ft,
+        None => return CheckStatus::Unknown,
+    };
+
+    let flag_bit = match mapping.flag_bit {
+        Some(fb) => fb,
+        None => return CheckStatus::Unknown,
+    };
+
+    match flag_type {
+        MmFlagType::Chest => {
+            if let Some(scene_id) = mapping.scene_id {
+                if let Some(scene_flags) = mm_save.permanent_scene_flags.get(scene_id as usize) {
+                    if scene_flags.chest & flag_bit != 0 {
+                        CheckStatus::Checked
+                    } else {
+                        CheckStatus::Unchecked
+                    }
+                } else {
+                    CheckStatus::Unknown
+                }
+            } else {
+                CheckStatus::Unknown
+            }
+        }
+        MmFlagType::Switch0 => {
+            if let Some(scene_id) = mapping.scene_id {
+                if let Some(scene_flags) = mm_save.permanent_scene_flags.get(scene_id as usize) {
+                    if scene_flags.switch0 & flag_bit != 0 {
+                        CheckStatus::Checked
+                    } else {
+                        CheckStatus::Unchecked
+                    }
+                } else {
+                    CheckStatus::Unknown
+                }
+            } else {
+                CheckStatus::Unknown
+            }
+        }
+        MmFlagType::Switch1 => {
+            if let Some(scene_id) = mapping.scene_id {
+                if let Some(scene_flags) = mm_save.permanent_scene_flags.get(scene_id as usize) {
+                    if scene_flags.switch1 & flag_bit != 0 {
+                        CheckStatus::Checked
+                    } else {
+                        CheckStatus::Unchecked
+                    }
+                } else {
+                    CheckStatus::Unknown
+                }
+            } else {
+                CheckStatus::Unknown
+            }
+        }
+        MmFlagType::ClearedRoom => {
+            if let Some(scene_id) = mapping.scene_id {
+                if let Some(scene_flags) = mm_save.permanent_scene_flags.get(scene_id as usize) {
+                    if scene_flags.cleared_room & flag_bit != 0 {
+                        CheckStatus::Checked
+                    } else {
+                        CheckStatus::Unchecked
+                    }
+                } else {
+                    CheckStatus::Unknown
+                }
+            } else {
+                CheckStatus::Unknown
+            }
+        }
+        MmFlagType::Collectible => {
+            if let Some(scene_id) = mapping.scene_id {
+                if let Some(scene_flags) = mm_save.permanent_scene_flags.get(scene_id as usize) {
+                    if scene_flags.collectible & flag_bit != 0 {
+                        CheckStatus::Checked
+                    } else {
+                        CheckStatus::Unchecked
+                    }
+                } else {
+                    CheckStatus::Unknown
+                }
+            } else {
+                CheckStatus::Unknown
+            }
+        }
+        // These flag types need special handling or are not yet implemented
+        MmFlagType::GoldSkulltula
+        | MmFlagType::EventInf
+        | MmFlagType::WeekEventReg
+        | MmFlagType::ItemGetInf
+        | MmFlagType::Shop
+        | MmFlagType::Scrub
+        | MmFlagType::GreatFairy
+        | MmFlagType::Boss
+        | MmFlagType::Song
+        | MmFlagType::Cow
+        | MmFlagType::StrayFairy
+        | MmFlagType::OwlStatue
+        | MmFlagType::MoonsTear
+        | MmFlagType::GossipStone => CheckStatus::Unknown,
+    }
+}
+
+/// Returns all checked MM locations for the current save data.
+///
+/// # Arguments
+///
+/// * `mm_save` - The MM save data
+///
+/// # Returns
+///
+/// A vector of `LocationCheckResult` for all mapped MM locations.
+pub fn get_all_mm_checked_locations(mm_save: &MmSave) -> Vec<LocationCheckResult> {
+    get_mm_mapped_locations()
+        .map(|mapping| LocationCheckResult {
+            location_id: mapping.location_id.to_string(),
+            status: check_mm_location_status(mapping, mm_save),
+            is_mapped: mapping.is_mapped(),
+        })
+        .collect()
+}
+
+/// Returns all MM locations (mapped and unmapped) with their check status.
+///
+/// # Arguments
+///
+/// * `mm_save` - Optional MM save data
+///
+/// # Returns
+///
+/// A vector of `LocationCheckResult` for all MM locations.
+/// If mm_save is None, all locations will have Unknown status.
+pub fn get_all_mm_locations_with_status(mm_save: Option<&MmSave>) -> Vec<LocationCheckResult> {
+    match mm_save {
+        Some(save) => get_all_mm_mappings()
+            .map(|mapping| LocationCheckResult {
+                location_id: mapping.location_id.to_string(),
+                status: check_mm_location_status(mapping, save),
+                is_mapped: mapping.is_mapped(),
+            })
+            .collect(),
+        None => get_all_mm_mappings()
+            .map(|mapping| LocationCheckResult {
+                location_id: mapping.location_id.to_string(),
+                status: CheckStatus::Unknown,
+                is_mapped: mapping.is_mapped(),
+            })
+            .collect(),
+    }
+}
+
+// ============================================================================
 // Tests
 // ============================================================================
 
@@ -3401,6 +3579,185 @@ mod tests {
         assert!(
             mapped_count >= 15,
             "Should have at least 15 mapped locations (stray fairy fountains)"
+        );
+    }
+
+    // ========================================================================
+    // check_mm_location_status tests
+    // ========================================================================
+
+    #[test]
+    fn test_check_mm_location_status_stub_returns_unknown() {
+        // Create a stub mapping (unmapped location)
+        let stub = MmFlagMapping::stub("test_unmapped_location");
+
+        // Create a default MmSave
+        let mm_save = MmSave::default();
+
+        // Stub mappings should return Unknown
+        let status = check_mm_location_status(&stub, &mm_save);
+        assert_eq!(
+            status,
+            CheckStatus::Unknown,
+            "Stub mapping should return Unknown status"
+        );
+    }
+
+    #[test]
+    fn test_check_mm_location_status_chest_checked() {
+        use crate::mm_save::MmPermanentSceneFlags;
+
+        // Create a mapped chest location for Woodfall Temple
+        let mapping = MmFlagMapping::mapped(
+            "test_chest_location",
+            mm_scene::WOODFALL_TEMPLE,
+            MmFlagType::Chest,
+            0x01, // bit 0
+        );
+
+        // Create MmSave with the chest flag set
+        let mut mm_save = MmSave::default();
+        // Ensure we have enough scene flag entries
+        while mm_save.permanent_scene_flags.len() <= mm_scene::WOODFALL_TEMPLE as usize {
+            mm_save
+                .permanent_scene_flags
+                .push(MmPermanentSceneFlags::default());
+        }
+        // Set the chest flag bit
+        mm_save.permanent_scene_flags[mm_scene::WOODFALL_TEMPLE as usize].chest = 0x01;
+
+        // Status should be Checked
+        let status = check_mm_location_status(&mapping, &mm_save);
+        assert_eq!(
+            status,
+            CheckStatus::Checked,
+            "Chest with flag set should return Checked status"
+        );
+    }
+
+    #[test]
+    fn test_check_mm_location_status_chest_unchecked() {
+        use crate::mm_save::MmPermanentSceneFlags;
+
+        // Create a mapped chest location for Woodfall Temple
+        let mapping = MmFlagMapping::mapped(
+            "test_chest_location",
+            mm_scene::WOODFALL_TEMPLE,
+            MmFlagType::Chest,
+            0x01, // bit 0
+        );
+
+        // Create MmSave with the chest flag NOT set
+        let mut mm_save = MmSave::default();
+        // Ensure we have enough scene flag entries
+        while mm_save.permanent_scene_flags.len() <= mm_scene::WOODFALL_TEMPLE as usize {
+            mm_save
+                .permanent_scene_flags
+                .push(MmPermanentSceneFlags::default());
+        }
+        // Chest flags are 0 (not set)
+        mm_save.permanent_scene_flags[mm_scene::WOODFALL_TEMPLE as usize].chest = 0x00;
+
+        // Status should be Unchecked
+        let status = check_mm_location_status(&mapping, &mm_save);
+        assert_eq!(
+            status,
+            CheckStatus::Unchecked,
+            "Chest with flag not set should return Unchecked status"
+        );
+    }
+
+    #[test]
+    fn test_check_mm_location_status_out_of_bounds_scene_returns_unknown() {
+        // Create a mapped location with an out-of-bounds scene ID
+        let mapping = MmFlagMapping::mapped(
+            "test_oob_location",
+            255, // Very high scene ID that won't exist
+            MmFlagType::Chest,
+            0x01,
+        );
+
+        // Create MmSave with default (small) permanent_scene_flags
+        let mm_save = MmSave::default();
+
+        // Out of bounds scene should return Unknown
+        let status = check_mm_location_status(&mapping, &mm_save);
+        assert_eq!(
+            status,
+            CheckStatus::Unknown,
+            "Out of bounds scene_id should return Unknown status"
+        );
+    }
+
+    #[test]
+    fn test_check_mm_location_status_collectible_checked() {
+        use crate::mm_save::MmPermanentSceneFlags;
+
+        // Test collectible flag type as well
+        let mapping = MmFlagMapping::mapped(
+            "test_collectible_location",
+            mm_scene::TERMINA_FIELD,
+            MmFlagType::Collectible,
+            0x04, // bit 2
+        );
+
+        // Create MmSave with the collectible flag set
+        let mut mm_save = MmSave::default();
+        while mm_save.permanent_scene_flags.len() <= mm_scene::TERMINA_FIELD as usize {
+            mm_save
+                .permanent_scene_flags
+                .push(MmPermanentSceneFlags::default());
+        }
+        mm_save.permanent_scene_flags[mm_scene::TERMINA_FIELD as usize].collectible = 0x04;
+
+        let status = check_mm_location_status(&mapping, &mm_save);
+        assert_eq!(
+            status,
+            CheckStatus::Checked,
+            "Collectible with flag set should return Checked status"
+        );
+    }
+
+    #[test]
+    fn test_check_mm_location_status_switch0_checked() {
+        use crate::mm_save::MmPermanentSceneFlags;
+
+        // Test switch0 flag type
+        let mapping = MmFlagMapping::mapped(
+            "test_switch0_location",
+            mm_scene::SNOWHEAD_TEMPLE,
+            MmFlagType::Switch0,
+            0x08, // bit 3
+        );
+
+        let mut mm_save = MmSave::default();
+        while mm_save.permanent_scene_flags.len() <= mm_scene::SNOWHEAD_TEMPLE as usize {
+            mm_save
+                .permanent_scene_flags
+                .push(MmPermanentSceneFlags::default());
+        }
+        mm_save.permanent_scene_flags[mm_scene::SNOWHEAD_TEMPLE as usize].switch0 = 0x08;
+
+        let status = check_mm_location_status(&mapping, &mm_save);
+        assert_eq!(
+            status,
+            CheckStatus::Checked,
+            "Switch0 with flag set should return Checked status"
+        );
+    }
+
+    #[test]
+    fn test_check_mm_location_status_global_flag_returns_unknown() {
+        // Global flags like EventInf are not yet implemented, should return Unknown
+        let mapping = MmFlagMapping::global("test_event_location", MmFlagType::EventInf, 0x01);
+
+        let mm_save = MmSave::default();
+
+        let status = check_mm_location_status(&mapping, &mm_save);
+        assert_eq!(
+            status,
+            CheckStatus::Unknown,
+            "Unimplemented global flags should return Unknown status"
         );
     }
 }
