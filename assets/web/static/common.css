@@ -63,6 +63,7 @@ table td {
 
 .items {
     display: grid;
+    grid-auto-rows: 10px;
     gap: 10px;
     padding: 5px;
 }
@@ -175,7 +176,7 @@ a:hover {
 }
 
 .cols3.loc {
-    grid-row-end: span 1;
+    grid-row-end: span 2;
 }
 
 .cols3.loc,
