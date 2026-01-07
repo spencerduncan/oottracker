@@ -194,7 +194,7 @@ img.loc {
     color: white;
     background-color: rgba(0, 0, 0, 0.65);
     padding: 2pt;
-    position: absolute;
+    position: relative;
     bottom: 2px;
     right: 2px;
 }
