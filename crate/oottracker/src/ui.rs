@@ -1528,13 +1528,12 @@ impl TrackerCellKind {
                 }
             }
             TrackerCellKind::MmSmallKeys { get, set, max, .. } => {
-                if let Some(ref mut mm_save) = state.ram.mm_save {
-                    let num = get(&mm_save.small_keys);
-                    if num == *max {
-                        set(&mut mm_save.small_keys, 0);
-                    } else {
-                        set(&mut mm_save.small_keys, num + 1);
-                    }
+                let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+                let num = get(&mm_save.small_keys);
+                if num == *max {
+                    set(&mut mm_save.small_keys, 0);
+                } else {
+                    set(&mut mm_save.small_keys, num + 1);
                 }
             }
             Song {
@@ -1559,19 +1558,16 @@ impl TrackerCellKind {
             OotMap { toggle, .. } => toggle(&mut state.ram.save.dungeon_items),
             OotCompass { toggle, .. } => toggle(&mut state.ram.save.dungeon_items),
             MmBossKey { toggle, .. } => {
-                if let Some(ref mut mm_save) = state.ram.mm_save {
-                    toggle(&mut mm_save.dungeon_items);
-                }
+                let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+                toggle(&mut mm_save.dungeon_items);
             }
             MmMap { toggle, .. } => {
-                if let Some(ref mut mm_save) = state.ram.mm_save {
-                    toggle(&mut mm_save.dungeon_items);
-                }
+                let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+                toggle(&mut mm_save.dungeon_items);
             }
             MmCompass { toggle, .. } => {
-                if let Some(ref mut mm_save) = state.ram.mm_save {
-                    toggle(&mut mm_save.dungeon_items);
-                }
+                let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+                toggle(&mut mm_save.dungeon_items);
             }
             BossKey { toggle, .. } => toggle(&mut state.ram.save.dungeon_items),
             BigPoeTriforce | SongCheck { .. } => unimplemented!(),
@@ -1762,13 +1758,12 @@ impl TrackerCellKind {
                     }
                 }
                 TrackerCellKind::MmSmallKeys { get, set, max, .. } => {
-                    if let Some(ref mut mm_save) = state.ram.mm_save {
-                        let num = get(&mm_save.small_keys);
-                        if num == 0 {
-                            set(&mut mm_save.small_keys, *max);
-                        } else {
-                            set(&mut mm_save.small_keys, num - 1);
-                        }
+                    let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+                    let num = get(&mm_save.small_keys);
+                    if num == 0 {
+                        set(&mut mm_save.small_keys, *max);
+                    } else {
+                        set(&mut mm_save.small_keys, num - 1);
                     }
                 }
                 Song { toggle_overlay, .. } => toggle_overlay(&mut state.ram.save.event_chk_inf),
