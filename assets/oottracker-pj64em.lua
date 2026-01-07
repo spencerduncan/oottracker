@@ -515,7 +515,10 @@ local function main()
                             rangeIdx = rangeIdx + 1
                         end
                     end
-                    -- TODO: Send MM data when protocol supports combo mode
+                    -- Send MM data when in MM world of combo mode
+                    if mmChanged and rawMmRam ~= nil then
+                        sendMmRamData(sock, rawMmRam)
+                    end
                 end
                 -- Also still read OoT ranges to keep save data updated for combo tracking
                 -- (save data persists across world switches in OoTMM)
