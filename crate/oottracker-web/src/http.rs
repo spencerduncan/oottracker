@@ -92,9 +92,6 @@ fn tracker_page<'a>(
                 noscript {
                     p : "live update disabled (requires JavaScript)";
                 }
-                footer {
-                    a(href = "https://fenhl.net/disc") : "disclaimer / Impressum";
-                }
                 script(src = "/static/proto.js");
                 script(src = "/static/checked-locations.js");
                 script(src = "/static/location-filter.js");
@@ -304,9 +301,6 @@ async fn mw_notes(
                         }
                     }
                     p : "live update not yet implemented (refresh to update)"; //TODO
-                    footer {
-                        a(href = "https://fenhl.net/disc") : "disclaimer / Impressum";
-                    }
                 }
             }
         }))
