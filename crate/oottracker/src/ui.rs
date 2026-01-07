@@ -1528,7 +1528,8 @@ impl TrackerCellKind {
                     toggle(&mut mm_save.dungeon_items);
                 }
             }
-            BigPoeTriforce | BossKey { .. } | SongCheck { .. } => unimplemented!(),
+            BossKey { toggle, .. } => toggle(&mut state.ram.save.dungeon_items),
+            BigPoeTriforce | SongCheck { .. } => unimplemented!(),
         }
     }
 
