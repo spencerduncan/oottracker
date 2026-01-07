@@ -51,7 +51,7 @@ impl TrackerCellIdExt for TrackerCellId {
         };
         html! {
             form(id = format!("cell{cell_id}"), method = "POST", action = click_uri.to_string(), class = css_classes) {
-                button(type = "submit") : content;
+                button(type = "submit", title = self.to_string()) : content;
             }
         }
     }

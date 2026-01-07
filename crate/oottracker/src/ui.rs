@@ -1764,6 +1764,14 @@ macro_rules! cells {
                 }
             }
         }
+
+        impl fmt::Display for TrackerCellId {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                match self {
+                    $(TrackerCellId::$cell => write!(f, stringify!($cell)),)*
+                }
+            }
+        }
     }
 }
 
