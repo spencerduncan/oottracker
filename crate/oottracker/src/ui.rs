@@ -3570,6 +3570,65 @@ cells! {
     },
 
     // ============================================================================
+    // Heart Count Cells
+    // ============================================================================
+
+    // OoT heart containers count (3-20)
+    OotHearts: Count {
+        dimmed_img: ImageInfo::extra("heart_container"),
+        img: ImageInfo::extra("heart_container"),
+        get: Box::new(|state| state.ram.save.heart_containers()),
+        set: Box::new(|state, value| {
+            // Set health_capacity based on heart containers (each heart = 0x10)
+            state.ram.save.health_capacity = (value as u16) * 0x10;
+        }),
+        max: 20,
+        step: 1,
+    },
+
+    // OoT heart pieces count (0-3)
+    OotHeartPieces: Count {
+        dimmed_img: ImageInfo::extra("heart_piece"),
+        img: ImageInfo::extra("heart_piece"),
+        get: Box::new(|state| state.ram.save.heart_pieces),
+        set: Box::new(|state, value| {
+            state.ram.save.heart_pieces = value.min(3);
+        }),
+        max: 3,
+        step: 1,
+    },
+
+    // MM heart containers count (3-20)
+    MmHearts: Count {
+        dimmed_img: ImageInfo::extra("heart_container"),
+        img: ImageInfo::extra("heart_container"),
+        get: Box::new(|state| {
+            state.ram.mm_save.as_ref().map_or(0, |mm| mm.heart_containers())
+        }),
+        set: Box::new(|state, value| {
+            if let Some(mm) = state.ram.mm_save.as_mut() {
+                mm.health_capacity = (value as u16) * 0x10;
+            }
+        }),
+        max: 20,
+        step: 1,
+    },
+
+    // MM heart pieces count (0-3)
+    MmHeartPieces: Count {
+        dimmed_img: ImageInfo::extra("heart_piece"),
+        img: ImageInfo::extra("heart_piece"),
+        get: Box::new(|state| {
+            state.ram.mm_save.as_ref().map_or(0, |mm| mm.quest_items.heart_pieces())
+        }),
+        set: Box::new(|_state, _value| {
+            // Heart pieces in MM are stored in quest_items bitflags - complex to set
+        }),
+        max: 3,
+        step: 1,
+    },
+
+    // ============================================================================
     // MM Items - Dungeon Keys
     // ============================================================================
     MmWoodfallSmallKeys: TrackerCellKind::MmSmallKeys {
@@ -4705,7 +4764,7 @@ impl TrackerLayout {
                         MmMaskOfScents,
                         MmRomaniMask,
                         MmCircusLeaderMask,
-                        // Row 9: MM Collectible Masks (13-20) + padding
+                        // Row 9: MM Collectible Masks (13-20) + Heart Count Display
                         MmKafeiMask,
                         MmCouplesMask,
                         MmMaskOfTruth,
@@ -4714,10 +4773,11 @@ impl TrackerLayout {
                         MmGaroMask,
                         MmCaptainHat,
                         MmGiantMask,
-                        Blank,
-                        Blank,
-                        Blank,
-                        Blank,
+                        // Heart count display: OoT hearts + pieces, MM hearts + pieces
+                        OotHearts,
+                        OotHeartPieces,
+                        MmHearts,
+                        MmHeartPieces,
                         // Row 10: OoT Dungeon Maps
                         DekuMap,
                         DcMap,

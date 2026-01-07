@@ -1178,6 +1178,10 @@ pub enum DecodeError {
 pub struct Save {
     pub time_of_day: TimeOfDay,
     pub is_adult: bool,
+    /// Health capacity in 16ths of a heart (3 hearts = 0x30, max 20 hearts = 0x140)
+    pub health_capacity: u16,
+    /// Heart pieces collected (0-3, resets to 0 when 4th piece adds a heart container)
+    pub heart_pieces: u8,
     pub magic: MagicCapacity,
     pub biggoron_sword: bool,
     pub dmt_biggoron_checked: bool,
@@ -1273,6 +1277,10 @@ impl Save {
             return Err(DecodeError::Size(save_data.len()));
         }
         try_eq!(0x001c..0x0022, b"ZELDAZ");
+        // Parse quest items raw value to extract heart pieces from bits 24-27
+        let quest_items_raw = BigEndian::read_u32(get_offset!("quest_items_raw", 0x00a4, 0x4));
+        let heart_pieces = ((quest_items_raw >> 24) & 0x0F) as u8;
+
         Ok(Save {
             is_adult: match BigEndian::read_i32(get_offset!("is_adult", 0x0004, 0x4)) {
                 0 => true,
@@ -1287,6 +1295,8 @@ impl Save {
                 }
             },
             time_of_day: try_get_offset!("time_of_day", 0x000c, 0x2),
+            health_capacity: BigEndian::read_u16(get_offset!("health_capacity", 0x002e, 0x2)),
+            heart_pieces,
             magic: if get_offset!("has single magic", 0x003a) == 0 {
                 try_eq!(0x003c, 0);
                 MagicCapacity::None
@@ -1367,6 +1377,8 @@ impl Save {
         let Save {
             is_adult,
             time_of_day,
+            health_capacity,
+            heart_pieces,
             magic,
             biggoron_sword,
             dmt_biggoron_checked,
@@ -1394,6 +1406,7 @@ impl Save {
         );
         buf.splice(0x000c..0x000e, Vec::from(time_of_day));
         buf.splice(0x001c..0x0022, b"ZELDAZ".iter().copied());
+        buf.splice(0x002e..0x0030, health_capacity.to_be_bytes());
         buf[0x0032] = magic.into();
         buf[0x003a] = match magic {
             MagicCapacity::None => 0,
@@ -1409,7 +1422,9 @@ impl Save {
         buf.splice(0x008c..0x009b, Vec::from(inv_amounts));
         buf.splice(0x009c..0x009e, Vec::from(equipment));
         buf.splice(0x00a0..0x00a4, Vec::from(upgrades));
-        buf.splice(0x00a4..0x00a8, Vec::from(quest_items));
+        // Combine quest_items bits with heart_pieces in bits 24-27
+        let quest_items_with_hearts = quest_items.bits() | ((*heart_pieces as u32) << 24);
+        buf.splice(0x00a4..0x00a8, quest_items_with_hearts.to_be_bytes());
         buf.splice(0x00a8..0x00bc, Vec::from(dungeon_items));
         buf.splice(0x00bc..0x00cf, Vec::from(small_keys));
         buf.splice(0x00d0..0x00d2, i16::from(*skull_tokens).to_be_bytes());
@@ -1423,6 +1438,13 @@ impl Save {
         buf[0x12c5] = if *scarecrow_song_child { 1 } else { 0 };
         buf.splice(0x135c..0x1360, Vec::from(game_mode));
         buf
+    }
+
+    /// Returns the number of heart containers (full hearts).
+    /// OoT starts with 3 hearts, max is 20.
+    pub fn heart_containers(&self) -> u8 {
+        // health_capacity is in 16ths of a heart (0x10 per heart)
+        (self.health_capacity / 0x10) as u8
     }
 
     pub fn triforce_pieces(&self) -> u8 {
@@ -1834,3 +1856,252 @@ impl Sub<&Save> for &Save {
 /// The difference between two save states.
 #[derive(Debug, Clone, Protocol)]
 pub struct Delta(Vec<(u16, u8)>);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Creates a minimal valid save data buffer with ZELDAZ magic and valid default values
+    fn create_test_save_data() -> Vec<u8> {
+        let mut data = vec![0u8; SIZE];
+        // Set ZELDAZ magic at offset 0x001c
+        data[0x001c..0x0022].copy_from_slice(b"ZELDAZ");
+
+        // Set inventory slots to 0xFF (NONE) at offset 0x0074
+        // Inventory is 0x18 bytes and expects 0xFF for empty slots
+        for i in 0..0x18 {
+            data[0x0074 + i] = 0xFF;
+        }
+
+        // Set inv_amounts to valid values (offset 0x008c, 0x0f bytes)
+        // These are just counts and can be 0
+
+        // Set equipment to valid value (offset 0x009c, 0x02 bytes)
+        // Can be 0
+
+        // Set upgrades to valid value (offset 0x00a0, 0x04 bytes)
+        // Can be 0
+
+        // Set quest_items to valid value (offset 0x00a4, 0x04 bytes)
+        // Can be 0
+
+        // Set dungeon_items at offset 0x00a8 (0x14 bytes)
+        // Can be 0
+
+        // Set small_keys at offset 0x00bc (0x13 bytes)
+        // Each key count should be 0xFF for "not obtained dungeon"
+        for i in 0..0x13 {
+            data[0x00bc + i] = 0xFF;
+        }
+
+        data
+    }
+
+    #[test]
+    fn test_heart_containers_calculation() {
+        let mut save = Save::default();
+
+        // 3 hearts = 0x30 (48 in decimal, 48/16 = 3)
+        save.health_capacity = 0x30;
+        assert_eq!(save.heart_containers(), 3, "3 hearts should equal 0x30");
+
+        // 20 hearts = 0x140 (320 in decimal, 320/16 = 20)
+        save.health_capacity = 0x140;
+        assert_eq!(save.heart_containers(), 20, "20 hearts should equal 0x140");
+
+        // 10 hearts = 0xA0 (160 in decimal, 160/16 = 10)
+        save.health_capacity = 0xA0;
+        assert_eq!(save.heart_containers(), 10, "10 hearts should equal 0xA0");
+
+        // Partial hearts should round down
+        // 0x35 = 53, 53/16 = 3 (rounds down from 3.3125)
+        save.health_capacity = 0x35;
+        assert_eq!(
+            save.heart_containers(),
+            3,
+            "Partial hearts should round down"
+        );
+
+        // 0x4F = 79, 79/16 = 4 (rounds down from 4.9375)
+        save.health_capacity = 0x4F;
+        assert_eq!(
+            save.heart_containers(),
+            4,
+            "Partial hearts should round down to 4"
+        );
+
+        // Zero hearts edge case
+        save.health_capacity = 0;
+        assert_eq!(
+            save.heart_containers(),
+            0,
+            "Zero health_capacity = 0 hearts"
+        );
+    }
+
+    #[test]
+    fn test_health_capacity_parsing() {
+        let mut data = create_test_save_data();
+
+        // Set health_capacity at offset 0x002e (big-endian u16)
+        // 3 hearts = 0x0030
+        data[0x002e] = 0x00;
+        data[0x002f] = 0x30;
+
+        let save = Save::from_save_data(&data).expect("Failed to parse save data");
+        assert_eq!(save.health_capacity, 0x30, "Should parse 3 hearts (0x30)");
+        assert_eq!(save.heart_containers(), 3);
+
+        // Test 20 hearts = 0x0140
+        data[0x002e] = 0x01;
+        data[0x002f] = 0x40;
+
+        let save = Save::from_save_data(&data).expect("Failed to parse save data");
+        assert_eq!(
+            save.health_capacity, 0x140,
+            "Should parse 20 hearts (0x140)"
+        );
+        assert_eq!(save.heart_containers(), 20);
+
+        // Test 12 hearts = 0x00C0
+        data[0x002e] = 0x00;
+        data[0x002f] = 0xC0;
+
+        let save = Save::from_save_data(&data).expect("Failed to parse save data");
+        assert_eq!(save.health_capacity, 0xC0, "Should parse 12 hearts (0xC0)");
+        assert_eq!(save.heart_containers(), 12);
+    }
+
+    #[test]
+    fn test_heart_pieces_parsing() {
+        let mut data = create_test_save_data();
+
+        // Heart pieces are stored in bits 24-27 of quest_items at offset 0x00a4
+        // quest_items is a big-endian u32
+
+        // Test 0 heart pieces (bits 24-27 = 0000)
+        data[0x00a4] = 0x00;
+        data[0x00a5] = 0x00;
+        data[0x00a6] = 0x00;
+        data[0x00a7] = 0x00;
+
+        let save = Save::from_save_data(&data).expect("Failed to parse save data");
+        assert_eq!(save.heart_pieces, 0, "Should parse 0 heart pieces");
+
+        // Test 1 heart piece (bits 24-27 = 0001)
+        // 0x01000000 in big-endian
+        data[0x00a4] = 0x01;
+        data[0x00a5] = 0x00;
+        data[0x00a6] = 0x00;
+        data[0x00a7] = 0x00;
+
+        let save = Save::from_save_data(&data).expect("Failed to parse save data");
+        assert_eq!(save.heart_pieces, 1, "Should parse 1 heart piece");
+
+        // Test 2 heart pieces (bits 24-27 = 0010)
+        data[0x00a4] = 0x02;
+
+        let save = Save::from_save_data(&data).expect("Failed to parse save data");
+        assert_eq!(save.heart_pieces, 2, "Should parse 2 heart pieces");
+
+        // Test 3 heart pieces (bits 24-27 = 0011)
+        data[0x00a4] = 0x03;
+
+        let save = Save::from_save_data(&data).expect("Failed to parse save data");
+        assert_eq!(save.heart_pieces, 3, "Should parse 3 heart pieces");
+
+        // Test heart pieces with other quest_items set
+        // Set some medallions/songs in lower bits, heart pieces = 2
+        data[0x00a4] = 0x02; // 2 heart pieces in bits 24-27
+        data[0x00a5] = 0x00;
+        data[0x00a6] = 0x3F; // Some songs
+        data[0x00a7] = 0x3F; // All medallions
+
+        let save = Save::from_save_data(&data).expect("Failed to parse save data");
+        assert_eq!(
+            save.heart_pieces, 2,
+            "Should parse 2 heart pieces even with other quest items"
+        );
+    }
+
+    #[test]
+    fn test_save_round_trip() {
+        // Create a save with specific heart values
+        let mut original_save = Save::default();
+        original_save.health_capacity = 0xA0; // 10 hearts
+        original_save.heart_pieces = 2;
+
+        // Convert to save data and back
+        let save_data = original_save.to_save_data();
+        let parsed_save =
+            Save::from_save_data(&save_data).expect("Failed to parse round-tripped save data");
+
+        // Verify heart-related fields survived the round trip
+        assert_eq!(
+            parsed_save.health_capacity, original_save.health_capacity,
+            "health_capacity should survive round trip"
+        );
+        assert_eq!(
+            parsed_save.heart_pieces, original_save.heart_pieces,
+            "heart_pieces should survive round trip"
+        );
+        assert_eq!(
+            parsed_save.heart_containers(),
+            original_save.heart_containers(),
+            "heart_containers() should match after round trip"
+        );
+
+        // Test with different values
+        original_save.health_capacity = 0x140; // 20 hearts (max)
+        original_save.heart_pieces = 3;
+
+        let save_data = original_save.to_save_data();
+        let parsed_save =
+            Save::from_save_data(&save_data).expect("Failed to parse round-tripped save data");
+
+        assert_eq!(parsed_save.health_capacity, 0x140);
+        assert_eq!(parsed_save.heart_pieces, 3);
+        assert_eq!(parsed_save.heart_containers(), 20);
+
+        // Test with minimum values
+        original_save.health_capacity = 0x30; // 3 hearts (starting)
+        original_save.heart_pieces = 0;
+
+        let save_data = original_save.to_save_data();
+        let parsed_save =
+            Save::from_save_data(&save_data).expect("Failed to parse round-tripped save data");
+
+        assert_eq!(parsed_save.health_capacity, 0x30);
+        assert_eq!(parsed_save.heart_pieces, 0);
+        assert_eq!(parsed_save.heart_containers(), 3);
+    }
+
+    #[test]
+    fn test_heart_pieces_preserved_with_quest_items() {
+        // Ensure heart_pieces in bits 24-27 doesn't interfere with quest_items in lower bits
+        let mut original_save = Save::default();
+        original_save.health_capacity = 0x80; // 8 hearts
+        original_save.heart_pieces = 3;
+
+        // Set some quest items (medallions, songs, etc.)
+        original_save.quest_items = QuestItems::FOREST_MEDALLION
+            | QuestItems::FIRE_MEDALLION
+            | QuestItems::KOKIRI_EMERALD
+            | QuestItems::ZELDAS_LULLABY;
+
+        let save_data = original_save.to_save_data();
+        let parsed_save =
+            Save::from_save_data(&save_data).expect("Failed to parse round-tripped save data");
+
+        // Heart pieces should be preserved
+        assert_eq!(parsed_save.heart_pieces, 3);
+
+        // Quest items should also be preserved
+        assert!(parsed_save
+            .quest_items
+            .contains(QuestItems::FOREST_MEDALLION));
+        assert!(parsed_save.quest_items.contains(QuestItems::FIRE_MEDALLION));
+        assert!(parsed_save.quest_items.contains(QuestItems::KOKIRI_EMERALD));
+        assert!(parsed_save.quest_items.contains(QuestItems::ZELDAS_LULLABY));
+    }
+}

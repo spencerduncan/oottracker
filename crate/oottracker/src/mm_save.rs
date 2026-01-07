@@ -1191,6 +1191,17 @@ impl MmSave {
     }
 
     // ========================================================================
+    // Heart Accessors
+    // ========================================================================
+
+    /// Returns the number of heart containers (full hearts).
+    /// MM starts with 3 hearts, max is 20.
+    pub fn heart_containers(&self) -> u8 {
+        // health_capacity is in 16ths of a heart (0x10 per heart)
+        (self.health_capacity / 0x10) as u8
+    }
+
+    // ========================================================================
     // Transformation Mask Accessors
     // ========================================================================
 
@@ -3697,5 +3708,123 @@ mod tests {
         data[DOUBLE_DEFENSE] = 255;
         let save = MmSave::from_save_data(&data).unwrap();
         assert!(save.double_defense);
+    }
+
+    #[test]
+    fn test_heart_containers_calculation() {
+        let mut save = MmSave::default();
+
+        // 3 hearts = 0x30 (48 in decimal, 48/16 = 3)
+        save.health_capacity = 0x30;
+        assert_eq!(save.heart_containers(), 3, "3 hearts should equal 0x30");
+
+        // 20 hearts = 0x140 (320 in decimal, 320/16 = 20)
+        save.health_capacity = 0x140;
+        assert_eq!(save.heart_containers(), 20, "20 hearts should equal 0x140");
+
+        // 10 hearts = 0xA0 (160 in decimal, 160/16 = 10)
+        save.health_capacity = 0xA0;
+        assert_eq!(save.heart_containers(), 10, "10 hearts should equal 0xA0");
+
+        // Partial hearts should round down
+        // 0x35 = 53, 53/16 = 3 (rounds down from 3.3125)
+        save.health_capacity = 0x35;
+        assert_eq!(
+            save.heart_containers(),
+            3,
+            "Partial hearts should round down"
+        );
+
+        // 0x4F = 79, 79/16 = 4 (rounds down from 4.9375)
+        save.health_capacity = 0x4F;
+        assert_eq!(
+            save.heart_containers(),
+            4,
+            "Partial hearts should round down to 4"
+        );
+
+        // Zero hearts edge case
+        save.health_capacity = 0;
+        assert_eq!(
+            save.heart_containers(),
+            0,
+            "Zero health_capacity = 0 hearts"
+        );
+    }
+
+    #[test]
+    fn test_heart_containers_parsing() {
+        use offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+
+        // Set health_capacity at offset HEALTH_CAPACITY (0x002C) - big-endian u16
+        // 3 hearts = 0x0030
+        data[HEALTH_CAPACITY] = 0x00;
+        data[HEALTH_CAPACITY + 1] = 0x30;
+
+        let save = MmSave::from_save_data(&data).unwrap();
+        assert_eq!(save.health_capacity, 0x30, "Should parse 3 hearts (0x30)");
+        assert_eq!(save.heart_containers(), 3);
+
+        // Test 20 hearts = 0x0140
+        data[HEALTH_CAPACITY] = 0x01;
+        data[HEALTH_CAPACITY + 1] = 0x40;
+
+        let save = MmSave::from_save_data(&data).unwrap();
+        assert_eq!(
+            save.health_capacity, 0x140,
+            "Should parse 20 hearts (0x140)"
+        );
+        assert_eq!(save.heart_containers(), 20);
+
+        // Test 12 hearts = 0x00C0
+        data[HEALTH_CAPACITY] = 0x00;
+        data[HEALTH_CAPACITY + 1] = 0xC0;
+
+        let save = MmSave::from_save_data(&data).unwrap();
+        assert_eq!(save.health_capacity, 0xC0, "Should parse 12 hearts (0xC0)");
+        assert_eq!(save.heart_containers(), 12);
+    }
+
+    #[test]
+    fn test_heart_pieces_method() {
+        // Test the heart_pieces() method on MmQuestItems
+        let mut quest_items = MmQuestItems::empty();
+
+        // No heart pieces
+        assert_eq!(quest_items.heart_pieces(), 0);
+
+        // 1 heart piece
+        quest_items = MmQuestItems::HEART_PIECE_1;
+        assert_eq!(quest_items.heart_pieces(), 1);
+
+        // 2 heart pieces
+        quest_items = MmQuestItems::HEART_PIECE_1 | MmQuestItems::HEART_PIECE_2;
+        assert_eq!(quest_items.heart_pieces(), 3); // bits 28+29 set = 0011 = 3
+
+        // Actually test the bit counting correctly
+        // HEART_PIECE_1 = 1 << 28, HEART_PIECE_2 = 1 << 29
+        // The heart_pieces() method does (bits >> 28) & 0xF
+
+        // Test individual piece bits
+        quest_items = MmQuestItems::from_bits_truncate(1 << 28);
+        assert_eq!(quest_items.heart_pieces(), 1, "Bit 28 should be 1 piece");
+
+        quest_items = MmQuestItems::from_bits_truncate(2 << 28);
+        assert_eq!(quest_items.heart_pieces(), 2, "Bits should be 2 pieces");
+
+        quest_items = MmQuestItems::from_bits_truncate(3 << 28);
+        assert_eq!(quest_items.heart_pieces(), 3, "Bits should be 3 pieces");
+
+        // Test with other quest items set
+        quest_items = MmQuestItems::REMAINS_ODOLWA
+            | MmQuestItems::SONG_TIME
+            | MmQuestItems::from_bits_truncate(2 << 28);
+        assert_eq!(
+            quest_items.heart_pieces(),
+            2,
+            "Should have 2 heart pieces with other items"
+        );
     }
 }
