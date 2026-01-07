@@ -793,6 +793,7 @@ impl TrackerCellKind {
                 dimmed_img,
                 img,
                 get,
+                max,
                 ..
             } => {
                 let count = get(state);
@@ -801,8 +802,9 @@ impl TrackerCellKind {
                 } else {
                     (
                         CellStyle::Normal,
-                        CellOverlay::Count {
+                        CellOverlay::CountWithMax {
                             count,
+                            max: *max,
                             count_img: img.clone(),
                         },
                     )
@@ -4679,7 +4681,7 @@ impl TrackerLayout {
                         // Row 2: OoT Stone + MM Transformation Masks + Shared Equipment
                         ZoraSapphire,
                         Skulltula,
-                        Bottle,
+                        NumBottles,
                         Scale,
                         MmDekuMask,
                         MmGoronMask,
@@ -5090,6 +5092,12 @@ pub enum CellOverlay {
         loc: ImageInfo,
         style: LocationStyle,
     },
+    /// Count with maximum displayed as "count/max" (e.g., "2/4" for bottles)
+    CountWithMax {
+        count: u8,
+        max: u8,
+        count_img: ImageInfo,
+    },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Protocol)]
@@ -5173,6 +5181,7 @@ impl ToHtml for CellRender {
                 CellOverlay::Count { count, .. } => span(class = "count") : count;
                 CellOverlay::Image(ref overlay) => img(src = format!("/static/img/{}.png", overlay.to_string('/', ImageDirContext::OverlayOnly)));
                 CellOverlay::Location { ref loc, style } => img(class = style.css_classes(), src = format!("/static/img/{}.png", loc.to_string('/', ImageDirContext::Normal)));
+                CellOverlay::CountWithMax { count, max, .. } => span(class = "count") : format!("{}/{}", count, max);
             }
             @if let Some(ref label) = self.label {
                 span(class = "key-label") : label;
@@ -5990,10 +5999,70 @@ mod tests {
         let render = cell.render(&state);
 
         assert_eq!(render.style, CellStyle::Normal);
-        if let CellOverlay::Count { count, .. } = render.overlay {
+        if let CellOverlay::CountWithMax { count, max, .. } = render.overlay {
             assert_eq!(count, 25);
+            assert_eq!(max, 100);
         } else {
-            panic!("Expected Count overlay");
+            panic!("Expected CountWithMax overlay");
+        }
+    }
+
+    #[test]
+    fn test_count_with_max_overlay_construction() {
+        let overlay = CellOverlay::CountWithMax {
+            count: 2,
+            max: 4,
+            count_img: ImageInfo::new("bottle"),
+        };
+        if let CellOverlay::CountWithMax { count, max, .. } = overlay {
+            assert_eq!(count, 2);
+            assert_eq!(max, 4);
+        } else {
+            panic!("Expected CountWithMax variant");
+        }
+    }
+
+    #[test]
+    fn test_num_bottles_cell_render_zero() {
+        let state = ModelState::default();
+        let cell = TrackerCellId::NumBottles.kind();
+        let render = cell.render(&state);
+
+        assert_eq!(render.style, CellStyle::Dimmed);
+        assert_eq!(render.overlay, CellOverlay::None);
+    }
+
+    #[test]
+    fn test_num_bottles_cell_render_nonzero() {
+        let mut state = ModelState::default();
+        state.ram.save.inv.set_emptiable_bottles(2);
+
+        let cell = TrackerCellId::NumBottles.kind();
+        let render = cell.render(&state);
+
+        assert_eq!(render.style, CellStyle::Normal);
+        if let CellOverlay::CountWithMax { count, max, .. } = render.overlay {
+            assert_eq!(count, 2);
+            assert_eq!(max, 4);
+        } else {
+            panic!("Expected CountWithMax overlay for NumBottles");
+        }
+    }
+
+    #[test]
+    fn test_num_bottles_cell_render_max() {
+        let mut state = ModelState::default();
+        state.ram.save.inv.set_emptiable_bottles(4);
+
+        let cell = TrackerCellId::NumBottles.kind();
+        let render = cell.render(&state);
+
+        assert_eq!(render.style, CellStyle::Normal);
+        if let CellOverlay::CountWithMax { count, max, .. } = render.overlay {
+            assert_eq!(count, 4);
+            assert_eq!(max, 4);
+        } else {
+            panic!("Expected CountWithMax overlay for NumBottles at max");
         }
     }
 
