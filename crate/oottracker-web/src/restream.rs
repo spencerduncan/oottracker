@@ -105,5 +105,6 @@ pub(crate) fn render_double_cell(
             },
         },
         accessibility: None,
+        label: None,
     }
 }

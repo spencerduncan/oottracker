@@ -199,6 +199,18 @@ img.loc {
     right: 2px;
 }
 
+.key-label {
+    color: white;
+    background-color: rgba(0, 0, 0, 0.65);
+    padding: 1pt 2pt;
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-size: 8pt;
+    font-weight: bold;
+    line-height: 1;
+}
+
 .power {
     color: #ff4040;
 }
