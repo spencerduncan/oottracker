@@ -488,7 +488,11 @@ async fn click_with_layout(
         Ok(())
     })
     .await?;
-    Ok(Redirect::to(rocket::uri!(room_with_layout(name, layout, Option::<Theme>::None))))
+    Ok(Redirect::to(rocket::uri!(room_with_layout(
+        name,
+        layout,
+        Option::<Theme>::None
+    ))))
 }
 
 // ============================================================================

@@ -238,6 +238,33 @@ function makeLayoutBuf(layoutString) {
         case 'triforce-pieces':
             new DataView(buf).setUint8(0, 10);
             return buf;
+        case 'mm-default':
+            new DataView(buf).setUint8(0, 11);
+            return buf;
+        case 'mm-masks':
+            new DataView(buf).setUint8(0, 12);
+            return buf;
+        case 'mm-boss-remains':
+            new DataView(buf).setUint8(0, 13);
+            return buf;
+        case 'mm-stray-fairies':
+            new DataView(buf).setUint8(0, 14);
+            return buf;
+        case 'mm-songs':
+            new DataView(buf).setUint8(0, 15);
+            return buf;
+        case 'mm-equipment':
+            new DataView(buf).setUint8(0, 16);
+            return buf;
+        case 'dungeon-items':
+            new DataView(buf).setUint8(0, 17);
+            return buf;
+        case 'mm-dungeon-items':
+            new DataView(buf).setUint8(0, 18);
+            return buf;
+        case 'combo':
+            new DataView(buf).setUint8(0, 19);
+            return buf;
         default:
             throw 'unknown layout';
     }
@@ -246,6 +273,7 @@ function makeLayoutBuf(layoutString) {
 function sendClick(cellID, right) {
     const mwRoomMatch = window.location.pathname.match(/^\/mw\/([0-9A-Za-z-]+)\/([0-9]+)\/([0-9A-Za-z-]+)\/?$/);
     const roomMatch = window.location.pathname.match(/^\/room\/([0-9A-Za-z-]+)\/?$/);
+    const roomWithLayoutMatch = window.location.pathname.match(/^\/room\/([0-9A-Za-z-]+)\/([0-9A-Za-z-]+)\/?$/);
     const restreamMatch = window.location.pathname.match(/^\/restream\/([0-9A-Za-z-]+)\/([0-9A-Za-z-]+)\/([0-9A-Za-z-]+)\/?$/);
     let buf;
     let bufView;
@@ -264,6 +292,19 @@ function sendClick(cellID, right) {
         bufView.setUint8(1, right ? 1 : 0);
         bufView.setUint8(2, 0); // Option<RoomToken>: None
         sock.send(new Blob([clickMw, mwRoomLen, mwRoom, world, mwLayoutBuf, buf]));
+    } else if (roomWithLayoutMatch) {
+        const clickRoom = new ArrayBuffer(1);
+        new DataView(clickRoom).setUint8(0, 5); // ClientMessage variant: ClickRoom
+        const room = utf8encoder.encode(roomWithLayoutMatch[1]);
+        const roomLen = new ArrayBuffer(8);
+        new DataView(roomLen).setBigUint64(0, BigInt(room.length));
+        const layoutBuf = makeLayoutBuf(roomWithLayoutMatch[2]);
+        buf = new ArrayBuffer(3);
+        bufView = new DataView(buf);
+        bufView.setUint8(0, cellID);
+        bufView.setUint8(1, right ? 1 : 0);
+        bufView.setUint8(2, 0); // Option<RoomToken>: None
+        sock.send(new Blob([clickRoom, roomLen, room, layoutBuf, buf]));
     } else if (roomMatch) {
         const clickRoom = new ArrayBuffer(1);
         new DataView(clickRoom).setUint8(0, 5); // ClientMessage variant: ClickRoom
@@ -416,6 +457,7 @@ function updateCell(cellID, data, offset, isInitialLoad) {
 sock.addEventListener('open', function(event) {
     const mwRoomMatch = window.location.pathname.match(/^\/mw\/([0-9A-Za-z-]+)\/([0-9]+)\/([0-9A-Za-z-]+)\/?$/);
     const roomMatch = window.location.pathname.match(/^\/room\/([0-9A-Za-z-]+)\/?$/);
+    const roomWithLayoutMatch = window.location.pathname.match(/^\/room\/([0-9A-Za-z-]+)\/([0-9A-Za-z-]+)\/?$/);
     const restreamMatch = window.location.pathname.match(/^\/restream\/([0-9A-Za-z-]+)\/([0-9A-Za-z-]+)\/([0-9A-Za-z-]+)\/?$/);
     const restreamDoubleMatch = window.location.pathname.match(/^\/restream\/([0-9A-Za-z-]+)\/([0-9A-Za-z-]+)\/([0-9A-Za-z-]+)\/with\/([0-9A-Za-z-]+)\/?$/);
     if (mwRoomMatch) {
@@ -428,6 +470,14 @@ sock.addEventListener('open', function(event) {
         new DataView(world).setUint8(0, parseInt(mwRoomMatch[2]));
         const mwLayoutBuf = makeLayoutBuf(mwRoomMatch[3]);
         sock.send(new Blob([mwSubscription, mwRoomLen, mwRoom, world, mwLayoutBuf]));
+    } else if (roomWithLayoutMatch) {
+        const roomSubscription = new ArrayBuffer(1);
+        new DataView(roomSubscription).setUint8(0, 4); // ClientMessage variant: SubscribeRoom
+        const room = utf8encoder.encode(roomWithLayoutMatch[1]);
+        const roomLen = new ArrayBuffer(8);
+        new DataView(roomLen).setBigUint64(0, BigInt(room.length));
+        const roomLayoutBuf = makeLayoutBuf(roomWithLayoutMatch[2]);
+        sock.send(new Blob([roomSubscription, roomLen, room, roomLayoutBuf]));
     } else if (roomMatch) {
         const roomSubscription = new ArrayBuffer(1);
         new DataView(roomSubscription).setUint8(0, 4); // ClientMessage variant: SubscribeRoom

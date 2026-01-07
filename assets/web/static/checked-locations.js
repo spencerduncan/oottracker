@@ -125,9 +125,10 @@ const SORTED_REGION_KEYS = Object.keys(REGION_NAMES).sort((a, b) => b.length - a
 
 /**
  * Get the current room name from the URL
+ * Supports both /room/<name> and /room/<name>/<layout> patterns
  */
 function getRoomName() {
-    const match = window.location.pathname.match(/^\/room\/([0-9A-Za-z-]+)\/?$/);
+    const match = window.location.pathname.match(/^\/room\/([0-9A-Za-z-]+)(?:\/[0-9A-Za-z-]+)?\/?$/);
     return match ? match[1] : null;
 }
 
