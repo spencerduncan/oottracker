@@ -290,10 +290,18 @@ fn group_locations_by_region(
 /// - `oot_deku_tree_compass_chest` -> "Deku Tree"
 /// - `oot_kokiri_forest_sword_chest` -> "Kokiri Forest"
 /// - `oot_fire_temple_boss_key` -> "Fire Temple"
+/// - `mq_oot_mq_deku_tree_compass_chest` -> "Deku Tree (MQ)"
 fn extract_region_name(location_id: &str) -> String {
-    // Remove "oot_" or "mm_" prefix
+    // Check if this is an MQ location
+    let is_mq = location_id.starts_with("mq_oot_");
+
+    // Remove game prefix (handle MQ prefixes first, then vanilla)
+    // MQ locations have pattern: mq_oot_mq_<dungeon>_<location>
+    // or mq_oot_<dungeon>_<location> for regions
     let without_prefix = location_id
-        .strip_prefix("oot_")
+        .strip_prefix("mq_oot_mq_")
+        .or_else(|| location_id.strip_prefix("mq_oot_"))
+        .or_else(|| location_id.strip_prefix("oot_"))
         .or_else(|| location_id.strip_prefix("mm_"))
         .unwrap_or(location_id);
 
@@ -341,15 +349,35 @@ fn extract_region_name(location_id: &str) -> String {
         ("reward", "Rewards"),
     ];
 
+    // List of dungeon patterns that can have MQ variants
+    let dungeon_patterns = [
+        "deku_tree",
+        "dodongo_cavern",
+        "jabu_jabu",
+        "forest_temple",
+        "fire_temple",
+        "water_temple",
+        "shadow_temple",
+        "spirit_temple",
+        "bottom_of_the_well",
+        "ice_cavern",
+        "gerudo_training",
+        "ganon_castle",
+    ];
+
     for (prefix, name) in known_regions {
         if without_prefix.starts_with(prefix) {
+            // Add (MQ) suffix for MQ dungeon locations
+            if is_mq && dungeon_patterns.iter().any(|d| prefix.starts_with(d)) {
+                return format!("{} (MQ)", name);
+            }
             return name.to_string();
         }
     }
 
     // Fallback: capitalize the first part before the last underscore-separated word
     let parts: Vec<&str> = without_prefix.split('_').collect();
-    if parts.len() > 1 {
+    let base_name = if parts.len() > 1 {
         // Take all but the last part as the region name
         let region_parts = &parts[..parts.len().saturating_sub(1)];
         region_parts
@@ -365,19 +393,29 @@ fn extract_region_name(location_id: &str) -> String {
             .join(" ")
     } else {
         without_prefix.to_string()
+    };
+
+    // Add (MQ) suffix for MQ locations even in fallback case
+    if is_mq {
+        format!("{} (MQ)", base_name)
+    } else {
+        base_name
     }
 }
 
 /// Formats a location name for display by removing the region prefix and prettifying.
 fn format_location_name(location_id: &str, region_name: &str) -> String {
-    // Remove game prefix
+    // Remove game prefix (handle MQ prefixes first, then vanilla)
     let without_prefix = location_id
-        .strip_prefix("oot_")
+        .strip_prefix("mq_oot_mq_")
+        .or_else(|| location_id.strip_prefix("mq_oot_"))
+        .or_else(|| location_id.strip_prefix("oot_"))
         .or_else(|| location_id.strip_prefix("mm_"))
         .unwrap_or(location_id);
 
-    // Convert region name to snake_case for matching
-    let region_snake = region_name.to_lowercase().replace([' ', '\''], "_");
+    // Convert region name to snake_case for matching (remove MQ suffix if present)
+    let region_base = region_name.trim_end_matches(" (MQ)");
+    let region_snake = region_base.to_lowercase().replace([' ', '\''], "_");
     let region_snake = region_snake.replace("__", "_");
 
     // Remove region prefix from location name
@@ -557,5 +595,67 @@ mod tests {
         assert_eq!(ICON_CHECKED, "\u{25CF}");
         assert_eq!(ICON_UNCHECKED, "\u{2713}");
         assert_eq!(ICON_UNKNOWN, "?");
+    }
+
+    // MQ location tests
+
+    #[test]
+    fn test_extract_region_name_mq_deku_tree() {
+        assert_eq!(
+            extract_region_name("mq_oot_mq_deku_tree_compass_chest"),
+            "Deku Tree (MQ)"
+        );
+    }
+
+    #[test]
+    fn test_extract_region_name_mq_fire_temple() {
+        assert_eq!(
+            extract_region_name("mq_oot_mq_fire_temple_boss_key"),
+            "Fire Temple (MQ)"
+        );
+    }
+
+    #[test]
+    fn test_extract_region_name_mq_ganon_castle() {
+        assert_eq!(
+            extract_region_name("mq_oot_mq_ganon_castle_light_trial"),
+            "Ganon's Castle (MQ)"
+        );
+    }
+
+    #[test]
+    fn test_format_location_name_mq_basic() {
+        let result = format_location_name("mq_oot_mq_deku_tree_compass_chest", "Deku Tree (MQ)");
+        assert_eq!(result, "Compass Chest");
+    }
+
+    #[test]
+    fn test_format_location_name_mq_fire_temple() {
+        let result =
+            format_location_name("mq_oot_mq_fire_temple_boss_key_chest", "Fire Temple (MQ)");
+        assert_eq!(result, "Boss Key Chest");
+    }
+
+    #[test]
+    fn test_group_locations_by_region_with_mq() {
+        let locations = vec![
+            LocationCheckResult {
+                location_id: "oot_deku_tree_compass_chest".to_string(),
+                status: CheckStatus::Checked,
+                is_mapped: true,
+            },
+            LocationCheckResult {
+                location_id: "mq_oot_mq_fire_temple_boss_key".to_string(),
+                status: CheckStatus::Unchecked,
+                is_mapped: true,
+            },
+        ];
+
+        let grouped = group_locations_by_region(&locations);
+
+        assert!(grouped.contains_key("Deku Tree"));
+        assert!(grouped.contains_key("Fire Temple (MQ)"));
+        assert_eq!(grouped.get("Deku Tree").unwrap().len(), 1);
+        assert_eq!(grouped.get("Fire Temple (MQ)").unwrap().len(), 1);
     }
 }
