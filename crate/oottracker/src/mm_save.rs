@@ -3711,6 +3711,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::field_reassign_with_default)]
     fn test_heart_containers_calculation() {
         let mut save = MmSave::default();
 

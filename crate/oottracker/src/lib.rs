@@ -912,6 +912,7 @@ mod cross_game_sync_tests {
 
     /// Test cross-game sync when OoT save is updated with MM save present.
     #[test]
+    #[allow(clippy::field_reassign_with_default)]
     fn test_cross_game_sync_on_oot_update() {
         let mut state = ModelState::default();
 
@@ -980,6 +981,7 @@ mod cross_game_sync_tests {
 
     /// Test that the check tracker persists across multiple update cycles.
     #[test]
+    #[allow(clippy::field_reassign_with_default)]
     fn test_check_tracker_persists_across_updates() {
         let mut state = ModelState::default();
         state.ram.save.game_mode = GameMode::Gameplay;
@@ -1006,6 +1008,7 @@ mod cross_game_sync_tests {
 
     /// Test cross-game delta synchronization
     #[test]
+    #[allow(clippy::field_reassign_with_default)]
     fn test_model_delta_preserves_cross_game_state() {
         let mut state1 = ModelState::default();
         state1.ram.save.game_mode = GameMode::Gameplay;

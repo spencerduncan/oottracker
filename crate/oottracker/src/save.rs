@@ -1898,6 +1898,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::field_reassign_with_default)]
     fn test_heart_containers_calculation() {
         let mut save = Save::default();
 
@@ -2025,6 +2026,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::field_reassign_with_default)]
     fn test_save_round_trip() {
         // Create a save with specific heart values
         let mut original_save = Save::default();
@@ -2077,6 +2079,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::field_reassign_with_default)]
     fn test_heart_pieces_preserved_with_quest_items() {
         // Ensure heart_pieces in bits 24-27 doesn't interfere with quest_items in lower bits
         let mut original_save = Save::default();
