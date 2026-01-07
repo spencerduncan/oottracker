@@ -248,3 +248,65 @@ footer a {
 .accessibility-unknown {
     box-shadow: 0 0 0 2px #cc8822;
 }
+
+/* WebSocket connection status indicator */
+#connection-status-indicator {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 16px;
+    background: rgba(0, 0, 0, 0.7);
+    font-size: 12px;
+    cursor: default;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+#connection-status-indicator:hover {
+    opacity: 1;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    transition: background-color 0.3s;
+}
+
+.status-dot.status-connected {
+    background-color: #22cc22;
+    box-shadow: 0 0 4px #22cc22;
+}
+
+.status-dot.status-connecting {
+    background-color: #ccaa22;
+    box-shadow: 0 0 4px #ccaa22;
+    animation: pulse 1.5s infinite;
+}
+
+.status-dot.status-disconnected {
+    background-color: #cc2222;
+    box-shadow: 0 0 4px #cc2222;
+}
+
+#connection-status-indicator.status-disconnected {
+    cursor: pointer;
+}
+
+.status-text {
+    color: white;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
