@@ -618,6 +618,7 @@ impl TrackerCellKind {
                         style: CellStyle::Normal,
                         overlay: CellOverlay::Count {
                             count: state.ram.save.triforce_pieces(),
+                            max: 0, // Triforce max is configurable and unknown
                             count_img: ImageInfo::new("force"),
                         },
                         accessibility: None,
@@ -630,6 +631,7 @@ impl TrackerCellKind {
                         style: CellStyle::Normal,
                         overlay: CellOverlay::Count {
                             count: state.ram.save.big_poes,
+                            max: 10,
                             count_img: ImageInfo::extra("poes"),
                         },
                         accessibility: None,
@@ -756,14 +758,20 @@ impl TrackerCellKind {
                 }
             }
             CompositeKeys { boss, small } => {
-                let (has_boss_key, num_small_keys, label) = if let (
+                let (has_boss_key, num_small_keys, max_keys, label) = if let (
                     BossKey { active, label, .. },
-                    TrackerCellKind::SmallKeys { get, .. },
+                    TrackerCellKind::SmallKeys {
+                        get,
+                        max_vanilla,
+                        max_mq,
+                        ..
+                    },
                 ) = (boss.kind(), small.kind())
                 {
                     (
                         active(&state.ram.save.dungeon_items),
                         get(&state.ram.save.small_keys),
+                        max_vanilla.max(max_mq),
                         label,
                     )
                 } else {
@@ -780,6 +788,7 @@ impl TrackerCellKind {
                     overlay: if num_small_keys > 0 {
                         CellOverlay::Count {
                             count: num_small_keys,
+                            max: max_keys,
                             count_img: ImageInfo::new("UNIMPLEMENTED"), //TODO
                         }
                     } else {
@@ -1163,8 +1172,15 @@ impl TrackerCellKind {
                 accessibility: None,
                 label: None,
             },
-            TrackerCellKind::SmallKeys { get, label, .. } => {
+            TrackerCellKind::SmallKeys {
+                get,
+                max_vanilla,
+                max_mq,
+                label,
+                ..
+            } => {
                 let num_small_keys = get(&state.ram.save.small_keys);
+                let max_keys = *max_vanilla.max(max_mq);
                 CellRender {
                     img: ImageInfo::extra("small_key"),
                     style: if num_small_keys > 0 {
@@ -1175,6 +1191,7 @@ impl TrackerCellKind {
                     overlay: if num_small_keys > 0 {
                         CellOverlay::Count {
                             count: num_small_keys,
+                            max: max_keys,
                             count_img: ImageInfo::new("UNIMPLEMENTED"), //TODO
                         }
                     } else {
@@ -1184,7 +1201,7 @@ impl TrackerCellKind {
                     label: Some(label.to_string()),
                 }
             }
-            TrackerCellKind::MmSmallKeys { get, label, .. } => {
+            TrackerCellKind::MmSmallKeys { get, max, label, .. } => {
                 let num_small_keys = state
                     .ram
                     .mm_save
@@ -1201,6 +1218,7 @@ impl TrackerCellKind {
                     overlay: if num_small_keys > 0 {
                         CellOverlay::Count {
                             count: num_small_keys,
+                            max: *max,
                             count_img: ImageInfo::new("UNIMPLEMENTED"), //TODO
                         }
                     } else {
@@ -5106,6 +5124,7 @@ pub enum CellOverlay {
     None,
     Count {
         count: u8,
+        max: u8,
         count_img: ImageInfo,
     },
     Image(ImageInfo),
@@ -5199,7 +5218,8 @@ impl ToHtml for CellRender {
             img(class = self.combined_css_classes(), src = format!("/static/img/{}.png", self.img.to_string('/', ImageDirContext::Normal)));
             @match self.overlay {
                 CellOverlay::None => ;
-                CellOverlay::Count { count, .. } => span(class = "count") : count;
+                CellOverlay::Count { count, max: 0, .. } => span(class = "count") : count;
+                CellOverlay::Count { count, max, .. } => span(class = "count") : format!("{} / {}", count, max);
                 CellOverlay::Image(ref overlay) => img(src = format!("/static/img/{}.png", overlay.to_string('/', ImageDirContext::OverlayOnly)));
                 CellOverlay::Location { ref loc, style } => img(class = style.css_classes(), src = format!("/static/img/{}.png", loc.to_string('/', ImageDirContext::Normal)));
                 CellOverlay::CountWithMax { count, max, .. } => span(class = "count") : format!("{}/{}", count, max);
@@ -5600,10 +5620,12 @@ mod tests {
     fn test_cell_overlay_count() {
         let overlay = CellOverlay::Count {
             count: 5,
+            max: 100,
             count_img: ImageInfo::new("skulls"),
         };
-        if let CellOverlay::Count { count, .. } = overlay {
+        if let CellOverlay::Count { count, max, .. } = overlay {
             assert_eq!(count, 5);
+            assert_eq!(max, 100);
         } else {
             panic!("Expected Count variant");
         }

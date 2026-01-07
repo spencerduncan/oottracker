@@ -399,6 +399,7 @@ function updateCell(cellID, data, offset, isInitialLoad) {
         case 1:
             // Count
             const count = view.getUint8(offset++);
+            const max = view.getUint8(offset++);
             readImgDir(view.getUint8(offset++));
             const countImgFilenameLen = Number(view.getBigUint64(offset));
             offset += 8;
@@ -406,7 +407,8 @@ function updateCell(cellID, data, offset, isInitialLoad) {
             offset += countImgFilenameLen;
             let countOverlay = document.createElement('span');
             countOverlay.setAttribute('class', 'count');
-            countOverlay.append('' + count);
+            // Display "count / max" format if max > 0, otherwise just count
+            countOverlay.append(max > 0 ? (count + ' / ' + max) : ('' + count));
             elt.append(countOverlay);
             break;
         case 2:
