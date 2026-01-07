@@ -4197,6 +4197,10 @@ pub fn get_checked_locations_summary_filtered(model: &ModelState) -> CheckedLoca
         .iter()
         .filter(|l| l.status == CheckStatus::Unchecked)
         .count();
+    let skipped_count = locations
+        .iter()
+        .filter(|l| l.status == CheckStatus::Skipped)
+        .count();
     let unknown_count = locations
         .iter()
         .filter(|l| l.status == CheckStatus::Unknown)
@@ -4206,6 +4210,7 @@ pub fn get_checked_locations_summary_filtered(model: &ModelState) -> CheckedLoca
         total_mapped,
         checked_count,
         unchecked_count,
+        skipped_count,
         unknown_count,
         locations,
     }
@@ -4560,5 +4565,199 @@ mod tests {
             summary.total_mapped,
             "Status counts should sum to total_mapped"
         );
+    }
+
+    // === dungeon_to_mq_dungeon Tests ===
+
+    #[test]
+    fn test_dungeon_to_mq_dungeon_main_dungeons() {
+        // Test all main dungeon conversions
+        assert_eq!(
+            dungeon_to_mq_dungeon(&Dungeon::Main(MainDungeon::DekuTree)),
+            MqDungeon::DekuTree
+        );
+        assert_eq!(
+            dungeon_to_mq_dungeon(&Dungeon::Main(MainDungeon::DodongosCavern)),
+            MqDungeon::DodongosCavern
+        );
+        assert_eq!(
+            dungeon_to_mq_dungeon(&Dungeon::Main(MainDungeon::JabuJabu)),
+            MqDungeon::JabuJabu
+        );
+        assert_eq!(
+            dungeon_to_mq_dungeon(&Dungeon::Main(MainDungeon::ForestTemple)),
+            MqDungeon::ForestTemple
+        );
+        assert_eq!(
+            dungeon_to_mq_dungeon(&Dungeon::Main(MainDungeon::FireTemple)),
+            MqDungeon::FireTemple
+        );
+        assert_eq!(
+            dungeon_to_mq_dungeon(&Dungeon::Main(MainDungeon::WaterTemple)),
+            MqDungeon::WaterTemple
+        );
+        assert_eq!(
+            dungeon_to_mq_dungeon(&Dungeon::Main(MainDungeon::ShadowTemple)),
+            MqDungeon::ShadowTemple
+        );
+        assert_eq!(
+            dungeon_to_mq_dungeon(&Dungeon::Main(MainDungeon::SpiritTemple)),
+            MqDungeon::SpiritTemple
+        );
+    }
+
+    #[test]
+    fn test_dungeon_to_mq_dungeon_mini_dungeons() {
+        // Test mini dungeon conversions
+        assert_eq!(
+            dungeon_to_mq_dungeon(&Dungeon::IceCavern),
+            MqDungeon::IceCavern
+        );
+        assert_eq!(
+            dungeon_to_mq_dungeon(&Dungeon::BottomOfTheWell),
+            MqDungeon::BottomOfTheWell
+        );
+        assert_eq!(
+            dungeon_to_mq_dungeon(&Dungeon::GerudoTrainingGround),
+            MqDungeon::GerudoTrainingGround
+        );
+        assert_eq!(
+            dungeon_to_mq_dungeon(&Dungeon::GanonsCastle),
+            MqDungeon::GanonsCastle
+        );
+    }
+
+    #[test]
+    fn test_dungeon_to_mq_dungeon_exhaustive() {
+        // Ensure all Dungeon variants can be converted
+        use enum_iterator::all;
+
+        for main_dungeon in all::<MainDungeon>() {
+            let dungeon = Dungeon::Main(main_dungeon);
+            // Should not panic
+            let _ = dungeon_to_mq_dungeon(&dungeon);
+        }
+
+        // Test non-main dungeons explicitly
+        let _ = dungeon_to_mq_dungeon(&Dungeon::IceCavern);
+        let _ = dungeon_to_mq_dungeon(&Dungeon::BottomOfTheWell);
+        let _ = dungeon_to_mq_dungeon(&Dungeon::GerudoTrainingGround);
+        let _ = dungeon_to_mq_dungeon(&Dungeon::GanonsCastle);
+    }
+
+    // === mq_settings_from_knowledge Tests ===
+
+    #[test]
+    fn test_mq_settings_from_knowledge_empty() {
+        // Empty HashMap should result in all-vanilla settings
+        let mq_settings: HashMap<Dungeon, Mq> = HashMap::new();
+        let settings = mq_settings_from_knowledge(&mq_settings);
+
+        // All dungeons should be vanilla
+        assert!(!settings.is_dungeon_mq(MqDungeon::DekuTree));
+        assert!(!settings.is_dungeon_mq(MqDungeon::ForestTemple));
+        assert!(!settings.is_dungeon_mq(MqDungeon::GanonsCastle));
+    }
+
+    #[test]
+    fn test_mq_settings_from_knowledge_single_mq() {
+        let mut mq_settings: HashMap<Dungeon, Mq> = HashMap::new();
+        mq_settings.insert(Dungeon::Main(MainDungeon::ForestTemple), Mq::Mq);
+
+        let settings = mq_settings_from_knowledge(&mq_settings);
+
+        // Only Forest Temple should be MQ
+        assert!(settings.is_dungeon_mq(MqDungeon::ForestTemple));
+        assert!(!settings.is_dungeon_mq(MqDungeon::DekuTree));
+        assert!(!settings.is_dungeon_mq(MqDungeon::FireTemple));
+    }
+
+    #[test]
+    fn test_mq_settings_from_knowledge_multiple_mq() {
+        let mut mq_settings: HashMap<Dungeon, Mq> = HashMap::new();
+        mq_settings.insert(Dungeon::Main(MainDungeon::DekuTree), Mq::Mq);
+        mq_settings.insert(Dungeon::Main(MainDungeon::ForestTemple), Mq::Mq);
+        mq_settings.insert(Dungeon::GanonsCastle, Mq::Mq);
+        mq_settings.insert(Dungeon::Main(MainDungeon::WaterTemple), Mq::Vanilla);
+
+        let settings = mq_settings_from_knowledge(&mq_settings);
+
+        // Check MQ dungeons
+        assert!(settings.is_dungeon_mq(MqDungeon::DekuTree));
+        assert!(settings.is_dungeon_mq(MqDungeon::ForestTemple));
+        assert!(settings.is_dungeon_mq(MqDungeon::GanonsCastle));
+
+        // Check vanilla dungeon
+        assert!(!settings.is_dungeon_mq(MqDungeon::WaterTemple));
+
+        // Check unspecified dungeons (should be vanilla)
+        assert!(!settings.is_dungeon_mq(MqDungeon::FireTemple));
+    }
+
+    #[test]
+    fn test_mq_settings_from_knowledge_all_vanilla() {
+        let mut mq_settings: HashMap<Dungeon, Mq> = HashMap::new();
+        // Explicitly set everything to vanilla
+        mq_settings.insert(Dungeon::Main(MainDungeon::DekuTree), Mq::Vanilla);
+        mq_settings.insert(Dungeon::Main(MainDungeon::ForestTemple), Mq::Vanilla);
+        mq_settings.insert(Dungeon::GanonsCastle, Mq::Vanilla);
+
+        let settings = mq_settings_from_knowledge(&mq_settings);
+
+        // All should be vanilla
+        assert!(!settings.is_dungeon_mq(MqDungeon::DekuTree));
+        assert!(!settings.is_dungeon_mq(MqDungeon::ForestTemple));
+        assert!(!settings.is_dungeon_mq(MqDungeon::GanonsCastle));
+    }
+
+    #[test]
+    fn test_mq_settings_from_knowledge_all_mq() {
+        use enum_iterator::all;
+
+        let mut mq_settings: HashMap<Dungeon, Mq> = HashMap::new();
+
+        // Set all main dungeons to MQ
+        for main_dungeon in all::<MainDungeon>() {
+            mq_settings.insert(Dungeon::Main(main_dungeon), Mq::Mq);
+        }
+        // Set mini dungeons to MQ
+        mq_settings.insert(Dungeon::IceCavern, Mq::Mq);
+        mq_settings.insert(Dungeon::BottomOfTheWell, Mq::Mq);
+        mq_settings.insert(Dungeon::GerudoTrainingGround, Mq::Mq);
+        mq_settings.insert(Dungeon::GanonsCastle, Mq::Mq);
+
+        let settings = mq_settings_from_knowledge(&mq_settings);
+
+        // All should be MQ
+        assert!(settings.is_dungeon_mq(MqDungeon::DekuTree));
+        assert!(settings.is_dungeon_mq(MqDungeon::DodongosCavern));
+        assert!(settings.is_dungeon_mq(MqDungeon::JabuJabu));
+        assert!(settings.is_dungeon_mq(MqDungeon::ForestTemple));
+        assert!(settings.is_dungeon_mq(MqDungeon::FireTemple));
+        assert!(settings.is_dungeon_mq(MqDungeon::WaterTemple));
+        assert!(settings.is_dungeon_mq(MqDungeon::ShadowTemple));
+        assert!(settings.is_dungeon_mq(MqDungeon::SpiritTemple));
+        assert!(settings.is_dungeon_mq(MqDungeon::IceCavern));
+        assert!(settings.is_dungeon_mq(MqDungeon::BottomOfTheWell));
+        assert!(settings.is_dungeon_mq(MqDungeon::GerudoTrainingGround));
+        assert!(settings.is_dungeon_mq(MqDungeon::GanonsCastle));
+    }
+
+    #[test]
+    fn test_mq_settings_from_knowledge_integration_with_filtering() {
+        // Test that mq_settings_from_knowledge integrates properly with location filtering
+        let mut mq_settings: HashMap<Dungeon, Mq> = HashMap::new();
+        mq_settings.insert(Dungeon::Main(MainDungeon::DekuTree), Mq::Mq);
+
+        let settings = mq_settings_from_knowledge(&mq_settings);
+
+        // Vanilla Deku Tree should be inactive
+        assert!(get_active_mapping("oot_deku_tree_compass_chest", &settings).is_none());
+
+        // MQ Deku Tree should be active
+        assert!(get_active_mapping("mq_oot_mq_deku_tree_compass_chest", &settings).is_some());
+
+        // Other vanilla dungeons should still be active
+        assert!(get_active_mapping("oot_forest_temple_compass", &settings).is_some());
     }
 }
