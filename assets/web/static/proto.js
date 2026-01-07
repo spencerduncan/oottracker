@@ -447,6 +447,20 @@ function updateCell(cellID, data, offset, isInitialLoad) {
             locOverlay.setAttribute('src', '/static/img/' + locDir + '/' + locImg + '.png');
             elt.append(locOverlay);
             break;
+        case 4:
+            // CountWithMax - displays "count/max" (e.g., "2/4" for bottles)
+            const countWithMax = view.getUint8(offset++);
+            const maxCount = view.getUint8(offset++);
+            readImgDir(view.getUint8(offset++));
+            const countWithMaxImgFilenameLen = Number(view.getBigUint64(offset));
+            offset += 8;
+            utf8decoder.decode(data.slice(offset, offset + countWithMaxImgFilenameLen));
+            offset += countWithMaxImgFilenameLen;
+            let countWithMaxOverlay = document.createElement('span');
+            countWithMaxOverlay.setAttribute('class', 'count');
+            countWithMaxOverlay.append(countWithMax + '/' + maxCount);
+            elt.append(countWithMaxOverlay);
+            break;
         default:
             throw 'unexpected CellOverlay variant';
     }

@@ -772,6 +772,7 @@ impl TrackerCellKind {
                 dimmed_img,
                 img,
                 get,
+                max,
                 ..
             } => {
                 let count = get(state);
@@ -780,8 +781,9 @@ impl TrackerCellKind {
                 } else {
                     (
                         CellStyle::Normal,
-                        CellOverlay::Count {
+                        CellOverlay::CountWithMax {
                             count,
+                            max: *max,
                             count_img: img.clone(),
                         },
                     )
@@ -4521,7 +4523,7 @@ impl TrackerLayout {
                         // Row 2: OoT Stone + MM Transformation Masks + Shared Equipment
                         ZoraSapphire,
                         Skulltula,
-                        Bottle,
+                        NumBottles,
                         Scale,
                         MmDekuMask,
                         MmGoronMask,
@@ -4918,6 +4920,12 @@ pub enum CellOverlay {
         loc: ImageInfo,
         style: LocationStyle,
     },
+    /// Count with maximum displayed as "count/max" (e.g., "2/4" for bottles)
+    CountWithMax {
+        count: u8,
+        max: u8,
+        count_img: ImageInfo,
+    },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Protocol)]
@@ -4992,6 +5000,7 @@ impl ToHtml for CellRender {
                 CellOverlay::Count { count, .. } => span(class = "count") : count;
                 CellOverlay::Image(ref overlay) => img(src = format!("/static/img/{}.png", overlay.to_string('/', ImageDirContext::OverlayOnly)));
                 CellOverlay::Location { ref loc, style } => img(class = style.css_classes(), src = format!("/static/img/{}.png", loc.to_string('/', ImageDirContext::Normal)));
+                CellOverlay::CountWithMax { count, max, .. } => span(class = "count") : format!("{}/{}", count, max);
             }
         }
     }
