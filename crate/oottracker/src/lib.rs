@@ -126,6 +126,11 @@ pub struct ModelState {
 
 impl ModelState {
     pub fn update_knowledge(&mut self) {
+        // Always update MM knowledge first for cross-game state synchronization.
+        // This ensures MM tracker is updated even when OoT is not in Gameplay mode
+        // (e.g., during game transitions in combo mode, or MM-only tracking).
+        self.update_mm_knowledge();
+
         if self.ram.save.game_mode != GameMode::Gameplay {
             return;
         } //TODO read knowledge from inventory preview on file select?
@@ -851,5 +856,174 @@ mod update_mm_knowledge_tests {
         state.update_mm_knowledge();
 
         assert!(state.is_checked("mm_moon_access"));
+    }
+}
+
+#[cfg(test)]
+mod cross_game_sync_tests {
+    use super::*;
+    use crate::save::GameMode;
+
+    /// Test that update_knowledge() also calls update_mm_knowledge() for cross-game sync.
+    /// This is the fix for GitHub issue #508.
+    #[test]
+    fn test_update_knowledge_calls_update_mm_knowledge() {
+        let mut state = ModelState::default();
+        let mut mm_save = mm_save::MmSave::default();
+
+        // Set up MM save with some items
+        mm_save.quest_items =
+            mm_save::MmQuestItems::REMAINS_ODOLWA | mm_save::MmQuestItems::SONG_TIME;
+        mm_save.inventory.hookshot = true;
+        state.ram.mm_save = Some(mm_save);
+
+        // Set OoT game mode to Gameplay so update_knowledge doesn't early return
+        state.ram.save.game_mode = GameMode::Gameplay;
+
+        // Call update_knowledge() - this should also call update_mm_knowledge()
+        state.update_knowledge();
+
+        // Verify MM items were tracked (proving update_mm_knowledge was called)
+        assert!(
+            state.check_tracker.is_some(),
+            "check_tracker should be initialized"
+        );
+        assert!(
+            state.is_checked("mm_woodfall_temple_boss"),
+            "MM boss remain should be tracked"
+        );
+        assert!(
+            state.is_checked("mm_song_of_time"),
+            "MM song should be tracked"
+        );
+        assert!(
+            state.is_checked("mm_hookshot"),
+            "MM hookshot should be tracked"
+        );
+    }
+
+    /// Test cross-game sync when OoT save is updated with MM save present.
+    #[test]
+    fn test_cross_game_sync_on_oot_update() {
+        let mut state = ModelState::default();
+
+        // First, set up MM save
+        let mut mm_save = mm_save::MmSave::default();
+        mm_save.quest_items = mm_save::MmQuestItems::REMAINS_GOHT;
+        state.ram.mm_save = Some(mm_save);
+        state.ram.save.game_mode = GameMode::Gameplay;
+
+        // Call update_knowledge (simulating OoT state update)
+        state.update_knowledge();
+
+        // MM knowledge should be synced
+        assert!(state.is_checked("mm_snowhead_temple_boss"));
+
+        // Now update MM save with more items
+        let mut mm_save2 = mm_save::MmSave::default();
+        mm_save2.quest_items =
+            mm_save::MmQuestItems::REMAINS_GOHT | mm_save::MmQuestItems::REMAINS_GYORG;
+        mm_save2.inventory.bow = true;
+        state.ram.mm_save = Some(mm_save2);
+
+        // Call update_knowledge again (simulating another OoT state update)
+        state.update_knowledge();
+
+        // Both old and new MM items should be tracked
+        assert!(state.is_checked("mm_snowhead_temple_boss"));
+        assert!(state.is_checked("mm_great_bay_temple_boss"));
+        assert!(state.is_checked("mm_bow"));
+    }
+
+    /// Test that MM knowledge updates even when OoT save is not in Gameplay mode,
+    /// as long as mm_save is present.
+    /// This is important for combo mode where game transitions may occur.
+    #[test]
+    fn test_mm_knowledge_updates_regardless_of_oot_game_mode() {
+        let mut state = ModelState::default();
+
+        // MM save with items
+        let mut mm_save = mm_save::MmSave::default();
+        mm_save.quest_items = mm_save::MmQuestItems::SONG_HEALING;
+        mm_save.masks.transformation = mm_save::MmTransformationMasks::DEKU;
+        state.ram.mm_save = Some(mm_save);
+
+        // OoT is NOT in Gameplay mode (e.g., file select or game transition)
+        state.ram.save.game_mode = GameMode::FileSelect;
+
+        // update_knowledge should still update MM knowledge even when OoT isn't in Gameplay
+        state.update_knowledge();
+
+        // MM items should be tracked because update_mm_knowledge is called BEFORE the
+        // OoT Gameplay mode check (fix for GitHub issue #508)
+        assert!(
+            state.check_tracker.is_some(),
+            "MM tracker should be initialized"
+        );
+        assert!(
+            state.is_checked("mm_song_of_healing"),
+            "MM song should be tracked"
+        );
+        assert!(
+            state.is_checked("mm_deku_mask"),
+            "MM mask should be tracked"
+        );
+    }
+
+    /// Test that the check tracker persists across multiple update cycles.
+    #[test]
+    fn test_check_tracker_persists_across_updates() {
+        let mut state = ModelState::default();
+        state.ram.save.game_mode = GameMode::Gameplay;
+
+        // First update with some MM items
+        let mut mm_save = mm_save::MmSave::default();
+        mm_save.quest_items = mm_save::MmQuestItems::REMAINS_ODOLWA;
+        state.ram.mm_save = Some(mm_save);
+        state.update_knowledge();
+
+        assert!(state.is_checked("mm_woodfall_temple_boss"));
+
+        // Second update with additional items
+        let mut mm_save2 = mm_save::MmSave::default();
+        mm_save2.quest_items =
+            mm_save::MmQuestItems::REMAINS_ODOLWA | mm_save::MmQuestItems::REMAINS_GOHT;
+        state.ram.mm_save = Some(mm_save2);
+        state.update_knowledge();
+
+        // Both should be tracked
+        assert!(state.is_checked("mm_woodfall_temple_boss"));
+        assert!(state.is_checked("mm_snowhead_temple_boss"));
+    }
+
+    /// Test cross-game delta synchronization
+    #[test]
+    fn test_model_delta_preserves_cross_game_state() {
+        let mut state1 = ModelState::default();
+        state1.ram.save.game_mode = GameMode::Gameplay;
+
+        // Set up initial state with MM data
+        let mut mm_save = mm_save::MmSave::default();
+        mm_save.quest_items = mm_save::MmQuestItems::REMAINS_ODOLWA;
+        state1.ram.mm_save = Some(mm_save);
+        state1.update_knowledge();
+
+        // Create a second state with more MM data
+        let mut state2 = state1.clone();
+        let mut mm_save2 = mm_save::MmSave::default();
+        mm_save2.quest_items =
+            mm_save::MmQuestItems::REMAINS_ODOLWA | mm_save::MmQuestItems::REMAINS_GOHT;
+        state2.ram.mm_save = Some(mm_save2);
+        state2.update_knowledge();
+
+        // Create delta between states
+        let delta = &state2 - &state1;
+
+        // Apply delta to state1
+        state1 += delta;
+
+        // state1 should now have all the MM checks
+        assert!(state1.is_checked("mm_woodfall_temple_boss"));
+        assert!(state1.is_checked("mm_snowhead_temple_boss"));
     }
 }
