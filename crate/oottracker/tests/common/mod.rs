@@ -39,6 +39,7 @@ pub fn fixture_path(name: &str) -> PathBuf {
 /// let content = load_fixture("knowledge/default.json");
 /// let knowledge: Knowledge = serde_json::from_str(&content).unwrap();
 /// ```
+#[allow(dead_code)]
 pub fn load_fixture(name: &str) -> String {
     let path = fixture_path(name);
     std::fs::read_to_string(&path)
@@ -56,6 +57,7 @@ pub fn load_fixture(name: &str) -> String {
 /// # Panics
 ///
 /// Panics if the fixture file does not exist or cannot be read.
+#[allow(dead_code)]
 pub fn load_fixture_bytes(name: &str) -> Vec<u8> {
     let path = fixture_path(name);
     std::fs::read(&path)

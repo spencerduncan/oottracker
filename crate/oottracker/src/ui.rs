@@ -6116,7 +6116,7 @@ mod tests {
         let reward = DungeonReward::Medallion(Medallion::Forest);
 
         // Start with no location
-        assert!(locations.get(&reward).is_none());
+        assert!(!locations.contains_key(&reward));
 
         // Increment to first dungeon
         locations.increment(reward);
@@ -6179,7 +6179,7 @@ mod tests {
 
         // One more increment removes the entry
         locations.increment(reward);
-        assert!(locations.get(&reward).is_none());
+        assert!(!locations.contains_key(&reward));
     }
 
     // ==========================================================================

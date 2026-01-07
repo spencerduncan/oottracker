@@ -2700,15 +2700,19 @@ mod tests {
 
     #[test]
     fn test_magic_accessor_single_magic() {
-        let mut save = MmSave::default();
-        save.magic = MmMagicCapacity::Single;
+        let save = MmSave {
+            magic: MmMagicCapacity::Single,
+            ..Default::default()
+        };
         assert!(save.has_magic());
     }
 
     #[test]
     fn test_magic_accessor_double_magic() {
-        let mut save = MmSave::default();
-        save.magic = MmMagicCapacity::Double;
+        let save = MmSave {
+            magic: MmMagicCapacity::Double,
+            ..Default::default()
+        };
         assert!(save.has_magic());
     }
 
@@ -2731,15 +2735,15 @@ mod tests {
 
     #[test]
     fn test_song_accessors_with_songs() {
-        let mut save = MmSave::default();
-
-        // Set some songs
-        save.quest_items = MmQuestItems::SONG_TIME
-            | MmQuestItems::SONG_HEALING
-            | MmQuestItems::SONG_EPONA
-            | MmQuestItems::SONG_SOARING
-            | MmQuestItems::SONG_AWAKENING
-            | MmQuestItems::SONG_ORDER;
+        let save = MmSave {
+            quest_items: MmQuestItems::SONG_TIME
+                | MmQuestItems::SONG_HEALING
+                | MmQuestItems::SONG_EPONA
+                | MmQuestItems::SONG_SOARING
+                | MmQuestItems::SONG_AWAKENING
+                | MmQuestItems::SONG_ORDER,
+            ..Default::default()
+        };
 
         // Check accessors return true for songs we have
         assert!(save.has_song_of_time());
@@ -2758,19 +2762,19 @@ mod tests {
 
     #[test]
     fn test_song_accessors_all_songs() {
-        let mut save = MmSave::default();
-
-        // Set all songs
-        save.quest_items = MmQuestItems::SONG_TIME
-            | MmQuestItems::SONG_HEALING
-            | MmQuestItems::SONG_EPONA
-            | MmQuestItems::SONG_SOARING
-            | MmQuestItems::SONG_STORMS
-            | MmQuestItems::SONG_AWAKENING
-            | MmQuestItems::SONG_GORON
-            | MmQuestItems::SONG_ZORA
-            | MmQuestItems::SONG_EMPTINESS
-            | MmQuestItems::SONG_ORDER;
+        let save = MmSave {
+            quest_items: MmQuestItems::SONG_TIME
+                | MmQuestItems::SONG_HEALING
+                | MmQuestItems::SONG_EPONA
+                | MmQuestItems::SONG_SOARING
+                | MmQuestItems::SONG_STORMS
+                | MmQuestItems::SONG_AWAKENING
+                | MmQuestItems::SONG_GORON
+                | MmQuestItems::SONG_ZORA
+                | MmQuestItems::SONG_EMPTINESS
+                | MmQuestItems::SONG_ORDER,
+            ..Default::default()
+        };
 
         // All song accessors should return true
         assert!(save.has_song_of_time());
@@ -2798,10 +2802,10 @@ mod tests {
 
     #[test]
     fn test_boss_remains_accessors_with_remains() {
-        let mut save = MmSave::default();
-
-        // Set some boss remains
-        save.quest_items = MmQuestItems::REMAINS_ODOLWA | MmQuestItems::REMAINS_GOHT;
+        let save = MmSave {
+            quest_items: MmQuestItems::REMAINS_ODOLWA | MmQuestItems::REMAINS_GOHT,
+            ..Default::default()
+        };
 
         // Check accessors return true for remains we have
         assert!(save.has_odolwa_remains());
@@ -2814,13 +2818,13 @@ mod tests {
 
     #[test]
     fn test_boss_remains_accessors_all_remains() {
-        let mut save = MmSave::default();
-
-        // Set all boss remains
-        save.quest_items = MmQuestItems::REMAINS_ODOLWA
-            | MmQuestItems::REMAINS_GOHT
-            | MmQuestItems::REMAINS_GYORG
-            | MmQuestItems::REMAINS_TWINMOLD;
+        let save = MmSave {
+            quest_items: MmQuestItems::REMAINS_ODOLWA
+                | MmQuestItems::REMAINS_GOHT
+                | MmQuestItems::REMAINS_GYORG
+                | MmQuestItems::REMAINS_TWINMOLD,
+            ..Default::default()
+        };
 
         // All remains accessors should return true
         assert!(save.has_odolwa_remains());

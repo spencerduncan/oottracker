@@ -828,23 +828,27 @@ mod update_mm_knowledge_tests {
     #[test]
     fn test_update_mm_knowledge_moon_access_requires_all_remains() {
         let mut state = ModelState::default();
-        let mut mm_save = mm_save::MmSave::default();
 
         // Add only 3 remains - should NOT mark moon access
-        mm_save.quest_items = mm_save::MmQuestItems::REMAINS_ODOLWA
-            | mm_save::MmQuestItems::REMAINS_GOHT
-            | mm_save::MmQuestItems::REMAINS_GYORG;
+        let mm_save = mm_save::MmSave {
+            quest_items: mm_save::MmQuestItems::REMAINS_ODOLWA
+                | mm_save::MmQuestItems::REMAINS_GOHT
+                | mm_save::MmQuestItems::REMAINS_GYORG,
+            ..Default::default()
+        };
         state.ram.mm_save = Some(mm_save);
         state.update_mm_knowledge();
 
         assert!(!state.is_checked("mm_moon_access"));
 
         // Add the 4th remain
-        let mut mm_save2 = mm_save::MmSave::default();
-        mm_save2.quest_items = mm_save::MmQuestItems::REMAINS_ODOLWA
-            | mm_save::MmQuestItems::REMAINS_GOHT
-            | mm_save::MmQuestItems::REMAINS_GYORG
-            | mm_save::MmQuestItems::REMAINS_TWINMOLD;
+        let mm_save2 = mm_save::MmSave {
+            quest_items: mm_save::MmQuestItems::REMAINS_ODOLWA
+                | mm_save::MmQuestItems::REMAINS_GOHT
+                | mm_save::MmQuestItems::REMAINS_GYORG
+                | mm_save::MmQuestItems::REMAINS_TWINMOLD,
+            ..Default::default()
+        };
         state.ram.mm_save = Some(mm_save2);
         state.update_mm_knowledge();
 
