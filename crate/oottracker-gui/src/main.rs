@@ -41,7 +41,7 @@ use {
     ootr::Rando,
     oottracker::{
         firebase,
-        flag_mapping::{get_checked_locations_summary, CheckedLocationsSummary},
+        flag_mapping::{get_checked_locations_summary_filtered, CheckedLocationsSummary},
         github::Repo,
         net::{self, Connection},
         proto::Packet,
@@ -734,7 +734,7 @@ impl Application for State<ootr_static::Rando> {
                     }
                 }
                 // Update checked locations summary after model changes
-                self.checked_locations = Some(get_checked_locations_summary(&self.model));
+                self.checked_locations = Some(get_checked_locations_summary_filtered(&self.model));
             }
             Message::ResetUpdateState => {
                 self.update_check = UpdateCheckState::Unknown(button::State::default())

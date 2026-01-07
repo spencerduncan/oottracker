@@ -47,6 +47,11 @@ use std::collections::HashMap;
 use once_cell::sync::Lazy;
 
 use ootmm::region::Game;
+use ootmm::settings::RandomizerSettings;
+use ootr::{
+    model::{Dungeon, MainDungeon},
+    region::Mq,
+};
 
 // ============================================================================
 // Flag Type Definition
@@ -3640,10 +3645,7 @@ pub use ootmm::settings::MqDungeon;
 /// This function handles MQ locations that `MqDungeon::from_location_id` might not
 /// recognize due to non-standard naming patterns (e.g., `mq_oot_mq_ganon_pot_*`
 /// instead of `mq_oot_mq_ganon_castle_*`).
-fn is_mq_location_active(
-    location_id: &str,
-    settings: &ootmm::settings::RandomizerSettings,
-) -> bool {
+fn is_mq_location_active(location_id: &str, settings: &RandomizerSettings) -> bool {
     // First try the standard detection
     if let Some(dungeon) = MqDungeon::from_location_id(location_id) {
         return settings.is_dungeon_mq(dungeon);
@@ -3684,7 +3686,7 @@ fn is_mq_location_active(
 /// }
 /// ```
 pub fn get_active_mappings(
-    settings: &ootmm::settings::RandomizerSettings,
+    settings: &RandomizerSettings,
 ) -> impl Iterator<Item = &'static FlagMapping> + '_ {
     OOT_MAPPINGS
         .values()
@@ -3708,7 +3710,7 @@ pub fn get_active_mappings(
 #[must_use]
 pub fn get_active_mapping(
     location_id: &str,
-    settings: &ootmm::settings::RandomizerSettings,
+    settings: &RandomizerSettings,
 ) -> Option<&'static FlagMapping> {
     let mapping = OOT_MAPPINGS.get(location_id)?;
     if is_location_active_for_settings(location_id, settings) {
@@ -3719,10 +3721,7 @@ pub fn get_active_mapping(
 }
 
 /// Helper to check if a location is active for given settings.
-fn is_location_active_for_settings(
-    location_id: &str,
-    settings: &ootmm::settings::RandomizerSettings,
-) -> bool {
+fn is_location_active_for_settings(location_id: &str, settings: &RandomizerSettings) -> bool {
     if location_id.starts_with("mq_oot_") {
         is_mq_location_active(location_id, settings)
     } else {
@@ -3732,7 +3731,7 @@ fn is_location_active_for_settings(
 
 /// Returns the count of active (non-MQ-filtered) locations for given settings.
 #[must_use]
-pub fn active_location_count(settings: &ootmm::settings::RandomizerSettings) -> usize {
+pub fn active_location_count(settings: &RandomizerSettings) -> usize {
     OOT_MAPPINGS
         .values()
         .filter(|m| is_location_active_for_settings(m.location_id, settings))
@@ -3741,7 +3740,7 @@ pub fn active_location_count(settings: &ootmm::settings::RandomizerSettings) -> 
 
 /// Returns the count of active mapped (non-stub) locations for given settings.
 #[must_use]
-pub fn active_mapped_count(settings: &ootmm::settings::RandomizerSettings) -> usize {
+pub fn active_mapped_count(settings: &RandomizerSettings) -> usize {
     OOT_MAPPINGS
         .values()
         .filter(|m| m.is_mapped() && is_location_active_for_settings(m.location_id, settings))
@@ -3750,7 +3749,7 @@ pub fn active_mapped_count(settings: &ootmm::settings::RandomizerSettings) -> us
 
 /// Returns an iterator over active mapped (non-stub) locations for given settings.
 pub fn get_active_mapped_locations(
-    settings: &ootmm::settings::RandomizerSettings,
+    settings: &RandomizerSettings,
 ) -> impl Iterator<Item = &'static FlagMapping> + '_ {
     OOT_MAPPINGS
         .values()
@@ -3763,12 +3762,74 @@ pub fn get_active_mapped_locations(
 /// setting in the provided settings.
 pub fn get_dungeon_mappings(
     dungeon: MqDungeon,
-    settings: &ootmm::settings::RandomizerSettings,
+    settings: &RandomizerSettings,
 ) -> impl Iterator<Item = &'static FlagMapping> + '_ {
     let prefix = settings.get_dungeon_location_prefix(dungeon);
     OOT_MAPPINGS
         .values()
         .filter(move |m| m.location_id.starts_with(prefix))
+}
+
+// ============================================================================
+// MQ Settings Conversion from Knowledge
+// ============================================================================
+
+/// Converts a Dungeon enum to the corresponding MqDungeon enum.
+///
+/// This mapping is needed to bridge between the ootr Dungeon enum used in
+/// Knowledge.mq and the ootmm MqDungeon enum used in RandomizerSettings.
+fn dungeon_to_mq_dungeon(dungeon: &Dungeon) -> MqDungeon {
+    match dungeon {
+        Dungeon::Main(MainDungeon::DekuTree) => MqDungeon::DekuTree,
+        Dungeon::Main(MainDungeon::DodongosCavern) => MqDungeon::DodongosCavern,
+        Dungeon::Main(MainDungeon::JabuJabu) => MqDungeon::JabuJabu,
+        Dungeon::Main(MainDungeon::ForestTemple) => MqDungeon::ForestTemple,
+        Dungeon::Main(MainDungeon::FireTemple) => MqDungeon::FireTemple,
+        Dungeon::Main(MainDungeon::WaterTemple) => MqDungeon::WaterTemple,
+        Dungeon::Main(MainDungeon::ShadowTemple) => MqDungeon::ShadowTemple,
+        Dungeon::Main(MainDungeon::SpiritTemple) => MqDungeon::SpiritTemple,
+        Dungeon::IceCavern => MqDungeon::IceCavern,
+        Dungeon::BottomOfTheWell => MqDungeon::BottomOfTheWell,
+        Dungeon::GerudoTrainingGround => MqDungeon::GerudoTrainingGround,
+        Dungeon::GanonsCastle => MqDungeon::GanonsCastle,
+    }
+}
+
+/// Creates RandomizerSettings from Knowledge MQ settings.
+///
+/// This function converts the `Knowledge.mq` HashMap<Dungeon, Mq> into a
+/// `RandomizerSettings` struct with the appropriate MQ dungeon selections.
+///
+/// # Arguments
+///
+/// * `mq_settings` - A HashMap mapping dungeons to their MQ status from Knowledge
+///
+/// # Returns
+///
+/// A `RandomizerSettings` with MQ dungeons configured according to the Knowledge.
+///
+/// # Example
+///
+/// ```ignore
+/// use oottracker::flag_mapping::mq_settings_from_knowledge;
+/// use oottracker::Knowledge;
+///
+/// let knowledge = Knowledge::default();
+/// let settings = mq_settings_from_knowledge(&knowledge.mq);
+/// ```
+#[must_use]
+pub fn mq_settings_from_knowledge(mq_settings: &HashMap<Dungeon, Mq>) -> RandomizerSettings {
+    let mut settings = RandomizerSettings::new();
+
+    for (dungeon, mq) in mq_settings {
+        let mq_dungeon = dungeon_to_mq_dungeon(dungeon);
+        match mq {
+            Mq::Mq => settings.set_dungeon_mq(mq_dungeon),
+            Mq::Vanilla => settings.set_dungeon_vanilla(mq_dungeon),
+        }
+    }
+
+    settings
 }
 
 // ============================================================================
@@ -4071,6 +4132,80 @@ pub fn get_checked_locations_summary(model: &ModelState) -> CheckedLocationsSumm
         checked_count,
         unchecked_count,
         skipped_count,
+        unknown_count,
+        locations,
+    }
+}
+
+/// Returns all checked locations for the current game state, filtered by MQ settings.
+///
+/// This function filters out locations that don't match the current MQ/vanilla
+/// settings for each dungeon as stored in the model's Knowledge.
+///
+/// # Arguments
+///
+/// * `model` - The current model state containing game memory and knowledge
+///
+/// # Returns
+///
+/// A vector of `LocationCheckResult` for all active locations based on MQ settings.
+pub fn get_all_checked_locations_filtered(model: &ModelState) -> Vec<LocationCheckResult> {
+    let settings = mq_settings_from_knowledge(&model.knowledge.mq);
+    get_active_mapped_locations(&settings)
+        .map(|mapping| LocationCheckResult {
+            location_id: mapping.location_id.to_string(),
+            status: check_location_status(mapping, model),
+            is_mapped: mapping.is_mapped(),
+        })
+        .collect()
+}
+
+/// Returns a summary of checked locations filtered by MQ settings from Knowledge.
+///
+/// This function filters out locations that don't match the current MQ/vanilla
+/// settings for each dungeon. For example, if the Deku Tree is set to vanilla
+/// in Knowledge.mq, then Master Quest Deku Tree locations will be excluded.
+///
+/// # Arguments
+///
+/// * `model` - The current model state containing game memory and knowledge
+///
+/// # Returns
+///
+/// A `CheckedLocationsSummary` containing counts and individual location statuses,
+/// filtered to only include locations matching the current MQ settings.
+///
+/// # Example
+///
+/// ```ignore
+/// use oottracker::flag_mapping::get_checked_locations_summary_filtered;
+/// use oottracker::ModelState;
+///
+/// let model = ModelState::default();
+/// let summary = get_checked_locations_summary_filtered(&model);
+/// // summary.locations will only include vanilla dungeon checks
+/// // since Knowledge.default() sets all dungeons to vanilla
+/// ```
+pub fn get_checked_locations_summary_filtered(model: &ModelState) -> CheckedLocationsSummary {
+    let locations = get_all_checked_locations_filtered(model);
+    let total_mapped = locations.len();
+    let checked_count = locations
+        .iter()
+        .filter(|l| l.status == CheckStatus::Checked)
+        .count();
+    let unchecked_count = locations
+        .iter()
+        .filter(|l| l.status == CheckStatus::Unchecked)
+        .count();
+    let unknown_count = locations
+        .iter()
+        .filter(|l| l.status == CheckStatus::Unknown)
+        .count();
+
+    CheckedLocationsSummary {
+        total_mapped,
+        checked_count,
+        unchecked_count,
         unknown_count,
         locations,
     }
