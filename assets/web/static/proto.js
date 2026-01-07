@@ -1,4 +1,7 @@
-const sock = new WebSocket("wss://oottracker.fenhl.net/websocket");
+const wsUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'ws://localhost:24808'
+    : 'wss://oottracker.fenhl.net/websocket';
+const sock = new WebSocket(wsUrl);
 const utf8decoder = new TextDecoder();
 const utf8encoder = new TextEncoder();
 
