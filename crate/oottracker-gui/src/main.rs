@@ -883,7 +883,7 @@ impl Application for State<ootr_static::Rando> {
 
     fn view(&mut self) -> Element<'_, Message<ootr_static::Rando>> {
         let layout = self.layout();
-        let (layout_width, layout_height) = layout.pixel_dimensions();
+        let (layout_width, _layout_height) = layout.pixel_dimensions();
         let mut cell_buttons = self.cell_buttons.iter_mut();
 
         macro_rules! cell {
@@ -1097,45 +1097,52 @@ impl Application for State<ootr_static::Rando> {
         };
 
         // Use computed layout dimensions for container sizing
-        let show_side_panel = self.flags.show_logic_tracker || self.show_check_panel;
-        let items_container = Container::new(
-            Container::new(view.spacing(10).padding(5))
-                .width(Length::Units(layout_width as u16))
-                .height(Length::Units(layout_height as u16)),
-        )
-        .width(Length::Fill)
-        .style(ContainerStyle)
-        .width(if show_side_panel {
-            Length::Units(layout_width as u16 + 2)
-        } else {
-            Length::Fill
-        })
-        .height(Length::Fill)
-        .into();
+        // Float tracker at top with no wasted space above
+        let items_view = Container::new(view.spacing(10).padding(5))
+            .width(Length::Units(layout_width as u16))
+            .height(Length::Shrink);
+
         if self.flags.show_logic_tracker {
+            // Logic tracker shows as side panel (existing behavior)
+            let items_container = Container::new(items_view)
+                .width(Length::Units(layout_width as u16 + 2))
+                .height(Length::Fill)
+                .align_y(alignment::Vertical::Top)
+                .style(ContainerStyle);
             Row::new()
                 .push(items_container)
                 .push(self.logic.view(&self.rando).map(Message::Logic))
                 .width(Length::Fill)
                 .into()
         } else if self.show_check_panel {
-            // Placeholder check panel - will be replaced by actual widget from #482
+            // Check panel anchored below the tracker (vertical layout)
             let check_panel = Container::new(
                 Text::new("Check Panel")
                     .color([1.0, 1.0, 1.0])
                     .width(Length::Fill)
                     .horizontal_alignment(alignment::Horizontal::Center),
             )
-            .width(Length::Units(200))
+            .width(Length::Fill)
             .height(Length::Fill)
             .style(ContainerStyle);
-            Row::new()
-                .push(items_container)
-                .push(check_panel)
-                .width(Length::Fill)
-                .into()
+            Container::new(
+                Column::new()
+                    .push(items_view)
+                    .push(check_panel)
+                    .width(Length::Fill),
+            )
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .style(ContainerStyle)
+            .into()
         } else {
-            items_container
+            // Tracker only - float at top, fill remaining space with background
+            Container::new(items_view)
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .align_y(alignment::Vertical::Top)
+                .style(ContainerStyle)
+                .into()
         }
     }
 
