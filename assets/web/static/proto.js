@@ -1,4 +1,4 @@
-const wsUrl = (window.location.hostname === 'localhost')
+const wsUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'ws://localhost:24808'
     : 'wss://oottracker.fenhl.net/websocket';
 const sock = new WebSocket(wsUrl);
