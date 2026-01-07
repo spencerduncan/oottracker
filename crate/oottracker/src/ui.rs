@@ -4423,7 +4423,7 @@ impl TrackerLayout {
             }
 
             Self::DungeonItems => {
-                // OoT dungeon items: maps and compasses for all dungeons
+                // OoT dungeon items: maps, compasses, boss keys, and small keys
                 // 6 columns, organized by dungeon
                 columns!(
                     6,
@@ -4454,6 +4454,27 @@ impl TrackerLayout {
                         SpiritCompass,
                         WellCompass,
                         IceCompass,
+                        Blank,
+                        Blank,
+                        // Row 5: Boss Keys (dungeons that have them)
+                        ForestBossKey,
+                        FireBossKey,
+                        WaterBossKey,
+                        ShadowBossKey,
+                        SpiritBossKey,
+                        GanonBossKey,
+                        // Row 6: Small Keys (main temples + Well)
+                        ForestSmallKeys,
+                        FireSmallKeys,
+                        WaterSmallKeys,
+                        ShadowSmallKeys,
+                        SpiritSmallKeys,
+                        WellSmallKeys,
+                        // Row 7: Small Keys (other dungeons)
+                        FortressSmallKeys,
+                        GtgSmallKeys,
+                        GanonSmallKeys,
+                        Blank,
                         Blank,
                         Blank,
                     ]
@@ -4658,7 +4679,20 @@ impl TrackerLayout {
                         Blank,
                         Blank,
                         Blank,
-                        // Row 13: MM Dungeon Items - Boss Keys + Maps
+                        // Row 13: OoT Small Keys
+                        ForestSmallKeys,
+                        FireSmallKeys,
+                        WaterSmallKeys,
+                        ShadowSmallKeys,
+                        SpiritSmallKeys,
+                        WellSmallKeys,
+                        FortressSmallKeys,
+                        GtgSmallKeys,
+                        GanonSmallKeys,
+                        Blank,
+                        Blank,
+                        Blank,
+                        // Row 14: MM Dungeon Items - Boss Keys + Maps
                         MmWoodfallBossKey,
                         MmSnowheadBossKey,
                         MmGreatBayBossKey,
@@ -4671,7 +4705,7 @@ impl TrackerLayout {
                         MmSnowheadCompass,
                         MmGreatBayCompass,
                         MmStoneTowerCompass,
-                        // Row 14: MM Dungeon Items - Small Keys + Stray Fairies
+                        // Row 15: MM Dungeon Items - Small Keys + Stray Fairies
                         MmWoodfallSmallKeys,
                         MmSnowheadSmallKeys,
                         MmGreatBaySmallKeys,
