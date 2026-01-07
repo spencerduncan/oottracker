@@ -1,9 +1,149 @@
 const wsUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'ws://localhost:24808'
     : 'wss://oottracker.fenhl.net/websocket';
-const sock = new WebSocket(wsUrl);
 const utf8decoder = new TextDecoder();
 const utf8encoder = new TextEncoder();
+
+// ========== WebSocket Connection Management ==========
+
+// Connection state
+let sock = null;
+let reconnectAttempts = 0;
+let reconnectTimeout = null;
+const MAX_RECONNECT_DELAY = 30000; // 30 seconds max
+const BASE_RECONNECT_DELAY = 1000; // 1 second base
+
+// Connection status: 'connecting', 'connected', 'disconnected'
+let connectionStatus = 'disconnected';
+
+function getReconnectDelay() {
+    // Exponential backoff: 1s, 2s, 4s, 8s, 16s, 30s (capped)
+    const delay = Math.min(BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY);
+    return delay;
+}
+
+function updateConnectionStatus(status) {
+    connectionStatus = status;
+    updateConnectionIndicator();
+}
+
+function updateConnectionIndicator() {
+    const indicator = document.getElementById('connection-status-indicator');
+    if (!indicator) return;
+
+    const dot = indicator.querySelector('.status-dot');
+    const text = indicator.querySelector('.status-text');
+
+    if (!dot || !text) return;
+
+    // Remove existing status classes
+    dot.classList.remove('status-connected', 'status-connecting', 'status-disconnected');
+
+    switch (connectionStatus) {
+        case 'connected':
+            dot.classList.add('status-connected');
+            text.textContent = 'Connected';
+            indicator.title = 'WebSocket connected';
+            break;
+        case 'connecting':
+            dot.classList.add('status-connecting');
+            if (reconnectAttempts > 0) {
+                text.textContent = 'Reconnecting...';
+                indicator.title = `Reconnecting (attempt ${reconnectAttempts})`;
+            } else {
+                text.textContent = 'Connecting...';
+                indicator.title = 'Connecting to server';
+            }
+            break;
+        case 'disconnected':
+            dot.classList.add('status-disconnected');
+            text.textContent = 'Disconnected';
+            indicator.title = 'WebSocket disconnected - click to reconnect';
+            break;
+    }
+}
+
+function createConnectionIndicator() {
+    // Check if indicator already exists
+    if (document.getElementById('connection-status-indicator')) return;
+
+    const indicator = document.createElement('div');
+    indicator.id = 'connection-status-indicator';
+
+    const dot = document.createElement('span');
+    dot.className = 'status-dot';
+
+    const text = document.createElement('span');
+    text.className = 'status-text';
+    text.textContent = 'Connecting...';
+
+    indicator.appendChild(dot);
+    indicator.appendChild(text);
+
+    // Allow manual reconnection on click when disconnected
+    indicator.addEventListener('click', function() {
+        if (connectionStatus === 'disconnected') {
+            reconnectAttempts = 0;
+            if (reconnectTimeout) {
+                clearTimeout(reconnectTimeout);
+                reconnectTimeout = null;
+            }
+            connectWebSocket();
+        }
+    });
+
+    document.body.appendChild(indicator);
+    updateConnectionIndicator();
+}
+
+function connectWebSocket() {
+    // Clear any existing connection
+    if (sock) {
+        sock.close();
+        sock = null;
+    }
+
+    updateConnectionStatus('connecting');
+
+    try {
+        sock = new WebSocket(wsUrl);
+        sock.binaryType = "arraybuffer";
+
+        sock.addEventListener('open', handleWebSocketOpen);
+        sock.addEventListener('message', handleWebSocketMessage);
+        sock.addEventListener('close', handleWebSocketClose);
+        sock.addEventListener('error', handleWebSocketError);
+    } catch (e) {
+        console.error('WebSocket connection error:', e);
+        scheduleReconnect();
+    }
+}
+
+function scheduleReconnect() {
+    if (reconnectTimeout) return; // Already scheduled
+
+    updateConnectionStatus('disconnected');
+    const delay = getReconnectDelay();
+    console.log(`Scheduling reconnect in ${delay}ms (attempt ${reconnectAttempts + 1})`);
+
+    reconnectTimeout = setTimeout(function() {
+        reconnectTimeout = null;
+        reconnectAttempts++;
+        connectWebSocket();
+    }, delay);
+}
+
+function handleWebSocketClose(event) {
+    console.log('WebSocket closed:', event.code, event.reason);
+    scheduleReconnect();
+}
+
+function handleWebSocketError(event) {
+    console.error('WebSocket error:', event);
+    // The close event will fire after error, which will trigger reconnect
+}
+
+// ========== End WebSocket Connection Management ==========
 
 // ========== Audio System for Item Fanfares ==========
 
@@ -185,8 +325,6 @@ if (document.readyState === 'loading') {
 }
 
 // ========== End Audio System ==========
-
-sock.binaryType = "arraybuffer";
 
 function readImgDir(discrim, overlay) {
     switch (discrim) {
@@ -498,7 +636,11 @@ function updateCell(cellID, data, offset, isInitialLoad) {
     return offset;
 }
 
-sock.addEventListener('open', function(event) {
+function handleWebSocketOpen(event) {
+    console.log('WebSocket connected');
+    reconnectAttempts = 0; // Reset on successful connection
+    updateConnectionStatus('connected');
+
     const mwRoomMatch = window.location.pathname.match(/^\/mw\/([0-9A-Za-z-]+)\/([0-9]+)\/([0-9A-Za-z-]+)\/?$/);
     const roomMatch = window.location.pathname.match(/^\/room\/([0-9A-Za-z-]+)\/?$/);
     const roomWithLayoutMatch = window.location.pathname.match(/^\/room\/([0-9A-Za-z-]+)\/([0-9A-Za-z-]+)\/?$/);
@@ -569,9 +711,9 @@ sock.addEventListener('open', function(event) {
         new DataView(doubleLayoutBuf).setUint8(0, doubleLayout);
         sock.send(new Blob([doubleSubscription, doubleRestreamLen, doubleRestream, runner1len, runner1, runner2len, runner2, doubleLayoutBuf]));
     }
-});
+}
 
-sock.addEventListener('message', function(event) {
+function handleWebSocketMessage(event) {
     const data = event.data;
     const view = new DataView(data);
     let offset = 0;
@@ -609,4 +751,15 @@ sock.addEventListener('message', function(event) {
         default:
             throw 'unexpected ServerMessage variant';
     }
-});
+}
+
+// Initialize connection indicator and WebSocket on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        createConnectionIndicator();
+        connectWebSocket();
+    });
+} else {
+    createConnectionIndicator();
+    connectWebSocket();
+}
