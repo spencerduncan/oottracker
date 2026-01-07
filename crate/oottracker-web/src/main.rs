@@ -240,6 +240,7 @@ async fn main() -> Result<(), Error> {
                     ram,
                     tracker_ctx: TrackerCtx::default(),
                     check_tracker: None,
+                    skipped_locations: Default::default(),
                 },
                 None, // Rooms loaded from database don't have tokens (backwards compatible)
             );

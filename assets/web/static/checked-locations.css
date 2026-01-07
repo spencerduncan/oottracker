@@ -197,6 +197,17 @@
     color: #4caf50;
 }
 
+.location-skipped {
+    color: #9c27b0;
+    text-decoration: line-through;
+    font-style: italic;
+    opacity: 0.8;
+}
+
+.location-skipped .location-icon {
+    color: #9c27b0;
+}
+
 .location-unknown {
     color: #ff9800;
     font-style: italic;
@@ -204,6 +215,55 @@
 
 .location-unknown .location-icon {
     color: #ff9800;
+}
+
+/* Skip/Unskip buttons */
+.skip-button,
+.unskip-button {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    color: #888;
+    cursor: pointer;
+    font-size: 10px;
+    padding: 2px 6px;
+    margin-left: auto;
+    opacity: 0;
+    transition: opacity 0.2s, background-color 0.2s, color 0.2s;
+}
+
+.location-item:hover .skip-button,
+.location-item:hover .unskip-button {
+    opacity: 1;
+}
+
+.skip-button:hover {
+    background: rgba(156, 39, 176, 0.2);
+    border-color: #9c27b0;
+    color: #9c27b0;
+}
+
+.unskip-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #fff;
+    color: #fff;
+}
+
+.skip-button:disabled,
+.unskip-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Pending state for locations being toggled */
+.location-item.pending {
+    opacity: 0.5;
+}
+
+/* Skipped indicator in status bar */
+.skipped-indicator {
+    color: #9c27b0;
+    font-size: 12px;
 }
 
 /* Light theme overrides */
@@ -300,6 +360,36 @@
 
     .location-unknown .location-icon {
         color: #f57c00;
+    }
+
+    .location-skipped {
+        color: #7b1fa2;
+    }
+
+    .location-skipped .location-icon {
+        color: #7b1fa2;
+    }
+
+    .skip-button,
+    .unskip-button {
+        border-color: rgba(0, 0, 0, 0.2);
+        color: #666;
+    }
+
+    .skip-button:hover {
+        background: rgba(123, 31, 162, 0.1);
+        border-color: #7b1fa2;
+        color: #7b1fa2;
+    }
+
+    .unskip-button:hover {
+        background: rgba(0, 0, 0, 0.05);
+        border-color: #333;
+        color: #333;
+    }
+
+    .skipped-indicator {
+        color: #7b1fa2;
     }
 }
 

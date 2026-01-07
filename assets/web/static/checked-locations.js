@@ -12,7 +12,8 @@ let checkedLocationsState = {
     lastUpdate: null,
     isLoading: false,
     error: null,
-    collapsedRegions: new Set() // Track which regions are collapsed
+    collapsedRegions: new Set(), // Track which regions are collapsed
+    pendingSkipToggles: new Set() // Track locations with pending skip toggle requests
 };
 
 // Status display element
@@ -253,15 +254,23 @@ function updateStatusDisplay(data) {
     if (!statusElement) return;
 
     if (data) {
+        // Done includes both checked and skipped
+        const doneCount = data.checked_count + (data.skipped_count || 0);
         const percent = data.total_mapped > 0
-            ? Math.round((data.checked_count / data.total_mapped) * 100)
+            ? Math.round((doneCount / data.total_mapped) * 100)
             : 0;
-        statusElement.innerHTML = `
-            <span class="checked-count">${data.checked_count}</span>
+        let html = `
+            <span class="checked-count">${data.checked_count}</span>`;
+        // Show skipped count if any locations are skipped
+        if (data.skipped_count && data.skipped_count > 0) {
+            html += `<span class="skipped-indicator"> (+${data.skipped_count} skipped)</span>`;
+        }
+        html += `
             <span class="checked-separator">/</span>
             <span class="total-count">${data.total_mapped}</span>
             <span class="checked-percent">(${percent}%)</span>
         `;
+        statusElement.innerHTML = html;
         statusElement.classList.remove('error');
     } else if (checkedLocationsState.error) {
         statusElement.innerHTML = `<span class="error-text">Error: ${checkedLocationsState.error}</span>`;
@@ -314,14 +323,36 @@ function createCheckedLocationsPanel() {
     list.className = 'locations-list';
     list.id = 'checked-locations-list';
 
-    // Event delegation for region toggle buttons (prevents XSS from inline onclick)
+    // Event delegation for region toggle buttons and skip buttons (prevents XSS from inline onclick)
     list.addEventListener('click', (e) => {
+        // Handle region header clicks
         const header = e.target.closest('.region-header');
         if (header) {
             const regionGroup = header.closest('.region-group');
             if (regionGroup && regionGroup.dataset.region) {
                 toggleRegion(regionGroup.dataset.region);
             }
+            return;
+        }
+
+        // Handle skip button clicks
+        const skipButton = e.target.closest('.skip-button');
+        if (skipButton) {
+            const locationItem = skipButton.closest('.location-item');
+            if (locationItem && locationItem.dataset.location) {
+                toggleSkipLocation(locationItem.dataset.location);
+            }
+            return;
+        }
+
+        // Handle unskip button clicks
+        const unskipButton = e.target.closest('.unskip-button');
+        if (unskipButton) {
+            const locationItem = unskipButton.closest('.location-item');
+            if (locationItem && locationItem.dataset.location) {
+                toggleSkipLocation(locationItem.dataset.location);
+            }
+            return;
         }
     });
 
@@ -359,6 +390,48 @@ function toggleRegion(regionKey) {
 }
 
 /**
+ * Toggle skip state for a location
+ */
+async function toggleSkipLocation(locationId) {
+    const roomName = getRoomName();
+    if (!roomName) return;
+
+    // Mark as pending
+    checkedLocationsState.pendingSkipToggles.add(locationId);
+
+    try {
+        const response = await fetch(`/api/room/${encodeURIComponent(roomName)}/toggle-skip`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ location_id: locationId })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        // Update local state immediately
+        checkedLocationsState.locations[locationId] = result.skipped ? 'Skipped' : 'Unchecked';
+
+        // Refresh the display
+        const data = {
+            locations: Object.entries(checkedLocationsState.locations).map(([id, status]) => ({
+                location_id: id,
+                status: status
+            }))
+        };
+        updateLocationsList(data);
+    } catch (error) {
+        console.error('Failed to toggle skip state:', error);
+    } finally {
+        checkedLocationsState.pendingSkipToggles.delete(locationId);
+    }
+}
+
+/**
  * Update the locations list display with region-based grouping
  */
 function updateLocationsList(data) {
@@ -374,6 +447,7 @@ function updateLocationsList(data) {
             regionGroups[region] = {
                 checked: [],
                 unchecked: [],
+                skipped: [],
                 unknown: []
             };
         }
@@ -382,6 +456,8 @@ function updateLocationsList(data) {
             regionGroups[region].checked.push(loc.location_id);
         } else if (loc.status === 'Unchecked') {
             regionGroups[region].unchecked.push(loc.location_id);
+        } else if (loc.status === 'Skipped') {
+            regionGroups[region].skipped.push(loc.location_id);
         } else {
             regionGroups[region].unknown.push(loc.location_id);
         }
@@ -405,8 +481,10 @@ function updateLocationsList(data) {
 
     for (const region of sortedRegions) {
         const group = regionGroups[region];
-        const total = group.checked.length + group.unchecked.length + group.unknown.length;
-        const checked = group.checked.length;
+        // Total includes checked, unchecked, skipped, and unknown
+        const total = group.checked.length + group.unchecked.length + group.skipped.length + group.unknown.length;
+        // Progress shows checked + skipped (locations that are "done" either way)
+        const done = group.checked.length + group.skipped.length;
         const isCollapsed = checkedLocationsState.collapsedRegions.has(region);
         const collapsedClass = isCollapsed ? 'collapsed' : '';
         const arrow = isCollapsed ? '&#9654;' : '&#9660;'; // Right arrow or down arrow
@@ -415,16 +493,30 @@ function updateLocationsList(data) {
         html += `<button class="region-header" aria-expanded="${!isCollapsed}" aria-controls="region-${escapeHtml(region)}">`;
         html += `<span class="region-arrow">${arrow}</span>`;
         html += `<span class="region-name">${escapeHtml(getRegionDisplayName(region))}</span>`;
-        html += `<span class="region-count">(${checked}/${total})</span>`;
+        html += `<span class="region-count">(${done}/${total})</span>`;
         html += `</button>`;
 
         html += `<div class="region-locations" id="region-${escapeHtml(region)}">`;
 
         // Show unchecked first (what the player still needs to get)
         for (const loc of group.unchecked.sort()) {
-            html += `<div class="location-item location-unchecked">`;
+            const isPending = checkedLocationsState.pendingSkipToggles.has(loc);
+            const pendingClass = isPending ? ' pending' : '';
+            html += `<div class="location-item location-unchecked${pendingClass}" data-location="${escapeHtml(loc)}">`;
             html += `<span class="location-icon">&#9744;</span>`; // Empty checkbox
             html += `<span class="location-name">${escapeHtml(formatLocationName(loc))}</span>`;
+            html += `<button class="skip-button" title="Skip this location" ${isPending ? 'disabled' : ''}>&#10006;</button>`; // X mark to skip
+            html += `</div>`;
+        }
+
+        // Then skipped (user decided to skip)
+        for (const loc of group.skipped.sort()) {
+            const isPending = checkedLocationsState.pendingSkipToggles.has(loc);
+            const pendingClass = isPending ? ' pending' : '';
+            html += `<div class="location-item location-skipped${pendingClass}" data-location="${escapeHtml(loc)}">`;
+            html += `<span class="location-icon">&#10060;</span>`; // Red X to indicate skipped
+            html += `<span class="location-name">${escapeHtml(formatLocationName(loc))}</span>`;
+            html += `<button class="unskip-button" title="Unskip this location" ${isPending ? 'disabled' : ''}>&#8634;</button>`; // Undo/refresh icon
             html += `</div>`;
         }
 
@@ -502,5 +594,7 @@ if (document.readyState === 'loading') {
 window.checkedLocations = {
     refresh: refreshCheckedLocations,
     getState: () => checkedLocationsState,
-    isLocationChecked: (locationId) => checkedLocationsState.locations[locationId] === 'Checked'
+    isLocationChecked: (locationId) => checkedLocationsState.locations[locationId] === 'Checked',
+    isLocationSkipped: (locationId) => checkedLocationsState.locations[locationId] === 'Skipped',
+    toggleSkip: toggleSkipLocation
 };
