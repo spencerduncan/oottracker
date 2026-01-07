@@ -75,7 +75,7 @@ mod packet_serialization {
     #[test]
     fn test_save_init_packet_roundtrip() {
         let save = Save::default();
-        let packet = Packet::SaveInit(save.clone());
+        let packet = Packet::SaveInit(save);
         let mut buf = Vec::new();
         packet.write_sync(&mut buf).unwrap();
 

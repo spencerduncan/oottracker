@@ -2,6 +2,9 @@
 //!
 //! This module provides helper functions for loading and working with test fixtures.
 
+// These utility functions are available for future tests
+#![allow(dead_code)]
+
 use std::path::PathBuf;
 
 /// Returns the path to a fixture file.
