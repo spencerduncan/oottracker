@@ -525,6 +525,117 @@ async fn api_checked_locations(
     Ok(Json(summary))
 }
 
+/// Request body for toggling location skip state.
+#[derive(Debug, serde::Deserialize)]
+struct ToggleSkipRequest {
+    /// The location ID to toggle skip state for.
+    location_id: String,
+}
+
+/// Response for toggle skip endpoint.
+#[derive(Debug, serde::Serialize)]
+struct ToggleSkipResponse {
+    /// The location ID that was toggled.
+    location_id: String,
+    /// Whether the location is now skipped.
+    skipped: bool,
+}
+
+/// Toggles the skip state for a location in a room.
+///
+/// If the location is currently skipped, it will be unskipped.
+/// If the location is not skipped, it will be marked as skipped.
+///
+/// # Request Body
+///
+/// JSON object with:
+/// - `location_id`: The location ID to toggle
+///
+/// # Response
+///
+/// Returns a JSON object with:
+/// - `location_id`: The location ID that was toggled
+/// - `skipped`: Whether the location is now skipped (true) or not (false)
+#[rocket::post("/api/room/<name>/toggle-skip", data = "<request>")]
+async fn api_toggle_skip(
+    pool: &State<SqlitePool>,
+    rooms: &State<Rooms>,
+    name: &str,
+    request: Json<ToggleSkipRequest>,
+) -> Result<Json<ToggleSkipResponse>, Error> {
+    let location_id = request.location_id.clone();
+    // First check if currently skipped
+    let is_currently_skipped = get_room(rooms, name.to_owned(), |room| {
+        room.model.skipped_locations.contains(&location_id)
+    })
+    .await?;
+
+    // Toggle the state
+    let new_skipped = !is_currently_skipped;
+    let location_id_clone = location_id.clone();
+    edit_room(pool, rooms, name.to_owned(), |room| {
+        if new_skipped {
+            room.model
+                .skipped_locations
+                .insert(location_id_clone.clone());
+        } else {
+            room.model.skipped_locations.remove(&location_id_clone);
+        }
+        Ok(())
+    })
+    .await?;
+
+    Ok(Json(ToggleSkipResponse {
+        location_id: request.location_id.clone(),
+        skipped: new_skipped,
+    }))
+}
+
+/// Sets the skip state for a location in a room.
+///
+/// # Request Body
+///
+/// JSON object with:
+/// - `location_id`: The location ID to set skip state for
+/// - `skipped`: Whether to skip (true) or unskip (false) the location
+///
+/// # Response
+///
+/// Returns a JSON object with:
+/// - `location_id`: The location ID that was modified
+/// - `skipped`: The new skip state
+#[derive(Debug, serde::Deserialize)]
+struct SetSkipRequest {
+    /// The location ID to set skip state for.
+    location_id: String,
+    /// Whether to skip the location.
+    skipped: bool,
+}
+
+#[rocket::post("/api/room/<name>/set-skip", data = "<request>")]
+async fn api_set_skip(
+    pool: &State<SqlitePool>,
+    rooms: &State<Rooms>,
+    name: &str,
+    request: Json<SetSkipRequest>,
+) -> Result<Json<ToggleSkipResponse>, Error> {
+    let location_id = request.location_id.clone();
+    let skipped = request.skipped;
+    edit_room(pool, rooms, name.to_owned(), |room| {
+        if skipped {
+            room.model.skipped_locations.insert(location_id.clone());
+        } else {
+            room.model.skipped_locations.remove(&location_id);
+        }
+        Ok(())
+    })
+    .await?;
+    Ok(Json(ToggleSkipResponse {
+        location_id: request.location_id.clone(),
+        skipped,
+    }))
+}
+
 pub(crate) fn rocket(
     pool: SqlitePool,
     rooms: Rooms,
@@ -565,6 +676,8 @@ pub(crate) fn rocket(
             click,
             click_with_layout,
             api_checked_locations,
+            api_toggle_skip,
+            api_set_skip,
         ],
     )
 }

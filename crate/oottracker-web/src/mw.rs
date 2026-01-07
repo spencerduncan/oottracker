@@ -63,6 +63,7 @@ impl MwState {
                             knowledge: Default::default(),
                             tracker_ctx: Default::default(),
                             check_tracker: None,
+                            skipped_locations: Default::default(),
                         },
                         queue,
                         HashSet::default(),

@@ -3685,6 +3685,7 @@ dependencies = [
  "pyo3",
  "rocket",
  "rocket-util",
+ "serde",
  "serde_json",
  "sqlx",
  "thiserror 1.0.44",

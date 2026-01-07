@@ -3784,6 +3784,8 @@ pub enum CheckStatus {
     Checked,
     /// Location has not been checked yet.
     Unchecked,
+    /// User has decided to skip this location (won't complete it).
+    Skipped,
     /// Check status cannot be determined (unmapped or unknown).
     Unknown,
 }
@@ -3808,11 +3810,17 @@ pub struct LocationCheckResult {
 ///
 /// # Returns
 ///
+/// `CheckStatus::Skipped` if the user has marked this location as skipped,
 /// `CheckStatus::Checked` if the location flag is set,
 /// `CheckStatus::Unchecked` if the flag is not set,
 /// `CheckStatus::Unknown` if the location is unmapped or cannot be determined.
 #[must_use]
 pub fn check_location_status(mapping: &FlagMapping, model: &ModelState) -> CheckStatus {
+    // Check if user has marked this location as skipped
+    if model.skipped_locations.contains(mapping.location_id) {
+        return CheckStatus::Skipped;
+    }
+
     // If the mapping is a stub (unmapped), we can't determine the status
     if mapping.is_stub() {
         return CheckStatus::Unknown;
@@ -3975,6 +3983,8 @@ pub struct CheckedLocationsSummary {
     pub checked_count: usize,
     /// Number of unchecked locations.
     pub unchecked_count: usize,
+    /// Number of skipped locations.
+    pub skipped_count: usize,
     /// Number of locations with unknown status.
     pub unknown_count: usize,
     /// List of location check results.
@@ -4001,6 +4011,10 @@ pub fn get_checked_locations_summary(model: &ModelState) -> CheckedLocationsSumm
         .iter()
         .filter(|l| l.status == CheckStatus::Unchecked)
         .count();
+    let skipped_count = locations
+        .iter()
+        .filter(|l| l.status == CheckStatus::Skipped)
+        .count();
     let unknown_count = locations
         .iter()
         .filter(|l| l.status == CheckStatus::Unknown)
@@ -4010,6 +4024,7 @@ pub fn get_checked_locations_summary(model: &ModelState) -> CheckedLocationsSumm
         total_mapped,
         checked_count,
         unchecked_count,
+        skipped_count,
         unknown_count,
         locations,
     }

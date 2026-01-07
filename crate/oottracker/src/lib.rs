@@ -29,7 +29,10 @@ use {
     ootr::{check::Check, model::*},
     semver::Version,
     serde::{Deserialize, Serialize},
-    std::ops::{AddAssign, Sub},
+    std::{
+        collections::HashSet,
+        ops::{AddAssign, Sub},
+    },
 };
 
 use once_cell::sync::Lazy;
@@ -122,6 +125,10 @@ pub struct ModelState {
     /// Check tracker for MM/combo randomizer tracking.
     /// Initialized when MM tracking is active (mm_save is Some).
     pub check_tracker: Option<CheckTracker>,
+    /// Locations the user has decided to skip (won't complete).
+    /// These are displayed visually distinct from unchecked and checked locations.
+    #[serde(default)]
+    pub skipped_locations: HashSet<String>,
 }
 
 impl ModelState {
@@ -562,6 +569,7 @@ impl Sub<&ModelState> for &ModelState {
             tracker_ctx,
             ram,
             check_tracker,
+            skipped_locations: _, // Skipped locations are not included in delta
         } = self;
         ModelDelta {
             knowledge: knowledge.clone(), //TODO only include new knowledge?
