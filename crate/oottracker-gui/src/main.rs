@@ -771,11 +771,10 @@ impl Application for State<ootr_static::Rando> {
                 }
             }
             Message::SetAutoUpdateCheck(enable) => {
-                self.config
-                    .as_mut()
-                    .expect("config not yet loaded")
-                    .auto_update_check = Some(enable);
-                return self.save_config();
+                if let Some(config) = self.config.as_mut() {
+                    config.auto_update_check = Some(enable);
+                    return self.save_config();
+                }
             }
             Message::SetItemFanfarePath(path) => {
                 let config = self.config.as_mut().expect("config not yet loaded");
@@ -797,18 +796,16 @@ impl Application for State<ootr_static::Rando> {
                 }
             }
             Message::SetLayoutPreference(layout_preference) => {
-                self.config
-                    .as_mut()
-                    .expect("config not yet loaded")
-                    .layout_preference = layout_preference;
-                return self.save_config();
+                if let Some(config) = self.config.as_mut() {
+                    config.layout_preference = layout_preference;
+                    return self.save_config();
+                }
             }
             Message::SetMedOrder(med_order) => {
-                self.config
-                    .as_mut()
-                    .expect("config not yet loaded")
-                    .med_order = med_order;
-                return self.save_config();
+                if let Some(config) = self.config.as_mut() {
+                    config.med_order = med_order;
+                    return self.save_config();
+                }
             }
             Message::SetPasscode(new_passcode) => {
                 if let Some(MenuState {
@@ -843,11 +840,10 @@ impl Application for State<ootr_static::Rando> {
                 }
             }
             Message::SetWarpSongOrder(warp_song_order) => {
-                self.config
-                    .as_mut()
-                    .expect("config not yet loaded")
-                    .warp_song_order = warp_song_order;
-                return self.save_config();
+                if let Some(config) = self.config.as_mut() {
+                    config.warp_song_order = warp_song_order;
+                    return self.save_config();
+                }
             }
             Message::ToggleCheckPanel => {
                 self.show_check_panel = !self.show_check_panel;
