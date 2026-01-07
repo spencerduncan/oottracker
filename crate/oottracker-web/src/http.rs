@@ -657,6 +657,14 @@ pub(crate) fn rocket(
             rocket::fs::Options::None,
         ),
     )
+    // Serve images directly from assets/img to avoid symlink issues on Windows
+    .mount(
+        "/static/img",
+        FileServer::new(
+            relative!("../../assets/img"),
+            rocket::fs::Options::None,
+        ),
+    )
     .mount(
         "/",
         rocket::routes![
