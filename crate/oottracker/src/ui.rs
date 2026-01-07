@@ -6978,6 +6978,42 @@ mod tests {
             "Accessibility should be None when check is not completed"
         );
     }
+
+    #[test]
+    #[cfg(feature = "rocket")]
+    fn test_cell_overlay_count_renders_without_max_when_zero() {
+        use rocket_util::ToHtml;
+        let render = CellRender::new(
+            ImageInfo::new("triforce"),
+            CellStyle::Normal,
+            CellOverlay::CountWithMax {
+                count: 5,
+                max: 0,
+                count_img: ImageInfo::new("force"),
+            },
+        );
+        let html = render.to_html().0;
+        assert!(html.contains(">5<"));
+        // Should not contain "X / Y" format (the slash in img src path is fine)
+        assert!(!html.contains(" / "));
+    }
+
+    #[test]
+    #[cfg(feature = "rocket")]
+    fn test_cell_overlay_count_renders_with_max_when_nonzero() {
+        use rocket_util::ToHtml;
+        let render = CellRender::new(
+            ImageInfo::new("skulltula"),
+            CellStyle::Normal,
+            CellOverlay::CountWithMax {
+                count: 25,
+                max: 100,
+                count_img: ImageInfo::new("skulls"),
+            },
+        );
+        let html = render.to_html().0;
+        assert!(html.contains("25 / 100"));
+    }
 }
 
 #[cfg(feature = "embed-images")]
