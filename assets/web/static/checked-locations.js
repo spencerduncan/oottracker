@@ -23,101 +23,227 @@ let statusElement = null;
  * The order here determines display order (dungeons first, then overworld).
  */
 const REGION_DISPLAY_ORDER = [
-    // Child Dungeons
+    // OoT Child Dungeons
     'deku_tree',
     'dodongo_cavern',
     'jabu_jabu',
-    // Adult Dungeons
+    // OoT Adult Dungeons
     'forest_temple',
     'fire_temple',
     'water_temple',
     'spirit_temple',
     'shadow_temple',
-    // Mini Dungeons
+    // OoT Mini Dungeons
     'bottom_of_the_well',
     'ice_cavern',
     'gerudo_training',
     'ganon_castle',
     'treasure_chest_game',
-    // Overworld - Kokiri/Forest
+    // OoT Overworld - Kokiri/Forest
     'kokiri_forest',
     'kf',
     'lw',
     'sfm',
-    // Overworld - Hyrule
+    // OoT Overworld - Hyrule
     'hf',
     'lon_lon_ranch',
     'market',
     'hyrule_castle',
     'temple_of_time',
-    // Overworld - Kakariko
+    // OoT Overworld - Kakariko
     'kak',
     'graveyard',
-    // Overworld - Death Mountain
+    // OoT Overworld - Death Mountain
     'dmt',
     'death_mountain_trail',
     'goron_city',
     'dmc',
     'death_mountain_crater',
-    // Overworld - Zora
+    // OoT Overworld - Zora
     'zr',
     'zora_domain',
     'zora_fountain',
     'lake_hylia',
-    // Overworld - Gerudo
+    // OoT Overworld - Gerudo
     'gerudo_valley',
     'gerudo_fortress',
     'haunted_wasteland',
-    'desert_colossus'
+    'desert_colossus',
+    // MM Main Dungeons
+    'woodfall_temple',
+    'snowhead_temple',
+    'great_bay_temple',
+    'stone_tower_temple',
+    'stone_tower_temple_inverted',
+    // MM Mini Dungeons
+    'beneath_the_well',
+    'ancient_castle_of_ikana',
+    'pirates_fortress',
+    'secret_shrine',
+    'swamp_spider_house',
+    'ocean_spider_house',
+    // MM Clock Town
+    'clock_town',
+    'post_office',
+    'swordsman_school',
+    'mayors_office',
+    'chest_game',
+    'stock_pot_inn',
+    'curiosity_shop',
+    'milk_bar',
+    'astral_observatory',
+    // MM Termina Field & Swamp
+    'termina_field',
+    'road_to_southern_swamp',
+    'southern_swamp',
+    'deku_palace',
+    'deku_shrine',
+    'woodfall',
+    // MM Mountain
+    'mountain_village',
+    'goron_village',
+    'goron_shrine',
+    'path_to_snowhead',
+    'snowhead',
+    // MM Great Bay
+    'great_bay_coast',
+    'pinnacle_rock',
+    'zora_cape',
+    'zora_hall',
+    'laboratory',
+    // MM Ikana
+    'ikana_canyon',
+    'ikana_valley',
+    'ikana_graveyard',
+    'beneath_the_graveyard',
+    'ghost_hut',
+    'stone_tower',
+    'music_box_house',
+    'road_to_ikana',
+    // MM Romani Ranch
+    'romani_ranch',
+    'milk_road',
+    'doggy_racetrack',
+    'cucco_shack',
+    'gorman_track',
+    // MM Moon
+    'moon_trial_deku',
+    'moon_trial_goron',
+    'moon_trial_zora',
+    'moon_trial_link',
+    'moon'
 ];
 
 const REGION_NAMES = {
-    // Child Dungeons
+    // OoT Child Dungeons
     'deku_tree': 'Deku Tree',
     'dodongo_cavern': "Dodongo's Cavern",
     'jabu_jabu': "Jabu Jabu's Belly",
-    // Adult Dungeons
+    // OoT Adult Dungeons
     'forest_temple': 'Forest Temple',
     'fire_temple': 'Fire Temple',
     'water_temple': 'Water Temple',
     'spirit_temple': 'Spirit Temple',
     'shadow_temple': 'Shadow Temple',
-    // Mini Dungeons
+    // OoT Mini Dungeons
     'bottom_of_the_well': 'Bottom of the Well',
     'ice_cavern': 'Ice Cavern',
     'gerudo_training': 'Gerudo Training Ground',
     'ganon_castle': "Ganon's Castle",
     'treasure_chest_game': 'Treasure Chest Game',
-    // Overworld - Kokiri/Forest
+    // OoT Overworld - Kokiri/Forest
     'kokiri_forest': 'Kokiri Forest',
     'kf': 'Kokiri Forest',
     'lw': 'Lost Woods',
     'sfm': 'Sacred Forest Meadow',
-    // Overworld - Hyrule
+    // OoT Overworld - Hyrule
     'hf': 'Hyrule Field',
     'lon_lon_ranch': 'Lon Lon Ranch',
     'market': 'Market',
     'hyrule_castle': 'Hyrule Castle',
     'temple_of_time': 'Temple of Time',
-    // Overworld - Kakariko
+    // OoT Overworld - Kakariko
     'kak': 'Kakariko Village',
     'graveyard': 'Graveyard',
-    // Overworld - Death Mountain
+    // OoT Overworld - Death Mountain
     'dmt': 'Death Mountain Trail',
     'death_mountain_trail': 'Death Mountain Trail',
     'goron_city': 'Goron City',
     'dmc': 'Death Mountain Crater',
     'death_mountain_crater': 'Death Mountain Crater',
-    // Overworld - Zora
+    // OoT Overworld - Zora
     'zr': "Zora's River",
     'zora_domain': "Zora's Domain",
     'zora_fountain': "Zora's Fountain",
     'lake_hylia': 'Lake Hylia',
-    // Overworld - Gerudo
+    // OoT Overworld - Gerudo
     'gerudo_valley': 'Gerudo Valley',
     'gerudo_fortress': 'Gerudo Fortress',
     'haunted_wasteland': 'Haunted Wasteland',
-    'desert_colossus': 'Desert Colossus'
+    'desert_colossus': 'Desert Colossus',
+    // MM Main Dungeons
+    'woodfall_temple': 'Woodfall Temple',
+    'snowhead_temple': 'Snowhead Temple',
+    'great_bay_temple': 'Great Bay Temple',
+    'stone_tower_temple': 'Stone Tower Temple',
+    'stone_tower_temple_inverted': 'Stone Tower Temple (Inverted)',
+    // MM Mini Dungeons
+    'beneath_the_well': 'Beneath the Well',
+    'ancient_castle_of_ikana': 'Ancient Castle of Ikana',
+    'pirates_fortress': "Pirates' Fortress",
+    'secret_shrine': 'Secret Shrine',
+    'swamp_spider_house': 'Swamp Spider House',
+    'ocean_spider_house': 'Ocean Spider House',
+    // MM Clock Town
+    'clock_town': 'Clock Town',
+    'post_office': 'Post Office',
+    'swordsman_school': 'Swordsman School',
+    'mayors_office': "Mayor's Office",
+    'chest_game': 'Chest Game',
+    'stock_pot_inn': 'Stock Pot Inn',
+    'curiosity_shop': 'Curiosity Shop',
+    'milk_bar': 'Milk Bar',
+    'astral_observatory': 'Astral Observatory',
+    // MM Termina Field & Swamp
+    'termina_field': 'Termina Field',
+    'road_to_southern_swamp': 'Road to Southern Swamp',
+    'southern_swamp': 'Southern Swamp',
+    'deku_palace': 'Deku Palace',
+    'deku_shrine': 'Deku Shrine',
+    'woodfall': 'Woodfall',
+    // MM Mountain
+    'mountain_village': 'Mountain Village',
+    'goron_village': 'Goron Village',
+    'goron_shrine': 'Goron Shrine',
+    'path_to_snowhead': 'Path to Snowhead',
+    'snowhead': 'Snowhead',
+    // MM Great Bay
+    'great_bay_coast': 'Great Bay Coast',
+    'pinnacle_rock': 'Pinnacle Rock',
+    'zora_cape': 'Zora Cape',
+    'zora_hall': 'Zora Hall',
+    'laboratory': 'Marine Research Lab',
+    // MM Ikana
+    'ikana_canyon': 'Ikana Canyon',
+    'ikana_valley': 'Ikana Valley',
+    'ikana_graveyard': 'Ikana Graveyard',
+    'beneath_the_graveyard': 'Beneath the Graveyard',
+    'ghost_hut': 'Ghost Hut',
+    'stone_tower': 'Stone Tower',
+    'music_box_house': 'Music Box House',
+    'road_to_ikana': 'Road to Ikana',
+    // MM Romani Ranch
+    'romani_ranch': 'Romani Ranch',
+    'milk_road': 'Milk Road',
+    'doggy_racetrack': 'Doggy Racetrack',
+    'cucco_shack': 'Cucco Shack',
+    'gorman_track': 'Gorman Track',
+    // MM Moon
+    'moon_trial_deku': 'Moon Trial (Deku)',
+    'moon_trial_goron': 'Moon Trial (Goron)',
+    'moon_trial_zora': 'Moon Trial (Zora)',
+    'moon_trial_link': 'Moon Trial (Link)',
+    'moon': 'The Moon'
 };
 
 // Pre-sorted region keys for efficient matching (longest first)

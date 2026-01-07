@@ -2886,6 +2886,184 @@ pub fn get_all_mm_location_ids() -> impl Iterator<Item = &'static str> {
 }
 
 // ============================================================================
+// Location Status Checking
+// ============================================================================
+
+use crate::flag_mapping::{CheckStatus, LocationCheckResult};
+use crate::mm_save::MmSave;
+
+/// Checks if a specific MM location has been checked based on the save data.
+///
+/// # Arguments
+///
+/// * `mapping` - The flag mapping for the location
+/// * `mm_save` - The MM save data
+///
+/// # Returns
+///
+/// `CheckStatus::Checked` if the location flag is set,
+/// `CheckStatus::Unchecked` if the flag is not set,
+/// `CheckStatus::Unknown` if the location is unmapped or cannot be determined.
+#[must_use]
+pub fn check_mm_location_status(mapping: &MmFlagMapping, mm_save: &MmSave) -> CheckStatus {
+    // If the mapping is a stub (unmapped), we can't determine the status
+    if mapping.is_stub() {
+        return CheckStatus::Unknown;
+    }
+
+    let flag_type = match mapping.flag_type {
+        Some(ft) => ft,
+        None => return CheckStatus::Unknown,
+    };
+
+    let flag_bit = match mapping.flag_bit {
+        Some(fb) => fb,
+        None => return CheckStatus::Unknown,
+    };
+
+    match flag_type {
+        MmFlagType::Chest => {
+            if let Some(scene_id) = mapping.scene_id {
+                if let Some(scene_flags) = mm_save.permanent_scene_flags.get(scene_id as usize) {
+                    if scene_flags.chest & flag_bit != 0 {
+                        CheckStatus::Checked
+                    } else {
+                        CheckStatus::Unchecked
+                    }
+                } else {
+                    CheckStatus::Unknown
+                }
+            } else {
+                CheckStatus::Unknown
+            }
+        }
+        MmFlagType::Switch0 => {
+            if let Some(scene_id) = mapping.scene_id {
+                if let Some(scene_flags) = mm_save.permanent_scene_flags.get(scene_id as usize) {
+                    if scene_flags.switch0 & flag_bit != 0 {
+                        CheckStatus::Checked
+                    } else {
+                        CheckStatus::Unchecked
+                    }
+                } else {
+                    CheckStatus::Unknown
+                }
+            } else {
+                CheckStatus::Unknown
+            }
+        }
+        MmFlagType::Switch1 => {
+            if let Some(scene_id) = mapping.scene_id {
+                if let Some(scene_flags) = mm_save.permanent_scene_flags.get(scene_id as usize) {
+                    if scene_flags.switch1 & flag_bit != 0 {
+                        CheckStatus::Checked
+                    } else {
+                        CheckStatus::Unchecked
+                    }
+                } else {
+                    CheckStatus::Unknown
+                }
+            } else {
+                CheckStatus::Unknown
+            }
+        }
+        MmFlagType::ClearedRoom => {
+            if let Some(scene_id) = mapping.scene_id {
+                if let Some(scene_flags) = mm_save.permanent_scene_flags.get(scene_id as usize) {
+                    if scene_flags.cleared_room & flag_bit != 0 {
+                        CheckStatus::Checked
+                    } else {
+                        CheckStatus::Unchecked
+                    }
+                } else {
+                    CheckStatus::Unknown
+                }
+            } else {
+                CheckStatus::Unknown
+            }
+        }
+        MmFlagType::Collectible => {
+            if let Some(scene_id) = mapping.scene_id {
+                if let Some(scene_flags) = mm_save.permanent_scene_flags.get(scene_id as usize) {
+                    if scene_flags.collectible & flag_bit != 0 {
+                        CheckStatus::Checked
+                    } else {
+                        CheckStatus::Unchecked
+                    }
+                } else {
+                    CheckStatus::Unknown
+                }
+            } else {
+                CheckStatus::Unknown
+            }
+        }
+        // These flag types need special handling or are not yet implemented
+        MmFlagType::GoldSkulltula
+        | MmFlagType::EventInf
+        | MmFlagType::WeekEventReg
+        | MmFlagType::ItemGetInf
+        | MmFlagType::Shop
+        | MmFlagType::Scrub
+        | MmFlagType::GreatFairy
+        | MmFlagType::Boss
+        | MmFlagType::Song
+        | MmFlagType::Cow
+        | MmFlagType::StrayFairy
+        | MmFlagType::OwlStatue
+        | MmFlagType::MoonsTear
+        | MmFlagType::GossipStone => CheckStatus::Unknown,
+    }
+}
+
+/// Returns all checked MM locations for the current save data.
+///
+/// # Arguments
+///
+/// * `mm_save` - The MM save data
+///
+/// # Returns
+///
+/// A vector of `LocationCheckResult` for all mapped MM locations.
+pub fn get_all_mm_checked_locations(mm_save: &MmSave) -> Vec<LocationCheckResult> {
+    get_mm_mapped_locations()
+        .map(|mapping| LocationCheckResult {
+            location_id: mapping.location_id.to_string(),
+            status: check_mm_location_status(mapping, mm_save),
+            is_mapped: mapping.is_mapped(),
+        })
+        .collect()
+}
+
+/// Returns all MM locations (mapped and unmapped) with their check status.
+///
+/// # Arguments
+///
+/// * `mm_save` - Optional MM save data
+///
+/// # Returns
+///
+/// A vector of `LocationCheckResult` for all MM locations.
+/// If mm_save is None, all locations will have Unknown status.
+pub fn get_all_mm_locations_with_status(mm_save: Option<&MmSave>) -> Vec<LocationCheckResult> {
+    match mm_save {
+        Some(save) => get_all_mm_mappings()
+            .map(|mapping| LocationCheckResult {
+                location_id: mapping.location_id.to_string(),
+                status: check_mm_location_status(mapping, save),
+                is_mapped: mapping.is_mapped(),
+            })
+            .collect(),
+        None => get_all_mm_mappings()
+            .map(|mapping| LocationCheckResult {
+                location_id: mapping.location_id.to_string(),
+                status: CheckStatus::Unknown,
+                is_mapped: mapping.is_mapped(),
+            })
+            .collect(),
+    }
+}
+
+// ============================================================================
 // Tests
 // ============================================================================
 

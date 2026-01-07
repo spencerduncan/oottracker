@@ -3929,13 +3929,16 @@ pub fn check_location_status(mapping: &FlagMapping, model: &ModelState) -> Check
 
 /// Returns all checked locations for the current game state.
 ///
+/// This function returns check status for all OoT locations. For combo randomizer
+/// tracking that includes MM locations, use `get_all_checked_locations_combo`.
+///
 /// # Arguments
 ///
 /// * `model` - The current model state containing game memory
 ///
 /// # Returns
 ///
-/// A vector of `LocationCheckResult` for all mapped locations.
+/// A vector of `LocationCheckResult` for all mapped OoT locations.
 pub fn get_all_checked_locations(model: &ModelState) -> Vec<LocationCheckResult> {
     get_mapped_locations()
         .map(|mapping| LocationCheckResult {
@@ -3944,6 +3947,45 @@ pub fn get_all_checked_locations(model: &ModelState) -> Vec<LocationCheckResult>
             is_mapped: mapping.is_mapped(),
         })
         .collect()
+}
+
+/// Returns all checked locations for both OoT and MM (combo randomizer).
+///
+/// This function combines OoT and MM location checks for combo randomizer tracking.
+/// MM locations are only included if `model.ram.mm_save` is Some.
+///
+/// # Arguments
+///
+/// * `model` - The current model state containing game memory
+///
+/// # Returns
+///
+/// A vector of `LocationCheckResult` for all OoT locations and MM locations (if available).
+pub fn get_all_checked_locations_combo(model: &ModelState) -> Vec<LocationCheckResult> {
+    use crate::mm_flag_mapping::{check_mm_location_status, get_mm_mapped_locations};
+
+    // Get all OoT locations
+    let mut results: Vec<LocationCheckResult> = get_mapped_locations()
+        .map(|mapping| LocationCheckResult {
+            location_id: mapping.location_id.to_string(),
+            status: check_location_status(mapping, model),
+            is_mapped: mapping.is_mapped(),
+        })
+        .collect();
+
+    // Add MM locations if MM save data is available
+    if let Some(ref mm_save) = model.ram.mm_save {
+        let mm_results: Vec<LocationCheckResult> = get_mm_mapped_locations()
+            .map(|mapping| LocationCheckResult {
+                location_id: mapping.location_id.to_string(),
+                status: check_mm_location_status(mapping, mm_save),
+                is_mapped: mapping.is_mapped(),
+            })
+            .collect();
+        results.extend(mm_results);
+    }
+
+    results
 }
 
 /// Returns all checked locations as a HashMap for efficient lookup.
@@ -3983,6 +4025,9 @@ pub struct CheckedLocationsSummary {
 
 /// Returns a summary of checked locations for the current game state.
 ///
+/// This function includes both OoT and MM locations when MM save data is available,
+/// making it suitable for combo randomizer tracking.
+///
 /// # Arguments
 ///
 /// * `model` - The current model state containing game memory
@@ -3991,7 +4036,8 @@ pub struct CheckedLocationsSummary {
 ///
 /// A `CheckedLocationsSummary` containing counts and individual location statuses.
 pub fn get_checked_locations_summary(model: &ModelState) -> CheckedLocationsSummary {
-    let locations = get_all_checked_locations(model);
+    // Use combo version to include both OoT and MM locations
+    let locations = get_all_checked_locations_combo(model);
     let total_mapped = locations.len();
     let checked_count = locations
         .iter()
