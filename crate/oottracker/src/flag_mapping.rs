@@ -56,6 +56,8 @@ use ootr::{
     region::Mq,
 };
 
+use crate::world_database;
+
 // ============================================================================
 // Flag Type Definition
 // ============================================================================
@@ -4121,9 +4123,27 @@ pub struct LocationCheckResult {
     pub status: CheckStatus,
     /// Whether this location has a valid flag mapping.
     pub is_mapped: bool,
+    /// Logic expression required to access this location (if available).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub logic: Option<String>,
     /// Accessibility based on logic evaluation.
     #[serde(default)]
     pub accessibility: Accessibility,
+}
+
+/// Returns the logic expression for a location from the world database.
+///
+/// # Arguments
+///
+/// * `location_id` - The location ID to look up
+///
+/// # Returns
+///
+/// The logic expression as a String if found, None otherwise.
+pub fn get_location_logic(location_id: &str) -> Option<String> {
+    let db = world_database();
+    db.get_location(location_id)
+        .and_then(|(location, _)| location.logic.clone())
 }
 
 /// Checks if a specific location has been checked based on the current game state.
@@ -4278,9 +4298,10 @@ pub fn get_all_checked_locations(model: &ModelState) -> Vec<LocationCheckResult>
             let location_id = mapping.location_id.to_string();
             let accessibility = evaluate_accessibility(&location_id, &model.ram.save);
             LocationCheckResult {
-                location_id,
+                location_id: location_id.clone(),
                 status: check_location_status(mapping, model),
                 is_mapped: mapping.is_mapped(),
+                logic: get_location_logic(&location_id),
                 accessibility,
             }
         })
@@ -4308,9 +4329,10 @@ pub fn get_all_checked_locations_combo(model: &ModelState) -> Vec<LocationCheckR
             let location_id = mapping.location_id.to_string();
             let accessibility = evaluate_accessibility(&location_id, &model.ram.save);
             LocationCheckResult {
-                location_id,
+                location_id: location_id.clone(),
                 status: check_location_status(mapping, model),
                 is_mapped: mapping.is_mapped(),
+                logic: get_location_logic(&location_id),
                 accessibility,
             }
         })
@@ -4324,9 +4346,10 @@ pub fn get_all_checked_locations_combo(model: &ModelState) -> Vec<LocationCheckR
                 // MM accessibility evaluation would use MM save context
                 // For now, mark as Unknown since we don't have MM logic evaluation yet
                 LocationCheckResult {
-                    location_id,
+                    location_id: location_id.clone(),
                     status: check_mm_location_status(mapping, mm_save),
                     is_mapped: mapping.is_mapped(),
+                    logic: get_location_logic(&location_id),
                     accessibility: Accessibility::Unknown,
                 }
             })
@@ -4457,9 +4480,10 @@ pub fn get_all_checked_locations_filtered(model: &ModelState) -> Vec<LocationChe
             let location_id = mapping.location_id.to_string();
             let accessibility = evaluate_accessibility(&location_id, &model.ram.save);
             LocationCheckResult {
-                location_id,
+                location_id: location_id.clone(),
                 status: check_location_status(mapping, model),
                 is_mapped: mapping.is_mapped(),
+                logic: get_location_logic(&location_id),
                 accessibility,
             }
         })
