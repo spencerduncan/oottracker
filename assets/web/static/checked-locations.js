@@ -16,7 +16,8 @@ let checkedLocationsState = {
     isLoading: false,
     error: null,
     collapsedRegions: new Set(), // Track which regions are collapsed
-    pendingSkipToggles: new Set() // Track locations with pending skip toggle requests
+    pendingSkipToggles: new Set(), // Track locations with pending skip toggle requests
+    hideUnavailable: false // Filter to hide inaccessible locations
 };
 
 // Status display element
@@ -438,6 +439,51 @@ function createStatusElement() {
 }
 
 /**
+ * Toggle the hide unavailable filter
+ */
+function toggleHideUnavailable() {
+    checkedLocationsState.hideUnavailable = !checkedLocationsState.hideUnavailable;
+    // Save preference to localStorage
+    localStorage.setItem('oottracker_hide_unavailable', checkedLocationsState.hideUnavailable);
+    // Re-render the list
+    const data = {
+        locations: Object.entries(checkedLocationsState.locations).map(([id, locData]) => ({
+            location_id: id,
+            status: locData.status,
+            accessibility: locData.accessibility
+        }))
+    };
+    updateLocationsList(data);
+    // Update checkbox state
+    const checkbox = document.getElementById('hide-unavailable-checkbox');
+    if (checkbox) {
+        checkbox.checked = checkedLocationsState.hideUnavailable;
+    }
+}
+
+/**
+ * Check if a location should be hidden based on current filter settings
+ */
+function shouldHideLocation(locationId, status) {
+    if (!checkedLocationsState.hideUnavailable) {
+        return false;
+    }
+    // If location is already checked or skipped, never hide it
+    if (status === 'Checked' || status === 'Skipped') {
+        return false;
+    }
+    // Check accessibility status from the location data
+    const locData = checkedLocationsState.locations[locationId];
+    const accessibility = locData ? locData.accessibility : null;
+    // Hide if explicitly unavailable
+    if (accessibility === 'Unavailable') {
+        return true;
+    }
+    // Show if accessible, unknown, or no accessibility data
+    return false;
+}
+
+/**
  * Create the checked locations panel
  */
 function createCheckedLocationsPanel() {
@@ -454,6 +500,28 @@ function createCheckedLocationsPanel() {
             ? 'Checked Locations'
             : 'Hide Locations';
     });
+
+    // Filter controls
+    const filterControls = document.createElement('div');
+    filterControls.className = 'filter-controls';
+    filterControls.id = 'locations-filter-controls';
+
+    const filterLabel = document.createElement('label');
+    filterLabel.className = 'filter-checkbox-label';
+
+    const filterCheckbox = document.createElement('input');
+    filterCheckbox.type = 'checkbox';
+    filterCheckbox.id = 'hide-unavailable-checkbox';
+    filterCheckbox.checked = checkedLocationsState.hideUnavailable;
+    filterCheckbox.addEventListener('change', toggleHideUnavailable);
+
+    const filterText = document.createElement('span');
+    filterText.textContent = 'Hide unavailable';
+    filterText.title = 'Hide locations that are currently inaccessible based on items/logic';
+
+    filterLabel.appendChild(filterCheckbox);
+    filterLabel.appendChild(filterText);
+    filterControls.appendChild(filterLabel);
 
     const list = document.createElement('div');
     list.className = 'locations-list';
@@ -493,6 +561,7 @@ function createCheckedLocationsPanel() {
     });
 
     panel.appendChild(toggle);
+    panel.appendChild(filterControls);
     panel.appendChild(list);
 
     // Insert before footer
@@ -584,6 +653,11 @@ function updateLocationsList(data) {
     const regionGroups = {};
 
     for (const loc of data.locations) {
+        // Check if location should be hidden based on filter
+        if (shouldHideLocation(loc.location_id, loc.status)) {
+            continue;
+        }
+
         const region = extractRegion(loc.location_id);
         if (!regionGroups[region]) {
             regionGroups[region] = {
@@ -750,6 +824,12 @@ function initCheckedLocations() {
     if (!roomName) {
         // Not on a room page, skip initialization
         return;
+    }
+
+    // Load saved filter preference from localStorage
+    const savedHideUnavailable = localStorage.getItem('oottracker_hide_unavailable');
+    if (savedHideUnavailable !== null) {
+        checkedLocationsState.hideUnavailable = savedHideUnavailable === 'true';
     }
 
     // Create UI elements
