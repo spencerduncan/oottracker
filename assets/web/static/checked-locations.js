@@ -18,7 +18,11 @@ let checkedLocationsState = {
     error: null,
     collapsedRegions: new Set(), // Track which regions are collapsed
     pendingSkipToggles: new Set(), // Track locations with pending skip toggle requests
-    hideUnavailable: false // Filter to hide inaccessible locations
+    hideUnavailable: false, // Filter to hide inaccessible locations
+    // Auto-scroll state
+    lastSceneId: null,           // Track last seen scene ID for detecting changes
+    lastGame: null,              // Track which game was active ('oot' or 'mm')
+    autoScrollEnabled: localStorage.getItem('oottracker_autoscroll_enabled') !== 'false' // User preference
 };
 
 // Status display element
@@ -254,6 +258,103 @@ const REGION_NAMES = {
 
 // Pre-sorted region keys for efficient matching (longest first)
 const SORTED_REGION_KEYS = Object.keys(REGION_NAMES).sort((a, b) => b.length - a.length);
+
+/**
+ * Mapping from OoT scene IDs to region keys.
+ * Scene IDs are from game_detection.rs.
+ */
+const OOT_SCENE_TO_REGION = {
+    // Dungeons
+    0x00: 'deku_tree',           // Deku Tree
+    0x01: 'dodongo_cavern',      // Dodongo's Cavern
+    0x02: 'jabu_jabu',           // Jabu Jabu's Belly
+    0x03: 'forest_temple',       // Forest Temple
+    0x04: 'fire_temple',         // Fire Temple
+    0x05: 'water_temple',        // Water Temple
+    0x06: 'spirit_temple',       // Spirit Temple
+    0x07: 'shadow_temple',       // Shadow Temple
+    0x08: 'bottom_of_the_well',  // Bottom of the Well
+    0x09: 'ice_cavern',          // Ice Cavern
+    0x0A: 'ganon_castle',        // Ganon's Castle Tower
+    0x0B: 'gerudo_training',     // Gerudo Training Ground
+    0x0C: 'gerudo_fortress',     // Thieves' Hideout
+    0x0D: 'ganon_castle',        // Ganon's Castle
+
+    // Interior locations
+    0x2D: 'market',              // Happy Mask Shop
+    0x43: 'temple_of_time',      // Temple of Time Exterior
+
+    // Overworld areas
+    0x51: 'hf',                  // Hyrule Field
+    0x52: 'kak',                 // Kakariko Village
+    0x53: 'graveyard',           // Graveyard
+    0x54: 'zr',                  // Zora's River
+    0x55: 'kokiri_forest',       // Kokiri Forest
+    0x57: 'lake_hylia',          // Lake Hylia
+    0x58: 'zora_domain',         // Zora's Domain
+    0x59: 'zora_fountain',       // Zora's Fountain
+    0x5A: 'gerudo_valley',       // Gerudo Valley
+    0x5B: 'lw',                  // Lost Woods
+    0x5C: 'desert_colossus',     // Desert Colossus
+    0x5D: 'gerudo_fortress',     // Gerudo Fortress
+    0x5E: 'haunted_wasteland',   // Haunted Wasteland
+    0x60: 'dmt',                 // Death Mountain Trail
+    0x61: 'dmc',                 // Death Mountain Crater
+    0x62: 'goron_city',          // Goron City
+
+    // Additional interior scenes
+    0x10: 'market',              // Market Day
+    0x1D: 'lon_lon_ranch',       // Lon Lon Ranch
+    0x34: 'hyrule_castle',       // Hyrule Castle
+    0x42: 'temple_of_time',      // Temple of Time
+    0x56: 'sfm',                 // Sacred Forest Meadow
+};
+
+/**
+ * Mapping from MM scene IDs to region keys.
+ * Scene IDs are from game_detection.rs.
+ */
+const MM_SCENE_TO_REGION = {
+    // Main Dungeons
+    0x07: 'woodfall_temple',     // Woodfall Temple
+    0x1B: 'snowhead_temple',     // Snowhead Temple
+    0x37: 'great_bay_temple',    // Great Bay Temple
+    0x12: 'stone_tower_temple',  // Stone Tower Temple
+    0x13: 'stone_tower_temple_inverted', // Stone Tower Temple (Inverted)
+    0x01: 'moon',                // Majora's Lair
+
+    // Clock Town
+    0x6E: 'clock_town',          // Clock Town South
+    0x6F: 'clock_town',          // Clock Town North
+    0x70: 'clock_town',          // Clock Town East
+    0x71: 'clock_town',          // Clock Town West
+    0x6C: 'clock_town',          // Clock Tower
+
+    // Overworld
+    0x54: 'termina_field',       // Termina Field
+    0x35: 'romani_ranch',        // Romani Ranch
+    0x55: 'southern_swamp',      // Southern Swamp
+    0x5A: 'mountain_village',    // Mountain Village
+    0x57: 'great_bay_coast',     // Great Bay Coast
+    0x5B: 'ikana_canyon',        // Ikana Canyon
+
+    // Mini Dungeons
+    0x02: 'beneath_the_graveyard', // Beneath the Graveyard
+    0x00: 'mayors_office',       // Mayor's Residence
+};
+
+/**
+ * Get the region key for a given scene ID and game.
+ * @param {number} sceneId - The scene ID from RAM
+ * @param {string} game - Either 'oot' or 'mm'
+ * @returns {string|null} The region key, or null if not found
+ */
+function getRegionFromSceneId(sceneId, game) {
+    if (game === 'mm') {
+        return MM_SCENE_TO_REGION[sceneId] || null;
+    }
+    return OOT_SCENE_TO_REGION[sceneId] || null;
+}
 
 /**
  * Get the current room name from the URL
@@ -496,6 +597,10 @@ function createCheckedLocationsPanel() {
     panel.id = 'checked-locations-panel';
     panel.className = 'checked-locations-panel collapsed';
 
+    // Create header container for toggle button and auto-scroll control
+    const header = document.createElement('div');
+    header.className = 'panel-header';
+
     const toggle = document.createElement('button');
     toggle.className = 'panel-toggle';
     toggle.textContent = 'Checked Locations';
@@ -505,6 +610,23 @@ function createCheckedLocationsPanel() {
             ? 'Checked Locations'
             : 'Hide Locations';
     });
+
+    // Auto-scroll toggle button
+    const autoScrollBtn = document.createElement('button');
+    autoScrollBtn.id = 'autoscroll-toggle-btn';
+    autoScrollBtn.className = 'autoscroll-toggle' +
+        (checkedLocationsState.autoScrollEnabled ? ' enabled' : ' disabled');
+    autoScrollBtn.innerHTML = '&#8645;'; // Up-down arrow symbol
+    autoScrollBtn.title = checkedLocationsState.autoScrollEnabled
+        ? 'Auto-scroll enabled (click to disable)'
+        : 'Auto-scroll disabled (click to enable)';
+    autoScrollBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleAutoScroll();
+    });
+
+    header.appendChild(toggle);
+    header.appendChild(autoScrollBtn);
 
     // Filter controls
     const filterControls = document.createElement('div');
@@ -565,7 +687,7 @@ function createCheckedLocationsPanel() {
         }
     });
 
-    panel.appendChild(toggle);
+    panel.appendChild(header);
     panel.appendChild(filterControls);
     panel.appendChild(list);
 
@@ -827,13 +949,187 @@ function escapeHtml(text) {
 }
 
 /**
+ * Scroll the check tracker panel to show a specific region.
+ * @param {string} regionKey - The region key to scroll to
+ */
+function scrollToRegion(regionKey) {
+    const panel = document.getElementById('checked-locations-panel');
+    const list = document.getElementById('checked-locations-list');
+    if (!panel || !list) return;
+
+    // Find the region group element
+    const regionGroup = list.querySelector(`[data-region="${regionKey}"]`);
+    if (!regionGroup) return;
+
+    // Expand the panel if collapsed
+    if (panel.classList.contains('collapsed')) {
+        panel.classList.remove('collapsed');
+        const toggle = panel.querySelector('.panel-toggle');
+        if (toggle) {
+            toggle.textContent = 'Hide Locations';
+        }
+    }
+
+    // Expand the region if collapsed
+    if (checkedLocationsState.collapsedRegions.has(regionKey)) {
+        checkedLocationsState.collapsedRegions.delete(regionKey);
+        regionGroup.classList.remove('collapsed');
+        const header = regionGroup.querySelector('.region-header');
+        if (header) {
+            header.setAttribute('aria-expanded', 'true');
+        }
+        const arrow = regionGroup.querySelector('.region-arrow');
+        if (arrow) {
+            arrow.innerHTML = '&#9660;'; // Down arrow
+        }
+    }
+
+    // Scroll the region into view with smooth animation
+    regionGroup.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Add a brief highlight effect
+    regionGroup.classList.add('auto-scroll-highlight');
+    setTimeout(() => {
+        regionGroup.classList.remove('auto-scroll-highlight');
+    }, 2000);
+}
+
+/**
+ * Handle scene change detection and auto-scroll.
+ * @param {object} data - The API response data containing current_scene_id and current_game
+ */
+function handleSceneChange(data) {
+    if (!data || !checkedLocationsState.autoScrollEnabled) return;
+
+    const newSceneId = data.current_scene_id;
+    const newGame = data.current_game || 'oot';
+
+    // Skip if scene hasn't changed
+    if (newSceneId === checkedLocationsState.lastSceneId &&
+        newGame === checkedLocationsState.lastGame) {
+        return;
+    }
+
+    // Skip invalid scene IDs
+    if (newSceneId === null || newSceneId === undefined || newSceneId === 0xFF) {
+        return;
+    }
+
+    // Update tracked state
+    const oldSceneId = checkedLocationsState.lastSceneId;
+    checkedLocationsState.lastSceneId = newSceneId;
+    checkedLocationsState.lastGame = newGame;
+
+    // Don't scroll on first load (when oldSceneId is null)
+    if (oldSceneId === null) {
+        return;
+    }
+
+    // Get the region for the new scene
+    const regionKey = getRegionFromSceneId(newSceneId, newGame);
+    if (regionKey) {
+        // Small delay to let the UI update first
+        setTimeout(() => {
+            scrollToRegion(regionKey);
+        }, 100);
+    }
+}
+
+/**
+ * Toggle auto-scroll feature on/off
+ */
+function toggleAutoScroll() {
+    checkedLocationsState.autoScrollEnabled = !checkedLocationsState.autoScrollEnabled;
+    localStorage.setItem('oottracker_autoscroll_enabled',
+        checkedLocationsState.autoScrollEnabled ? 'true' : 'false');
+    updateAutoScrollButtonState();
+
+    // Start or stop scene polling based on new state
+    if (checkedLocationsState.autoScrollEnabled) {
+        startScenePolling();
+    } else {
+        stopScenePolling();
+    }
+}
+
+/**
+ * Update the auto-scroll button visual state
+ */
+function updateAutoScrollButtonState() {
+    const btn = document.getElementById('autoscroll-toggle-btn');
+    if (btn) {
+        if (checkedLocationsState.autoScrollEnabled) {
+            btn.classList.add('enabled');
+            btn.classList.remove('disabled');
+            btn.title = 'Auto-scroll enabled (click to disable)';
+        } else {
+            btn.classList.remove('enabled');
+            btn.classList.add('disabled');
+            btn.title = 'Auto-scroll disabled (click to enable)';
+        }
+    }
+}
+
+/**
  * Refresh checked locations and update display
  */
 async function refreshCheckedLocations() {
     const data = await fetchCheckedLocations();
     updateStatusDisplay(data);
     updateLocationsList(data);
+
+    // Handle auto-scroll on scene change
+    handleSceneChange(data);
+
     return data;
+}
+
+/**
+ * Lightweight scene check - only fetches scene info for auto-scroll.
+ * This is used for periodic polling to detect scene changes when
+ * WebSocket doesn't trigger updates (e.g., walking between areas
+ * without collecting items).
+ */
+async function checkSceneForAutoScroll() {
+    if (!checkedLocationsState.autoScrollEnabled) return;
+
+    try {
+        const roomName = getRoomName();
+        if (!roomName) return;
+
+        const response = await fetch(`/api/room/${roomName}/checked-locations`);
+        if (!response.ok) return;
+
+        const data = await response.json();
+        handleSceneChange(data);
+    } catch (e) {
+        // Silent fail for background polling
+        console.debug('Scene check failed:', e);
+    }
+}
+
+// Scene polling interval ID
+let scenePollingInterval = null;
+
+/**
+ * Start periodic scene polling for auto-scroll.
+ * Polls every 2 seconds to detect scene changes even when
+ * WebSocket doesn't send updates.
+ */
+function startScenePolling() {
+    if (scenePollingInterval) return; // Already polling
+
+    scenePollingInterval = setInterval(checkSceneForAutoScroll, 2000);
+}
+
+/**
+ * Stop periodic scene polling.
+ */
+function stopScenePolling() {
+    if (scenePollingInterval) {
+        clearInterval(scenePollingInterval);
+        scenePollingInterval = null;
+    }
 }
 
 /**
@@ -865,6 +1161,13 @@ function initCheckedLocations() {
         // Refresh checked locations when tracker state changes
         refreshCheckedLocations();
     });
+
+    // Start periodic scene polling for auto-scroll
+    // This ensures scene changes are detected even when WebSocket
+    // doesn't trigger updates (e.g., walking between areas)
+    if (checkedLocationsState.autoScrollEnabled) {
+        startScenePolling();
+    }
 }
 
 // Initialize when DOM is ready
@@ -890,5 +1193,10 @@ window.checkedLocations = {
         const info = checkedLocationsState.locations[locationId];
         return info && info.accessibility === 'Available';
     },
-    toggleSkip: toggleSkipLocation
+    toggleSkip: toggleSkipLocation,
+    // Auto-scroll API
+    scrollToRegion: scrollToRegion,
+    toggleAutoScroll: toggleAutoScroll,
+    isAutoScrollEnabled: () => checkedLocationsState.autoScrollEnabled,
+    getRegionFromSceneId: getRegionFromSceneId
 };
