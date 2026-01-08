@@ -650,17 +650,13 @@ pub(crate) fn rocket(
     .manage(rooms)
     .manage(restreams)
     .manage(mw_rooms)
+    // Serve static files and images
     .mount(
         "/static",
         FileServer::new(
             relative!("../../assets/web/static"),
             rocket::fs::Options::None,
         ),
-    )
-    // Serve images directly from assets/img to avoid symlink issues on Windows
-    .mount(
-        "/static/img",
-        FileServer::new(relative!("../../assets/img"), rocket::fs::Options::None),
     )
     .mount(
         "/",

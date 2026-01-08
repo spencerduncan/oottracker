@@ -241,6 +241,7 @@ async fn main() -> Result<(), Error> {
                     tracker_ctx: TrackerCtx::default(),
                     check_tracker: None,
                     skipped_locations: Default::default(),
+                    max_bottles: 4,
                 },
                 None, // Rooms loaded from database don't have tokens (backwards compatible)
             );

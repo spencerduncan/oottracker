@@ -64,6 +64,7 @@ impl MwState {
                             tracker_ctx: Default::default(),
                             check_tracker: None,
                             skipped_locations: Default::default(),
+                            max_bottles: 4,
                         },
                         queue,
                         HashSet::default(),
