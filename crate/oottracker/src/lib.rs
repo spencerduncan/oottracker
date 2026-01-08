@@ -117,7 +117,7 @@ pub mod websocket;
 #[cfg(test)]
 pub mod test_utils;
 
-#[derive(Debug, Default, Clone, PartialEq, Eq, Protocol, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Protocol, Deserialize, Serialize)]
 pub struct ModelState {
     pub knowledge: Knowledge,
     pub tracker_ctx: TrackerCtx,
@@ -129,6 +129,28 @@ pub struct ModelState {
     /// These are displayed visually distinct from unchecked and checked locations.
     #[serde(default)]
     pub skipped_locations: HashSet<String>,
+    /// Maximum number of bottles (for shared bottle randomizer settings).
+    /// Defaults to 4, can be set to 1-4 for combo seeds with shared bottles.
+    #[serde(default = "default_max_bottles")]
+    pub max_bottles: u8,
+}
+
+/// Returns the default max bottles count (4).
+fn default_max_bottles() -> u8 {
+    4
+}
+
+impl Default for ModelState {
+    fn default() -> Self {
+        Self {
+            knowledge: Knowledge::default(),
+            tracker_ctx: TrackerCtx::default(),
+            ram: Ram::default(),
+            check_tracker: None,
+            skipped_locations: HashSet::new(),
+            max_bottles: 4,
+        }
+    }
 }
 
 impl ModelState {
@@ -575,6 +597,7 @@ impl Sub<&ModelState> for &ModelState {
             ram,
             check_tracker,
             skipped_locations: _, // Skipped locations are not included in delta
+            max_bottles: _,       // max_bottles is user settings, not included in delta
         } = self;
         ModelDelta {
             knowledge: knowledge.clone(), //TODO only include new knowledge?

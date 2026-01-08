@@ -1142,6 +1142,18 @@ pub struct RandomizerSettings {
     /// Set of enabled logic tricks.
     #[serde(default)]
     pub logic_tricks: HashSet<String>,
+
+    /// Maximum number of bottles (for shared bottle randomizer settings).
+    ///
+    /// In OoTMM with shared bottles, players may have fewer than 4 bottles.
+    /// Valid range is 1-4, defaults to 4.
+    #[serde(default = "default_bottle_count")]
+    pub bottle_count: u8,
+}
+
+/// Returns the default bottle count (4).
+fn default_bottle_count() -> u8 {
+    4
 }
 
 impl Default for RandomizerSettings {
@@ -1194,6 +1206,7 @@ impl Default for RandomizerSettings {
             small_key_shuffle_oot: SmallKeyShuffleOot::default(),
             shuffle_pots_mm: ShufflePotsMm::default(),
             logic_mode: LogicMode::default(),
+            bottle_count: 4,
         }
     }
 }
@@ -1286,6 +1299,23 @@ impl RandomizerSettings {
     /// Disables a logic trick.
     pub fn disable_trick(&mut self, trick: &str) {
         self.logic_tricks.remove(trick);
+    }
+
+    // === Bottle Count Methods ===
+
+    /// Returns the maximum bottle count for this seed.
+    ///
+    /// For shared bottle randomizer settings, this may be less than 4.
+    #[must_use]
+    pub fn get_bottle_count(&self) -> u8 {
+        self.bottle_count.clamp(1, 4)
+    }
+
+    /// Sets the maximum bottle count.
+    ///
+    /// The value is clamped to the valid range of 1-4.
+    pub fn set_bottle_count(&mut self, count: u8) {
+        self.bottle_count = count.clamp(1, 4);
     }
 
     // === Master Quest Dungeon Methods ===
@@ -1695,5 +1725,58 @@ mod tests {
         assert_eq!(all.len(), 12);
         assert!(all.contains(&MqDungeon::DekuTree));
         assert!(all.contains(&MqDungeon::GanonsCastle));
+    }
+
+    // === Bottle Count Tests ===
+
+    #[test]
+    fn test_bottle_count_default() {
+        let settings = RandomizerSettings::default();
+        assert_eq!(settings.bottle_count, 4);
+        assert_eq!(settings.get_bottle_count(), 4);
+    }
+
+    #[test]
+    fn test_bottle_count_set_and_get() {
+        let mut settings = RandomizerSettings::new();
+
+        settings.set_bottle_count(3);
+        assert_eq!(settings.get_bottle_count(), 3);
+
+        settings.set_bottle_count(1);
+        assert_eq!(settings.get_bottle_count(), 1);
+    }
+
+    #[test]
+    fn test_bottle_count_clamping() {
+        let mut settings = RandomizerSettings::new();
+
+        // Test upper bound clamping
+        settings.set_bottle_count(10);
+        assert_eq!(settings.get_bottle_count(), 4);
+
+        // Test lower bound clamping
+        settings.set_bottle_count(0);
+        assert_eq!(settings.get_bottle_count(), 1);
+    }
+
+    #[test]
+    fn test_bottle_count_serde_roundtrip() {
+        let mut settings = RandomizerSettings::new();
+        settings.set_bottle_count(2);
+
+        let json = serde_json::to_string(&settings).unwrap();
+        let parsed: RandomizerSettings = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed.get_bottle_count(), 2);
+    }
+
+    #[test]
+    fn test_bottle_count_defaults_in_deserialization() {
+        // Test that missing bottle_count in JSON defaults to 4
+        let json = r#"{"agelessBoots": true}"#;
+        let parsed: RandomizerSettings = serde_json::from_str(json).unwrap();
+
+        assert_eq!(parsed.get_bottle_count(), 4);
     }
 }
