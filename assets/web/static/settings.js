@@ -48,7 +48,10 @@ const DEFAULT_SETTINGS = {
     bossWarpPads: 'vanilla',
     smallKeyShuffleOot: 'vanilla',
     shufflePotsMm: 'none',
-    logicMode: 'glitchless'
+    logicMode: 'glitchless',
+
+    // Numeric settings
+    bottleCount: 4
 };
 
 /**
@@ -96,6 +99,12 @@ function getSettingsFromForm() {
             settings[field] = select.value;
         }
     });
+
+    // Numeric select fields
+    const bottleCountSelect = form.querySelector('select[name="bottleCount"]');
+    if (bottleCountSelect) {
+        settings.bottleCount = parseInt(bottleCountSelect.value, 10);
+    }
 
     // Logic tricks (comma-separated textarea)
     const tricksTextarea = form.querySelector('textarea[name="logicTricks"]');
@@ -161,6 +170,12 @@ function populateForm(settings) {
             select.value = merged[field];
         }
     });
+
+    // Numeric select fields
+    const bottleCountSelect = form.querySelector('select[name="bottleCount"]');
+    if (bottleCountSelect) {
+        bottleCountSelect.value = (merged.bottleCount || 4).toString();
+    }
 
     // Logic tricks
     const tricksTextarea = form.querySelector('textarea[name="logicTricks"]');

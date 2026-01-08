@@ -47,6 +47,9 @@ type StateImageGetter = Box<dyn Fn(&ModelState) -> (bool, ImageInfo)>;
 /// Type alias for functions that set small keys count
 type SmallKeysSetter = Box<dyn Fn(&mut crate::save::SmallKeys, u8)>;
 
+/// Type alias for functions that get a u8 value from ModelState
+type StateU8Getter = Box<dyn Fn(&ModelState) -> u8>;
+
 /// Type alias for functions that set MM small keys count
 type MmSmallKeysSetter = Box<dyn Fn(&mut crate::mm_save::MmSmallKeys, u8)>;
 
@@ -525,6 +528,16 @@ pub enum TrackerCellKind {
         max: u8,
         step: u8,
     },
+    /// Like Count, but with a dynamic max value from ModelState.
+    /// Used for bottles where the max depends on settings.
+    DynamicCount {
+        dimmed_img: ImageInfo,
+        img: ImageInfo,
+        get: StateU8Getter,
+        set: StateU8Setter,
+        max_fn: StateU8Getter,
+        step: u8,
+    },
     FortressMq, // a cell kind used on Xopar's tracker to show whether Gerudo Fortress has 4 carpenters
     FreeReward,
     GoBk, // a combined go mode/BK mode/finished cell, used on the multiworld restream layout
@@ -815,6 +828,35 @@ impl TrackerCellKind {
                         CellOverlay::CountWithMax {
                             count,
                             max: *max,
+                            count_img: img.clone(),
+                        },
+                    )
+                };
+                CellRender {
+                    img: dimmed_img.clone(),
+                    style,
+                    overlay,
+                    accessibility: None,
+                    label: None,
+                }
+            }
+            DynamicCount {
+                dimmed_img,
+                img,
+                get,
+                max_fn,
+                ..
+            } => {
+                let count = get(state);
+                let max = max_fn(state);
+                let (style, overlay) = if count == 0 {
+                    (CellStyle::Dimmed, CellOverlay::None)
+                } else {
+                    (
+                        CellStyle::Normal,
+                        CellOverlay::CountWithMax {
+                            count,
+                            max,
                             count_img: img.clone(),
                         },
                     )
@@ -1511,6 +1553,24 @@ impl TrackerCellKind {
                     },
                 );
             }
+            DynamicCount {
+                get,
+                set,
+                max_fn,
+                step,
+                ..
+            } => {
+                let current = get(state);
+                let max = max_fn(state);
+                set(
+                    state,
+                    if current == max {
+                        0
+                    } else {
+                        current.saturating_add(*step).min(max)
+                    },
+                );
+            }
             FortressMq => {
                 if state
                     .knowledge
@@ -1674,6 +1734,32 @@ impl TrackerCellKind {
                         },
                     );
                 }
+                DynamicCount {
+                    get,
+                    set,
+                    max_fn,
+                    step,
+                    ..
+                } => {
+                    let current = get(state);
+                    let max = max_fn(state);
+                    set(
+                        state,
+                        if current == max {
+                            0
+                        } else {
+                            current
+                                .saturating_add(
+                                    step * if keyboard_modifiers.shift() && max >= 10 {
+                                        10
+                                    } else {
+                                        1
+                                    },
+                                )
+                                .min(max)
+                        },
+                    );
+                }
                 GoBk => {
                     state.knowledge.progression_mode = match state.knowledge.progression_mode {
                         ProgressionMode::Normal => ProgressionMode::Go,
@@ -1763,6 +1849,30 @@ impl TrackerCellKind {
                         } else {
                             current.saturating_sub(
                                 step * if keyboard_modifiers.shift() && *max >= 10 {
+                                    10
+                                } else {
+                                    1
+                                },
+                            )
+                        },
+                    );
+                }
+                DynamicCount {
+                    get,
+                    set,
+                    max_fn,
+                    step,
+                    ..
+                } => {
+                    let current = get(state);
+                    let max = max_fn(state);
+                    set(
+                        state,
+                        if current == 0 {
+                            max
+                        } else {
+                            current.saturating_sub(
+                                step * if keyboard_modifiers.shift() && max >= 10 {
                                     10
                                 } else {
                                     1
@@ -2045,12 +2155,12 @@ cells! {
         }),
         toggle_overlay: Box::new(|state| state.ram.save.inv.toggle_rutos_letter()),
     },
-    NumBottles: Count {
+    NumBottles: DynamicCount {
         dimmed_img: ImageInfo::new("bottle"),
         img: ImageInfo::new("UNIMPLEMENTED"), //TODO make images for 1–4 bottles
         get: Box::new(|state| state.ram.save.inv.emptiable_bottles()),
-        set: Box::new(|state, value| state.ram.save.inv.set_emptiable_bottles(value)),
-        max: 4,
+        set: Box::new(|state, value| state.ram.save.inv.set_emptiable_bottles(value.min(state.max_bottles))),
+        max_fn: Box::new(|state| state.max_bottles),
         step: 1,
     },
     RutosLetter: Simple {
@@ -6109,6 +6219,27 @@ mod tests {
             assert_eq!(max, 4);
         } else {
             panic!("Expected CountWithMax overlay for NumBottles at max");
+        }
+    }
+
+    #[test]
+    fn test_num_bottles_cell_render_with_custom_max() {
+        // Set custom max bottles (for shared bottle randomizer settings)
+        let mut state = ModelState {
+            max_bottles: 2,
+            ..Default::default()
+        };
+        state.ram.save.inv.set_emptiable_bottles(2);
+
+        let cell = TrackerCellId::NumBottles.kind();
+        let render = cell.render(&state);
+
+        assert_eq!(render.style, CellStyle::Normal);
+        if let CellOverlay::CountWithMax { count, max, .. } = render.overlay {
+            assert_eq!(count, 2);
+            assert_eq!(max, 2); // Max should now be 2, not 4
+        } else {
+            panic!("Expected CountWithMax overlay for NumBottles with custom max");
         }
     }
 

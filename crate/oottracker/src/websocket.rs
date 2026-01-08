@@ -127,6 +127,15 @@ pub enum ClientMessage {
         /// Token required if the room has authorization enabled.
         token: Option<RoomToken>,
     },
+    /// Update tracker settings for a room (e.g., max_bottles for shared bottle randomizer).
+    /// This updates user-configurable settings that affect the tracker display.
+    UpdateSettings {
+        room: String,
+        /// Maximum number of bottles (1-4) for shared bottle randomizer settings.
+        max_bottles: u8,
+        /// Token required if the room has authorization enabled.
+        token: Option<RoomToken>,
+    },
 }
 
 #[derive(Protocol)]

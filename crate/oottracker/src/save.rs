@@ -386,7 +386,8 @@ impl Inventory {
     }
 
     pub fn set_emptiable_bottles(&mut self, amount: u8) {
-        assert!(amount <= 4);
+        // Clamp to maximum possible bottles (4 slots available in inventory)
+        let amount = amount.min(4);
         'increment: while self.emptiable_bottles() < amount {
             for bottle in &mut self.bottles {
                 if *bottle == Bottle::None {
