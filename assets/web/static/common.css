@@ -116,13 +116,15 @@ table td {
 
 .items > div,
 .items > a,
+.items > form,
 a:hover {
     position: relative;
     text-decoration: none;
 }
 
 .items > div > img,
-.items > a > img {
+.items > a > img,
+.items > form > img {
     position: absolute;
 }
 

@@ -557,7 +557,7 @@ mod timeout_handling {
         // Either timeout or immediate connection error is acceptable
         // The key assertion is that the connection does NOT succeed
         match result {
-            Err(_) => {} // Timeout - expected behavior
+            Err(_) => {}     // Timeout - expected behavior
             Ok(Err(_)) => {} // Connection error (refused, unreachable, etc.)
             Ok(Ok(_)) => panic!("Connection to non-routable IP should not succeed"),
         }
