@@ -4092,6 +4092,14 @@ pub struct CheckedLocationsSummary {
     pub unknown_count: usize,
     /// List of location check results.
     pub locations: Vec<LocationCheckResult>,
+    /// Current scene ID from RAM (used for auto-scrolling the check tracker).
+    /// This is the OoT scene ID when in OoT, or the MM scene ID when in MM.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub current_scene_id: Option<u8>,
+    /// Indicates which game is currently active (for combo randomizer).
+    /// Values: "oot" for Ocarina of Time, "mm" for Majora's Mask, None if unknown.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub current_game: Option<String>,
 }
 
 /// Returns a summary of checked locations for the current game state.
@@ -4127,6 +4135,26 @@ pub fn get_checked_locations_summary(model: &ModelState) -> CheckedLocationsSumm
         .filter(|l| l.status == CheckStatus::Unknown)
         .count();
 
+    // Determine current scene and game from RAM state
+    let current_scene_id = Some(model.ram.current_scene_id);
+
+    // Determine which game is active based on MM save data presence
+    // If MM save is present and has valid data, we might be in MM
+    let current_game = if model.ram.mm_save.is_some() {
+        // In combo mode - could be either game
+        // Scene ID 0xFF typically indicates no active scene
+        if model.ram.current_scene_id == 0xFF {
+            None
+        } else {
+            // Default to OoT for now - more sophisticated detection would
+            // require checking game detection state which isn't stored in ModelState
+            Some("oot".to_string())
+        }
+    } else {
+        // No MM save means standalone OoT
+        Some("oot".to_string())
+    };
+
     CheckedLocationsSummary {
         total_mapped,
         checked_count,
@@ -4134,6 +4162,8 @@ pub fn get_checked_locations_summary(model: &ModelState) -> CheckedLocationsSumm
         skipped_count,
         unknown_count,
         locations,
+        current_scene_id,
+        current_game,
     }
 }
 
@@ -4206,6 +4236,20 @@ pub fn get_checked_locations_summary_filtered(model: &ModelState) -> CheckedLoca
         .filter(|l| l.status == CheckStatus::Unknown)
         .count();
 
+    // Determine current scene and game from RAM state
+    let current_scene_id = Some(model.ram.current_scene_id);
+
+    // Determine which game is active based on MM save data presence
+    let current_game = if model.ram.mm_save.is_some() {
+        if model.ram.current_scene_id == 0xFF {
+            None
+        } else {
+            Some("oot".to_string())
+        }
+    } else {
+        Some("oot".to_string())
+    };
+
     CheckedLocationsSummary {
         total_mapped,
         checked_count,
@@ -4213,6 +4257,8 @@ pub fn get_checked_locations_summary_filtered(model: &ModelState) -> CheckedLoca
         skipped_count,
         unknown_count,
         locations,
+        current_scene_id,
+        current_game,
     }
 }
 
