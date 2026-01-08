@@ -898,6 +898,13 @@ function toggleAutoScroll() {
     localStorage.setItem('oottracker_autoscroll_enabled',
         checkedLocationsState.autoScrollEnabled ? 'true' : 'false');
     updateAutoScrollButtonState();
+
+    // Start or stop scene polling based on new state
+    if (checkedLocationsState.autoScrollEnabled) {
+        startScenePolling();
+    } else {
+        stopScenePolling();
+    }
 }
 
 /**
@@ -933,6 +940,54 @@ async function refreshCheckedLocations() {
 }
 
 /**
+ * Lightweight scene check - only fetches scene info for auto-scroll.
+ * This is used for periodic polling to detect scene changes when
+ * WebSocket doesn't trigger updates (e.g., walking between areas
+ * without collecting items).
+ */
+async function checkSceneForAutoScroll() {
+    if (!checkedLocationsState.autoScrollEnabled) return;
+
+    try {
+        const roomName = getRoomName();
+        if (!roomName) return;
+
+        const response = await fetch(`/api/room/${roomName}/checked-locations`);
+        if (!response.ok) return;
+
+        const data = await response.json();
+        handleSceneChange(data);
+    } catch (e) {
+        // Silent fail for background polling
+        console.debug('Scene check failed:', e);
+    }
+}
+
+// Scene polling interval ID
+let scenePollingInterval = null;
+
+/**
+ * Start periodic scene polling for auto-scroll.
+ * Polls every 2 seconds to detect scene changes even when
+ * WebSocket doesn't send updates.
+ */
+function startScenePolling() {
+    if (scenePollingInterval) return; // Already polling
+
+    scenePollingInterval = setInterval(checkSceneForAutoScroll, 2000);
+}
+
+/**
+ * Stop periodic scene polling.
+ */
+function stopScenePolling() {
+    if (scenePollingInterval) {
+        clearInterval(scenePollingInterval);
+        scenePollingInterval = null;
+    }
+}
+
+/**
  * Initialize the checked locations display
  */
 function initCheckedLocations() {
@@ -955,6 +1010,13 @@ function initCheckedLocations() {
         // Refresh checked locations when tracker state changes
         refreshCheckedLocations();
     });
+
+    // Start periodic scene polling for auto-scroll
+    // This ensures scene changes are detected even when WebSocket
+    // doesn't trigger updates (e.g., walking between areas)
+    if (checkedLocationsState.autoScrollEnabled) {
+        startScenePolling();
+    }
 }
 
 // Initialize when DOM is ready
