@@ -858,6 +858,35 @@ async fn client_session(
                     }
                 }
             }
+            ClientMessage::UpdateSettings {
+                room,
+                max_bottles,
+                token,
+            } => {
+                // Check authorization before allowing settings modification
+                {
+                    let rooms_guard = rooms.lock().await;
+                    if let Some(room_state) = rooms_guard.get(&room) {
+                        if !room_state.check_auth(&token) {
+                            if let Err(e) = (ServerMessage::Unauthorized { room: room.clone() })
+                                .write_warp(&mut *sink.lock().await)
+                                .await
+                            {
+                                warn!(room = %room, "Failed to send Unauthorized message to client: {e}");
+                            }
+                            continue;
+                        }
+                    }
+                    // If room doesn't exist, it will be created (no auth needed for new rooms)
+                }
+                // Clamp max_bottles to valid range (1-4)
+                let max_bottles = max_bottles.clamp(1, 4);
+                edit_room(pool, &rooms, room, |room| {
+                    room.model.max_bottles = max_bottles;
+                    Ok(())
+                })
+                .await?
+            }
         }
     }
 }

@@ -411,6 +411,56 @@ function makeLayoutBuf(layoutString) {
     }
 }
 
+/**
+ * Sends an UpdateSettings message to the server to update tracker settings.
+ * @param {string} roomName - The name of the room to update settings for.
+ * @param {number} maxBottles - The maximum number of bottles (1-4).
+ */
+function sendUpdateSettings(roomName, maxBottles) {
+    if (!sock || sock.readyState !== WebSocket.OPEN) {
+        console.warn('Cannot send UpdateSettings: WebSocket not connected');
+        return;
+    }
+
+    // ClientMessage variant: UpdateSettings = 16
+    const updateSettings = new ArrayBuffer(1);
+    new DataView(updateSettings).setUint8(0, 16);
+
+    // Room name
+    const room = utf8encoder.encode(roomName);
+    const roomLen = new ArrayBuffer(8);
+    new DataView(roomLen).setBigUint64(0, BigInt(room.length));
+
+    // max_bottles (u8) + token (Option<RoomToken>: None = 0)
+    const settingsData = new ArrayBuffer(2);
+    const settingsView = new DataView(settingsData);
+    settingsView.setUint8(0, Math.max(1, Math.min(4, maxBottles))); // Clamp to 1-4
+    settingsView.setUint8(1, 0); // Option<RoomToken>: None
+
+    sock.send(new Blob([updateSettings, roomLen, room, settingsData]));
+    console.log('Sent UpdateSettings:', { roomName, maxBottles });
+}
+
+/**
+ * Gets the current room name from the URL, if on a room page.
+ * @returns {string|null} The room name, or null if not on a room page.
+ */
+function getCurrentRoomName() {
+    const roomMatch = window.location.pathname.match(/^\/room\/([0-9A-Za-z-]+)\/?/);
+    if (roomMatch) {
+        return roomMatch[1];
+    }
+    const mwRoomMatch = window.location.pathname.match(/^\/mw\/([0-9A-Za-z-]+)\//);
+    if (mwRoomMatch) {
+        return mwRoomMatch[1];
+    }
+    return null;
+}
+
+// Expose functions globally for use by settings.js
+window.sendUpdateSettings = sendUpdateSettings;
+window.getCurrentRoomName = getCurrentRoomName;
+
 function sendClick(cellID, right) {
     const mwRoomMatch = window.location.pathname.match(/^\/mw\/([0-9A-Za-z-]+)\/([0-9]+)\/([0-9A-Za-z-]+)\/?$/);
     const roomMatch = window.location.pathname.match(/^\/room\/([0-9A-Za-z-]+)\/?$/);
@@ -636,6 +686,30 @@ function updateCell(cellID, data, offset, isInitialLoad) {
     return offset;
 }
 
+/**
+ * Syncs tracker settings from localStorage to the server for the current room.
+ * Called after subscribing to ensure the room has the correct settings.
+ */
+function syncSettingsToRoom() {
+    const roomName = getCurrentRoomName();
+    if (!roomName) return;
+
+    try {
+        const settingsStr = localStorage.getItem('ootmm-settings');
+        if (settingsStr) {
+            const settings = JSON.parse(settingsStr);
+            const bottleCount = settings.bottleCount || 4;
+            // Only send if not default (to avoid unnecessary updates)
+            if (bottleCount !== 4) {
+                // Small delay to ensure subscription is processed first
+                setTimeout(() => sendUpdateSettings(roomName, bottleCount), 100);
+            }
+        }
+    } catch (e) {
+        console.warn('Failed to sync settings from localStorage:', e);
+    }
+}
+
 function handleWebSocketOpen(event) {
     console.log('WebSocket connected');
     reconnectAttempts = 0; // Reset on successful connection
@@ -711,6 +785,9 @@ function handleWebSocketOpen(event) {
         new DataView(doubleLayoutBuf).setUint8(0, doubleLayout);
         sock.send(new Blob([doubleSubscription, doubleRestreamLen, doubleRestream, runner1len, runner1, runner2len, runner2, doubleLayoutBuf]));
     }
+
+    // Sync settings from localStorage to the server after subscribing
+    syncSettingsToRoom();
 }
 
 function handleWebSocketMessage(event) {
