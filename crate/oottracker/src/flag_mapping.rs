@@ -4561,7 +4561,10 @@ mod tests {
 
         // Counts should add up
         assert_eq!(
-            summary.checked_count + summary.unchecked_count + summary.unknown_count,
+            summary.checked_count
+                + summary.unchecked_count
+                + summary.skipped_count
+                + summary.unknown_count,
             summary.total_mapped,
             "Status counts should sum to total_mapped"
         );
