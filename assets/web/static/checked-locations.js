@@ -11,7 +11,7 @@
 
 // Checked locations state
 let checkedLocationsState = {
-    locations: {},
+    locations: {},       // location_id -> { status, accessibility }
     lastUpdate: null,
     isLoading: false,
     error: null,
@@ -358,9 +358,12 @@ async function fetchCheckedLocations() {
         const data = await response.json();
         checkedLocationsState.locations = {};
 
-        // Build a map of location_id -> status
+        // Build a map of location_id -> { status, accessibility }
         for (const loc of data.locations) {
-            checkedLocationsState.locations[loc.location_id] = loc.status;
+            checkedLocationsState.locations[loc.location_id] = {
+                status: loc.status,
+                accessibility: loc.accessibility || 'Unknown'
+            };
         }
 
         checkedLocationsState.lastUpdate = new Date();
@@ -399,6 +402,10 @@ function updateStatusDisplay(data) {
             <span class="total-count">${data.total_mapped}</span>
             <span class="checked-percent">(${percent}%)</span>
         `;
+        // Show available count if there are accessible unchecked locations
+        if (data.available_count !== undefined && data.available_count > 0) {
+            html += `<span class="available-indicator"> [${data.available_count} available]</span>`;
+        }
         statusElement.innerHTML = html;
         statusElement.classList.remove('error');
     } else if (checkedLocationsState.error) {
@@ -510,9 +517,10 @@ function toggleRegion(regionKey) {
     }
     // Re-render
     const data = {
-        locations: Object.entries(checkedLocationsState.locations).map(([id, status]) => ({
+        locations: Object.entries(checkedLocationsState.locations).map(([id, info]) => ({
             location_id: id,
-            status: status
+            status: info.status,
+            accessibility: info.accessibility
         }))
     };
     updateLocationsList(data);
@@ -542,14 +550,19 @@ async function toggleSkipLocation(locationId) {
         }
 
         const result = await response.json();
-        // Update local state immediately
-        checkedLocationsState.locations[locationId] = result.skipped ? 'Skipped' : 'Unchecked';
+        // Update local state immediately (preserve accessibility)
+        const currentInfo = checkedLocationsState.locations[locationId] || { accessibility: 'Unknown' };
+        checkedLocationsState.locations[locationId] = {
+            status: result.skipped ? 'Skipped' : 'Unchecked',
+            accessibility: currentInfo.accessibility
+        };
 
         // Refresh the display
         const data = {
-            locations: Object.entries(checkedLocationsState.locations).map(([id, status]) => ({
+            locations: Object.entries(checkedLocationsState.locations).map(([id, info]) => ({
                 location_id: id,
-                status: status
+                status: info.status,
+                accessibility: info.accessibility
             }))
         };
         updateLocationsList(data);
@@ -575,7 +588,9 @@ function updateLocationsList(data) {
         if (!regionGroups[region]) {
             regionGroups[region] = {
                 checked: [],
-                unchecked: [],
+                available: [],    // unchecked and available
+                unavailable: [],  // unchecked and unavailable
+                unchecked: [],    // unchecked with unknown accessibility
                 skipped: [],
                 unknown: []
             };
@@ -584,7 +599,14 @@ function updateLocationsList(data) {
         if (loc.status === 'Checked') {
             regionGroups[region].checked.push(loc.location_id);
         } else if (loc.status === 'Unchecked') {
-            regionGroups[region].unchecked.push(loc.location_id);
+            // Categorize unchecked by accessibility
+            if (loc.accessibility === 'Available') {
+                regionGroups[region].available.push(loc.location_id);
+            } else if (loc.accessibility === 'Unavailable') {
+                regionGroups[region].unavailable.push(loc.location_id);
+            } else {
+                regionGroups[region].unchecked.push(loc.location_id);
+            }
         } else if (loc.status === 'Skipped') {
             regionGroups[region].skipped.push(loc.location_id);
         } else {
@@ -610,10 +632,13 @@ function updateLocationsList(data) {
 
     for (const region of sortedRegions) {
         const group = regionGroups[region];
-        // Total includes checked, unchecked, skipped, and unknown
-        const total = group.checked.length + group.unchecked.length + group.skipped.length + group.unknown.length;
+        // Total includes all locations
+        const total = group.checked.length + group.available.length + group.unavailable.length +
+                      group.unchecked.length + group.skipped.length + group.unknown.length;
         // Progress shows checked + skipped (locations that are "done" either way)
         const done = group.checked.length + group.skipped.length;
+        // Count of available checks in this region
+        const availableInRegion = group.available.length;
         const isCollapsed = checkedLocationsState.collapsedRegions.has(region);
         const collapsedClass = isCollapsed ? 'collapsed' : '';
         const arrow = isCollapsed ? '&#9654;' : '&#9660;'; // Right arrow or down arrow
@@ -622,19 +647,45 @@ function updateLocationsList(data) {
         html += `<button class="region-header" aria-expanded="${!isCollapsed}" aria-controls="region-${escapeHtml(region)}">`;
         html += `<span class="region-arrow">${arrow}</span>`;
         html += `<span class="region-name">${escapeHtml(getRegionDisplayName(region))}</span>`;
-        html += `<span class="region-count">(${done}/${total})</span>`;
+        html += `<span class="region-count">(${done}/${total})`;
+        if (availableInRegion > 0) {
+            html += ` <span class="region-available">[${availableInRegion} avail]</span>`;
+        }
+        html += `</span>`;
         html += `</button>`;
 
         html += `<div class="region-locations" id="region-${escapeHtml(region)}">`;
 
-        // Show unchecked first (what the player still needs to get)
+        // Show available checks first (player can get these now!)
+        for (const loc of group.available.sort()) {
+            const isPending = checkedLocationsState.pendingSkipToggles.has(loc);
+            const pendingClass = isPending ? ' pending' : '';
+            html += `<div class="location-item location-available${pendingClass}" data-location="${escapeHtml(loc)}">`;
+            html += `<span class="location-icon">&#9679;</span>`; // Filled circle (go get it!)
+            html += `<span class="location-name">${escapeHtml(formatLocationName(loc))}</span>`;
+            html += `<button class="skip-button" title="Skip this location" ${isPending ? 'disabled' : ''}>&#10006;</button>`;
+            html += `</div>`;
+        }
+
+        // Show unavailable checks (player needs more items)
+        for (const loc of group.unavailable.sort()) {
+            const isPending = checkedLocationsState.pendingSkipToggles.has(loc);
+            const pendingClass = isPending ? ' pending' : '';
+            html += `<div class="location-item location-unavailable${pendingClass}" data-location="${escapeHtml(loc)}">`;
+            html += `<span class="location-icon">&#9675;</span>`; // Empty circle (can't get yet)
+            html += `<span class="location-name">${escapeHtml(formatLocationName(loc))}</span>`;
+            html += `<button class="skip-button" title="Skip this location" ${isPending ? 'disabled' : ''}>&#10006;</button>`;
+            html += `</div>`;
+        }
+
+        // Show unchecked with unknown accessibility
         for (const loc of group.unchecked.sort()) {
             const isPending = checkedLocationsState.pendingSkipToggles.has(loc);
             const pendingClass = isPending ? ' pending' : '';
             html += `<div class="location-item location-unchecked${pendingClass}" data-location="${escapeHtml(loc)}">`;
             html += `<span class="location-icon">&#9744;</span>`; // Empty checkbox
             html += `<span class="location-name">${escapeHtml(formatLocationName(loc))}</span>`;
-            html += `<button class="skip-button" title="Skip this location" ${isPending ? 'disabled' : ''}>&#10006;</button>`; // X mark to skip
+            html += `<button class="skip-button" title="Skip this location" ${isPending ? 'disabled' : ''}>&#10006;</button>`;
             html += `</div>`;
         }
 
@@ -645,7 +696,7 @@ function updateLocationsList(data) {
             html += `<div class="location-item location-skipped${pendingClass}" data-location="${escapeHtml(loc)}">`;
             html += `<span class="location-icon">&#10060;</span>`; // Red X to indicate skipped
             html += `<span class="location-name">${escapeHtml(formatLocationName(loc))}</span>`;
-            html += `<button class="unskip-button" title="Unskip this location" ${isPending ? 'disabled' : ''}>&#8634;</button>`; // Undo/refresh icon
+            html += `<button class="unskip-button" title="Unskip this location" ${isPending ? 'disabled' : ''}>&#8634;</button>`;
             html += `</div>`;
         }
 
@@ -727,7 +778,17 @@ if (document.readyState === 'loading') {
 window.checkedLocations = {
     refresh: refreshCheckedLocations,
     getState: () => checkedLocationsState,
-    isLocationChecked: (locationId) => checkedLocationsState.locations[locationId] === 'Checked',
-    isLocationSkipped: (locationId) => checkedLocationsState.locations[locationId] === 'Skipped',
+    isLocationChecked: (locationId) => {
+        const info = checkedLocationsState.locations[locationId];
+        return info && info.status === 'Checked';
+    },
+    isLocationSkipped: (locationId) => {
+        const info = checkedLocationsState.locations[locationId];
+        return info && info.status === 'Skipped';
+    },
+    isLocationAvailable: (locationId) => {
+        const info = checkedLocationsState.locations[locationId];
+        return info && info.accessibility === 'Available';
+    },
     toggleSkip: toggleSkipLocation
 };

@@ -3025,11 +3025,13 @@ pub fn check_mm_location_status(mapping: &MmFlagMapping, mm_save: &MmSave) -> Ch
 ///
 /// A vector of `LocationCheckResult` for all mapped MM locations.
 pub fn get_all_mm_checked_locations(mm_save: &MmSave) -> Vec<LocationCheckResult> {
+    use crate::flag_mapping::Accessibility;
     get_mm_mapped_locations()
         .map(|mapping| LocationCheckResult {
             location_id: mapping.location_id.to_string(),
             status: check_mm_location_status(mapping, mm_save),
             is_mapped: mapping.is_mapped(),
+            accessibility: Accessibility::Unknown, // MM logic evaluation not yet implemented
         })
         .collect()
 }
@@ -3045,12 +3047,14 @@ pub fn get_all_mm_checked_locations(mm_save: &MmSave) -> Vec<LocationCheckResult
 /// A vector of `LocationCheckResult` for all MM locations.
 /// If mm_save is None, all locations will have Unknown status.
 pub fn get_all_mm_locations_with_status(mm_save: Option<&MmSave>) -> Vec<LocationCheckResult> {
+    use crate::flag_mapping::Accessibility;
     match mm_save {
         Some(save) => get_all_mm_mappings()
             .map(|mapping| LocationCheckResult {
                 location_id: mapping.location_id.to_string(),
                 status: check_mm_location_status(mapping, save),
                 is_mapped: mapping.is_mapped(),
+                accessibility: Accessibility::Unknown, // MM logic evaluation not yet implemented
             })
             .collect(),
         None => get_all_mm_mappings()
@@ -3058,6 +3062,7 @@ pub fn get_all_mm_locations_with_status(mm_save: Option<&MmSave>) -> Vec<Locatio
                 location_id: mapping.location_id.to_string(),
                 status: CheckStatus::Unknown,
                 is_mapped: mapping.is_mapped(),
+                accessibility: Accessibility::Unknown,
             })
             .collect(),
     }
