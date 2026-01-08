@@ -143,7 +143,7 @@
 
 /* Collapsible region content */
 .region-locations {
-    max-height: 500px;
+    max-height: 5000px;
     overflow: hidden;
     transition: max-height 0.3s ease, opacity 0.3s ease;
     opacity: 1;
