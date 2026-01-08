@@ -46,8 +46,11 @@ use std::collections::HashMap;
 
 use once_cell::sync::Lazy;
 
+use ootmm::embedded_data;
+use ootmm::expr::{eval_str, EvalContext};
 use ootmm::region::Game;
 use ootmm::settings::RandomizerSettings;
+use ootmm::world_database::WorldDatabase;
 use ootr::{
     model::{Dungeon, MainDungeon},
     region::Mq,
@@ -375,7 +378,7 @@ impl FlagMapping {
 ///
 /// This list is generated at compile time from the OoTMM YAML files.
 static OOT_LOCATION_IDS: Lazy<Vec<&'static str>> = Lazy::new(|| {
-    let db = ootmm::embedded_data::create_world_database()
+    let db = embedded_data::create_world_database()
         .expect("Failed to load world database for location extraction");
 
     db.locations_for_game(Game::Oot)
@@ -3851,6 +3854,264 @@ pub enum CheckStatus {
     Unknown,
 }
 
+/// Accessibility status based on logic evaluation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
+pub enum Accessibility {
+    /// The location is accessible with current items and state.
+    Available,
+    /// The location is not accessible yet.
+    Unavailable,
+    /// Accessibility cannot be determined (no logic defined or evaluation failed).
+    #[default]
+    Unknown,
+}
+
+// ============================================================================
+// OoT Evaluation Context
+// ============================================================================
+
+use crate::save::{Equipment, Hookshot, MagicCapacity, Ocarina, QuestItems, Save, Upgrades};
+
+/// Context for evaluating OoT logic expressions from save data.
+///
+/// This struct provides an [`EvalContext`] implementation that reads item
+/// possession, age, and other state from OoT save data.
+pub struct OotEvalContext<'a> {
+    save: &'a Save,
+}
+
+impl<'a> OotEvalContext<'a> {
+    /// Creates a new evaluation context from save data.
+    pub fn new(save: &'a Save) -> Self {
+        Self { save }
+    }
+}
+
+impl EvalContext for OotEvalContext<'_> {
+    fn has_item(&self, item: &str, count: u32) -> bool {
+        let item_upper = item.to_uppercase();
+        let has = match item_upper.as_str() {
+            // Inventory items
+            "BOW" => self.save.inv.bow,
+            "FIRE_ARROW" | "FIRE_ARROWS" => self.save.inv.fire_arrows,
+            "ICE_ARROW" | "ICE_ARROWS" => self.save.inv.ice_arrows,
+            "LIGHT_ARROW" | "LIGHT_ARROWS" => self.save.inv.light_arrows,
+            "DINS_FIRE" | "DIN" => self.save.inv.dins_fire,
+            "FARORES_WIND" | "FARORE" => self.save.inv.farores_wind,
+            "NAYRUS_LOVE" | "NAYRU" => self.save.inv.nayrus_love,
+            "SLINGSHOT" | "FAIRY_SLINGSHOT" => self.save.inv.slingshot,
+            "OCARINA" | "OCARINA_OF_TIME" | "FAIRY_OCARINA" => {
+                self.save.inv.ocarina != Ocarina::None
+            }
+            "BOMBCHU" | "BOMBCHUS" => self.save.inv.bombchus,
+            "HOOKSHOT" => matches!(
+                self.save.inv.hookshot,
+                Hookshot::Hookshot | Hookshot::Longshot
+            ),
+            "LONGSHOT" => matches!(self.save.inv.hookshot, Hookshot::Longshot),
+            "BOOMERANG" => self.save.inv.boomerang,
+            "LENS" | "LENS_OF_TRUTH" => self.save.inv.lens,
+            "MAGIC_BEAN" | "BEANS" => self.save.inv.beans,
+            "HAMMER" | "MEGATON_HAMMER" => self.save.inv.hammer,
+
+            // Equipment
+            "KOKIRI_SWORD" => self.save.equipment.contains(Equipment::KOKIRI_SWORD),
+            "MASTER_SWORD" => self.save.equipment.contains(Equipment::MASTER_SWORD),
+            "GIANTS_KNIFE" | "BIGGORON_SWORD" | "SWORD_BIGGORON" => {
+                self.save.biggoron_sword || self.save.equipment.contains(Equipment::GIANTS_KNIFE)
+            }
+            "DEKU_SHIELD" => self.save.equipment.contains(Equipment::DEKU_SHIELD),
+            "HYLIAN_SHIELD" => self.save.equipment.contains(Equipment::HYLIAN_SHIELD),
+            "MIRROR_SHIELD" => self.save.equipment.contains(Equipment::MIRROR_SHIELD),
+            "GORON_TUNIC" => self.save.equipment.contains(Equipment::GORON_TUNIC),
+            "ZORA_TUNIC" => self.save.equipment.contains(Equipment::ZORA_TUNIC),
+            "IRON_BOOTS" => self.save.equipment.contains(Equipment::IRON_BOOTS),
+            "HOVER_BOOTS" => self.save.equipment.contains(Equipment::HOVER_BOOTS),
+
+            // Upgrades
+            "GORON_BRACELET" | "STRENGTH" => self.save.upgrades.contains(Upgrades::GORON_BRACELET),
+            "SILVER_GAUNTLETS" => self.save.upgrades.contains(Upgrades::SILVER_GAUNTLETS),
+            "GOLD_GAUNTLETS" | "GOLDEN_GAUNTLETS" => {
+                self.save.upgrades.contains(Upgrades::GOLD_GAUNTLETS)
+            }
+            "SILVER_SCALE" | "SCALE" => self.save.upgrades.contains(Upgrades::SILVER_SCALE),
+            "GOLD_SCALE" | "GOLDEN_SCALE" => self.save.upgrades.contains(Upgrades::GOLD_SCALE),
+            "BOMB_BAG" | "BOMBS" => self
+                .save
+                .upgrades
+                .intersects(Upgrades::BOMB_BAG_20 | Upgrades::BOMB_BAG_30 | Upgrades::BOMB_BAG_40),
+            "QUIVER" => self.save.upgrades.intersects(
+                Upgrades::QUIVER_50 | Upgrades::QUIVER_40 | Upgrades::from_bits_truncate(0x1),
+            ),
+            "BULLET_BAG" => self.save.upgrades.intersects(
+                Upgrades::BULLET_BAG_30 | Upgrades::BULLET_BAG_40 | Upgrades::BULLET_BAG_50,
+            ),
+            "WALLET" | "ADULTS_WALLET" | "GIANTS_WALLET" => {
+                self.save.upgrades.intersects(Upgrades::WALLET_MASK)
+            }
+
+            // Magic
+            "MAGIC" | "MAGIC_METER" => self.save.magic != MagicCapacity::None,
+            "DOUBLE_MAGIC" => self.save.magic == MagicCapacity::Large,
+
+            // Quest items - songs
+            "ZELDAS_LULLABY" | "LULLABY" => {
+                self.save.quest_items.contains(QuestItems::ZELDAS_LULLABY)
+            }
+            "EPONAS_SONG" | "EPONA" => self.save.quest_items.contains(QuestItems::EPONAS_SONG),
+            "SARIAS_SONG" | "SARIA" => self.save.quest_items.contains(QuestItems::SARIAS_SONG),
+            "SUNS_SONG" | "SUN" => self.save.quest_items.contains(QuestItems::SUNS_SONG),
+            "SONG_OF_TIME" | "TIME" => self.save.quest_items.contains(QuestItems::SONG_OF_TIME),
+            "SONG_OF_STORMS" | "STORMS" => {
+                self.save.quest_items.contains(QuestItems::SONG_OF_STORMS)
+            }
+            "MINUET_OF_FOREST" | "MINUET" => {
+                self.save.quest_items.contains(QuestItems::MINUET_OF_FOREST)
+            }
+            "BOLERO_OF_FIRE" | "BOLERO" => {
+                self.save.quest_items.contains(QuestItems::BOLERO_OF_FIRE)
+            }
+            "SERENADE_OF_WATER" | "SERENADE" => self
+                .save
+                .quest_items
+                .contains(QuestItems::SERENADE_OF_WATER),
+            "REQUIEM_OF_SPIRIT" | "REQUIEM" => self
+                .save
+                .quest_items
+                .contains(QuestItems::REQUIEM_OF_SPIRIT),
+            "NOCTURNE_OF_SHADOW" | "NOCTURNE" => self
+                .save
+                .quest_items
+                .contains(QuestItems::NOCTURNE_OF_SHADOW),
+            "PRELUDE_OF_LIGHT" | "PRELUDE" => {
+                self.save.quest_items.contains(QuestItems::PRELUDE_OF_LIGHT)
+            }
+
+            // Quest items - stones and medallions
+            "KOKIRI_EMERALD" => self.save.quest_items.contains(QuestItems::KOKIRI_EMERALD),
+            "GORON_RUBY" => self.save.quest_items.contains(QuestItems::GORON_RUBY),
+            "ZORA_SAPPHIRE" => self.save.quest_items.contains(QuestItems::ZORA_SAPPHIRE),
+            "FOREST_MEDALLION" => self.save.quest_items.contains(QuestItems::FOREST_MEDALLION),
+            "FIRE_MEDALLION" => self.save.quest_items.contains(QuestItems::FIRE_MEDALLION),
+            "WATER_MEDALLION" => self.save.quest_items.contains(QuestItems::WATER_MEDALLION),
+            "SPIRIT_MEDALLION" => self.save.quest_items.contains(QuestItems::SPIRIT_MEDALLION),
+            "SHADOW_MEDALLION" => self.save.quest_items.contains(QuestItems::SHADOW_MEDALLION),
+            "LIGHT_MEDALLION" => self.save.quest_items.contains(QuestItems::LIGHT_MEDALLION),
+
+            // Other quest items
+            "GERUDO_CARD" | "GERUDO_MEMBERSHIP_CARD" => {
+                self.save.quest_items.contains(QuestItems::GERUDO_CARD)
+            }
+            "STONE_OF_AGONY" => self.save.quest_items.contains(QuestItems::STONE_OF_AGONY),
+
+            // Bottles (check if any bottle exists)
+            "BOTTLE" | "EMPTY_BOTTLE" => self
+                .save
+                .inv
+                .bottles
+                .iter()
+                .any(|b| *b != crate::save::Bottle::None),
+
+            // Sticks/Nuts (check if capacity upgrade exists)
+            "DEKU_STICK" | "STICKS" => self
+                .save
+                .upgrades
+                .intersects(Upgrades::DEKU_STICK_CAPACITY_MASK),
+            "DEKU_NUT" | "NUTS" => self
+                .save
+                .upgrades
+                .intersects(Upgrades::DEKU_NUT_CAPACITY_MASK),
+
+            // Default - unknown item
+            _ => false,
+        };
+
+        // For count-based checks, we only support count=1 for now
+        // Most logic just checks has(ITEM) which defaults to count=1
+        has && count <= 1
+    }
+
+    fn event(&self, _name: &str) -> bool {
+        // Events require more complex tracking (event_chk_inf flags)
+        // For now, return false - events are harder to map without full flag analysis
+        false
+    }
+
+    fn setting(&self, _name: &str) -> Option<bool> {
+        // Settings are not stored in save data
+        // Return None to indicate unknown
+        None
+    }
+
+    fn setting_value(&self, _name: &str, _value: &str) -> bool {
+        // Settings are not stored in save data
+        false
+    }
+
+    fn trick(&self, _name: &str) -> bool {
+        // Tricks are user preferences, not stored in save
+        false
+    }
+
+    fn is_adult(&self) -> bool {
+        self.save.is_adult
+    }
+
+    fn is_child(&self) -> bool {
+        !self.save.is_adult
+    }
+
+    fn mm_time(&self) -> u32 {
+        // OoT doesn't have MM time
+        0
+    }
+}
+
+// ============================================================================
+// World Database Cache
+// ============================================================================
+
+/// Lazily initialized world database containing all location logic definitions.
+static WORLD_DATABASE: Lazy<Option<WorldDatabase>> =
+    Lazy::new(|| match embedded_data::create_world_database() {
+        Ok(db) => Some(db),
+        Err(e) => {
+            eprintln!(
+                "Warning: Failed to load world database for logic evaluation: {}",
+                e
+            );
+            None
+        }
+    });
+
+/// Evaluates accessibility for a location based on current save state.
+///
+/// Returns `Accessibility::Available` if the location's logic evaluates to true,
+/// `Accessibility::Unavailable` if it evaluates to false, or `Accessibility::Unknown`
+/// if the location is not found or has no logic defined.
+fn evaluate_accessibility(location_id: &str, save: &Save) -> Accessibility {
+    let Some(db) = WORLD_DATABASE.as_ref() else {
+        return Accessibility::Unknown;
+    };
+
+    let Some((location, _region_id)) = db.get_location(location_id) else {
+        return Accessibility::Unknown;
+    };
+
+    let Some(logic) = &location.logic else {
+        // No logic defined means always accessible
+        return Accessibility::Available;
+    };
+
+    let ctx = OotEvalContext::new(save);
+
+    match eval_str(logic, &ctx) {
+        Ok(true) => Accessibility::Available,
+        Ok(false) => Accessibility::Unavailable,
+        Err(_) => Accessibility::Unknown,
+    }
+}
+
 /// Result of checking a location.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct LocationCheckResult {
@@ -3860,6 +4121,9 @@ pub struct LocationCheckResult {
     pub status: CheckStatus,
     /// Whether this location has a valid flag mapping.
     pub is_mapped: bool,
+    /// Accessibility based on logic evaluation.
+    #[serde(default)]
+    pub accessibility: Accessibility,
 }
 
 /// Checks if a specific location has been checked based on the current game state.
@@ -4010,10 +4274,15 @@ pub fn check_location_status(mapping: &FlagMapping, model: &ModelState) -> Check
 /// A vector of `LocationCheckResult` for all mapped OoT locations.
 pub fn get_all_checked_locations(model: &ModelState) -> Vec<LocationCheckResult> {
     get_mapped_locations()
-        .map(|mapping| LocationCheckResult {
-            location_id: mapping.location_id.to_string(),
-            status: check_location_status(mapping, model),
-            is_mapped: mapping.is_mapped(),
+        .map(|mapping| {
+            let location_id = mapping.location_id.to_string();
+            let accessibility = evaluate_accessibility(&location_id, &model.ram.save);
+            LocationCheckResult {
+                location_id,
+                status: check_location_status(mapping, model),
+                is_mapped: mapping.is_mapped(),
+                accessibility,
+            }
         })
         .collect()
 }
@@ -4035,20 +4304,31 @@ pub fn get_all_checked_locations_combo(model: &ModelState) -> Vec<LocationCheckR
 
     // Get all OoT locations
     let mut results: Vec<LocationCheckResult> = get_mapped_locations()
-        .map(|mapping| LocationCheckResult {
-            location_id: mapping.location_id.to_string(),
-            status: check_location_status(mapping, model),
-            is_mapped: mapping.is_mapped(),
+        .map(|mapping| {
+            let location_id = mapping.location_id.to_string();
+            let accessibility = evaluate_accessibility(&location_id, &model.ram.save);
+            LocationCheckResult {
+                location_id,
+                status: check_location_status(mapping, model),
+                is_mapped: mapping.is_mapped(),
+                accessibility,
+            }
         })
         .collect();
 
     // Add MM locations if MM save data is available
     if let Some(ref mm_save) = model.ram.mm_save {
         let mm_results: Vec<LocationCheckResult> = get_mm_mapped_locations()
-            .map(|mapping| LocationCheckResult {
-                location_id: mapping.location_id.to_string(),
-                status: check_mm_location_status(mapping, mm_save),
-                is_mapped: mapping.is_mapped(),
+            .map(|mapping| {
+                let location_id = mapping.location_id.to_string();
+                // MM accessibility evaluation would use MM save context
+                // For now, mark as Unknown since we don't have MM logic evaluation yet
+                LocationCheckResult {
+                    location_id,
+                    status: check_mm_location_status(mapping, mm_save),
+                    is_mapped: mapping.is_mapped(),
+                    accessibility: Accessibility::Unknown,
+                }
             })
             .collect();
         results.extend(mm_results);
@@ -4090,6 +4370,12 @@ pub struct CheckedLocationsSummary {
     pub skipped_count: usize,
     /// Number of locations with unknown status.
     pub unknown_count: usize,
+    /// Number of available (accessible) unchecked locations.
+    #[serde(default)]
+    pub available_count: usize,
+    /// Number of unavailable (inaccessible) unchecked locations.
+    #[serde(default)]
+    pub unavailable_count: usize,
     /// List of location check results.
     pub locations: Vec<LocationCheckResult>,
 }
@@ -4126,6 +4412,19 @@ pub fn get_checked_locations_summary(model: &ModelState) -> CheckedLocationsSumm
         .iter()
         .filter(|l| l.status == CheckStatus::Unknown)
         .count();
+    // Count available/unavailable only for unchecked locations
+    let available_count = locations
+        .iter()
+        .filter(|l| {
+            l.status == CheckStatus::Unchecked && l.accessibility == Accessibility::Available
+        })
+        .count();
+    let unavailable_count = locations
+        .iter()
+        .filter(|l| {
+            l.status == CheckStatus::Unchecked && l.accessibility == Accessibility::Unavailable
+        })
+        .count();
 
     CheckedLocationsSummary {
         total_mapped,
@@ -4133,6 +4432,8 @@ pub fn get_checked_locations_summary(model: &ModelState) -> CheckedLocationsSumm
         unchecked_count,
         skipped_count,
         unknown_count,
+        available_count,
+        unavailable_count,
         locations,
     }
 }
@@ -4152,10 +4453,15 @@ pub fn get_checked_locations_summary(model: &ModelState) -> CheckedLocationsSumm
 pub fn get_all_checked_locations_filtered(model: &ModelState) -> Vec<LocationCheckResult> {
     let settings = mq_settings_from_knowledge(&model.knowledge.mq);
     get_active_mapped_locations(&settings)
-        .map(|mapping| LocationCheckResult {
-            location_id: mapping.location_id.to_string(),
-            status: check_location_status(mapping, model),
-            is_mapped: mapping.is_mapped(),
+        .map(|mapping| {
+            let location_id = mapping.location_id.to_string();
+            let accessibility = evaluate_accessibility(&location_id, &model.ram.save);
+            LocationCheckResult {
+                location_id,
+                status: check_location_status(mapping, model),
+                is_mapped: mapping.is_mapped(),
+                accessibility,
+            }
         })
         .collect()
 }
@@ -4205,6 +4511,19 @@ pub fn get_checked_locations_summary_filtered(model: &ModelState) -> CheckedLoca
         .iter()
         .filter(|l| l.status == CheckStatus::Unknown)
         .count();
+    // Count available/unavailable only for unchecked locations
+    let available_count = locations
+        .iter()
+        .filter(|l| {
+            l.status == CheckStatus::Unchecked && l.accessibility == Accessibility::Available
+        })
+        .count();
+    let unavailable_count = locations
+        .iter()
+        .filter(|l| {
+            l.status == CheckStatus::Unchecked && l.accessibility == Accessibility::Unavailable
+        })
+        .count();
 
     CheckedLocationsSummary {
         total_mapped,
@@ -4212,6 +4531,8 @@ pub fn get_checked_locations_summary_filtered(model: &ModelState) -> CheckedLoca
         unchecked_count,
         skipped_count,
         unknown_count,
+        available_count,
+        unavailable_count,
         locations,
     }
 }
