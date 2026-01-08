@@ -766,7 +766,8 @@ impl TrackerCellKind {
                         max_mq,
                         ..
                     },
-                ) = (boss.kind(), small.kind())
+                ) =
+                    (boss.kind(), small.kind())
                 {
                     (
                         active(&state.ram.save.dungeon_items),
@@ -1201,7 +1202,9 @@ impl TrackerCellKind {
                     label: Some(label.to_string()),
                 }
             }
-            TrackerCellKind::MmSmallKeys { get, max, label, .. } => {
+            TrackerCellKind::MmSmallKeys {
+                get, max, label, ..
+            } => {
                 let num_small_keys = state
                     .ram
                     .mm_save
