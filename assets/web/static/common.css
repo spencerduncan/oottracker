@@ -124,7 +124,7 @@ a:hover {
 
 .items > div > img,
 .items > a > img,
-.items > form > img {
+.items > form img {
     position: absolute;
 }
 
