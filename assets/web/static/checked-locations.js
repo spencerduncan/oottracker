@@ -12,6 +12,7 @@
 // Checked locations state
 let checkedLocationsState = {
     locations: {},
+    logic: {}, // Map of location_id -> logic expression
     lastUpdate: null,
     isLoading: false,
     error: null,
@@ -357,10 +358,14 @@ async function fetchCheckedLocations() {
 
         const data = await response.json();
         checkedLocationsState.locations = {};
+        checkedLocationsState.logic = {};
 
-        // Build a map of location_id -> status
+        // Build maps of location_id -> status and location_id -> logic
         for (const loc of data.locations) {
             checkedLocationsState.locations[loc.location_id] = loc.status;
+            if (loc.logic) {
+                checkedLocationsState.logic[loc.location_id] = loc.logic;
+            }
         }
 
         checkedLocationsState.lastUpdate = new Date();
@@ -631,7 +636,8 @@ function updateLocationsList(data) {
         for (const loc of group.unchecked.sort()) {
             const isPending = checkedLocationsState.pendingSkipToggles.has(loc);
             const pendingClass = isPending ? ' pending' : '';
-            html += `<div class="location-item location-unchecked${pendingClass}" data-location="${escapeHtml(loc)}">`;
+            const tooltip = escapeHtml(getLocationTooltip(loc));
+            html += `<div class="location-item location-unchecked${pendingClass}" data-location="${escapeHtml(loc)}" title="${tooltip}">`;
             html += `<span class="location-icon">&#9744;</span>`; // Empty checkbox
             html += `<span class="location-name">${escapeHtml(formatLocationName(loc))}</span>`;
             html += `<button class="skip-button" title="Skip this location" ${isPending ? 'disabled' : ''}>&#10006;</button>`; // X mark to skip
@@ -642,7 +648,8 @@ function updateLocationsList(data) {
         for (const loc of group.skipped.sort()) {
             const isPending = checkedLocationsState.pendingSkipToggles.has(loc);
             const pendingClass = isPending ? ' pending' : '';
-            html += `<div class="location-item location-skipped${pendingClass}" data-location="${escapeHtml(loc)}">`;
+            const tooltip = escapeHtml(getLocationTooltip(loc));
+            html += `<div class="location-item location-skipped${pendingClass}" data-location="${escapeHtml(loc)}" title="${tooltip}">`;
             html += `<span class="location-icon">&#10060;</span>`; // Red X to indicate skipped
             html += `<span class="location-name">${escapeHtml(formatLocationName(loc))}</span>`;
             html += `<button class="unskip-button" title="Unskip this location" ${isPending ? 'disabled' : ''}>&#8634;</button>`; // Undo/refresh icon
@@ -651,7 +658,8 @@ function updateLocationsList(data) {
 
         // Then checked (completed)
         for (const loc of group.checked.sort()) {
-            html += `<div class="location-item location-checked">`;
+            const tooltip = escapeHtml(getLocationTooltip(loc));
+            html += `<div class="location-item location-checked" title="${tooltip}">`;
             html += `<span class="location-icon">&#9745;</span>`; // Checked checkbox
             html += `<span class="location-name">${escapeHtml(formatLocationName(loc))}</span>`;
             html += `</div>`;
@@ -659,7 +667,8 @@ function updateLocationsList(data) {
 
         // Unknown status
         for (const loc of group.unknown.sort()) {
-            html += `<div class="location-item location-unknown">`;
+            const tooltip = escapeHtml(getLocationTooltip(loc));
+            html += `<div class="location-item location-unknown" title="${tooltip}">`;
             html += `<span class="location-icon">?</span>`;
             html += `<span class="location-name">${escapeHtml(formatLocationName(loc))}</span>`;
             html += `</div>`;
@@ -670,6 +679,17 @@ function updateLocationsList(data) {
     }
 
     list.innerHTML = html;
+}
+
+/**
+ * Get the tooltip text for a location (shows logic requirements)
+ */
+function getLocationTooltip(locationId) {
+    const logic = checkedLocationsState.logic[locationId];
+    if (!logic || logic === 'true') {
+        return 'No special requirements';
+    }
+    return `Requires: ${logic}`;
 }
 
 /**

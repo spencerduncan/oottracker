@@ -53,6 +53,8 @@ use ootr::{
     region::Mq,
 };
 
+use crate::world_database;
+
 // ============================================================================
 // Flag Type Definition
 // ============================================================================
@@ -3860,6 +3862,24 @@ pub struct LocationCheckResult {
     pub status: CheckStatus,
     /// Whether this location has a valid flag mapping.
     pub is_mapped: bool,
+    /// Logic expression required to access this location (if available).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub logic: Option<String>,
+}
+
+/// Returns the logic expression for a location from the world database.
+///
+/// # Arguments
+///
+/// * `location_id` - The location ID to look up
+///
+/// # Returns
+///
+/// The logic expression as a String if found, None otherwise.
+pub fn get_location_logic(location_id: &str) -> Option<String> {
+    let db = world_database();
+    db.get_location(location_id)
+        .and_then(|(location, _)| location.logic.clone())
 }
 
 /// Checks if a specific location has been checked based on the current game state.
@@ -4014,6 +4034,7 @@ pub fn get_all_checked_locations(model: &ModelState) -> Vec<LocationCheckResult>
             location_id: mapping.location_id.to_string(),
             status: check_location_status(mapping, model),
             is_mapped: mapping.is_mapped(),
+            logic: get_location_logic(mapping.location_id),
         })
         .collect()
 }
@@ -4039,6 +4060,7 @@ pub fn get_all_checked_locations_combo(model: &ModelState) -> Vec<LocationCheckR
             location_id: mapping.location_id.to_string(),
             status: check_location_status(mapping, model),
             is_mapped: mapping.is_mapped(),
+            logic: get_location_logic(mapping.location_id),
         })
         .collect();
 
@@ -4049,6 +4071,7 @@ pub fn get_all_checked_locations_combo(model: &ModelState) -> Vec<LocationCheckR
                 location_id: mapping.location_id.to_string(),
                 status: check_mm_location_status(mapping, mm_save),
                 is_mapped: mapping.is_mapped(),
+                logic: get_location_logic(mapping.location_id),
             })
             .collect();
         results.extend(mm_results);
@@ -4156,6 +4179,7 @@ pub fn get_all_checked_locations_filtered(model: &ModelState) -> Vec<LocationChe
             location_id: mapping.location_id.to_string(),
             status: check_location_status(mapping, model),
             is_mapped: mapping.is_mapped(),
+            logic: get_location_logic(mapping.location_id),
         })
         .collect()
 }

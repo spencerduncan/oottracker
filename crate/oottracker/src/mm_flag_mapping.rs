@@ -2889,7 +2889,7 @@ pub fn get_all_mm_location_ids() -> impl Iterator<Item = &'static str> {
 // Location Status Checking
 // ============================================================================
 
-use crate::flag_mapping::{CheckStatus, LocationCheckResult};
+use crate::flag_mapping::{get_location_logic, CheckStatus, LocationCheckResult};
 use crate::mm_save::MmSave;
 
 /// Checks if a specific MM location has been checked based on the save data.
@@ -3030,6 +3030,7 @@ pub fn get_all_mm_checked_locations(mm_save: &MmSave) -> Vec<LocationCheckResult
             location_id: mapping.location_id.to_string(),
             status: check_mm_location_status(mapping, mm_save),
             is_mapped: mapping.is_mapped(),
+            logic: get_location_logic(mapping.location_id),
         })
         .collect()
 }
@@ -3051,6 +3052,7 @@ pub fn get_all_mm_locations_with_status(mm_save: Option<&MmSave>) -> Vec<Locatio
                 location_id: mapping.location_id.to_string(),
                 status: check_mm_location_status(mapping, save),
                 is_mapped: mapping.is_mapped(),
+                logic: get_location_logic(mapping.location_id),
             })
             .collect(),
         None => get_all_mm_mappings()
@@ -3058,6 +3060,7 @@ pub fn get_all_mm_locations_with_status(mm_save: Option<&MmSave>) -> Vec<Locatio
                 location_id: mapping.location_id.to_string(),
                 status: CheckStatus::Unknown,
                 is_mapped: mapping.is_mapped(),
+                logic: get_location_logic(mapping.location_id),
             })
             .collect(),
     }
