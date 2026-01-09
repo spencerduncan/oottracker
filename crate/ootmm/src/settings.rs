@@ -976,6 +976,134 @@ impl LogicMode {
     }
 }
 
+/// Rainbow Bridge access requirements mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum RainbowBridgeMode {
+    /// Vanilla behavior (requires all medallions and stones)
+    #[default]
+    Vanilla,
+    /// Bridge is always open
+    Open,
+    /// Requires medallions only
+    Medallions,
+    /// Requires spiritual stones only
+    Stones,
+    /// Requires dungeon rewards (medallions + stones)
+    DungeonRewards,
+    /// Requires Gold Skulltula tokens
+    Skulltulas,
+    /// Requires boss remains (MM)
+    Remains,
+    /// Custom requirements
+    Custom,
+}
+
+impl RainbowBridgeMode {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Vanilla => "vanilla",
+            Self::Open => "open",
+            Self::Medallions => "medallions",
+            Self::Stones => "stones",
+            Self::DungeonRewards => "dungeonRewards",
+            Self::Skulltulas => "skulltulas",
+            Self::Remains => "remains",
+            Self::Custom => "custom",
+        }
+    }
+
+    /// Parses a logic string identifier into a RainbowBridgeMode.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "vanilla" => Some(Self::Vanilla),
+            "open" => Some(Self::Open),
+            "medallions" => Some(Self::Medallions),
+            "stones" => Some(Self::Stones),
+            "dungeonRewards" => Some(Self::DungeonRewards),
+            "skulltulas" => Some(Self::Skulltulas),
+            "remains" => Some(Self::Remains),
+            "custom" => Some(Self::Custom),
+            _ => None,
+        }
+    }
+}
+
+/// Song shuffle mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum SongsMode {
+    /// Songs only shuffle with other songs
+    #[default]
+    SongsOnly,
+    /// Songs can be anywhere
+    Anywhere,
+    /// Songs on dungeon rewards
+    DungeonRewards,
+}
+
+impl SongsMode {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::SongsOnly => "songsOnly",
+            Self::Anywhere => "anywhere",
+            Self::DungeonRewards => "dungeonRewards",
+        }
+    }
+
+    /// Parses a logic string identifier into a SongsMode.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "songsOnly" => Some(Self::SongsOnly),
+            "anywhere" => Some(Self::Anywhere),
+            "dungeonRewards" => Some(Self::DungeonRewards),
+            _ => None,
+        }
+    }
+}
+
+/// Dungeon reward shuffle mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum DungeonRewardShuffle {
+    /// Vanilla (rewards in their original dungeons)
+    #[default]
+    Vanilla,
+    /// Rewards on dungeon blue warps
+    DungeonBlueWarps,
+    /// Rewards can be anywhere
+    Anywhere,
+}
+
+impl DungeonRewardShuffle {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Vanilla => "vanilla",
+            Self::DungeonBlueWarps => "dungeonBlueWarps",
+            Self::Anywhere => "anywhere",
+        }
+    }
+
+    /// Parses a logic string identifier into a DungeonRewardShuffle.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "vanilla" => Some(Self::Vanilla),
+            "dungeonBlueWarps" => Some(Self::DungeonBlueWarps),
+            "anywhere" => Some(Self::Anywhere),
+            _ => None,
+        }
+    }
+}
+
 /// Complete randomizer settings configuration.
 ///
 /// This struct contains all settings that can affect logic evaluation
@@ -1778,5 +1906,167 @@ mod tests {
         let parsed: RandomizerSettings = serde_json::from_str(json).unwrap();
 
         assert_eq!(parsed.get_bottle_count(), 4);
+    }
+
+    // === Rainbow Bridge Mode Tests ===
+
+    #[test]
+    fn test_rainbow_bridge_mode_default() {
+        let mode = RainbowBridgeMode::default();
+        assert_eq!(mode, RainbowBridgeMode::Vanilla);
+    }
+
+    #[test]
+    fn test_rainbow_bridge_mode_as_str() {
+        assert_eq!(RainbowBridgeMode::Vanilla.as_str(), "vanilla");
+        assert_eq!(RainbowBridgeMode::Open.as_str(), "open");
+        assert_eq!(RainbowBridgeMode::Medallions.as_str(), "medallions");
+        assert_eq!(RainbowBridgeMode::Stones.as_str(), "stones");
+        assert_eq!(RainbowBridgeMode::DungeonRewards.as_str(), "dungeonRewards");
+        assert_eq!(RainbowBridgeMode::Skulltulas.as_str(), "skulltulas");
+        assert_eq!(RainbowBridgeMode::Remains.as_str(), "remains");
+        assert_eq!(RainbowBridgeMode::Custom.as_str(), "custom");
+    }
+
+    #[test]
+    fn test_rainbow_bridge_mode_parse() {
+        assert_eq!(
+            RainbowBridgeMode::parse("vanilla"),
+            Some(RainbowBridgeMode::Vanilla)
+        );
+        assert_eq!(
+            RainbowBridgeMode::parse("open"),
+            Some(RainbowBridgeMode::Open)
+        );
+        assert_eq!(
+            RainbowBridgeMode::parse("medallions"),
+            Some(RainbowBridgeMode::Medallions)
+        );
+        assert_eq!(
+            RainbowBridgeMode::parse("stones"),
+            Some(RainbowBridgeMode::Stones)
+        );
+        assert_eq!(
+            RainbowBridgeMode::parse("dungeonRewards"),
+            Some(RainbowBridgeMode::DungeonRewards)
+        );
+        assert_eq!(
+            RainbowBridgeMode::parse("skulltulas"),
+            Some(RainbowBridgeMode::Skulltulas)
+        );
+        assert_eq!(
+            RainbowBridgeMode::parse("remains"),
+            Some(RainbowBridgeMode::Remains)
+        );
+        assert_eq!(
+            RainbowBridgeMode::parse("custom"),
+            Some(RainbowBridgeMode::Custom)
+        );
+        assert_eq!(RainbowBridgeMode::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_rainbow_bridge_mode_roundtrip() {
+        for mode in [
+            RainbowBridgeMode::Vanilla,
+            RainbowBridgeMode::Open,
+            RainbowBridgeMode::Medallions,
+            RainbowBridgeMode::Stones,
+            RainbowBridgeMode::DungeonRewards,
+            RainbowBridgeMode::Skulltulas,
+            RainbowBridgeMode::Remains,
+            RainbowBridgeMode::Custom,
+        ] {
+            let s = mode.as_str();
+            let parsed = RainbowBridgeMode::parse(s);
+            assert_eq!(parsed, Some(mode));
+        }
+    }
+
+    // === Songs Mode Tests ===
+
+    #[test]
+    fn test_songs_mode_default() {
+        let mode = SongsMode::default();
+        assert_eq!(mode, SongsMode::SongsOnly);
+    }
+
+    #[test]
+    fn test_songs_mode_as_str() {
+        assert_eq!(SongsMode::SongsOnly.as_str(), "songsOnly");
+        assert_eq!(SongsMode::Anywhere.as_str(), "anywhere");
+        assert_eq!(SongsMode::DungeonRewards.as_str(), "dungeonRewards");
+    }
+
+    #[test]
+    fn test_songs_mode_parse() {
+        assert_eq!(SongsMode::parse("songsOnly"), Some(SongsMode::SongsOnly));
+        assert_eq!(SongsMode::parse("anywhere"), Some(SongsMode::Anywhere));
+        assert_eq!(
+            SongsMode::parse("dungeonRewards"),
+            Some(SongsMode::DungeonRewards)
+        );
+        assert_eq!(SongsMode::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_songs_mode_roundtrip() {
+        for mode in [
+            SongsMode::SongsOnly,
+            SongsMode::Anywhere,
+            SongsMode::DungeonRewards,
+        ] {
+            let s = mode.as_str();
+            let parsed = SongsMode::parse(s);
+            assert_eq!(parsed, Some(mode));
+        }
+    }
+
+    // === Dungeon Reward Shuffle Tests ===
+
+    #[test]
+    fn test_dungeon_reward_shuffle_default() {
+        let mode = DungeonRewardShuffle::default();
+        assert_eq!(mode, DungeonRewardShuffle::Vanilla);
+    }
+
+    #[test]
+    fn test_dungeon_reward_shuffle_as_str() {
+        assert_eq!(DungeonRewardShuffle::Vanilla.as_str(), "vanilla");
+        assert_eq!(
+            DungeonRewardShuffle::DungeonBlueWarps.as_str(),
+            "dungeonBlueWarps"
+        );
+        assert_eq!(DungeonRewardShuffle::Anywhere.as_str(), "anywhere");
+    }
+
+    #[test]
+    fn test_dungeon_reward_shuffle_parse() {
+        assert_eq!(
+            DungeonRewardShuffle::parse("vanilla"),
+            Some(DungeonRewardShuffle::Vanilla)
+        );
+        assert_eq!(
+            DungeonRewardShuffle::parse("dungeonBlueWarps"),
+            Some(DungeonRewardShuffle::DungeonBlueWarps)
+        );
+        assert_eq!(
+            DungeonRewardShuffle::parse("anywhere"),
+            Some(DungeonRewardShuffle::Anywhere)
+        );
+        assert_eq!(DungeonRewardShuffle::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_dungeon_reward_shuffle_roundtrip() {
+        for mode in [
+            DungeonRewardShuffle::Vanilla,
+            DungeonRewardShuffle::DungeonBlueWarps,
+            DungeonRewardShuffle::Anywhere,
+        ] {
+            let s = mode.as_str();
+            let parsed = DungeonRewardShuffle::parse(s);
+            assert_eq!(parsed, Some(mode));
+        }
     }
 }
