@@ -976,6 +976,252 @@ impl LogicMode {
     }
 }
 
+/// Shuffle mode for entrances or locations.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum ShuffleMode {
+    /// No shuffling
+    #[default]
+    None,
+    /// Overworld only
+    Overworld,
+    /// Dungeons only
+    Dungeon,
+    /// All locations shuffled
+    All,
+}
+
+impl ShuffleMode {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::None => "none",
+            Self::Overworld => "overworld",
+            Self::Dungeon => "dungeon",
+            Self::All => "all",
+        }
+    }
+
+    /// Parses a logic string identifier into a ShuffleMode.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "none" => Some(Self::None),
+            "overworld" => Some(Self::Overworld),
+            "dungeon" => Some(Self::Dungeon),
+            "all" => Some(Self::All),
+            _ => None,
+        }
+    }
+
+    /// Returns true if any shuffling is enabled.
+    #[must_use]
+    pub fn is_shuffled(&self) -> bool {
+        !matches!(self, Self::None)
+    }
+}
+
+/// Tingle map shuffle mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum TingleShuffle {
+    /// Vanilla locations
+    #[default]
+    Vanilla,
+    /// Start with Tingle maps
+    Starting,
+    /// Tingle maps removed
+    Removed,
+    /// Tingle maps can be anywhere
+    Anywhere,
+    /// Tingle maps in their own region
+    OwnRegion,
+}
+
+impl TingleShuffle {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Vanilla => "vanilla",
+            Self::Starting => "starting",
+            Self::Removed => "removed",
+            Self::Anywhere => "anywhere",
+            Self::OwnRegion => "ownRegion",
+        }
+    }
+
+    /// Parses a logic string identifier into a TingleShuffle.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "vanilla" => Some(Self::Vanilla),
+            "starting" => Some(Self::Starting),
+            "removed" => Some(Self::Removed),
+            "anywhere" => Some(Self::Anywhere),
+            "ownRegion" => Some(Self::OwnRegion),
+            _ => None,
+        }
+    }
+}
+
+/// Owl statue shuffle mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum OwlShuffle {
+    /// No owl shuffling
+    #[default]
+    None,
+    /// Owl statues can be anywhere
+    Anywhere,
+}
+
+impl OwlShuffle {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::None => "none",
+            Self::Anywhere => "anywhere",
+        }
+    }
+
+    /// Parses a logic string identifier into an OwlShuffle.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "none" => Some(Self::None),
+            "anywhere" => Some(Self::Anywhere),
+            _ => None,
+        }
+    }
+}
+
+/// Skulltula token shuffle mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum SkulltulaTokenShuffle {
+    /// No token shuffling
+    #[default]
+    None,
+    /// Dungeon tokens only
+    Dungeons,
+    /// Overworld tokens only
+    Overworld,
+    /// All tokens shuffled
+    All,
+}
+
+impl SkulltulaTokenShuffle {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::None => "none",
+            Self::Dungeons => "dungeons",
+            Self::Overworld => "overworld",
+            Self::All => "all",
+        }
+    }
+
+    /// Parses a logic string identifier into a SkulltulaTokenShuffle.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "none" => Some(Self::None),
+            "dungeons" => Some(Self::Dungeons),
+            "overworld" => Some(Self::Overworld),
+            "all" => Some(Self::All),
+            _ => None,
+        }
+    }
+}
+
+/// Key shuffle mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum KeyShuffle {
+    /// Vanilla key locations
+    #[default]
+    Vanilla,
+    /// Keys within their own dungeon
+    OwnDungeon,
+    /// Keys can be anywhere
+    Anywhere,
+    /// Keys removed (not required)
+    Removed,
+}
+
+impl KeyShuffle {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Vanilla => "vanilla",
+            Self::OwnDungeon => "ownDungeon",
+            Self::Anywhere => "anywhere",
+            Self::Removed => "removed",
+        }
+    }
+
+    /// Parses a logic string identifier into a KeyShuffle.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "vanilla" => Some(Self::Vanilla),
+            "ownDungeon" => Some(Self::OwnDungeon),
+            "anywhere" => Some(Self::Anywhere),
+            "removed" => Some(Self::Removed),
+            _ => None,
+        }
+    }
+}
+
+/// Map and compass shuffle mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum MapCompassShuffle {
+    /// Vanilla locations
+    #[default]
+    Vanilla,
+    /// Start with maps/compasses
+    Starting,
+    /// Maps/compasses within their own dungeon
+    OwnDungeon,
+    /// Maps/compasses can be anywhere
+    Anywhere,
+    /// Maps/compasses removed
+    Removed,
+}
+
+impl MapCompassShuffle {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Vanilla => "vanilla",
+            Self::Starting => "starting",
+            Self::OwnDungeon => "ownDungeon",
+            Self::Anywhere => "anywhere",
+            Self::Removed => "removed",
+        }
+    }
+
+    /// Parses a logic string identifier into a MapCompassShuffle.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "vanilla" => Some(Self::Vanilla),
+            "starting" => Some(Self::Starting),
+            "ownDungeon" => Some(Self::OwnDungeon),
+            "anywhere" => Some(Self::Anywhere),
+            "removed" => Some(Self::Removed),
+            _ => None,
+        }
+    }
+}
+
 /// Complete randomizer settings configuration.
 ///
 /// This struct contains all settings that can affect logic evaluation
@@ -1778,5 +2024,259 @@ mod tests {
         let parsed: RandomizerSettings = serde_json::from_str(json).unwrap();
 
         assert_eq!(parsed.get_bottle_count(), 4);
+    }
+
+    // === ShuffleMode Tests ===
+
+    #[test]
+    fn test_shuffle_mode_default() {
+        let mode = ShuffleMode::default();
+        assert_eq!(mode, ShuffleMode::None);
+    }
+
+    #[test]
+    fn test_shuffle_mode_as_str() {
+        assert_eq!(ShuffleMode::None.as_str(), "none");
+        assert_eq!(ShuffleMode::Overworld.as_str(), "overworld");
+        assert_eq!(ShuffleMode::Dungeon.as_str(), "dungeon");
+        assert_eq!(ShuffleMode::All.as_str(), "all");
+    }
+
+    #[test]
+    fn test_shuffle_mode_parse() {
+        assert_eq!(ShuffleMode::parse("none"), Some(ShuffleMode::None));
+        assert_eq!(
+            ShuffleMode::parse("overworld"),
+            Some(ShuffleMode::Overworld)
+        );
+        assert_eq!(ShuffleMode::parse("dungeon"), Some(ShuffleMode::Dungeon));
+        assert_eq!(ShuffleMode::parse("all"), Some(ShuffleMode::All));
+        assert_eq!(ShuffleMode::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_shuffle_mode_is_shuffled() {
+        assert!(!ShuffleMode::None.is_shuffled());
+        assert!(ShuffleMode::Overworld.is_shuffled());
+        assert!(ShuffleMode::Dungeon.is_shuffled());
+        assert!(ShuffleMode::All.is_shuffled());
+    }
+
+    #[test]
+    fn test_shuffle_mode_serde_roundtrip() {
+        let mode = ShuffleMode::Overworld;
+        let json = serde_json::to_string(&mode).unwrap();
+        let parsed: ShuffleMode = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, mode);
+    }
+
+    // === TingleShuffle Tests ===
+
+    #[test]
+    fn test_tingle_shuffle_default() {
+        let mode = TingleShuffle::default();
+        assert_eq!(mode, TingleShuffle::Vanilla);
+    }
+
+    #[test]
+    fn test_tingle_shuffle_as_str() {
+        assert_eq!(TingleShuffle::Vanilla.as_str(), "vanilla");
+        assert_eq!(TingleShuffle::Starting.as_str(), "starting");
+        assert_eq!(TingleShuffle::Removed.as_str(), "removed");
+        assert_eq!(TingleShuffle::Anywhere.as_str(), "anywhere");
+        assert_eq!(TingleShuffle::OwnRegion.as_str(), "ownRegion");
+    }
+
+    #[test]
+    fn test_tingle_shuffle_parse() {
+        assert_eq!(
+            TingleShuffle::parse("vanilla"),
+            Some(TingleShuffle::Vanilla)
+        );
+        assert_eq!(
+            TingleShuffle::parse("starting"),
+            Some(TingleShuffle::Starting)
+        );
+        assert_eq!(
+            TingleShuffle::parse("removed"),
+            Some(TingleShuffle::Removed)
+        );
+        assert_eq!(
+            TingleShuffle::parse("anywhere"),
+            Some(TingleShuffle::Anywhere)
+        );
+        assert_eq!(
+            TingleShuffle::parse("ownRegion"),
+            Some(TingleShuffle::OwnRegion)
+        );
+        assert_eq!(TingleShuffle::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_tingle_shuffle_serde_roundtrip() {
+        let mode = TingleShuffle::OwnRegion;
+        let json = serde_json::to_string(&mode).unwrap();
+        let parsed: TingleShuffle = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, mode);
+    }
+
+    // === OwlShuffle Tests ===
+
+    #[test]
+    fn test_owl_shuffle_default() {
+        let mode = OwlShuffle::default();
+        assert_eq!(mode, OwlShuffle::None);
+    }
+
+    #[test]
+    fn test_owl_shuffle_as_str() {
+        assert_eq!(OwlShuffle::None.as_str(), "none");
+        assert_eq!(OwlShuffle::Anywhere.as_str(), "anywhere");
+    }
+
+    #[test]
+    fn test_owl_shuffle_parse() {
+        assert_eq!(OwlShuffle::parse("none"), Some(OwlShuffle::None));
+        assert_eq!(OwlShuffle::parse("anywhere"), Some(OwlShuffle::Anywhere));
+        assert_eq!(OwlShuffle::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_owl_shuffle_serde_roundtrip() {
+        let mode = OwlShuffle::Anywhere;
+        let json = serde_json::to_string(&mode).unwrap();
+        let parsed: OwlShuffle = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, mode);
+    }
+
+    // === SkulltulaTokenShuffle Tests ===
+
+    #[test]
+    fn test_skulltula_token_shuffle_default() {
+        let mode = SkulltulaTokenShuffle::default();
+        assert_eq!(mode, SkulltulaTokenShuffle::None);
+    }
+
+    #[test]
+    fn test_skulltula_token_shuffle_as_str() {
+        assert_eq!(SkulltulaTokenShuffle::None.as_str(), "none");
+        assert_eq!(SkulltulaTokenShuffle::Dungeons.as_str(), "dungeons");
+        assert_eq!(SkulltulaTokenShuffle::Overworld.as_str(), "overworld");
+        assert_eq!(SkulltulaTokenShuffle::All.as_str(), "all");
+    }
+
+    #[test]
+    fn test_skulltula_token_shuffle_parse() {
+        assert_eq!(
+            SkulltulaTokenShuffle::parse("none"),
+            Some(SkulltulaTokenShuffle::None)
+        );
+        assert_eq!(
+            SkulltulaTokenShuffle::parse("dungeons"),
+            Some(SkulltulaTokenShuffle::Dungeons)
+        );
+        assert_eq!(
+            SkulltulaTokenShuffle::parse("overworld"),
+            Some(SkulltulaTokenShuffle::Overworld)
+        );
+        assert_eq!(
+            SkulltulaTokenShuffle::parse("all"),
+            Some(SkulltulaTokenShuffle::All)
+        );
+        assert_eq!(SkulltulaTokenShuffle::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_skulltula_token_shuffle_serde_roundtrip() {
+        let mode = SkulltulaTokenShuffle::Dungeons;
+        let json = serde_json::to_string(&mode).unwrap();
+        let parsed: SkulltulaTokenShuffle = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, mode);
+    }
+
+    // === KeyShuffle Tests ===
+
+    #[test]
+    fn test_key_shuffle_default() {
+        let mode = KeyShuffle::default();
+        assert_eq!(mode, KeyShuffle::Vanilla);
+    }
+
+    #[test]
+    fn test_key_shuffle_as_str() {
+        assert_eq!(KeyShuffle::Vanilla.as_str(), "vanilla");
+        assert_eq!(KeyShuffle::OwnDungeon.as_str(), "ownDungeon");
+        assert_eq!(KeyShuffle::Anywhere.as_str(), "anywhere");
+        assert_eq!(KeyShuffle::Removed.as_str(), "removed");
+    }
+
+    #[test]
+    fn test_key_shuffle_parse() {
+        assert_eq!(KeyShuffle::parse("vanilla"), Some(KeyShuffle::Vanilla));
+        assert_eq!(
+            KeyShuffle::parse("ownDungeon"),
+            Some(KeyShuffle::OwnDungeon)
+        );
+        assert_eq!(KeyShuffle::parse("anywhere"), Some(KeyShuffle::Anywhere));
+        assert_eq!(KeyShuffle::parse("removed"), Some(KeyShuffle::Removed));
+        assert_eq!(KeyShuffle::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_key_shuffle_serde_roundtrip() {
+        let mode = KeyShuffle::OwnDungeon;
+        let json = serde_json::to_string(&mode).unwrap();
+        let parsed: KeyShuffle = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, mode);
+    }
+
+    // === MapCompassShuffle Tests ===
+
+    #[test]
+    fn test_map_compass_shuffle_default() {
+        let mode = MapCompassShuffle::default();
+        assert_eq!(mode, MapCompassShuffle::Vanilla);
+    }
+
+    #[test]
+    fn test_map_compass_shuffle_as_str() {
+        assert_eq!(MapCompassShuffle::Vanilla.as_str(), "vanilla");
+        assert_eq!(MapCompassShuffle::Starting.as_str(), "starting");
+        assert_eq!(MapCompassShuffle::OwnDungeon.as_str(), "ownDungeon");
+        assert_eq!(MapCompassShuffle::Anywhere.as_str(), "anywhere");
+        assert_eq!(MapCompassShuffle::Removed.as_str(), "removed");
+    }
+
+    #[test]
+    fn test_map_compass_shuffle_parse() {
+        assert_eq!(
+            MapCompassShuffle::parse("vanilla"),
+            Some(MapCompassShuffle::Vanilla)
+        );
+        assert_eq!(
+            MapCompassShuffle::parse("starting"),
+            Some(MapCompassShuffle::Starting)
+        );
+        assert_eq!(
+            MapCompassShuffle::parse("ownDungeon"),
+            Some(MapCompassShuffle::OwnDungeon)
+        );
+        assert_eq!(
+            MapCompassShuffle::parse("anywhere"),
+            Some(MapCompassShuffle::Anywhere)
+        );
+        assert_eq!(
+            MapCompassShuffle::parse("removed"),
+            Some(MapCompassShuffle::Removed)
+        );
+        assert_eq!(MapCompassShuffle::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_map_compass_shuffle_serde_roundtrip() {
+        let mode = MapCompassShuffle::OwnDungeon;
+        let json = serde_json::to_string(&mode).unwrap();
+        let parsed: MapCompassShuffle = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, mode);
     }
 }
