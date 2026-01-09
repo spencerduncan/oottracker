@@ -716,7 +716,8 @@ impl<R: OotRamReader> EvalContext for OotEvalContext<'_, R> {
         if let Some(rs) = self.randomizer_settings {
             return rs.check_setting_value(name, value);
         }
-        false
+        // Fall back to default settings (vanilla behavior)
+        RandomizerSettings::default().check_setting_value(name, value)
     }
 
     fn trick(&self, name: &str) -> bool {
@@ -1515,5 +1516,29 @@ mod tests {
             .build();
 
         assert!(ctx.randomizer_settings().is_some());
+    }
+
+    #[test]
+    fn test_setting_value_defaults_without_randomizer_settings() {
+        // When no randomizer settings are loaded, setting_value should
+        // fall back to default/vanilla values
+        let ram = MockRam::new();
+        let ctx = OotEvalContext::new(&ram);
+
+        // Default dekuTree is "closed"
+        assert!(ctx.setting_value("dekuTree", "closed"));
+        assert!(!ctx.setting_value("dekuTree", "open"));
+
+        // Default ganonBossKey is "vanilla"
+        assert!(ctx.setting_value("ganonBossKey", "vanilla"));
+        assert!(!ctx.setting_value("ganonBossKey", "removed"));
+
+        // Default doorOfTime is "closed"
+        assert!(ctx.setting_value("doorOfTime", "closed"));
+        assert!(!ctx.setting_value("doorOfTime", "open"));
+
+        // openDungeonsOot is empty by default
+        assert!(!ctx.setting_value("openDungeonsOot", "DC"));
+        assert!(!ctx.setting_value("openDungeonsOot", "Shadow"));
     }
 }

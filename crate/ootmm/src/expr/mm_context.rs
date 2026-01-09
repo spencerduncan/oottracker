@@ -743,7 +743,8 @@ impl<R: MmRamReader> EvalContext for MmEvalContext<'_, R> {
         if let Some(rs) = self.randomizer_settings {
             return rs.check_setting_value(name, value);
         }
-        false
+        // Fall back to default settings (vanilla behavior)
+        RandomizerSettings::default().check_setting_value(name, value)
     }
 
     fn trick(&self, name: &str) -> bool {
