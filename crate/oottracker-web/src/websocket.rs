@@ -446,7 +446,9 @@ async fn client_session(
                             .await?;
                         loop {
                             match rx.changed().await {
-                                Ok(()) => {}
+                                Ok(()) => {
+                                    tracing::debug!(room = %room_name, "SubscribeRoom: received change notification");
+                                }
                                 Err(e) => {
                                     warn!(room = %room_name, "Room watch channel closed: {e}");
                                     break;
@@ -460,6 +462,7 @@ async fn client_session(
                                     .collect::<Vec<_>>()
                             })
                             .await?;
+                            let mut updates_sent = 0;
                             for (i, (old_cell, new_cell)) in
                                 old_cells.iter().zip(&new_cells).enumerate()
                             {
@@ -470,7 +473,13 @@ async fn client_session(
                                     })
                                     .write_warp(&mut *sink.lock().await)
                                     .await?;
+                                    updates_sent += 1;
                                 }
+                            }
+                            if updates_sent > 0 {
+                                tracing::debug!(room = %room_name, updates_sent, "SubscribeRoom: sent cell updates");
+                            } else {
+                                tracing::debug!(room = %room_name, "SubscribeRoom: no cell changes detected");
                             }
                             old_cells = new_cells;
                         }
