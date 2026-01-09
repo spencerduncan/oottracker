@@ -3216,22 +3216,34 @@ cells! {
     MmDekuMask: Simple {
         img: ImageInfo::mm("deku_mask"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_deku_mask())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.masks.transformation.toggle(crate::mm_save::MmTransformationMasks::DEKU);
+        }),
     },
     MmGoronMask: Simple {
         img: ImageInfo::mm("goron_mask"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_goron_mask())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.masks.transformation.toggle(crate::mm_save::MmTransformationMasks::GORON);
+        }),
     },
     MmZoraMask: Simple {
         img: ImageInfo::mm("zora_mask"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_zora_mask())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.masks.transformation.toggle(crate::mm_save::MmTransformationMasks::ZORA);
+        }),
     },
     MmFierceDeityMask: Simple {
         img: ImageInfo::mm("fierce_deity_mask"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_fierce_deity_mask())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.masks.transformation.toggle(crate::mm_save::MmTransformationMasks::FIERCE_DEITY);
+        }),
     },
 
     // ============================================================================
@@ -3240,102 +3252,162 @@ cells! {
     MmPostmanHat: Simple {
         img: ImageInfo::mm("postman_hat"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_postman_hat())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.masks.masks_low.toggle(crate::mm_save::MmMasksLow::POSTMAN);
+        }),
     },
     MmAllNightMask: Simple {
         img: ImageInfo::mm("all_night_mask"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_all_night_mask())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.masks.masks_low.toggle(crate::mm_save::MmMasksLow::ALL_NIGHT);
+        }),
     },
     MmBlastMask: Simple {
         img: ImageInfo::mm("blast_mask"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_blast_mask())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.masks.masks_low.toggle(crate::mm_save::MmMasksLow::BLAST);
+        }),
     },
     MmStoneMask: Simple {
         img: ImageInfo::mm("stone_mask"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_stone_mask())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.masks.masks_low.toggle(crate::mm_save::MmMasksLow::STONE);
+        }),
     },
     MmGreatFairyMask: Simple {
         img: ImageInfo::mm("great_fairy_mask"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_great_fairy_mask())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.masks.masks_low.toggle(crate::mm_save::MmMasksLow::GREAT_FAIRY);
+        }),
     },
     MmKeatonMask: Simple {
         img: ImageInfo::mm("keaton_mask"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_keaton_mask())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.masks.masks_low.toggle(crate::mm_save::MmMasksLow::KEATON);
+        }),
     },
     MmBremenMask: Simple {
         img: ImageInfo::mm("bremen_mask"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_bremen_mask())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.masks.masks_low.toggle(crate::mm_save::MmMasksLow::BREMEN);
+        }),
     },
     MmBunnyHood: Simple {
         img: ImageInfo::mm("bunny_hood"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_bunny_hood())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.masks.masks_low.toggle(crate::mm_save::MmMasksLow::BUNNY);
+        }),
     },
     MmDonGeroMask: Simple {
         img: ImageInfo::mm("don_gero_mask"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_don_gero_mask())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.masks.masks_low.toggle(crate::mm_save::MmMasksLow::DON_GERO);
+        }),
     },
     MmMaskOfScents: Simple {
         img: ImageInfo::mm("mask_of_scents"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_mask_of_scents())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.masks.masks_low.toggle(crate::mm_save::MmMasksLow::SCENTS);
+        }),
     },
     MmRomaniMask: Simple {
         img: ImageInfo::mm("romani_mask"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_romani_mask())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.masks.masks_low.toggle(crate::mm_save::MmMasksLow::ROMANI);
+        }),
     },
     MmCircusLeaderMask: Simple {
         img: ImageInfo::mm("circus_leader_mask"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_circus_leader_mask())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.masks.masks_low.toggle(crate::mm_save::MmMasksLow::CIRCUS_LEADER);
+        }),
     },
     MmKafeiMask: Simple {
         img: ImageInfo::mm("kafei_mask"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_kafei_mask())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.masks.masks_low.toggle(crate::mm_save::MmMasksLow::KAFEI);
+        }),
     },
     MmCouplesMask: Simple {
         img: ImageInfo::mm("couples_mask"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_couples_mask())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.masks.masks_low.toggle(crate::mm_save::MmMasksLow::COUPLES);
+        }),
     },
     MmMaskOfTruth: Simple {
         img: ImageInfo::mm("mask_of_truth"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_mask_of_truth())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.masks.masks_low.toggle(crate::mm_save::MmMasksLow::TRUTH);
+        }),
     },
     MmKamaroMask: Simple {
         img: ImageInfo::mm("kamaro_mask"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_kamaro_mask())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.masks.masks_low.toggle(crate::mm_save::MmMasksLow::KAMARO);
+        }),
     },
     MmGibdoMask: Simple {
         img: ImageInfo::mm("gibdo_mask"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_gibdo_mask())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.masks.masks_high.toggle(crate::mm_save::MmMasksHigh::GIBDO);
+        }),
     },
     MmGaroMask: Simple {
         img: ImageInfo::mm("garo_mask"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_garo_mask())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.masks.masks_high.toggle(crate::mm_save::MmMasksHigh::GARO);
+        }),
     },
     MmCaptainHat: Simple {
         img: ImageInfo::mm("captain_hat"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_captain_hat())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.masks.masks_high.toggle(crate::mm_save::MmMasksHigh::CAPTAIN);
+        }),
     },
     MmGiantMask: Simple {
         img: ImageInfo::mm("giant_mask"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_giant_mask())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.masks.masks_high.toggle(crate::mm_save::MmMasksHigh::GIANT);
+        }),
     },
 
     // ============================================================================
@@ -3344,22 +3416,34 @@ cells! {
     MmOdolwaRemains: Simple {
         img: ImageInfo::mm("odolwa_remains"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_odolwa_remains())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.quest_items.toggle(crate::mm_save::MmQuestItems::REMAINS_ODOLWA);
+        }),
     },
     MmGohtRemains: Simple {
         img: ImageInfo::mm("goht_remains"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_goht_remains())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.quest_items.toggle(crate::mm_save::MmQuestItems::REMAINS_GOHT);
+        }),
     },
     MmGyorgRemains: Simple {
         img: ImageInfo::mm("gyorg_remains"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_gyorg_remains())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.quest_items.toggle(crate::mm_save::MmQuestItems::REMAINS_GYORG);
+        }),
     },
     MmTwinmoldRemains: Simple {
         img: ImageInfo::mm("twinmold_remains"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_twinmold_remains())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.quest_items.toggle(crate::mm_save::MmQuestItems::REMAINS_TWINMOLD);
+        }),
     },
 
     // ============================================================================
@@ -3369,7 +3453,10 @@ cells! {
         dimmed_img: ImageInfo::mm("stray_fairy_woodfall"),
         img: ImageInfo::mm("stray_fairy_woodfall"),
         get: Box::new(|state| state.ram.mm_save.as_ref().map_or(0, |mm| mm.stray_fairies.woodfall)),
-        set: Box::new(|_, _| ()),
+        set: Box::new(|state, value| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.stray_fairies.woodfall = value;
+        }),
         max: 15,
         step: 1,
     },
@@ -3377,7 +3464,10 @@ cells! {
         dimmed_img: ImageInfo::mm("stray_fairy_snowhead"),
         img: ImageInfo::mm("stray_fairy_snowhead"),
         get: Box::new(|state| state.ram.mm_save.as_ref().map_or(0, |mm| mm.stray_fairies.snowhead)),
-        set: Box::new(|_, _| ()),
+        set: Box::new(|state, value| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.stray_fairies.snowhead = value;
+        }),
         max: 15,
         step: 1,
     },
@@ -3385,7 +3475,10 @@ cells! {
         dimmed_img: ImageInfo::mm("stray_fairy_great_bay"),
         img: ImageInfo::mm("stray_fairy_great_bay"),
         get: Box::new(|state| state.ram.mm_save.as_ref().map_or(0, |mm| mm.stray_fairies.great_bay)),
-        set: Box::new(|_, _| ()),
+        set: Box::new(|state, value| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.stray_fairies.great_bay = value;
+        }),
         max: 15,
         step: 1,
     },
@@ -3393,14 +3486,20 @@ cells! {
         dimmed_img: ImageInfo::mm("stray_fairy_stone_tower"),
         img: ImageInfo::mm("stray_fairy_stone_tower"),
         get: Box::new(|state| state.ram.mm_save.as_ref().map_or(0, |mm| mm.stray_fairies.stone_tower)),
-        set: Box::new(|_, _| ()),
+        set: Box::new(|state, value| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.stray_fairies.stone_tower = value;
+        }),
         max: 15,
         step: 1,
     },
     MmStrayFairyClockTown: Simple {
         img: ImageInfo::mm("stray_fairy_clock_town"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.stray_fairies.clock_town > 0)),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.stray_fairies.clock_town = if mm_save.stray_fairies.clock_town > 0 { 0 } else { 1 };
+        }),
     },
 
     // ============================================================================
@@ -3409,52 +3508,82 @@ cells! {
     MmSongOfTime: Simple {
         img: ImageInfo::mm("song_of_time"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_song_of_time())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.quest_items.toggle(crate::mm_save::MmQuestItems::SONG_TIME);
+        }),
     },
     MmSongOfHealing: Simple {
         img: ImageInfo::mm("song_of_healing"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_song_of_healing())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.quest_items.toggle(crate::mm_save::MmQuestItems::SONG_HEALING);
+        }),
     },
     MmEponasSong: Simple {
         img: ImageInfo::mm("eponas_song"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_eponas_song())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.quest_items.toggle(crate::mm_save::MmQuestItems::SONG_EPONA);
+        }),
     },
     MmSongOfSoaring: Simple {
         img: ImageInfo::mm("song_of_soaring"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_song_of_soaring())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.quest_items.toggle(crate::mm_save::MmQuestItems::SONG_SOARING);
+        }),
     },
     MmSongOfStorms: Simple {
         img: ImageInfo::mm("song_of_storms"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_song_of_storms())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.quest_items.toggle(crate::mm_save::MmQuestItems::SONG_STORMS);
+        }),
     },
     MmSonataOfAwakening: Simple {
         img: ImageInfo::mm("sonata_of_awakening"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_sonata_of_awakening())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.quest_items.toggle(crate::mm_save::MmQuestItems::SONG_AWAKENING);
+        }),
     },
     MmGoronLullaby: Simple {
         img: ImageInfo::mm("goron_lullaby"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_goron_lullaby())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.quest_items.toggle(crate::mm_save::MmQuestItems::SONG_GORON);
+        }),
     },
     MmNewWaveBossaNova: Simple {
         img: ImageInfo::mm("new_wave_bossa_nova"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_new_wave_bossa_nova())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.quest_items.toggle(crate::mm_save::MmQuestItems::SONG_ZORA);
+        }),
     },
     MmElegyOfEmptiness: Simple {
         img: ImageInfo::mm("elegy_of_emptiness"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_elegy_of_emptiness())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.quest_items.toggle(crate::mm_save::MmQuestItems::SONG_EMPTINESS);
+        }),
     },
     MmOathToOrder: Simple {
         img: ImageInfo::mm("oath_to_order"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|mm| mm.has_oath_to_order())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.quest_items.toggle(crate::mm_save::MmQuestItems::SONG_ORDER);
+        }),
     },
 
     // ============================================================================
@@ -3463,7 +3592,10 @@ cells! {
     MmBomberNotebook: Simple {
         img: ImageInfo::mm("bomber_notebook"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_bombers_notebook())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.quest_items.toggle(crate::mm_save::MmQuestItems::NOTEBOOK);
+        }),
     },
 
     // ============================================================================
@@ -3472,67 +3604,106 @@ cells! {
     MmOcarina: Simple {
         img: ImageInfo::mm("ocarina"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_ocarina())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.inventory.ocarina = !mm_save.inventory.ocarina;
+        }),
     },
     MmHerosBow: Simple {
         img: ImageInfo::mm("heros_bow"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_heros_bow())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.inventory.bow = !mm_save.inventory.bow;
+        }),
     },
     MmFireArrow: Simple {
         img: ImageInfo::mm("fire_arrow"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_fire_arrow())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.inventory.fire_arrows = !mm_save.inventory.fire_arrows;
+        }),
     },
     MmIceArrow: Simple {
         img: ImageInfo::mm("ice_arrow"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_ice_arrow())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.inventory.ice_arrows = !mm_save.inventory.ice_arrows;
+        }),
     },
     MmLightArrow: Simple {
         img: ImageInfo::mm("light_arrow"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_light_arrow())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.inventory.light_arrows = !mm_save.inventory.light_arrows;
+        }),
     },
     MmHookshot: Simple {
         img: ImageInfo::mm("hookshot"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_hookshot())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.inventory.hookshot = !mm_save.inventory.hookshot;
+        }),
     },
     MmBombs: Simple {
         img: ImageInfo::mm("bombs"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_bombs())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.inventory.bombs = !mm_save.inventory.bombs;
+        }),
     },
     MmBombchu: Simple {
         img: ImageInfo::mm("bombchu"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_bombchu())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.inventory.bombchus = !mm_save.inventory.bombchus;
+        }),
     },
     MmPowderKeg: Simple {
         img: ImageInfo::mm("powder_keg"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_powder_keg())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.inventory.powder_keg = !mm_save.inventory.powder_keg;
+        }),
     },
     MmLensOfTruth: Simple {
         img: ImageInfo::mm("lens_of_truth"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_lens_of_truth())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.inventory.lens = !mm_save.inventory.lens;
+        }),
     },
     MmPictographBox: Simple {
         img: ImageInfo::mm("pictograph_box"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_pictograph_box())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.inventory.pictograph_box = !mm_save.inventory.pictograph_box;
+        }),
     },
     MmGreatFairySword: Simple {
         img: ImageInfo::mm("great_fairy_sword"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_great_fairy_sword())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.inventory.great_fairy_sword = !mm_save.inventory.great_fairy_sword;
+        }),
     },
     MmMagicBean: Simple {
         img: ImageInfo::mm("magic_bean"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_magic_bean())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.inventory.magic_beans = !mm_save.inventory.magic_beans;
+        }),
     },
 
     // ============================================================================
@@ -3709,7 +3880,14 @@ cells! {
     MmMagic: Simple {
         img: ImageInfo::mm("magic"),
         active: Box::new(|state| state.ram.mm_save.as_ref().is_some_and(|save| save.has_magic())),
-        toggle: Box::new(|_| ()),
+        toggle: Box::new(|state| {
+            let mm_save = state.ram.mm_save.get_or_insert_with(Default::default);
+            mm_save.magic = if mm_save.magic == crate::mm_save::MmMagicCapacity::None {
+                crate::mm_save::MmMagicCapacity::Single
+            } else {
+                crate::mm_save::MmMagicCapacity::None
+            };
+        }),
     },
     MmDoubleDefense: Simple {
         img: ImageInfo::mm("double_defense"),
