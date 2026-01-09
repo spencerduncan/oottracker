@@ -21,7 +21,7 @@ use {
     tokio::io::{AsyncRead, AsyncReadExt as _, AsyncWrite, AsyncWriteExt as _},
 };
 
-use crate::mm_save::{self, MmSave};
+use crate::mm_save::{self, MmRomType, MmSave};
 
 pub const SIZE: usize = 0x80_0000;
 pub const TEXT_LEN: usize = 0xc0;
@@ -571,7 +571,8 @@ impl Protocol for Delta {
                 None => None,
                 Some(None) => Some(None),
                 Some(Some(bytes)) => {
-                    let save = MmSave::from_save_data(&bytes).map_err(|e| {
+                    let rom_type = MmRomType::from_env();
+                    let save = MmSave::from_save_data_with_type(&bytes, rom_type).map_err(|e| {
                         ReadError::Custom(format!("failed to decode MM save: {e:?}"))
                     })?;
                     Some(Some(save))
@@ -620,7 +621,8 @@ impl Protocol for Delta {
             None => None,
             Some(None) => Some(None),
             Some(Some(bytes)) => {
-                let save = MmSave::from_save_data(&bytes)
+                let rom_type = MmRomType::from_env();
+                let save = MmSave::from_save_data_with_type(&bytes, rom_type)
                     .map_err(|e| ReadError::Custom(format!("failed to decode MM save: {e:?}")))?;
                 Some(Some(save))
             }
@@ -699,7 +701,8 @@ pub fn decode_mm_ranges(ram_data: &[u8]) -> Result<MmSave, DecodeError> {
 
     // Extract the save data slice and parse it
     let save_data = &ram_data[start..end];
-    MmSave::from_save_data(save_data).map_err(DecodeError::from)
+    let rom_type = MmRomType::from_env();
+    MmSave::from_save_data_with_type(save_data, rom_type).map_err(DecodeError::from)
 }
 
 /// Decodes Majora's Mask save data from pre-extracted range buffers.
@@ -728,7 +731,8 @@ pub fn decode_mm_range_bufs(
     }
 
     // Parse the save data
-    MmSave::from_save_data(&save_data).map_err(DecodeError::from)
+    let rom_type = MmRomType::from_env();
+    MmSave::from_save_data_with_type(&save_data, rom_type).map_err(DecodeError::from)
 }
 
 /// Decodes Majora's Mask save data from pre-extracted range slices.
@@ -757,7 +761,8 @@ where
     }
 
     // Parse the save data
-    MmSave::from_save_data(save_data).map_err(DecodeError::from)
+    let rom_type = MmRomType::from_env();
+    MmSave::from_save_data_with_type(save_data, rom_type).map_err(DecodeError::from)
 }
 
 /// Decodes Majora's Mask save data directly from a save data buffer.
@@ -772,7 +777,8 @@ where
 /// * `Ok(MmSave)` - Successfully decoded MM save data
 /// * `Err(DecodeError)` - If parsing fails
 pub fn decode_mm_save_data(save_data: &[u8]) -> Result<MmSave, DecodeError> {
-    MmSave::from_save_data(save_data).map_err(DecodeError::from)
+    let rom_type = MmRomType::from_env();
+    MmSave::from_save_data_with_type(save_data, rom_type).map_err(DecodeError::from)
 }
 
 #[cfg(test)]
