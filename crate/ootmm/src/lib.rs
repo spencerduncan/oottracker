@@ -21,6 +21,7 @@ pub mod expr;
 pub mod item;
 pub mod items;
 pub mod rando;
+pub mod reachability;
 pub mod region;
 pub mod settings;
 pub mod world_database;
@@ -38,6 +39,9 @@ pub use embedded_data::{create_world_database, create_world_database_from};
 
 // Re-export rando types
 pub use rando::{OotmmRando, OotmmRandoError, OotmmRegionName};
+
+// Re-export reachability types
+pub use reachability::{spawn_region, MM_SPAWN, OOT_SPAWN};
 
 // Re-export settings types
 pub use settings::{
