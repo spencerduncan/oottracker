@@ -21,7 +21,7 @@
 //! ```
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 /// OoT dungeon identifiers for `openDungeonsOot` setting.
 ///
@@ -1104,6 +1104,150 @@ impl DungeonRewardShuffle {
     }
 }
 
+/// Special condition configuration for goal requirements.
+///
+/// This struct defines the types of items that count towards special conditions
+/// like LACS, Ganon Boss Key, or Majora's Child requirements.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SpecialCondition {
+    /// Number of items required to meet the condition.
+    #[serde(default)]
+    pub count: u32,
+    /// Whether spiritual stones count towards the condition.
+    #[serde(default)]
+    pub stones: bool,
+    /// Whether medallions count towards the condition.
+    #[serde(default)]
+    pub medallions: bool,
+    /// Whether boss remains count towards the condition.
+    #[serde(default)]
+    pub remains: bool,
+    /// Whether gold skulltula tokens count towards the condition.
+    #[serde(default, rename = "skullsGold")]
+    pub skulls_gold: bool,
+    /// Whether swamp skulltula tokens count towards the condition.
+    #[serde(default, rename = "skullsSwamp")]
+    pub skulls_swamp: bool,
+    /// Whether ocean skulltula tokens count towards the condition.
+    #[serde(default, rename = "skullsOcean")]
+    pub skulls_ocean: bool,
+    /// Whether Woodfall stray fairies count towards the condition.
+    #[serde(default, rename = "fairiesWF")]
+    pub fairies_wf: bool,
+    /// Whether Snowhead stray fairies count towards the condition.
+    #[serde(default, rename = "fairiesSH")]
+    pub fairies_sh: bool,
+    /// Whether Great Bay stray fairies count towards the condition.
+    #[serde(default, rename = "fairiesGB")]
+    pub fairies_gb: bool,
+    /// Whether Stone Tower stray fairies count towards the condition.
+    #[serde(default, rename = "fairiesST")]
+    pub fairies_st: bool,
+    /// Whether Clock Town stray fairy counts towards the condition.
+    #[serde(default, rename = "fairyTown")]
+    pub fairy_town: bool,
+    /// Whether regular masks count towards the condition.
+    #[serde(default, rename = "masksRegular")]
+    pub masks_regular: bool,
+    /// Whether transformation masks count towards the condition.
+    #[serde(default, rename = "masksTransform")]
+    pub masks_transform: bool,
+    /// Whether OoT masks count towards the condition.
+    #[serde(default, rename = "masksOot")]
+    pub masks_oot: bool,
+    /// Whether triforce pieces count towards the condition.
+    #[serde(default)]
+    pub triforce: bool,
+    /// Whether red coins count towards the condition.
+    #[serde(default, rename = "coinsRed")]
+    pub coins_red: bool,
+    /// Whether green coins count towards the condition.
+    #[serde(default, rename = "coinsGreen")]
+    pub coins_green: bool,
+    /// Whether blue coins count towards the condition.
+    #[serde(default, rename = "coinsBlue")]
+    pub coins_blue: bool,
+    /// Whether yellow coins count towards the condition.
+    #[serde(default, rename = "coinsYellow")]
+    pub coins_yellow: bool,
+}
+
+/// A map of starting items and their quantities.
+///
+/// Keys are item names, values are the quantity of that item the player starts with.
+pub type StartingItems = HashMap<String, u32>;
+
+/// Extension trait for `StartingItems` providing convenience methods.
+pub trait StartingItemsExt {
+    /// Gets the quantity of an item, returning 0 if not present.
+    #[must_use]
+    fn get_quantity(&self, item: &str) -> u32;
+    /// Checks if the player has at least one of an item.
+    #[must_use]
+    fn has_item(&self, item: &str) -> bool;
+}
+
+impl StartingItemsExt for StartingItems {
+    fn get_quantity(&self, item: &str) -> u32 {
+        self.get(item).copied().unwrap_or(0)
+    }
+
+    fn has_item(&self, item: &str) -> bool {
+        self.get(item).map(|&q| q > 0).unwrap_or(false)
+    }
+}
+
+/// A set of locations that should be filled with junk items.
+pub type JunkLocations = HashSet<String>;
+
+/// Extension trait for `JunkLocations` providing convenience methods.
+pub trait JunkLocationsExt {
+    /// Checks if a location is marked as junk.
+    #[must_use]
+    fn is_junk(&self, location: &str) -> bool;
+}
+
+impl JunkLocationsExt for JunkLocations {
+    fn is_junk(&self, location: &str) -> bool {
+        self.contains(location)
+    }
+}
+
+/// Per-world configuration flags.
+///
+/// These flags control world-specific settings that can vary between
+/// different worlds in a multiworld seed.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct WorldFlags {
+    /// Ganon Trials configuration ("all", "none", or a number).
+    #[serde(default, rename = "Ganon Trials")]
+    pub ganon_trials: String,
+    /// Small Key Ring mode for OoT dungeons.
+    #[serde(default, rename = "Small Key Ring (OoT)")]
+    pub small_key_ring_oot: String,
+    /// Small Key Ring mode for MM dungeons.
+    #[serde(default, rename = "Small Key Ring (MM)")]
+    pub small_key_ring_mm: String,
+    /// Silver Rupee Pouches configuration.
+    #[serde(default, rename = "Silver Rupee Pouches")]
+    pub silver_rupee_pouches: String,
+}
+
+impl WorldFlags {
+    /// Checks if all Ganon trials are required.
+    #[must_use]
+    pub fn all_ganon_trials(&self) -> bool {
+        self.ganon_trials.eq_ignore_ascii_case("all")
+    }
+
+    /// Checks if no Ganon trials are required.
+    #[must_use]
+    pub fn no_ganon_trials(&self) -> bool {
+        self.ganon_trials.eq_ignore_ascii_case("none")
+    }
+}
+
 /// Complete randomizer settings configuration.
 ///
 /// This struct contains all settings that can affect logic evaluation
@@ -2068,5 +2212,220 @@ mod tests {
             let parsed = DungeonRewardShuffle::parse(s);
             assert_eq!(parsed, Some(mode));
         }
+    }
+
+    // === SpecialCondition Tests ===
+
+    #[test]
+    fn test_special_condition_default() {
+        let condition = SpecialCondition::default();
+        assert_eq!(condition.count, 0);
+        assert!(!condition.stones);
+        assert!(!condition.medallions);
+        assert!(!condition.remains);
+        assert!(!condition.skulls_gold);
+        assert!(!condition.triforce);
+    }
+
+    #[test]
+    fn test_special_condition_with_values() {
+        let condition = SpecialCondition {
+            count: 5,
+            stones: true,
+            medallions: true,
+            remains: false,
+            skulls_gold: true,
+            skulls_swamp: false,
+            skulls_ocean: false,
+            fairies_wf: true,
+            fairies_sh: false,
+            fairies_gb: false,
+            fairies_st: false,
+            fairy_town: true,
+            masks_regular: false,
+            masks_transform: true,
+            masks_oot: false,
+            triforce: true,
+            coins_red: false,
+            coins_green: false,
+            coins_blue: false,
+            coins_yellow: false,
+        };
+
+        assert_eq!(condition.count, 5);
+        assert!(condition.stones);
+        assert!(condition.medallions);
+        assert!(!condition.remains);
+        assert!(condition.skulls_gold);
+        assert!(condition.fairies_wf);
+        assert!(condition.fairy_town);
+        assert!(condition.masks_transform);
+        assert!(condition.triforce);
+    }
+
+    #[test]
+    fn test_special_condition_serde_roundtrip() {
+        let condition = SpecialCondition {
+            count: 3,
+            stones: true,
+            medallions: true,
+            remains: true,
+            ..Default::default()
+        };
+
+        let json = serde_json::to_string(&condition).unwrap();
+        let parsed: SpecialCondition = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed.count, 3);
+        assert!(parsed.stones);
+        assert!(parsed.medallions);
+        assert!(parsed.remains);
+        assert!(!parsed.skulls_gold);
+    }
+
+    #[test]
+    fn test_special_condition_serde_camel_case() {
+        let json = r#"{"count": 2, "skullsGold": true, "fairiesWF": true, "coinsRed": true}"#;
+        let parsed: SpecialCondition = serde_json::from_str(json).unwrap();
+
+        assert_eq!(parsed.count, 2);
+        assert!(parsed.skulls_gold);
+        assert!(parsed.fairies_wf);
+        assert!(parsed.coins_red);
+        assert!(!parsed.stones);
+    }
+
+    // === StartingItems Tests ===
+
+    #[test]
+    fn test_starting_items_get_quantity() {
+        let mut items: StartingItems = HashMap::new();
+        items.insert("hookshot".to_string(), 1);
+        items.insert("bombs".to_string(), 20);
+
+        assert_eq!(items.get_quantity("hookshot"), 1);
+        assert_eq!(items.get_quantity("bombs"), 20);
+        assert_eq!(items.get_quantity("bow"), 0);
+    }
+
+    #[test]
+    fn test_starting_items_has_item() {
+        let mut items: StartingItems = HashMap::new();
+        items.insert("hookshot".to_string(), 1);
+        items.insert("bombs".to_string(), 0);
+        items.insert("arrows".to_string(), 30);
+
+        assert!(items.has_item("hookshot"));
+        assert!(!items.has_item("bombs")); // quantity is 0
+        assert!(items.has_item("arrows"));
+        assert!(!items.has_item("bow")); // not in map
+    }
+
+    #[test]
+    fn test_starting_items_empty() {
+        let items: StartingItems = HashMap::new();
+
+        assert_eq!(items.get_quantity("anything"), 0);
+        assert!(!items.has_item("anything"));
+    }
+
+    // === JunkLocations Tests ===
+
+    #[test]
+    fn test_junk_locations_is_junk() {
+        let mut locations: JunkLocations = HashSet::new();
+        locations.insert("oot_kokiri_forest_chest".to_string());
+        locations.insert("mm_clock_town_chest".to_string());
+
+        assert!(locations.is_junk("oot_kokiri_forest_chest"));
+        assert!(locations.is_junk("mm_clock_town_chest"));
+        assert!(!locations.is_junk("oot_temple_of_time_chest"));
+    }
+
+    #[test]
+    fn test_junk_locations_empty() {
+        let locations: JunkLocations = HashSet::new();
+
+        assert!(!locations.is_junk("anything"));
+    }
+
+    // === WorldFlags Tests ===
+
+    #[test]
+    fn test_world_flags_default() {
+        let flags = WorldFlags::default();
+        assert_eq!(flags.ganon_trials, "");
+        assert_eq!(flags.small_key_ring_oot, "");
+        assert_eq!(flags.small_key_ring_mm, "");
+        assert_eq!(flags.silver_rupee_pouches, "");
+    }
+
+    #[test]
+    fn test_world_flags_all_ganon_trials() {
+        let mut flags = WorldFlags::default();
+
+        assert!(!flags.all_ganon_trials());
+
+        flags.ganon_trials = "all".to_string();
+        assert!(flags.all_ganon_trials());
+
+        flags.ganon_trials = "ALL".to_string();
+        assert!(flags.all_ganon_trials());
+
+        flags.ganon_trials = "All".to_string();
+        assert!(flags.all_ganon_trials());
+    }
+
+    #[test]
+    fn test_world_flags_no_ganon_trials() {
+        let mut flags = WorldFlags::default();
+
+        assert!(!flags.no_ganon_trials());
+
+        flags.ganon_trials = "none".to_string();
+        assert!(flags.no_ganon_trials());
+
+        flags.ganon_trials = "NONE".to_string();
+        assert!(flags.no_ganon_trials());
+
+        flags.ganon_trials = "None".to_string();
+        assert!(flags.no_ganon_trials());
+    }
+
+    #[test]
+    fn test_world_flags_ganon_trials_numeric() {
+        let mut flags = WorldFlags::default();
+        flags.ganon_trials = "3".to_string();
+
+        assert!(!flags.all_ganon_trials());
+        assert!(!flags.no_ganon_trials());
+    }
+
+    #[test]
+    fn test_world_flags_serde_roundtrip() {
+        let flags = WorldFlags {
+            ganon_trials: "all".to_string(),
+            small_key_ring_oot: "on".to_string(),
+            small_key_ring_mm: "off".to_string(),
+            silver_rupee_pouches: "anywhere".to_string(),
+        };
+
+        let json = serde_json::to_string(&flags).unwrap();
+        let parsed: WorldFlags = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed.ganon_trials, "all");
+        assert_eq!(parsed.small_key_ring_oot, "on");
+        assert_eq!(parsed.small_key_ring_mm, "off");
+        assert_eq!(parsed.silver_rupee_pouches, "anywhere");
+    }
+
+    #[test]
+    fn test_world_flags_serde_with_spaces_in_keys() {
+        let json = r#"{"Ganon Trials": "none", "Small Key Ring (OoT)": "on"}"#;
+        let parsed: WorldFlags = serde_json::from_str(json).unwrap();
+
+        assert_eq!(parsed.ganon_trials, "none");
+        assert!(parsed.no_ganon_trials());
+        assert_eq!(parsed.small_key_ring_oot, "on");
     }
 }
