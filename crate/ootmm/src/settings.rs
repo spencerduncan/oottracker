@@ -21,7 +21,7 @@
 //! ```
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 /// OoT dungeon identifiers for `openDungeonsOot` setting.
 ///
@@ -1368,6 +1368,575 @@ impl MapCompassShuffle {
     }
 }
 
+/// Shop shuffle mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum ShopShuffleMode {
+    /// No shop shuffling
+    #[default]
+    None,
+    /// Shuffle within same shop
+    OwnShop,
+    /// Shuffle across all shops
+    All,
+}
+
+impl ShopShuffleMode {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::None => "none",
+            Self::OwnShop => "ownShop",
+            Self::All => "all",
+        }
+    }
+
+    /// Parses a logic string identifier into a ShopShuffleMode.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "none" => Some(Self::None),
+            "ownShop" => Some(Self::OwnShop),
+            "all" => Some(Self::All),
+            _ => None,
+        }
+    }
+}
+
+/// Price mode for shops and scrubs.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum PriceMode {
+    /// Vanilla prices
+    #[default]
+    Vanilla,
+    /// Weighted random prices (favor affordable)
+    Weighted,
+    /// Fully random prices
+    Random,
+    /// Set all prices to a fixed value
+    Fixed,
+}
+
+impl PriceMode {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Vanilla => "vanilla",
+            Self::Weighted => "weighted",
+            Self::Random => "random",
+            Self::Fixed => "fixed",
+        }
+    }
+
+    /// Parses a logic string identifier into a PriceMode.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "vanilla" => Some(Self::Vanilla),
+            "weighted" => Some(Self::Weighted),
+            "random" => Some(Self::Random),
+            "fixed" => Some(Self::Fixed),
+            _ => None,
+        }
+    }
+}
+
+/// Town fairy shuffle mode for Clock Town stray fairies.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum TownFairyShuffle {
+    /// Vanilla locations
+    #[default]
+    Vanilla,
+    /// Fairies shuffled within Clock Town
+    Anywhere,
+}
+
+impl TownFairyShuffle {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Vanilla => "vanilla",
+            Self::Anywhere => "anywhere",
+        }
+    }
+
+    /// Parses a logic string identifier into a TownFairyShuffle.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "vanilla" => Some(Self::Vanilla),
+            "anywhere" => Some(Self::Anywhere),
+            _ => None,
+        }
+    }
+}
+
+/// Stray fairy shuffle mode for dungeon stray fairies.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum StrayFairyShuffle {
+    /// Vanilla locations (no shuffle)
+    #[default]
+    Vanilla,
+    /// Start with fairies
+    Starting,
+    /// Fairies removed
+    Removed,
+    /// Fairies shuffled within their dungeon
+    OwnDungeon,
+    /// Fairies can be anywhere
+    Anywhere,
+}
+
+impl StrayFairyShuffle {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Vanilla => "vanilla",
+            Self::Starting => "starting",
+            Self::Removed => "removed",
+            Self::OwnDungeon => "ownDungeon",
+            Self::Anywhere => "anywhere",
+        }
+    }
+
+    /// Parses a logic string identifier into a StrayFairyShuffle.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "vanilla" => Some(Self::Vanilla),
+            "starting" => Some(Self::Starting),
+            "removed" => Some(Self::Removed),
+            "ownDungeon" => Some(Self::OwnDungeon),
+            "anywhere" => Some(Self::Anywhere),
+            _ => None,
+        }
+    }
+}
+
+/// Cross-warp mode (warping between games).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum CrossWarpMode {
+    /// No cross-warping
+    #[default]
+    None,
+    /// Child cross-warp only
+    ChildOnly,
+    /// Adult cross-warp only
+    AdultOnly,
+    /// Full cross-warp enabled
+    Full,
+}
+
+impl CrossWarpMode {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::None => "none",
+            Self::ChildOnly => "childOnly",
+            Self::AdultOnly => "adultOnly",
+            Self::Full => "full",
+        }
+    }
+
+    /// Parses a logic string identifier into a CrossWarpMode.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "none" => Some(Self::None),
+            "childOnly" => Some(Self::ChildOnly),
+            "adultOnly" => Some(Self::AdultOnly),
+            "full" => Some(Self::Full),
+            _ => None,
+        }
+    }
+}
+
+/// Chest Size Matches Contents mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum CsmcMode {
+    /// CSMC disabled
+    #[default]
+    Never,
+    /// CSMC always enabled
+    Always,
+    /// CSMC for agony hints
+    Agony,
+}
+
+impl CsmcMode {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Never => "never",
+            Self::Always => "always",
+            Self::Agony => "agony",
+        }
+    }
+
+    /// Parses a logic string identifier into a CsmcMode.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "never" => Some(Self::Never),
+            "always" => Some(Self::Always),
+            "agony" => Some(Self::Agony),
+            _ => None,
+        }
+    }
+}
+
+/// Bombchu behavior mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum BombchuBehavior {
+    /// Bombchus are just items
+    #[default]
+    Normal,
+    /// Bombchus are considered logic bombs
+    BombsOrLogic,
+    /// Bombchus can always be used as bombs
+    AsBombs,
+}
+
+impl BombchuBehavior {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Normal => "normal",
+            Self::BombsOrLogic => "bombsOrLogic",
+            Self::AsBombs => "asBombs",
+        }
+    }
+
+    /// Parses a logic string identifier into a BombchuBehavior.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "normal" => Some(Self::Normal),
+            "bombsOrLogic" => Some(Self::BombsOrLogic),
+            "asBombs" => Some(Self::AsBombs),
+            _ => None,
+        }
+    }
+}
+
+/// Auto-invert camera mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum AutoInvertMode {
+    /// No auto-invert
+    #[default]
+    Off,
+    /// First-person auto-invert
+    FirstPerson,
+    /// Always auto-invert
+    Always,
+}
+
+impl AutoInvertMode {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Off => "off",
+            Self::FirstPerson => "firstPerson",
+            Self::Always => "always",
+        }
+    }
+
+    /// Parses a logic string identifier into an AutoInvertMode.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "off" => Some(Self::Off),
+            "firstPerson" => Some(Self::FirstPerson),
+            "always" => Some(Self::Always),
+            _ => None,
+        }
+    }
+}
+
+/// Starting age for the player.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum StartingAge {
+    /// Start as child
+    #[default]
+    Child,
+    /// Start as adult
+    Adult,
+    /// Random starting age
+    Random,
+}
+
+impl StartingAge {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Child => "child",
+            Self::Adult => "adult",
+            Self::Random => "random",
+        }
+    }
+
+    /// Parses a logic string identifier into a StartingAge.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "child" => Some(Self::Child),
+            "adult" => Some(Self::Adult),
+            "random" => Some(Self::Random),
+            _ => None,
+        }
+    }
+}
+
+/// Damage multiplier for enemies.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum DamageMultiplier {
+    /// Half damage
+    Half,
+    /// Normal damage
+    #[default]
+    Normal,
+    /// Double damage
+    Double,
+    /// Quadruple damage
+    Quadruple,
+    /// One-hit KO
+    Ohko,
+}
+
+impl DamageMultiplier {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Half => "half",
+            Self::Normal => "normal",
+            Self::Double => "double",
+            Self::Quadruple => "quadruple",
+            Self::Ohko => "ohko",
+        }
+    }
+
+    /// Parses a logic string identifier into a DamageMultiplier.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "half" => Some(Self::Half),
+            "normal" => Some(Self::Normal),
+            "double" => Some(Self::Double),
+            "quadruple" => Some(Self::Quadruple),
+            "ohko" => Some(Self::Ohko),
+            _ => None,
+        }
+    }
+}
+
+/// Item pool size.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum ItemPool {
+    /// Plentiful item pool (more progression items)
+    Plentiful,
+    /// Normal item pool
+    #[default]
+    Normal,
+    /// Scarce item pool (fewer items)
+    Scarce,
+    /// Minimal item pool (bare minimum)
+    Minimal,
+}
+
+impl ItemPool {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Plentiful => "plentiful",
+            Self::Normal => "normal",
+            Self::Scarce => "scarce",
+            Self::Minimal => "minimal",
+        }
+    }
+
+    /// Parses a logic string identifier into an ItemPool.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "plentiful" => Some(Self::Plentiful),
+            "normal" => Some(Self::Normal),
+            "scarce" => Some(Self::Scarce),
+            "minimal" => Some(Self::Minimal),
+            _ => None,
+        }
+    }
+}
+
+/// Traps quantity in the item pool.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum TrapsQuantity {
+    /// No traps
+    #[default]
+    None,
+    /// Few traps
+    Few,
+    /// Normal amount of traps
+    Normal,
+    /// Many traps
+    Many,
+    /// Maximum traps (most junk replaced)
+    Onslaught,
+}
+
+impl TrapsQuantity {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::None => "none",
+            Self::Few => "few",
+            Self::Normal => "normal",
+            Self::Many => "many",
+            Self::Onslaught => "onslaught",
+        }
+    }
+
+    /// Parses a logic string identifier into a TrapsQuantity.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "none" => Some(Self::None),
+            "few" => Some(Self::Few),
+            "normal" => Some(Self::Normal),
+            "many" => Some(Self::Many),
+            "onslaught" => Some(Self::Onslaught),
+            _ => None,
+        }
+    }
+}
+
+/// Special condition for custom requirements (bridge, LACS, etc.).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct SpecialCondition {
+    /// Number of stones required
+    #[serde(default)]
+    pub stones: u8,
+    /// Number of medallions required
+    #[serde(default)]
+    pub medallions: u8,
+    /// Number of dungeon rewards required
+    #[serde(default)]
+    pub dungeon_rewards: u8,
+    /// Number of Gold Skulltula tokens required
+    #[serde(default)]
+    pub skulltulas: u8,
+    /// Number of boss remains required
+    #[serde(default)]
+    pub remains: u8,
+}
+
+impl SpecialCondition {
+    /// Creates an empty condition with no requirements.
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Creates a condition requiring specific medallions.
+    #[must_use]
+    pub fn with_medallions(count: u8) -> Self {
+        Self {
+            medallions: count,
+            ..Default::default()
+        }
+    }
+
+    /// Creates a condition requiring specific stones.
+    #[must_use]
+    pub fn with_stones(count: u8) -> Self {
+        Self {
+            stones: count,
+            ..Default::default()
+        }
+    }
+
+    /// Returns true if this condition has any requirements.
+    #[must_use]
+    pub fn has_requirements(&self) -> bool {
+        self.stones > 0
+            || self.medallions > 0
+            || self.dungeon_rewards > 0
+            || self.skulltulas > 0
+            || self.remains > 0
+    }
+}
+
+/// Type alias for starting items collection.
+pub type StartingItems = HashMap<String, u32>;
+
+/// Type alias for junk locations collection.
+pub type JunkLocations = HashSet<String>;
+
+/// World flags that affect gameplay logic.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct WorldFlags {
+    /// Whether OoT world is enabled
+    #[serde(default = "default_true")]
+    pub oot_enabled: bool,
+    /// Whether MM world is enabled
+    #[serde(default = "default_true")]
+    pub mm_enabled: bool,
+    /// Whether shared items are enabled
+    #[serde(default)]
+    pub shared_items: bool,
+    /// Whether shared masks are enabled
+    #[serde(default)]
+    pub shared_masks: bool,
+}
+
+fn default_true() -> bool {
+    true
+}
+
+impl WorldFlags {
+    /// Creates default world flags (both games enabled).
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Returns true if OoT world is accessible.
+    #[must_use]
+    pub fn is_oot_enabled(&self) -> bool {
+        self.oot_enabled
+    }
+
+    /// Returns true if MM world is accessible.
+    #[must_use]
+    pub fn is_mm_enabled(&self) -> bool {
+        self.mm_enabled
+    }
+}
+
 /// Complete randomizer settings configuration.
 ///
 /// This struct contains all settings that can affect logic evaluation
@@ -1843,6 +2412,112 @@ pub struct RandomizerSettings {
     /// Valid range is 1-4, defaults to 4.
     #[serde(default = "default_bottle_count")]
     pub bottle_count: u8,
+
+    // === Game Mode Settings ===
+    /// Rainbow Bridge access requirements mode.
+    #[serde(default)]
+    pub rainbow_bridge: RainbowBridgeMode,
+
+    /// Song shuffle mode.
+    #[serde(default)]
+    pub songs: SongsMode,
+
+    /// Dungeon reward shuffle mode.
+    #[serde(default)]
+    pub dungeon_reward_shuffle: DungeonRewardShuffle,
+
+    // === Shop/Price Settings ===
+    /// Shop shuffle mode for OoT.
+    #[serde(default)]
+    pub shop_shuffle_oot: ShopShuffleMode,
+
+    /// Shop shuffle mode for MM.
+    #[serde(default)]
+    pub shop_shuffle_mm: ShopShuffleMode,
+
+    /// Price mode for OoT shops.
+    #[serde(default)]
+    pub price_oot_shops: PriceMode,
+
+    /// Price mode for OoT scrubs.
+    #[serde(default)]
+    pub price_oot_scrubs: PriceMode,
+
+    /// Price mode for MM shops.
+    #[serde(default)]
+    pub price_mm_shops: PriceMode,
+
+    /// Price mode for Tingle maps.
+    #[serde(default)]
+    pub tingle_prices: PriceMode,
+
+    // === Fairy Shuffle Settings ===
+    /// Town fairy shuffle mode (Clock Town stray fairies).
+    #[serde(default)]
+    pub town_fairy_shuffle: TownFairyShuffle,
+
+    /// Stray fairy shuffle mode for chest fairies.
+    #[serde(default)]
+    pub stray_fairy_chest_shuffle: StrayFairyShuffle,
+
+    /// Stray fairy shuffle mode for other fairies.
+    #[serde(default)]
+    pub stray_fairy_other_shuffle: StrayFairyShuffle,
+
+    // === Cross-Warp Settings ===
+    /// Cross-warp mode for OoT.
+    #[serde(default)]
+    pub cross_warp_oot: CrossWarpMode,
+
+    /// Cross-warp mode for MM.
+    #[serde(default)]
+    pub cross_warp_mm: CrossWarpMode,
+
+    // === Miscellaneous Enum Settings ===
+    /// Chest Size Matches Contents mode.
+    #[serde(default)]
+    pub csmc: CsmcMode,
+
+    /// Bombchu behavior mode.
+    #[serde(default)]
+    pub bombchu_behavior: BombchuBehavior,
+
+    /// Auto-invert camera mode.
+    #[serde(default)]
+    pub auto_invert: AutoInvertMode,
+
+    /// Starting age for the player.
+    #[serde(default)]
+    pub starting_age: StartingAge,
+
+    /// Damage multiplier.
+    #[serde(default)]
+    pub damage_multiplier: DamageMultiplier,
+
+    /// Item pool size.
+    #[serde(default)]
+    pub item_pool: ItemPool,
+
+    /// Traps quantity in the item pool.
+    #[serde(default)]
+    pub traps_quantity: TrapsQuantity,
+
+    // === Collection Fields ===
+    /// Special conditions for custom requirements.
+    #[serde(default)]
+    pub special_conditions: HashMap<String, SpecialCondition>,
+
+    /// Starting items and their quantities.
+    #[serde(default)]
+    pub starting_items: StartingItems,
+
+    /// Locations designated as junk.
+    #[serde(default)]
+    pub junk_locations: JunkLocations,
+
+    /// World flags affecting gameplay.
+    #[serde(default)]
+    pub world_flags: WorldFlags,
 }
 
 /// Returns the default bottle count (4).
@@ -1994,6 +2669,43 @@ impl Default for RandomizerSettings {
             shuffle_pots_mm: ShufflePotsMm::default(),
             logic_mode: LogicMode::default(),
             bottle_count: 4,
+
+            // Game mode settings
+            rainbow_bridge: RainbowBridgeMode::default(),
+            songs: SongsMode::default(),
+            dungeon_reward_shuffle: DungeonRewardShuffle::default(),
+
+            // Shop/price settings
+            shop_shuffle_oot: ShopShuffleMode::default(),
+            shop_shuffle_mm: ShopShuffleMode::default(),
+            price_oot_shops: PriceMode::default(),
+            price_oot_scrubs: PriceMode::default(),
+            price_mm_shops: PriceMode::default(),
+            tingle_prices: PriceMode::default(),
+
+            // Fairy shuffle settings
+            town_fairy_shuffle: TownFairyShuffle::default(),
+            stray_fairy_chest_shuffle: StrayFairyShuffle::default(),
+            stray_fairy_other_shuffle: StrayFairyShuffle::default(),
+
+            // Cross-warp settings
+            cross_warp_oot: CrossWarpMode::default(),
+            cross_warp_mm: CrossWarpMode::default(),
+
+            // Miscellaneous enum settings
+            csmc: CsmcMode::default(),
+            bombchu_behavior: BombchuBehavior::default(),
+            auto_invert: AutoInvertMode::default(),
+            starting_age: StartingAge::default(),
+            damage_multiplier: DamageMultiplier::default(),
+            item_pool: ItemPool::default(),
+            traps_quantity: TrapsQuantity::default(),
+
+            // Collection fields
+            special_conditions: HashMap::new(),
+            starting_items: StartingItems::new(),
+            junk_locations: JunkLocations::new(),
+            world_flags: WorldFlags::default(),
         }
     }
 }
@@ -2163,6 +2875,32 @@ impl RandomizerSettings {
             "smallKeyShuffleOot" => self.small_key_shuffle_oot.as_str() == value,
             "shufflePotsMm" => self.shuffle_pots_mm.as_str() == value,
             "logicMode" => self.logic_mode.as_str() == value,
+            // Game mode settings
+            "rainbowBridge" => self.rainbow_bridge.as_str() == value,
+            "songs" => self.songs.as_str() == value,
+            "dungeonRewardShuffle" => self.dungeon_reward_shuffle.as_str() == value,
+            // Shop/price settings
+            "shopShuffleOot" => self.shop_shuffle_oot.as_str() == value,
+            "shopShuffleMm" => self.shop_shuffle_mm.as_str() == value,
+            "priceOotShops" => self.price_oot_shops.as_str() == value,
+            "priceOotScrubs" => self.price_oot_scrubs.as_str() == value,
+            "priceMmShops" => self.price_mm_shops.as_str() == value,
+            "tinglePrices" => self.tingle_prices.as_str() == value,
+            // Fairy shuffle settings
+            "townFairyShuffle" => self.town_fairy_shuffle.as_str() == value,
+            "strayFairyChestShuffle" => self.stray_fairy_chest_shuffle.as_str() == value,
+            "strayFairyOtherShuffle" => self.stray_fairy_other_shuffle.as_str() == value,
+            // Cross-warp settings
+            "crossWarpOot" => self.cross_warp_oot.as_str() == value,
+            "crossWarpMm" => self.cross_warp_mm.as_str() == value,
+            // Miscellaneous enum settings
+            "csmc" => self.csmc.as_str() == value,
+            "bombchuBehavior" => self.bombchu_behavior.as_str() == value,
+            "autoInvert" => self.auto_invert.as_str() == value,
+            "startingAge" => self.starting_age.as_str() == value,
+            "damageMultiplier" => self.damage_multiplier.as_str() == value,
+            "itemPool" => self.item_pool.as_str() == value,
+            "trapsQuantity" => self.traps_quantity.as_str() == value,
             _ => false,
         }
     }
@@ -2273,6 +3011,41 @@ impl RandomizerSettings {
     #[must_use]
     pub fn mq_dungeon_count(&self) -> usize {
         self.mq_dungeons.len()
+    }
+
+    // === Special Condition Methods ===
+
+    /// Gets a special condition by name.
+    #[must_use]
+    pub fn get_special_condition(&self, name: &str) -> Option<&SpecialCondition> {
+        self.special_conditions.get(name)
+    }
+
+    /// Gets the bridge special condition.
+    ///
+    /// Returns the special condition for custom rainbow bridge requirements
+    /// when `rainbow_bridge` is set to `Custom`.
+    #[must_use]
+    pub fn bridge_condition(&self) -> Option<&SpecialCondition> {
+        self.special_conditions.get("bridge")
+    }
+
+    // === Junk Location Methods ===
+
+    /// Checks if a location is designated as junk.
+    #[must_use]
+    pub fn is_junk_location(&self, location: &str) -> bool {
+        self.junk_locations.contains(location)
+    }
+
+    // === Starting Items Methods ===
+
+    /// Returns the quantity of a starting item.
+    ///
+    /// Returns 0 if the item is not in the starting items.
+    #[must_use]
+    pub fn starting_item_quantity(&self, item: &str) -> u32 {
+        self.starting_items.get(item).copied().unwrap_or(0)
     }
 }
 
