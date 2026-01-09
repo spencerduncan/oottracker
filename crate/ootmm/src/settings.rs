@@ -1437,6 +1437,308 @@ pub struct RandomizerSettings {
     #[serde(default)]
     pub time_travel_sword: bool,
 
+    // === Shuffle Settings ===
+    /// Scrub shuffle (OoT).
+    #[serde(default)]
+    pub scrub_shuffle_oot: bool,
+
+    /// Scrub shuffle (MM).
+    #[serde(default)]
+    pub scrub_shuffle_mm: bool,
+
+    /// Cow shuffle (OoT).
+    #[serde(default)]
+    pub cow_shuffle_oot: bool,
+
+    /// Cow shuffle (MM).
+    #[serde(default)]
+    pub cow_shuffle_mm: bool,
+
+    /// Beehive shuffle (OoT).
+    #[serde(default)]
+    pub shuffle_hives_oot: bool,
+
+    /// Beehive shuffle (MM).
+    #[serde(default)]
+    pub shuffle_hives_mm: bool,
+
+    /// Pot shuffle (OoT).
+    #[serde(default)]
+    pub shuffle_pots_oot: bool,
+
+    /// Grass shuffle (OoT).
+    #[serde(default)]
+    pub shuffle_grass_oot: bool,
+
+    /// Grass shuffle (MM).
+    #[serde(default)]
+    pub shuffle_grass_mm: bool,
+
+    /// Freestanding items shuffle (OoT).
+    #[serde(default)]
+    pub shuffle_freestanding_oot: bool,
+
+    /// Freestanding items shuffle (MM).
+    #[serde(default)]
+    pub shuffle_freestanding_mm: bool,
+
+    /// Wonder items shuffle (OoT).
+    #[serde(default)]
+    pub shuffle_wonderitems_oot: bool,
+
+    /// Wonder items shuffle (MM).
+    #[serde(default)]
+    pub shuffle_wonderitems_mm: bool,
+
+    /// Snowball shuffle (MM).
+    #[serde(default)]
+    pub shuffle_snowballs_mm: bool,
+
+    // === Souls Settings ===
+    /// Enemy souls (OoT).
+    #[serde(default)]
+    pub souls_enemy_oot: bool,
+
+    /// Enemy souls (MM).
+    #[serde(default)]
+    pub souls_enemy_mm: bool,
+
+    /// Boss souls (OoT).
+    #[serde(default)]
+    pub souls_boss_oot: bool,
+
+    /// Boss souls (MM).
+    #[serde(default)]
+    pub souls_boss_mm: bool,
+
+    /// NPC souls (OoT).
+    #[serde(default)]
+    pub souls_npc_oot: bool,
+
+    /// NPC souls (MM).
+    #[serde(default)]
+    pub souls_npc_mm: bool,
+
+    // === Shared Item Settings ===
+    /// Shared spin attack upgrade between games.
+    #[serde(default)]
+    pub shared_spin_upgrade: bool,
+
+    /// Shared bows between games.
+    #[serde(default)]
+    pub shared_bows: bool,
+
+    /// Shared bomb bags between games.
+    #[serde(default)]
+    pub shared_bomb_bags: bool,
+
+    /// Shared magic upgrade between games.
+    #[serde(default)]
+    pub shared_magic_upgrade: bool,
+
+    /// Shared wallets between games.
+    #[serde(default)]
+    pub shared_wallets: bool,
+
+    /// Shared health between games.
+    #[serde(default)]
+    pub shared_health: bool,
+
+    /// Shared shields between games.
+    #[serde(default)]
+    pub shared_shields: bool,
+
+    /// Shared nuts and sticks between games.
+    #[serde(default)]
+    pub shared_nuts_sticks: bool,
+
+    /// Shared hookshot between games.
+    #[serde(default)]
+    pub shared_hookshot: bool,
+
+    /// Shared Lens of Truth between games.
+    #[serde(default)]
+    pub shared_lens: bool,
+
+    /// Shared ocarina between games.
+    #[serde(default)]
+    pub shared_ocarina: bool,
+
+    /// Shared masks between games.
+    #[serde(default)]
+    pub shared_masks: bool,
+
+    /// Shared ocarina songs between games.
+    #[serde(default)]
+    pub shared_ocarinas_songs: bool,
+
+    /// Shared Song of Time between games.
+    #[serde(default)]
+    pub shared_song_time: bool,
+
+    /// Shared Epona's Song between games.
+    #[serde(default)]
+    pub shared_song_epona: bool,
+
+    /// Shared Song of Storms between games.
+    #[serde(default)]
+    pub shared_song_storms: bool,
+
+    /// Shared Sun's Song between games.
+    #[serde(default)]
+    pub shared_song_sun: bool,
+
+    /// Shared Saria's Song between games.
+    #[serde(default)]
+    pub shared_song_saria: bool,
+
+    /// Shared Zelda's Lullaby between games.
+    #[serde(default)]
+    pub shared_song_zelda: bool,
+
+    /// Shared Song of Healing between games.
+    #[serde(default)]
+    pub shared_song_healing: bool,
+
+    /// Shared Song of Soaring between games.
+    #[serde(default)]
+    pub shared_song_soaring: bool,
+
+    // === Ageless Settings ===
+    /// Ageless swords.
+    #[serde(default)]
+    pub ageless_swords: bool,
+
+    /// Ageless shields.
+    #[serde(default)]
+    pub ageless_shields: bool,
+
+    /// Ageless tunics.
+    #[serde(default)]
+    pub ageless_tunics: bool,
+
+    /// Ageless sticks.
+    #[serde(default)]
+    pub ageless_sticks: bool,
+
+    /// Ageless bombs.
+    #[serde(default)]
+    pub ageless_bombs: bool,
+
+    /// Ageless boomerang.
+    #[serde(default)]
+    pub ageless_boomerang: bool,
+
+    /// Ageless hammer.
+    #[serde(default)]
+    pub ageless_hammer: bool,
+
+    /// Ageless child trade items.
+    #[serde(default)]
+    pub ageless_child_trade: bool,
+
+    /// Ageless adult trade items.
+    #[serde(default)]
+    pub ageless_adult_trade: bool,
+
+    // === Cross-Game Settings ===
+    /// Cross-age play enabled.
+    #[serde(default)]
+    pub cross_age: bool,
+
+    /// Cross-game Farore's Wind enabled.
+    #[serde(default)]
+    pub cross_game_fw: bool,
+
+    // === MM-Specific Settings ===
+    /// Fire spell available in MM.
+    #[serde(default)]
+    pub spell_fire_mm: bool,
+
+    /// Iron Boots available in MM.
+    #[serde(default)]
+    pub boots_iron_mm: bool,
+
+    /// Goron Tunic available in MM.
+    #[serde(default)]
+    pub tunic_goron_mm: bool,
+
+    /// Zora Tunic available in MM.
+    #[serde(default)]
+    pub tunic_zora_mm: bool,
+
+    /// Golden Scale available in MM.
+    #[serde(default)]
+    pub scale_gold_mm: bool,
+
+    // === QOL/Features Settings ===
+    /// Swordless adult allowed.
+    #[serde(default)]
+    pub swordless_adult: bool,
+
+    /// Free scarecrow song in OoT.
+    #[serde(default)]
+    pub free_scarecrow_oot: bool,
+
+    /// Blue Fire Arrows enabled.
+    #[serde(default)]
+    pub blue_fire_arrows: bool,
+
+    /// Sunlight Arrows enabled.
+    #[serde(default)]
+    pub sunlight_arrows: bool,
+
+    /// Fairy Ocarina available in MM.
+    #[serde(default)]
+    pub fairy_ocarina_mm: bool,
+
+    // === Hints Settings ===
+    /// Generate spoiler log.
+    #[serde(default)]
+    pub generate_spoiler_log: bool,
+
+    /// Probabilistic foolish hints.
+    #[serde(default)]
+    pub probabilistic_foolish: bool,
+
+    /// Hint importance enabled.
+    #[serde(default)]
+    pub hint_importance: bool,
+
+    // === Traps Settings ===
+    /// Ice traps enabled.
+    #[serde(default)]
+    pub trap_ice: bool,
+
+    /// Fire traps enabled.
+    #[serde(default)]
+    pub trap_fire: bool,
+
+    /// Shock traps enabled.
+    #[serde(default)]
+    pub trap_shock: bool,
+
+    /// Cloak traps (disguised traps).
+    #[serde(default)]
+    pub cloak_traps: bool,
+
+    // === Misc Settings ===
+    /// Clocks shuffled.
+    #[serde(default)]
+    pub clocks: bool,
+
+    /// Menu notebook enabled.
+    #[serde(default)]
+    pub menu_notebook: bool,
+
+    /// Coins enabled.
+    #[serde(default)]
+    pub coins: bool,
+
+    /// Void warp in MM enabled.
+    #[serde(default)]
+    pub void_warp_mm: bool,
+
     // === Enumerated Settings ===
     // These are evaluated with `setting(name, value)`
     /// Set of OoT dungeons that are open without requirements.
@@ -1572,6 +1874,99 @@ impl Default for RandomizerSettings {
             skip_zelda: false,
             time_travel_sword: false,
 
+            // Shuffle settings
+            scrub_shuffle_oot: false,
+            scrub_shuffle_mm: false,
+            cow_shuffle_oot: false,
+            cow_shuffle_mm: false,
+            shuffle_hives_oot: false,
+            shuffle_hives_mm: false,
+            shuffle_pots_oot: false,
+            shuffle_grass_oot: false,
+            shuffle_grass_mm: false,
+            shuffle_freestanding_oot: false,
+            shuffle_freestanding_mm: false,
+            shuffle_wonderitems_oot: false,
+            shuffle_wonderitems_mm: false,
+            shuffle_snowballs_mm: false,
+
+            // Souls settings
+            souls_enemy_oot: false,
+            souls_enemy_mm: false,
+            souls_boss_oot: false,
+            souls_boss_mm: false,
+            souls_npc_oot: false,
+            souls_npc_mm: false,
+
+            // Shared item settings
+            shared_spin_upgrade: false,
+            shared_bows: false,
+            shared_bomb_bags: false,
+            shared_magic_upgrade: false,
+            shared_wallets: false,
+            shared_health: false,
+            shared_shields: false,
+            shared_nuts_sticks: false,
+            shared_hookshot: false,
+            shared_lens: false,
+            shared_ocarina: false,
+            shared_masks: false,
+            shared_ocarinas_songs: false,
+            shared_song_time: false,
+            shared_song_epona: false,
+            shared_song_storms: false,
+            shared_song_sun: false,
+            shared_song_saria: false,
+            shared_song_zelda: false,
+            shared_song_healing: false,
+            shared_song_soaring: false,
+
+            // Ageless settings
+            ageless_swords: false,
+            ageless_shields: false,
+            ageless_tunics: false,
+            ageless_sticks: false,
+            ageless_bombs: false,
+            ageless_boomerang: false,
+            ageless_hammer: false,
+            ageless_child_trade: false,
+            ageless_adult_trade: false,
+
+            // Cross-game settings
+            cross_age: false,
+            cross_game_fw: false,
+
+            // MM-specific settings
+            spell_fire_mm: false,
+            boots_iron_mm: false,
+            tunic_goron_mm: false,
+            tunic_zora_mm: false,
+            scale_gold_mm: false,
+
+            // QOL/Features settings
+            swordless_adult: false,
+            free_scarecrow_oot: false,
+            blue_fire_arrows: false,
+            sunlight_arrows: false,
+            fairy_ocarina_mm: false,
+
+            // Hints settings
+            generate_spoiler_log: false,
+            probabilistic_foolish: false,
+            hint_importance: false,
+
+            // Traps settings
+            trap_ice: false,
+            trap_fire: false,
+            trap_shock: false,
+            cloak_traps: false,
+
+            // Misc settings
+            clocks: false,
+            menu_notebook: false,
+            coins: false,
+            void_warp_mm: false,
+
             // Set settings default to empty
             open_dungeons_oot: HashSet::new(),
             open_dungeons_mm: HashSet::new(),
@@ -1616,6 +2011,7 @@ impl RandomizerSettings {
     #[must_use]
     pub fn get_bool_setting(&self, name: &str) -> Option<bool> {
         match name {
+            // Original boolean settings
             "agelessBoots" => Some(self.ageless_boots),
             "agelessHookshot" => Some(self.ageless_hookshot),
             "agelessStrength" => Some(self.ageless_strength),
@@ -1631,6 +2027,100 @@ impl RandomizerSettings {
             "restoreBrokenActors" => Some(self.restore_broken_actors),
             "skipZelda" => Some(self.skip_zelda),
             "timeTravelSword" => Some(self.time_travel_sword),
+
+            // Shuffle settings
+            "scrubShuffleOot" => Some(self.scrub_shuffle_oot),
+            "scrubShuffleMm" => Some(self.scrub_shuffle_mm),
+            "cowShuffleOot" => Some(self.cow_shuffle_oot),
+            "cowShuffleMm" => Some(self.cow_shuffle_mm),
+            "shuffleHivesOot" => Some(self.shuffle_hives_oot),
+            "shuffleHivesMm" => Some(self.shuffle_hives_mm),
+            "shufflePotsOot" => Some(self.shuffle_pots_oot),
+            "shuffleGrassOot" => Some(self.shuffle_grass_oot),
+            "shuffleGrassMm" => Some(self.shuffle_grass_mm),
+            "shuffleFreestandingOot" => Some(self.shuffle_freestanding_oot),
+            "shuffleFreestandingMm" => Some(self.shuffle_freestanding_mm),
+            "shuffleWonderitemsOot" => Some(self.shuffle_wonderitems_oot),
+            "shuffleWonderitemsMm" => Some(self.shuffle_wonderitems_mm),
+            "shuffleSnowballsMm" => Some(self.shuffle_snowballs_mm),
+
+            // Souls settings
+            "soulsEnemyOot" => Some(self.souls_enemy_oot),
+            "soulsEnemyMm" => Some(self.souls_enemy_mm),
+            "soulsBossOot" => Some(self.souls_boss_oot),
+            "soulsBossMm" => Some(self.souls_boss_mm),
+            "soulsNpcOot" => Some(self.souls_npc_oot),
+            "soulsNpcMm" => Some(self.souls_npc_mm),
+
+            // Shared item settings
+            "sharedSpinUpgrade" => Some(self.shared_spin_upgrade),
+            "sharedBows" => Some(self.shared_bows),
+            "sharedBombBags" => Some(self.shared_bomb_bags),
+            "sharedMagicUpgrade" => Some(self.shared_magic_upgrade),
+            "sharedWallets" => Some(self.shared_wallets),
+            "sharedHealth" => Some(self.shared_health),
+            "sharedShields" => Some(self.shared_shields),
+            "sharedNutsSticks" => Some(self.shared_nuts_sticks),
+            "sharedHookshot" => Some(self.shared_hookshot),
+            "sharedLens" => Some(self.shared_lens),
+            "sharedOcarina" => Some(self.shared_ocarina),
+            "sharedMasks" => Some(self.shared_masks),
+            "sharedOcarinasSongs" => Some(self.shared_ocarinas_songs),
+            "sharedSongTime" => Some(self.shared_song_time),
+            "sharedSongEpona" => Some(self.shared_song_epona),
+            "sharedSongStorms" => Some(self.shared_song_storms),
+            "sharedSongSun" => Some(self.shared_song_sun),
+            "sharedSongSaria" => Some(self.shared_song_saria),
+            "sharedSongZelda" => Some(self.shared_song_zelda),
+            "sharedSongHealing" => Some(self.shared_song_healing),
+            "sharedSongSoaring" => Some(self.shared_song_soaring),
+
+            // Ageless settings
+            "agelessSwords" => Some(self.ageless_swords),
+            "agelessShields" => Some(self.ageless_shields),
+            "agelessTunics" => Some(self.ageless_tunics),
+            "agelessSticks" => Some(self.ageless_sticks),
+            "agelessBombs" => Some(self.ageless_bombs),
+            "agelessBoomerang" => Some(self.ageless_boomerang),
+            "agelessHammer" => Some(self.ageless_hammer),
+            "agelessChildTrade" => Some(self.ageless_child_trade),
+            "agelessAdultTrade" => Some(self.ageless_adult_trade),
+
+            // Cross-game settings
+            "crossAge" => Some(self.cross_age),
+            "crossGameFw" => Some(self.cross_game_fw),
+
+            // MM-specific settings
+            "spellFireMm" => Some(self.spell_fire_mm),
+            "bootsIronMm" => Some(self.boots_iron_mm),
+            "tunicGoronMm" => Some(self.tunic_goron_mm),
+            "tunicZoraMm" => Some(self.tunic_zora_mm),
+            "scaleGoldMm" => Some(self.scale_gold_mm),
+
+            // QOL/Features settings
+            "swordlessAdult" => Some(self.swordless_adult),
+            "freeScarecrowOot" => Some(self.free_scarecrow_oot),
+            "blueFireArrows" => Some(self.blue_fire_arrows),
+            "sunlightArrows" => Some(self.sunlight_arrows),
+            "fairyOcarinaMm" => Some(self.fairy_ocarina_mm),
+
+            // Hints settings
+            "generateSpoilerLog" => Some(self.generate_spoiler_log),
+            "probabilisticFoolish" => Some(self.probabilistic_foolish),
+            "hintImportance" => Some(self.hint_importance),
+
+            // Traps settings
+            "trapIce" => Some(self.trap_ice),
+            "trapFire" => Some(self.trap_fire),
+            "trapShock" => Some(self.trap_shock),
+            "cloakTraps" => Some(self.cloak_traps),
+
+            // Misc settings
+            "clocks" => Some(self.clocks),
+            "menuNotebook" => Some(self.menu_notebook),
+            "coins" => Some(self.coins),
+            "voidWarpMm" => Some(self.void_warp_mm),
+
             _ => None,
         }
     }
