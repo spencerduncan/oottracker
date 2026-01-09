@@ -587,11 +587,13 @@ pub enum TrackerCellKind {
     OotMap {
         active: Box<dyn Fn(&AllDungeonItems) -> bool>,
         toggle: Box<dyn Fn(&mut AllDungeonItems)>,
+        label: &'static str,
     },
     OotCompass {
         active: Box<dyn Fn(&AllDungeonItems) -> bool>,
         toggle: Box<dyn Fn(&mut AllDungeonItems)>,
         loc: ImageInfo,
+        label: &'static str,
     },
     MmBossKey {
         active: Box<dyn Fn(&crate::mm_save::MmAllDungeonItems) -> bool>,
@@ -601,10 +603,12 @@ pub enum TrackerCellKind {
     MmMap {
         active: Box<dyn Fn(&crate::mm_save::MmAllDungeonItems) -> bool>,
         toggle: Box<dyn Fn(&mut crate::mm_save::MmAllDungeonItems)>,
+        label: &'static str,
     },
     MmCompass {
         active: Box<dyn Fn(&crate::mm_save::MmAllDungeonItems) -> bool>,
         toggle: Box<dyn Fn(&mut crate::mm_save::MmAllDungeonItems)>,
+        label: &'static str,
     },
     Song {
         song: QuestItems,
@@ -671,7 +675,7 @@ impl TrackerCellKind {
                 accessibility: None,
                 label: Some(label.to_string()),
             },
-            OotMap { active, .. } => CellRender {
+            OotMap { active, label, .. } => CellRender {
                 img: ImageInfo::extra("map"),
                 style: if active(&state.ram.save.dungeon_items) {
                     CellStyle::Normal
@@ -680,9 +684,11 @@ impl TrackerCellKind {
                 },
                 overlay: CellOverlay::None,
                 accessibility: None,
-                label: None,
+                label: Some(label.to_string()),
             },
-            OotCompass { active, loc, .. } => CellRender {
+            OotCompass {
+                active, loc, label, ..
+            } => CellRender {
                 img: ImageInfo::extra("compass"),
                 style: if active(&state.ram.save.dungeon_items) {
                     CellStyle::Normal
@@ -694,7 +700,7 @@ impl TrackerCellKind {
                     style: LocationStyle::Normal,
                 },
                 accessibility: None,
-                label: None,
+                label: Some(label.to_string()),
             },
             MmBossKey { active, label, .. } => CellRender {
                 img: ImageInfo::extra("boss_key"),
@@ -712,7 +718,7 @@ impl TrackerCellKind {
                 accessibility: None,
                 label: Some(label.to_string()),
             },
-            MmMap { active, .. } => CellRender {
+            MmMap { active, label, .. } => CellRender {
                 img: ImageInfo::extra("map"),
                 style: if state
                     .ram
@@ -726,9 +732,9 @@ impl TrackerCellKind {
                 },
                 overlay: CellOverlay::None,
                 accessibility: None,
-                label: None,
+                label: Some(label.to_string()),
             },
-            MmCompass { active, .. } => CellRender {
+            MmCompass { active, label, .. } => CellRender {
                 img: ImageInfo::extra("compass"),
                 style: if state
                     .ram
@@ -742,7 +748,7 @@ impl TrackerCellKind {
                 },
                 overlay: CellOverlay::None,
                 accessibility: None,
-                label: None,
+                label: Some(label.to_string()),
             },
             Composite {
                 left_img,
@@ -3004,46 +3010,57 @@ cells! {
     DekuMap: OotMap {
         active: Box::new(|keys| keys.deku_tree.contains(DungeonItems::MAP)),
         toggle: Box::new(|keys| keys.deku_tree.toggle(DungeonItems::MAP)),
+        label: "Deku",
     },
     DcMap: OotMap {
         active: Box::new(|keys| keys.dodongos_cavern.contains(DungeonItems::MAP)),
         toggle: Box::new(|keys| keys.dodongos_cavern.toggle(DungeonItems::MAP)),
+        label: "DC",
     },
     JabuMap: OotMap {
         active: Box::new(|keys| keys.jabu_jabu.contains(DungeonItems::MAP)),
         toggle: Box::new(|keys| keys.jabu_jabu.toggle(DungeonItems::MAP)),
+        label: "Jabu",
     },
     ForestMap: OotMap {
         active: Box::new(|keys| keys.forest_temple.contains(DungeonItems::MAP)),
         toggle: Box::new(|keys| keys.forest_temple.toggle(DungeonItems::MAP)),
+        label: "Frst",
     },
     FireMap: OotMap {
         active: Box::new(|keys| keys.fire_temple.contains(DungeonItems::MAP)),
         toggle: Box::new(|keys| keys.fire_temple.toggle(DungeonItems::MAP)),
+        label: "Fire",
     },
     WaterMap: OotMap {
         active: Box::new(|keys| keys.water_temple.contains(DungeonItems::MAP)),
         toggle: Box::new(|keys| keys.water_temple.toggle(DungeonItems::MAP)),
+        label: "Watr",
     },
     ShadowMap: OotMap {
         active: Box::new(|keys| keys.shadow_temple.contains(DungeonItems::MAP)),
         toggle: Box::new(|keys| keys.shadow_temple.toggle(DungeonItems::MAP)),
+        label: "Shdw",
     },
     SpiritMap: OotMap {
         active: Box::new(|keys| keys.spirit_temple.contains(DungeonItems::MAP)),
         toggle: Box::new(|keys| keys.spirit_temple.toggle(DungeonItems::MAP)),
+        label: "Sprt",
     },
     WellMap: OotMap {
         active: Box::new(|keys| keys.bottom_of_the_well.contains(DungeonItems::MAP)),
         toggle: Box::new(|keys| keys.bottom_of_the_well.toggle(DungeonItems::MAP)),
+        label: "Well",
     },
     IceMap: OotMap {
         active: Box::new(|keys| keys.ice_cavern.contains(DungeonItems::MAP)),
         toggle: Box::new(|keys| keys.ice_cavern.toggle(DungeonItems::MAP)),
+        label: "Ice",
     },
     GanonMap: OotMap {
         active: Box::new(|keys| keys.ganons_castle.contains(DungeonItems::MAP)),
         toggle: Box::new(|keys| keys.ganons_castle.toggle(DungeonItems::MAP)),
+        label: "Ganon",
     },
 
     // ============================================================================
@@ -3053,51 +3070,61 @@ cells! {
         active: Box::new(|keys| keys.deku_tree.contains(DungeonItems::COMPASS)),
         toggle: Box::new(|keys| keys.deku_tree.toggle(DungeonItems::COMPASS)),
         loc: ImageInfo::new("deku_text"),
+        label: "Deku",
     },
     DcCompass: OotCompass {
         active: Box::new(|keys| keys.dodongos_cavern.contains(DungeonItems::COMPASS)),
         toggle: Box::new(|keys| keys.dodongos_cavern.toggle(DungeonItems::COMPASS)),
         loc: ImageInfo::new("dc_text"),
+        label: "DC",
     },
     JabuCompass: OotCompass {
         active: Box::new(|keys| keys.jabu_jabu.contains(DungeonItems::COMPASS)),
         toggle: Box::new(|keys| keys.jabu_jabu.toggle(DungeonItems::COMPASS)),
         loc: ImageInfo::new("jabu_text"),
+        label: "Jabu",
     },
     ForestCompass: OotCompass {
         active: Box::new(|keys| keys.forest_temple.contains(DungeonItems::COMPASS)),
         toggle: Box::new(|keys| keys.forest_temple.toggle(DungeonItems::COMPASS)),
         loc: ImageInfo::new("forest_text"),
+        label: "Frst",
     },
     FireCompass: OotCompass {
         active: Box::new(|keys| keys.fire_temple.contains(DungeonItems::COMPASS)),
         toggle: Box::new(|keys| keys.fire_temple.toggle(DungeonItems::COMPASS)),
         loc: ImageInfo::new("fire_text"),
+        label: "Fire",
     },
     WaterCompass: OotCompass {
         active: Box::new(|keys| keys.water_temple.contains(DungeonItems::COMPASS)),
         toggle: Box::new(|keys| keys.water_temple.toggle(DungeonItems::COMPASS)),
         loc: ImageInfo::new("water_text"),
+        label: "Watr",
     },
     ShadowCompass: OotCompass {
         active: Box::new(|keys| keys.shadow_temple.contains(DungeonItems::COMPASS)),
         toggle: Box::new(|keys| keys.shadow_temple.toggle(DungeonItems::COMPASS)),
         loc: ImageInfo::new("shadow_text"),
+        label: "Shdw",
     },
     SpiritCompass: OotCompass {
         active: Box::new(|keys| keys.spirit_temple.contains(DungeonItems::COMPASS)),
         toggle: Box::new(|keys| keys.spirit_temple.toggle(DungeonItems::COMPASS)),
         loc: ImageInfo::new("spirit_text"),
+        label: "Sprt",
     },
     WellCompass: OotCompass {
         active: Box::new(|keys| keys.bottom_of_the_well.contains(DungeonItems::COMPASS)),
         toggle: Box::new(|keys| keys.bottom_of_the_well.toggle(DungeonItems::COMPASS)),
         loc: ImageInfo::new("well_text"),
+        label: "Well",
     },
     IceCompass: OotCompass {
         active: Box::new(|keys| keys.ice_cavern.contains(DungeonItems::COMPASS)),
         toggle: Box::new(|keys| keys.ice_cavern.toggle(DungeonItems::COMPASS)),
         loc: ImageInfo::new("ice_text"),
+        label: "Ice",
     },
 
     // ============================================================================
@@ -3130,18 +3157,22 @@ cells! {
     MmWoodfallMap: MmMap {
         active: Box::new(|keys| keys.woodfall.contains(crate::mm_save::MmDungeonItems::MAP)),
         toggle: Box::new(|keys| keys.woodfall.toggle(crate::mm_save::MmDungeonItems::MAP)),
+        label: "WF",
     },
     MmSnowheadMap: MmMap {
         active: Box::new(|keys| keys.snowhead.contains(crate::mm_save::MmDungeonItems::MAP)),
         toggle: Box::new(|keys| keys.snowhead.toggle(crate::mm_save::MmDungeonItems::MAP)),
+        label: "SH",
     },
     MmGreatBayMap: MmMap {
         active: Box::new(|keys| keys.great_bay.contains(crate::mm_save::MmDungeonItems::MAP)),
         toggle: Box::new(|keys| keys.great_bay.toggle(crate::mm_save::MmDungeonItems::MAP)),
+        label: "GB",
     },
     MmStoneTowerMap: MmMap {
         active: Box::new(|keys| keys.stone_tower.contains(crate::mm_save::MmDungeonItems::MAP)),
         toggle: Box::new(|keys| keys.stone_tower.toggle(crate::mm_save::MmDungeonItems::MAP)),
+        label: "ST",
     },
 
     // ============================================================================
@@ -3150,18 +3181,22 @@ cells! {
     MmWoodfallCompass: MmCompass {
         active: Box::new(|keys| keys.woodfall.contains(crate::mm_save::MmDungeonItems::COMPASS)),
         toggle: Box::new(|keys| keys.woodfall.toggle(crate::mm_save::MmDungeonItems::COMPASS)),
+        label: "WF",
     },
     MmSnowheadCompass: MmCompass {
         active: Box::new(|keys| keys.snowhead.contains(crate::mm_save::MmDungeonItems::COMPASS)),
         toggle: Box::new(|keys| keys.snowhead.toggle(crate::mm_save::MmDungeonItems::COMPASS)),
+        label: "SH",
     },
     MmGreatBayCompass: MmCompass {
         active: Box::new(|keys| keys.great_bay.contains(crate::mm_save::MmDungeonItems::COMPASS)),
         toggle: Box::new(|keys| keys.great_bay.toggle(crate::mm_save::MmDungeonItems::COMPASS)),
+        label: "GB",
     },
     MmStoneTowerCompass: MmCompass {
         active: Box::new(|keys| keys.stone_tower.contains(crate::mm_save::MmDungeonItems::COMPASS)),
         toggle: Box::new(|keys| keys.stone_tower.toggle(crate::mm_save::MmDungeonItems::COMPASS)),
+        label: "ST",
     },
 
     BiggoronSword: Simple {
@@ -5105,11 +5140,11 @@ impl TrackerLayout {
                         MmGaroMask,
                         MmCaptainHat,
                         MmGiantMask,
-                        // Heart count display: OoT hearts + pieces, MM hearts + pieces
+                        // Heart count display: OoT hearts, MM hearts (heart pieces temporarily removed)
                         OotHearts,
-                        OotHeartPieces,
+                        Blank,
                         MmHearts,
-                        MmHeartPieces,
+                        Blank,
                         // Row 10: OoT Dungeon Maps
                         DekuMap,
                         DcMap,

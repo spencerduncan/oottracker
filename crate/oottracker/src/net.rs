@@ -6,6 +6,7 @@ use {
         mm_save::MmSave,
         proto::{self, Packet, TCP_PORT},
         ram::{self, Ram},
+        save::Save,
         websocket, ModelState,
     },
     async_proto::Protocol as _,
@@ -327,6 +328,11 @@ const TRANSITION_STABILITY_FRAMES: u32 = 3;
 struct ComboTransitionTracker {
     /// The last known MM save data (preserved when switching to OoT)
     last_mm_save: Option<MmSave>,
+    /// The last known OoT save data (preserved when switching to MM)
+    /// This is critical because in OoTMM, when MM engine is running,
+    /// the OoT save address (0x8011a5d0) contains garbage - the real
+    /// OoT save is in a separate gOotSave variable in the OoTMM payload.
+    last_oot_save: Option<Save>,
     /// Number of consecutive frames the current game has been active
     frames_stable: u32,
     /// Whether we're currently in a transition period
@@ -342,6 +348,7 @@ impl ComboTransitionTracker {
     }
 
     /// Check if the current game state is considered stable
+    #[allow(dead_code)]
     fn is_stable(&self) -> bool {
         self.frames_stable >= TRANSITION_STABILITY_FRAMES && !self.in_transition
     }
@@ -374,6 +381,16 @@ impl ComboTransitionTracker {
     /// Get the preserved MM save data
     fn get_preserved_mm_save(&self) -> Option<&MmSave> {
         self.last_mm_save.as_ref()
+    }
+
+    /// Preserve OoT save data for later restoration
+    fn preserve_oot_state(&mut self, oot_save: &Save) {
+        self.last_oot_save = Some(*oot_save);
+    }
+
+    /// Get the preserved OoT save data
+    fn get_preserved_oot_save(&self) -> Option<&Save> {
+        self.last_oot_save.as_ref()
     }
 }
 
@@ -629,54 +646,72 @@ async fn retroarch_read_ram_with_combo_transitions(
         combo_tracker.record_stable_frame();
     }
 
-    // === Read RAM ranges based on current state ===
-    // Always read OoT ranges first (base structure)
-    let oot_ranges = stream::iter(ram::OOT_RANGES.iter().copied().tuples())
-        .then(|(start, len)| async move { retroarch_read_memory_range(sock, start, len).await })
-        .try_collect::<Vec<_>>()
-        .await?;
+    // === Read RAM ranges based on current active game ===
+    // CRITICAL: In OoTMM, the inactive game's save address contains GARBAGE!
+    // - When OoT engine runs: OoT save at 0x8011a5d0 is valid, MM save at 0x801ef670 is garbage
+    // - When MM engine runs: MM save at 0x801ef670 is valid, OoT save at 0x8011a5d0 is garbage
+    // We must only read from the active game's address and use preserved state for the other.
 
-    let mut ram = Ram::from_range_bufs(oot_ranges)?;
-
-    // In combo mode, always try to read MM data to preserve state across transitions
-    match current_active {
-        ActiveGame::MajorasMask => {
-            // MM is active - read fresh MM data
-            let mm_ranges =
-                stream::iter(ram::MM_RANGES.iter().copied().tuples())
+    let ram =
+        match current_active {
+            ActiveGame::OcarinaOfTime => {
+                // OoT engine is active - read fresh OoT data from valid address
+                let oot_ranges = stream::iter(ram::OOT_RANGES.iter().copied().tuples())
                     .then(|(start, len)| async move {
                         retroarch_read_memory_range(sock, start, len).await
                     })
                     .try_collect::<Vec<_>>()
                     .await?;
 
-            let mm_save = ram::decode_mm_range_bufs(mm_ranges)?;
+                let mut ram = Ram::from_range_bufs(oot_ranges)?;
 
-            // Preserve the new MM state
-            combo_tracker.preserve_mm_state(&mm_save);
+                // Preserve the fresh OoT state for when we switch to MM
+                combo_tracker.preserve_oot_state(&ram.save);
 
-            ram.mm_save = Some(mm_save);
-        }
-        ActiveGame::OcarinaOfTime => {
-            // OoT is active - use preserved MM data if available
-            // This maintains MM state visibility while playing OoT
-            if let Some(preserved_mm) = combo_tracker.get_preserved_mm_save() {
-                ram.mm_save = Some(preserved_mm.clone());
-            } else if combo_tracker.is_stable() {
-                // No preserved MM data and stable in OoT - try reading MM anyway
-                // (This handles the initial state where we start in OoT)
-                match try_read_mm_data(sock).await {
-                    Ok(mm_save) => {
-                        combo_tracker.preserve_mm_state(&mm_save);
-                        ram.mm_save = Some(mm_save);
-                    }
-                    Err(_) => {
-                        // MM data not available, which is fine for standalone OoT portions
-                    }
+                // Use preserved MM data if available (MM address is garbage when OoT is active)
+                if let Some(preserved_mm) = combo_tracker.get_preserved_mm_save() {
+                    ram.mm_save = Some(preserved_mm.clone());
                 }
+
+                ram
             }
-        }
-    }
+            ActiveGame::MajorasMask => {
+                // MM engine is active - OoT save address contains GARBAGE!
+                // We must use preserved OoT state instead of reading garbage.
+
+                // Read fresh MM data from valid address
+                let mm_ranges = stream::iter(ram::MM_RANGES.iter().copied().tuples())
+                    .then(|(start, len)| async move {
+                        retroarch_read_memory_range(sock, start, len).await
+                    })
+                    .try_collect::<Vec<_>>()
+                    .await?;
+
+                let mm_save = ram::decode_mm_range_bufs(mm_ranges)?;
+
+                // Preserve the fresh MM state
+                combo_tracker.preserve_mm_state(&mm_save);
+
+                // Use preserved OoT state (the OoT save address is garbage when MM is active)
+                let ram = if let Some(preserved_oot) = combo_tracker.get_preserved_oot_save() {
+                    // Create RAM with preserved OoT save and fresh MM save
+                    Ram {
+                        save: *preserved_oot,
+                        mm_save: Some(mm_save),
+                        ..Default::default()
+                    }
+                } else {
+                    // No preserved OoT data yet - this happens if user started in MM world
+                    // Create a default/empty OoT save to avoid showing garbage
+                    Ram {
+                        mm_save: Some(mm_save),
+                        ..Default::default()
+                    }
+                };
+
+                ram
+            }
+        };
 
     Ok(ram)
 }
@@ -721,16 +756,6 @@ fn update_detector_with_context(
 
     // Let the detector update its internal state
     let _ = detector.detect_from_ram(&detection_buffer);
-}
-
-/// Attempt to read MM save data (used during OoT gameplay to check for initial MM data).
-async fn try_read_mm_data(sock: &UdpSocket) -> Result<MmSave, Error> {
-    let mm_ranges = stream::iter(ram::MM_RANGES.iter().copied().tuples())
-        .then(|(start, len)| async move { retroarch_read_memory_range(sock, start, len).await })
-        .try_collect::<Vec<_>>()
-        .await?;
-
-    Ok(ram::decode_mm_range_bufs(mm_ranges)?)
 }
 
 /// Detect the game type by reading memory signatures via RetroArch UDP API.

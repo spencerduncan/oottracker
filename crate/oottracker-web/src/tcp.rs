@@ -70,17 +70,19 @@ async fn handle_pj64_connection(
     while let Some(packet) = packet_stream.try_next().await.map_err(Error::from)? {
         match packet {
             Packet::RamInit(ram) => {
-                // Only update if the game is in gameplay mode
-                if ram.save.game_mode == GameMode::Gameplay {
-                    edit_room(&pool, &rooms, room_name.clone(), |room| {
-                        room.model.ram = ram.clone();
-                        room.model.update_knowledge();
-                        Ok(())
-                    })
-                    .await?;
-                }
+                // Log game_mode for debugging but always process RamInit
+                // The game_mode check was causing live update issues with OoTMM combo mode
+                // where the game_mode offset might differ from vanilla OoT
+                info!(room = %room_name, game_mode = ?ram.save.game_mode, "RamInit: updating room");
+                edit_room(&pool, &rooms, room_name.clone(), |room| {
+                    room.model.ram = ram.clone();
+                    room.model.update_knowledge();
+                    Ok(())
+                })
+                .await?;
             }
             Packet::SaveInit(save) => {
+                info!(room = %room_name, "SaveInit: updating room");
                 edit_room(&pool, &rooms, room_name.clone(), |room| {
                     room.model.ram.save = save.clone();
                     room.model.update_knowledge();
@@ -89,6 +91,7 @@ async fn handle_pj64_connection(
                 .await?;
             }
             Packet::SaveDelta(delta) => {
+                info!(room = %room_name, "SaveDelta: updating room");
                 edit_room(&pool, &rooms, room_name.clone(), |room| {
                     room.model.ram.save = &room.model.ram.save + &delta;
                     room.model.update_knowledge();
@@ -97,6 +100,7 @@ async fn handle_pj64_connection(
                 .await?;
             }
             Packet::KnowledgeInit(knowledge) => {
+                info!(room = %room_name, "KnowledgeInit: updating room");
                 edit_room(&pool, &rooms, room_name.clone(), |room| {
                     room.model.knowledge = knowledge.clone();
                     Ok(())
@@ -104,6 +108,7 @@ async fn handle_pj64_connection(
                 .await?;
             }
             Packet::ModelInit(model) => {
+                info!(room = %room_name, "ModelInit: updating room");
                 edit_room(&pool, &rooms, room_name.clone(), |room| {
                     room.model = model.clone();
                     room.model.update_knowledge();
@@ -112,6 +117,7 @@ async fn handle_pj64_connection(
                 .await?;
             }
             Packet::ModelDelta(delta) => {
+                info!(room = %room_name, "ModelDelta: updating room");
                 edit_room(&pool, &rooms, room_name.clone(), |room| {
                     room.model += delta.clone();
                     room.model.update_knowledge();
@@ -120,6 +126,7 @@ async fn handle_pj64_connection(
                 .await?;
             }
             Packet::MmRamInit(mm_save) => {
+                info!(room = %room_name, "MmRamInit: updating room");
                 edit_room(&pool, &rooms, room_name.clone(), |room| {
                     room.model.ram.mm_save = Some(mm_save.clone());
                     room.model.update_knowledge();
