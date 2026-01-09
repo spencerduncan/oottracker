@@ -385,7 +385,7 @@ impl ComboTransitionTracker {
 
     /// Preserve OoT save data for later restoration
     fn preserve_oot_state(&mut self, oot_save: &Save) {
-        self.last_oot_save = Some(oot_save.clone());
+        self.last_oot_save = Some(*oot_save);
     }
 
     /// Get the preserved OoT save data
@@ -652,63 +652,66 @@ async fn retroarch_read_ram_with_combo_transitions(
     // - When MM engine runs: MM save at 0x801ef670 is valid, OoT save at 0x8011a5d0 is garbage
     // We must only read from the active game's address and use preserved state for the other.
 
-    let ram = match current_active {
-        ActiveGame::OcarinaOfTime => {
-            // OoT engine is active - read fresh OoT data from valid address
-            let oot_ranges = stream::iter(ram::OOT_RANGES.iter().copied().tuples())
-                .then(|(start, len)| async move {
-                    retroarch_read_memory_range(sock, start, len).await
-                })
-                .try_collect::<Vec<_>>()
-                .await?;
+    let ram =
+        match current_active {
+            ActiveGame::OcarinaOfTime => {
+                // OoT engine is active - read fresh OoT data from valid address
+                let oot_ranges = stream::iter(ram::OOT_RANGES.iter().copied().tuples())
+                    .then(|(start, len)| async move {
+                        retroarch_read_memory_range(sock, start, len).await
+                    })
+                    .try_collect::<Vec<_>>()
+                    .await?;
 
-            let mut ram = Ram::from_range_bufs(oot_ranges)?;
+                let mut ram = Ram::from_range_bufs(oot_ranges)?;
 
-            // Preserve the fresh OoT state for when we switch to MM
-            combo_tracker.preserve_oot_state(&ram.save);
+                // Preserve the fresh OoT state for when we switch to MM
+                combo_tracker.preserve_oot_state(&ram.save);
 
-            // Use preserved MM data if available (MM address is garbage when OoT is active)
-            if let Some(preserved_mm) = combo_tracker.get_preserved_mm_save() {
-                ram.mm_save = Some(preserved_mm.clone());
+                // Use preserved MM data if available (MM address is garbage when OoT is active)
+                if let Some(preserved_mm) = combo_tracker.get_preserved_mm_save() {
+                    ram.mm_save = Some(preserved_mm.clone());
+                }
+
+                ram
             }
+            ActiveGame::MajorasMask => {
+                // MM engine is active - OoT save address contains GARBAGE!
+                // We must use preserved OoT state instead of reading garbage.
 
-            ram
-        }
-        ActiveGame::MajorasMask => {
-            // MM engine is active - OoT save address contains GARBAGE!
-            // We must use preserved OoT state instead of reading garbage.
+                // Read fresh MM data from valid address
+                let mm_ranges = stream::iter(ram::MM_RANGES.iter().copied().tuples())
+                    .then(|(start, len)| async move {
+                        retroarch_read_memory_range(sock, start, len).await
+                    })
+                    .try_collect::<Vec<_>>()
+                    .await?;
 
-            // Read fresh MM data from valid address
-            let mm_ranges = stream::iter(ram::MM_RANGES.iter().copied().tuples())
-                .then(|(start, len)| async move {
-                    retroarch_read_memory_range(sock, start, len).await
-                })
-                .try_collect::<Vec<_>>()
-                .await?;
+                let mm_save = ram::decode_mm_range_bufs(mm_ranges)?;
 
-            let mm_save = ram::decode_mm_range_bufs(mm_ranges)?;
+                // Preserve the fresh MM state
+                combo_tracker.preserve_mm_state(&mm_save);
 
-            // Preserve the fresh MM state
-            combo_tracker.preserve_mm_state(&mm_save);
+                // Use preserved OoT state (the OoT save address is garbage when MM is active)
+                let ram = if let Some(preserved_oot) = combo_tracker.get_preserved_oot_save() {
+                    // Create RAM with preserved OoT save and fresh MM save
+                    Ram {
+                        save: *preserved_oot,
+                        mm_save: Some(mm_save),
+                        ..Default::default()
+                    }
+                } else {
+                    // No preserved OoT data yet - this happens if user started in MM world
+                    // Create a default/empty OoT save to avoid showing garbage
+                    Ram {
+                        mm_save: Some(mm_save),
+                        ..Default::default()
+                    }
+                };
 
-            // Use preserved OoT state (the OoT save address is garbage when MM is active)
-            let ram = if let Some(preserved_oot) = combo_tracker.get_preserved_oot_save() {
-                // Create RAM with preserved OoT save and fresh MM save
-                let mut ram = Ram::default();
-                ram.save = preserved_oot.clone();
-                ram.mm_save = Some(mm_save);
                 ram
-            } else {
-                // No preserved OoT data yet - this happens if user started in MM world
-                // Create a default/empty OoT save to avoid showing garbage
-                let mut ram = Ram::default();
-                ram.mm_save = Some(mm_save);
-                ram
-            };
-
-            ram
-        }
-    };
+            }
+        };
 
     Ok(ram)
 }
