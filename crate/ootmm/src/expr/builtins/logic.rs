@@ -30,32 +30,43 @@ pub fn eval_event(args: &[Expr], ctx: &impl EvalContext) -> Result<bool, EvalErr
 
 /// Evaluate the `setting` built-in function.
 ///
-/// Checks if a specific randomizer setting is enabled. Settings control various
+/// Checks the value of a randomizer setting. Settings control various
 /// aspects of the randomizer logic, such as skipping certain sections or enabling
 /// specific game mechanics.
 ///
 /// # Syntax
-/// - `setting(SETTING_NAME)` - checks if the specified setting is enabled
+/// - `setting(SETTING_NAME)` - checks if a boolean setting is enabled
+/// - `setting(SETTING_NAME, VALUE)` - checks if a setting has a specific value
 ///
 /// # Return Value
-/// Returns `true` if the setting exists and is enabled, `false` otherwise.
+/// For boolean settings (1 argument): Returns `true` if enabled, `false` otherwise.
+/// For value settings (2 arguments): Returns `true` if the setting matches the value.
 /// If the setting doesn't exist in the context, this returns `false`.
 ///
 /// # Examples
 /// - `setting(skip_child_zelda)` - true if the skip child zelda setting is enabled
 /// - `setting(shuffle_ocarinas)` - true if ocarina shuffle is enabled
-/// - `setting(open_door_of_time)` - true if Door of Time is open by default
+/// - `setting(dekuTree, open)` - true if Deku Tree entrance is set to open
+/// - `setting(openDungeonsOot, DC)` - true if Dodongo's Cavern is open
 pub fn eval_setting(args: &[Expr], ctx: &impl EvalContext) -> Result<bool, EvalError> {
-    if args.len() != 1 {
-        return Err(EvalError::Error(format!(
-            "setting() expects 1 argument, got {}",
+    match args.len() {
+        1 => {
+            // Boolean setting check: setting(name)
+            let setting_name = extract_name(&args[0])?;
+            // If setting doesn't exist, treat as false
+            Ok(ctx.setting(&setting_name).unwrap_or(false))
+        }
+        2 => {
+            // Value setting check: setting(name, value)
+            let setting_name = extract_name(&args[0])?;
+            let setting_value = extract_name(&args[1])?;
+            Ok(ctx.setting_value(&setting_name, &setting_value))
+        }
+        _ => Err(EvalError::Error(format!(
+            "setting() expects 1 or 2 arguments, got {}",
             args.len()
-        )));
+        ))),
     }
-
-    let setting_name = extract_name(&args[0])?;
-    // If setting doesn't exist, treat as false
-    Ok(ctx.setting(&setting_name).unwrap_or(false))
 }
 
 /// Extract a name (event, setting, etc.) from an expression.
@@ -79,6 +90,8 @@ mod tests {
     struct MockContext {
         events: HashSet<String>,
         settings: HashMap<String, bool>,
+        /// Stores setting values as "name:value" for setting_value checks.
+        setting_values: HashSet<String>,
     }
 
     impl MockContext {
@@ -86,6 +99,7 @@ mod tests {
             Self {
                 events: HashSet::new(),
                 settings: HashMap::new(),
+                setting_values: HashSet::new(),
             }
         }
 
@@ -96,6 +110,11 @@ mod tests {
 
         fn with_setting(mut self, setting: &str, value: bool) -> Self {
             self.settings.insert(setting.to_string(), value);
+            self
+        }
+
+        fn with_setting_value(mut self, name: &str, value: &str) -> Self {
+            self.setting_values.insert(format!("{}:{}", name, value));
             self
         }
     }
@@ -111,6 +130,10 @@ mod tests {
 
         fn setting(&self, name: &str) -> Option<bool> {
             self.settings.get(name).copied()
+        }
+
+        fn setting_value(&self, name: &str, value: &str) -> bool {
+            self.setting_values.contains(&format!("{}:{}", name, value))
         }
 
         fn trick(&self, _name: &str) -> bool {
@@ -244,15 +267,20 @@ mod tests {
         assert!(result
             .unwrap_err()
             .to_string()
-            .contains("expects 1 argument"));
+            .contains("expects 1 or 2 arguments"));
 
-        // Too many arguments
+        // Too many arguments (3+)
         let args = vec![
             Expr::Ident("setting1".into()),
-            Expr::Ident("setting2".into()),
+            Expr::Ident("value1".into()),
+            Expr::Ident("extra".into()),
         ];
         let result = eval_setting(&args, &ctx);
         assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("expects 1 or 2 arguments"));
     }
 
     #[test]
@@ -279,6 +307,69 @@ mod tests {
         assert!(eval_setting(&args_a, &ctx).unwrap());
         assert!(!eval_setting(&args_b, &ctx).unwrap());
         assert!(eval_setting(&args_c, &ctx).unwrap());
+    }
+
+    // --- setting() two-argument tests ---
+
+    #[test]
+    fn test_setting_value_match() {
+        let ctx = MockContext::new()
+            .with_setting_value("dekuTree", "open")
+            .with_setting_value("openDungeonsOot", "DC");
+
+        // Check matching values
+        let args = vec![Expr::Ident("dekuTree".into()), Expr::Ident("open".into())];
+        assert!(eval_setting(&args, &ctx).unwrap());
+
+        let args = vec![
+            Expr::Ident("openDungeonsOot".into()),
+            Expr::Ident("DC".into()),
+        ];
+        assert!(eval_setting(&args, &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_setting_value_no_match() {
+        let ctx = MockContext::new().with_setting_value("dekuTree", "open");
+
+        // Check non-matching value
+        let args = vec![Expr::Ident("dekuTree".into()), Expr::Ident("closed".into())];
+        assert!(!eval_setting(&args, &ctx).unwrap());
+
+        // Check non-existent setting
+        let args = vec![
+            Expr::Ident("ganonBossKey".into()),
+            Expr::Ident("removed".into()),
+        ];
+        assert!(!eval_setting(&args, &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_setting_value_with_string_args() {
+        let ctx = MockContext::new().with_setting_value("openDungeonsOot", "Shadow");
+
+        let args = vec![
+            Expr::String("openDungeonsOot".into()),
+            Expr::String("Shadow".into()),
+        ];
+        assert!(eval_setting(&args, &ctx).unwrap());
+    }
+
+    #[test]
+    fn test_setting_value_invalid_arg_type() {
+        let ctx = MockContext::new();
+
+        // First arg invalid
+        let args = vec![Expr::Number(42), Expr::Ident("value".into())];
+        let result = eval_setting(&args, &ctx);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("expected name"));
+
+        // Second arg invalid
+        let args = vec![Expr::Ident("setting".into()), Expr::Bool(true)];
+        let result = eval_setting(&args, &ctx);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("expected name"));
     }
 
     // --- extract_name() tests ---
