@@ -42,7 +42,7 @@ pub use embedded_data::{create_world_database, create_world_database_from};
 pub use rando::{OotmmRando, OotmmRandoError, OotmmRegionName};
 
 // Re-export reachability types
-pub use reachability::{spawn_region, MM_SPAWN, OOT_SPAWN};
+pub use reachability::{is_region_reachable, spawn_region, MM_SPAWN, OOT_SPAWN};
 
 // Re-export settings types
 pub use settings::{
