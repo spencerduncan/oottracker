@@ -1104,6 +1104,7 @@ impl DungeonRewardShuffle {
     }
 }
 
+
 /// Special condition configuration for goal requirements.
 ///
 /// This struct defines the types of items that count towards special conditions
@@ -1245,6 +1246,150 @@ impl WorldFlags {
     #[must_use]
     pub fn no_ganon_trials(&self) -> bool {
         self.ganon_trials.eq_ignore_ascii_case("none")
+    }
+}
+
+/// Shop shuffle mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum ShopShuffleMode {
+    /// No shop shuffle
+    #[default]
+    None,
+    /// Full shop shuffle
+    Full,
+}
+
+impl ShopShuffleMode {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::None => "none",
+            Self::Full => "full",
+        }
+    }
+
+    /// Parses a logic string identifier into a ShopShuffleMode.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "none" => Some(Self::None),
+            "full" => Some(Self::Full),
+            _ => None,
+        }
+    }
+}
+
+/// Town fairy shuffle mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum TownFairyShuffle {
+    /// Vanilla town fairy locations
+    #[default]
+    Vanilla,
+    /// Town fairies can be anywhere
+    Anywhere,
+}
+
+impl TownFairyShuffle {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Vanilla => "vanilla",
+            Self::Anywhere => "anywhere",
+        }
+    }
+
+    /// Parses a logic string identifier into a TownFairyShuffle.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "vanilla" => Some(Self::Vanilla),
+            "anywhere" => Some(Self::Anywhere),
+            _ => None,
+        }
+    }
+}
+
+/// Stray fairy shuffle mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum StrayFairyShuffle {
+    /// Vanilla stray fairy locations
+    #[default]
+    Vanilla,
+    /// Stray fairies in starting locations
+    Starting,
+    /// Stray fairies can be anywhere
+    Anywhere,
+    /// Stray fairies within their own dungeon
+    OwnDungeon,
+}
+
+impl StrayFairyShuffle {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Vanilla => "vanilla",
+            Self::Starting => "starting",
+            Self::Anywhere => "anywhere",
+            Self::OwnDungeon => "ownDungeon",
+        }
+    }
+
+    /// Parses a logic string identifier into a StrayFairyShuffle.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "vanilla" => Some(Self::Vanilla),
+            "starting" => Some(Self::Starting),
+            "anywhere" => Some(Self::Anywhere),
+            "ownDungeon" => Some(Self::OwnDungeon),
+            _ => None,
+        }
+    }
+}
+
+/// Price mode for shops and other purchases.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum PriceMode {
+    /// Vanilla prices
+    #[default]
+    Vanilla,
+    /// Affordable prices
+    Affordable,
+    /// Random prices
+    Random,
+    /// Weighted random prices
+    WeightedRandom,
+}
+
+impl PriceMode {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Vanilla => "vanilla",
+            Self::Affordable => "affordable",
+            Self::Random => "random",
+            Self::WeightedRandom => "weightedRandom",
+        }
+    }
+
+    /// Parses a logic string identifier into a PriceMode.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "vanilla" => Some(Self::Vanilla),
+            "affordable" => Some(Self::Affordable),
+            "random" => Some(Self::Random),
+            "weightedRandom" => Some(Self::WeightedRandom),
+            _ => None,
+        }
     }
 }
 
@@ -2214,6 +2359,7 @@ mod tests {
         }
     }
 
+
     // === SpecialCondition Tests ===
 
     #[test]
@@ -2427,5 +2573,118 @@ mod tests {
         assert_eq!(parsed.ganon_trials, "none");
         assert!(parsed.no_ganon_trials());
         assert_eq!(parsed.small_key_ring_oot, "on");
+    }
+
+    // === ShopShuffleMode Tests ===
+
+    #[test]
+    fn test_shop_shuffle_mode_default() {
+        let mode = ShopShuffleMode::default();
+        assert_eq!(mode, ShopShuffleMode::None);
+    }
+
+    #[test]
+    fn test_shop_shuffle_mode_as_str() {
+        assert_eq!(ShopShuffleMode::None.as_str(), "none");
+        assert_eq!(ShopShuffleMode::Full.as_str(), "full");
+    }
+
+    #[test]
+    fn test_shop_shuffle_mode_parse() {
+        assert_eq!(ShopShuffleMode::parse("none"), Some(ShopShuffleMode::None));
+        assert_eq!(ShopShuffleMode::parse("full"), Some(ShopShuffleMode::Full));
+        assert_eq!(ShopShuffleMode::parse("invalid"), None);
+    }
+
+    // === TownFairyShuffle Tests ===
+
+    #[test]
+    fn test_town_fairy_shuffle_default() {
+        let mode = TownFairyShuffle::default();
+        assert_eq!(mode, TownFairyShuffle::Vanilla);
+    }
+
+    #[test]
+    fn test_town_fairy_shuffle_as_str() {
+        assert_eq!(TownFairyShuffle::Vanilla.as_str(), "vanilla");
+        assert_eq!(TownFairyShuffle::Anywhere.as_str(), "anywhere");
+    }
+
+    #[test]
+    fn test_town_fairy_shuffle_parse() {
+        assert_eq!(
+            TownFairyShuffle::parse("vanilla"),
+            Some(TownFairyShuffle::Vanilla)
+        );
+        assert_eq!(
+            TownFairyShuffle::parse("anywhere"),
+            Some(TownFairyShuffle::Anywhere)
+        );
+        assert_eq!(TownFairyShuffle::parse("invalid"), None);
+    }
+
+    // === StrayFairyShuffle Tests ===
+
+    #[test]
+    fn test_stray_fairy_shuffle_default() {
+        let mode = StrayFairyShuffle::default();
+        assert_eq!(mode, StrayFairyShuffle::Vanilla);
+    }
+
+    #[test]
+    fn test_stray_fairy_shuffle_as_str() {
+        assert_eq!(StrayFairyShuffle::Vanilla.as_str(), "vanilla");
+        assert_eq!(StrayFairyShuffle::Starting.as_str(), "starting");
+        assert_eq!(StrayFairyShuffle::Anywhere.as_str(), "anywhere");
+        assert_eq!(StrayFairyShuffle::OwnDungeon.as_str(), "ownDungeon");
+    }
+
+    #[test]
+    fn test_stray_fairy_shuffle_parse() {
+        assert_eq!(
+            StrayFairyShuffle::parse("vanilla"),
+            Some(StrayFairyShuffle::Vanilla)
+        );
+        assert_eq!(
+            StrayFairyShuffle::parse("starting"),
+            Some(StrayFairyShuffle::Starting)
+        );
+        assert_eq!(
+            StrayFairyShuffle::parse("anywhere"),
+            Some(StrayFairyShuffle::Anywhere)
+        );
+        assert_eq!(
+            StrayFairyShuffle::parse("ownDungeon"),
+            Some(StrayFairyShuffle::OwnDungeon)
+        );
+        assert_eq!(StrayFairyShuffle::parse("invalid"), None);
+    }
+
+    // === PriceMode Tests ===
+
+    #[test]
+    fn test_price_mode_default() {
+        let mode = PriceMode::default();
+        assert_eq!(mode, PriceMode::Vanilla);
+    }
+
+    #[test]
+    fn test_price_mode_as_str() {
+        assert_eq!(PriceMode::Vanilla.as_str(), "vanilla");
+        assert_eq!(PriceMode::Affordable.as_str(), "affordable");
+        assert_eq!(PriceMode::Random.as_str(), "random");
+        assert_eq!(PriceMode::WeightedRandom.as_str(), "weightedRandom");
+    }
+
+    #[test]
+    fn test_price_mode_parse() {
+        assert_eq!(PriceMode::parse("vanilla"), Some(PriceMode::Vanilla));
+        assert_eq!(PriceMode::parse("affordable"), Some(PriceMode::Affordable));
+        assert_eq!(PriceMode::parse("random"), Some(PriceMode::Random));
+        assert_eq!(
+            PriceMode::parse("weightedRandom"),
+            Some(PriceMode::WeightedRandom)
+        );
+        assert_eq!(PriceMode::parse("invalid"), None);
     }
 }
