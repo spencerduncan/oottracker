@@ -1979,7 +1979,8 @@ pub struct MmSaveReader {
 impl MmSaveReader {
     /// Create a new reader from raw save data
     pub fn from_bytes(data: &[u8]) -> Result<Self, MmDecodeError> {
-        let save = MmSave::from_save_data(data)?;
+        let rom_type = MmRomType::from_env();
+        let save = MmSave::from_save_data_with_type(data, rom_type)?;
         Ok(Self {
             save,
             game_mode: MmGameMode::Gameplay,
@@ -1993,7 +1994,8 @@ impl MmSaveReader {
 
     /// Update save from new data
     pub fn update(&mut self, data: &[u8]) -> Result<(), MmDecodeError> {
-        self.save = MmSave::from_save_data(data)?;
+        let rom_type = MmRomType::from_env();
+        self.save = MmSave::from_save_data_with_type(data, rom_type)?;
         Ok(())
     }
 }
@@ -2221,7 +2223,8 @@ impl async_proto::Protocol for MmSave {
             use tokio::io::AsyncReadExt;
             let mut buf = vec![0u8; MM_SIZE];
             stream.read_exact(&mut buf).await?;
-            MmSave::from_save_data(&buf)
+            let rom_type = MmRomType::from_env();
+            MmSave::from_save_data_with_type(&buf, rom_type)
                 .map_err(|e| async_proto::ReadError::Custom(format!("MM decode error: {:?}", e)))
         })
     }
@@ -2243,7 +2246,8 @@ impl async_proto::Protocol for MmSave {
     fn read_sync(stream: &mut impl std::io::Read) -> Result<Self, async_proto::ReadError> {
         let mut buf = vec![0u8; MM_SIZE];
         stream.read_exact(&mut buf)?;
-        MmSave::from_save_data(&buf)
+        let rom_type = MmRomType::from_env();
+        MmSave::from_save_data_with_type(&buf, rom_type)
             .map_err(|e| async_proto::ReadError::Custom(format!("MM decode error: {:?}", e)))
     }
 
