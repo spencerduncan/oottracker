@@ -781,6 +781,38 @@ pub fn decode_mm_save_data(save_data: &[u8]) -> Result<MmSave, DecodeError> {
     MmSave::from_save_data_with_type(save_data, rom_type).map_err(DecodeError::from)
 }
 
+/// Decodes Majora's Mask save data from pre-extracted range buffers with explicit combo mode flag.
+///
+/// This function is similar to `decode_mm_range_bufs` but accepts an explicit `is_combo` flag
+/// instead of relying on the `OOTTRACKER_MM_ROM_TYPE` environment variable. This should be
+/// used when the game type has been detected automatically (e.g., via context address polling).
+///
+/// # Arguments
+/// * `ranges` - Iterator yielding memory range buffers (expects exactly one buffer of `MM_SIZE` bytes)
+/// * `is_combo` - If true, uses OoTMM save offsets; if false, uses vanilla MM offsets
+///
+/// # Returns
+/// * `Ok(MmSave)` - Successfully decoded MM save data
+/// * `Err(DecodeError)` - If the ranges are invalid or parsing fails
+pub fn decode_mm_range_bufs_with_type(
+    ranges: impl IntoIterator<Item = Vec<u8>>,
+    is_combo: bool,
+) -> Result<MmSave, DecodeError> {
+    let mut iter = ranges.into_iter();
+
+    // Get the first (and only) range - the SaveContext
+    let save_data = iter.next().ok_or(DecodeError::Ranges)?;
+
+    // Validate size
+    if save_data.len() != mm_save::MM_SIZE {
+        return Err(DecodeError::Size(save_data.len()));
+    }
+
+    // Parse the save data with the specified ROM type
+    let rom_type = MmRomType::from_combo_flag(is_combo);
+    MmSave::from_save_data_with_type(&save_data, rom_type).map_err(DecodeError::from)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
