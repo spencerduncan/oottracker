@@ -720,6 +720,27 @@ pub fn decode_mm_ranges(ram_data: &[u8]) -> Result<MmSave, DecodeError> {
 pub fn decode_mm_range_bufs(
     ranges: impl IntoIterator<Item = Vec<u8>>,
 ) -> Result<MmSave, DecodeError> {
+    let rom_type = MmRomType::from_env();
+    decode_mm_range_bufs_with_type(ranges, rom_type)
+}
+
+/// Decodes Majora's Mask save data from memory range buffers with an explicit ROM type.
+///
+/// This function allows specifying the ROM type directly instead of reading from
+/// the environment variable. This is useful when the game type has been detected
+/// automatically (e.g., in OoTMM combo mode).
+///
+/// # Arguments
+/// * `ranges` - Iterator yielding the memory range buffers (currently just one)
+/// * `rom_type` - The ROM type to use for parsing (Vanilla or OoTMM)
+///
+/// # Returns
+/// * `Ok(MmSave)` - Successfully decoded MM save data
+/// * `Err(DecodeError)` - If the ranges are invalid or parsing fails
+pub fn decode_mm_range_bufs_with_type(
+    ranges: impl IntoIterator<Item = Vec<u8>>,
+    rom_type: MmRomType,
+) -> Result<MmSave, DecodeError> {
     let mut iter = ranges.into_iter();
 
     // Get the first (and only) range - the SaveContext
@@ -731,7 +752,6 @@ pub fn decode_mm_range_bufs(
     }
 
     // Parse the save data
-    let rom_type = MmRomType::from_env();
     MmSave::from_save_data_with_type(&save_data, rom_type).map_err(DecodeError::from)
 }
 

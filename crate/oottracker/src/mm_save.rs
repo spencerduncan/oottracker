@@ -3915,6 +3915,115 @@ mod tests {
     }
 
     // ========================================================================
+    // OoTMM-specific Parsing Tests
+    // ========================================================================
+
+    #[test]
+    fn test_ootmm_no_songs_when_quest_items_zero() {
+        // Regression test for GitHub issue #604:
+        // In OoTMM combo mode, MM song tracking was showing Time and Order songs
+        // when the user had no songs, because vanilla offsets were being used
+        // instead of OoTMM offsets.
+        use ootmm_offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+
+        // Quest items at OoTMM offset should be zero
+        data[QUEST_ITEMS..QUEST_ITEMS + 4].copy_from_slice(&0u32.to_be_bytes());
+
+        let save = MmSave::from_save_data_ootmm(&data).unwrap();
+
+        // All song bits should be false
+        assert!(!save.quest_items.contains(MmQuestItems::SONG_TIME));
+        assert!(!save.quest_items.contains(MmQuestItems::SONG_ORDER));
+        assert!(!save.quest_items.contains(MmQuestItems::SONG_AWAKENING));
+        assert!(!save.quest_items.contains(MmQuestItems::SONG_GORON));
+        assert!(!save.quest_items.contains(MmQuestItems::SONG_ZORA));
+        assert!(!save.quest_items.contains(MmQuestItems::SONG_EMPTINESS));
+        assert!(!save.quest_items.contains(MmQuestItems::SONG_HEALING));
+        assert!(!save.quest_items.contains(MmQuestItems::SONG_EPONA));
+        assert!(!save.quest_items.contains(MmQuestItems::SONG_SOARING));
+        assert!(!save.quest_items.contains(MmQuestItems::SONG_STORMS));
+    }
+
+    #[test]
+    fn test_ootmm_parse_all_songs_from_raw() {
+        use ootmm_offsets::*;
+
+        let mut data = vec![0u8; MM_SIZE];
+
+        // Set all song bits
+        let quest_bits: u32 = MmQuestItems::SONG_AWAKENING.bits()
+            | MmQuestItems::SONG_GORON.bits()
+            | MmQuestItems::SONG_ZORA.bits()
+            | MmQuestItems::SONG_EMPTINESS.bits()
+            | MmQuestItems::SONG_ORDER.bits()
+            | MmQuestItems::SONG_TIME.bits()
+            | MmQuestItems::SONG_HEALING.bits()
+            | MmQuestItems::SONG_EPONA.bits()
+            | MmQuestItems::SONG_SOARING.bits()
+            | MmQuestItems::SONG_STORMS.bits()
+            | MmQuestItems::SONG_LULLABY_INTRO.bits();
+
+        data[QUEST_ITEMS..QUEST_ITEMS + 4].copy_from_slice(&quest_bits.to_be_bytes());
+
+        let save = MmSave::from_save_data_ootmm(&data).unwrap();
+
+        assert!(save.quest_items.contains(MmQuestItems::SONG_AWAKENING));
+        assert!(save.quest_items.contains(MmQuestItems::SONG_GORON));
+        assert!(save.quest_items.contains(MmQuestItems::SONG_ZORA));
+        assert!(save.quest_items.contains(MmQuestItems::SONG_EMPTINESS));
+        assert!(save.quest_items.contains(MmQuestItems::SONG_ORDER));
+        assert!(save.quest_items.contains(MmQuestItems::SONG_TIME));
+        assert!(save.quest_items.contains(MmQuestItems::SONG_HEALING));
+        assert!(save.quest_items.contains(MmQuestItems::SONG_EPONA));
+        assert!(save.quest_items.contains(MmQuestItems::SONG_SOARING));
+        assert!(save.quest_items.contains(MmQuestItems::SONG_STORMS));
+        assert!(save.quest_items.contains(MmQuestItems::SONG_LULLABY_INTRO));
+    }
+
+    #[test]
+    fn test_ootmm_offset_differs_from_vanilla() {
+        // Verify that OoTMM and vanilla use different offsets for quest items
+        use offsets::QUEST_ITEMS as VANILLA_QUEST_ITEMS;
+        use ootmm_offsets::QUEST_ITEMS as OOTMM_QUEST_ITEMS;
+
+        // OoTMM uses offset 0xBA, vanilla uses 0xA4
+        assert_ne!(OOTMM_QUEST_ITEMS, VANILLA_QUEST_ITEMS);
+        assert_eq!(OOTMM_QUEST_ITEMS, 0xBA);
+        assert_eq!(VANILLA_QUEST_ITEMS, 0xA4);
+    }
+
+    #[test]
+    fn test_ootmm_using_vanilla_offset_reads_wrong_data() {
+        // This test demonstrates the bug from GitHub issue #604:
+        // If we use vanilla offsets (0xA4) on OoTMM data where quest_items
+        // are at 0xBA, we read from the wrong location.
+        //
+        // In OoTMM, offset 0xA4 is in the ammo array. If the user has 20 Deku Sticks,
+        // the ammo data at that location could be misinterpreted as songs.
+
+        use ootmm_offsets::QUEST_ITEMS as OOTMM_QUEST_ITEMS;
+
+        let mut data = vec![0u8; MM_SIZE];
+
+        // Set a song at the correct OoTMM offset
+        let quest_bits: u32 = MmQuestItems::SONG_SOARING.bits();
+        data[OOTMM_QUEST_ITEMS..OOTMM_QUEST_ITEMS + 4].copy_from_slice(&quest_bits.to_be_bytes());
+
+        // Parse with OoTMM parser - should correctly detect Song of Soaring
+        let ootmm_save = MmSave::from_save_data_ootmm(&data).unwrap();
+        assert!(ootmm_save.quest_items.contains(MmQuestItems::SONG_SOARING));
+
+        // Parse with vanilla parser - should NOT detect Song of Soaring
+        // (because vanilla reads from 0xA4 which is zeroed)
+        let vanilla_save = MmSave::from_save_data(&data).unwrap();
+        assert!(!vanilla_save
+            .quest_items
+            .contains(MmQuestItems::SONG_SOARING));
+    }
+
+    // ========================================================================
     // Edge Cases and Error Handling Tests
     // ========================================================================
 

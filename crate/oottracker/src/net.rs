@@ -3,7 +3,7 @@ use crate::firebase;
 use {
     crate::{
         game_detection::{ActiveGame, GameDetector, GameType, TransitionState},
-        mm_save::MmSave,
+        mm_save::{MmRomType, MmSave},
         proto::{self, Packet, TCP_PORT},
         ram::{self, Ram},
         save::Save,
@@ -579,7 +579,8 @@ async fn retroarch_read_ram_with_detection(
                     .try_collect::<Vec<_>>()
                     .await?;
 
-                let mm_save = ram::decode_mm_range_bufs(mm_ranges)?;
+                // In combo mode, always use OoTMM offsets (the structure is different from vanilla MM)
+                let mm_save = ram::decode_mm_range_bufs_with_type(mm_ranges, MmRomType::OoTMM)?;
                 ram.mm_save = Some(mm_save);
             }
 
@@ -687,7 +688,8 @@ async fn retroarch_read_ram_with_combo_transitions(
                     .try_collect::<Vec<_>>()
                     .await?;
 
-                let mm_save = ram::decode_mm_range_bufs(mm_ranges)?;
+                // In combo mode, always use OoTMM offsets (the structure is different from vanilla MM)
+                let mm_save = ram::decode_mm_range_bufs_with_type(mm_ranges, MmRomType::OoTMM)?;
 
                 // Preserve the fresh MM state
                 combo_tracker.preserve_mm_state(&mm_save);
