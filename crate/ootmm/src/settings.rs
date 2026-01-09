@@ -1104,499 +1104,267 @@ impl DungeonRewardShuffle {
     }
 }
 
-/// Cross warp mode for world transitions.
+/// Shuffle mode for entrances or locations.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
-pub enum CrossWarpMode {
-    /// No cross warping allowed
+pub enum ShuffleMode {
+    /// No shuffling
     #[default]
     None,
-    /// Cross warping only in child dungeons
-    ChildDungeons,
-    /// Full cross warping enabled
-    Full,
+    /// Overworld only
+    Overworld,
+    /// Dungeons only
+    Dungeon,
+    /// All locations shuffled
+    All,
 }
 
-impl CrossWarpMode {
+impl ShuffleMode {
     /// Returns the string identifier used in logic expressions.
     #[must_use]
     pub const fn as_str(&self) -> &'static str {
         match self {
             Self::None => "none",
-            Self::ChildDungeons => "childDungeons",
-            Self::Full => "full",
+            Self::Overworld => "overworld",
+            Self::Dungeon => "dungeon",
+            Self::All => "all",
         }
     }
 
-    /// Parses a logic string identifier into a CrossWarpMode.
+    /// Parses a logic string identifier into a ShuffleMode.
     #[must_use]
     pub fn parse(s: &str) -> Option<Self> {
         match s {
             "none" => Some(Self::None),
-            "childDungeons" => Some(Self::ChildDungeons),
-            "full" => Some(Self::Full),
+            "overworld" => Some(Self::Overworld),
+            "dungeon" => Some(Self::Dungeon),
+            "all" => Some(Self::All),
             _ => None,
         }
     }
+
+    /// Returns true if any shuffling is enabled.
+    #[must_use]
+    pub fn is_shuffled(&self) -> bool {
+        !matches!(self, Self::None)
+    }
 }
 
-/// Chest Size Matches Contents mode.
+/// Tingle map shuffle mode.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
-pub enum CsmcMode {
-    /// Never show chest size hints
-    #[default]
-    Never,
-    /// Always show chest size hints
-    Always,
-    /// Only show hints for major items
-    MajorOnly,
-}
-
-impl CsmcMode {
-    /// Returns the string identifier used in logic expressions.
-    #[must_use]
-    pub const fn as_str(&self) -> &'static str {
-        match self {
-            Self::Never => "never",
-            Self::Always => "always",
-            Self::MajorOnly => "majorOnly",
-        }
-    }
-
-    /// Parses a logic string identifier into a CsmcMode.
-    #[must_use]
-    pub fn parse(s: &str) -> Option<Self> {
-        match s {
-            "never" => Some(Self::Never),
-            "always" => Some(Self::Always),
-            "majorOnly" => Some(Self::MajorOnly),
-            _ => None,
-        }
-    }
-}
-
-/// Progressive item mode.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub enum ProgressiveMode {
-    /// Items are separate (non-progressive)
-    #[default]
-    Separate,
-    /// Items are progressive
-    Progressive,
-    /// Goron-specific progressive mode
-    Goron,
-}
-
-impl ProgressiveMode {
-    /// Returns the string identifier used in logic expressions.
-    #[must_use]
-    pub const fn as_str(&self) -> &'static str {
-        match self {
-            Self::Separate => "separate",
-            Self::Progressive => "progressive",
-            Self::Goron => "goron",
-        }
-    }
-
-    /// Parses a logic string identifier into a ProgressiveMode.
-    #[must_use]
-    pub fn parse(s: &str) -> Option<Self> {
-        match s {
-            "separate" => Some(Self::Separate),
-            "progressive" => Some(Self::Progressive),
-            "goron" => Some(Self::Goron),
-            _ => None,
-        }
-    }
-}
-
-/// Bombchu behavior mode.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub enum BombchuBehavior {
-    /// Vanilla bombchu behavior
+pub enum TingleShuffle {
+    /// Vanilla locations
     #[default]
     Vanilla,
-    /// Bombchu bag is separate item
-    BagSeparate,
-    /// Bombchu bag is shared between games
-    BagShared,
+    /// Start with Tingle maps
+    Starting,
+    /// Tingle maps removed
+    Removed,
+    /// Tingle maps can be anywhere
+    Anywhere,
+    /// Tingle maps in their own region
+    OwnRegion,
 }
 
-impl BombchuBehavior {
+impl TingleShuffle {
     /// Returns the string identifier used in logic expressions.
     #[must_use]
     pub const fn as_str(&self) -> &'static str {
         match self {
             Self::Vanilla => "vanilla",
-            Self::BagSeparate => "bagSeparate",
-            Self::BagShared => "bagShared",
+            Self::Starting => "starting",
+            Self::Removed => "removed",
+            Self::Anywhere => "anywhere",
+            Self::OwnRegion => "ownRegion",
         }
     }
 
-    /// Parses a logic string identifier into a BombchuBehavior.
+    /// Parses a logic string identifier into a TingleShuffle.
     #[must_use]
     pub fn parse(s: &str) -> Option<Self> {
         match s {
             "vanilla" => Some(Self::Vanilla),
-            "bagSeparate" => Some(Self::BagSeparate),
-            "bagShared" => Some(Self::BagShared),
+            "starting" => Some(Self::Starting),
+            "removed" => Some(Self::Removed),
+            "anywhere" => Some(Self::Anywhere),
+            "ownRegion" => Some(Self::OwnRegion),
             _ => None,
         }
     }
 }
 
-/// Auto-invert camera mode.
+/// Owl statue shuffle mode.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
-pub enum AutoInvertMode {
-    /// Never auto-invert
-    #[default]
-    Never,
-    /// Always auto-invert
-    Always,
-    /// Auto-invert only in first person view
-    FirstPerson,
-}
-
-impl AutoInvertMode {
-    /// Returns the string identifier used in logic expressions.
-    #[must_use]
-    pub const fn as_str(&self) -> &'static str {
-        match self {
-            Self::Never => "never",
-            Self::Always => "always",
-            Self::FirstPerson => "firstPerson",
-        }
-    }
-
-    /// Parses a logic string identifier into an AutoInvertMode.
-    #[must_use]
-    pub fn parse(s: &str) -> Option<Self> {
-        match s {
-            "never" => Some(Self::Never),
-            "always" => Some(Self::Always),
-            "firstPerson" => Some(Self::FirstPerson),
-            _ => None,
-        }
-    }
-}
-
-/// Starting age for the player.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub enum StartingAge {
-    /// Start as child
-    #[default]
-    Child,
-    /// Start as adult
-    Adult,
-    /// Random starting age
-    Random,
-}
-
-impl StartingAge {
-    /// Returns the string identifier used in logic expressions.
-    #[must_use]
-    pub const fn as_str(&self) -> &'static str {
-        match self {
-            Self::Child => "child",
-            Self::Adult => "adult",
-            Self::Random => "random",
-        }
-    }
-
-    /// Parses a logic string identifier into a StartingAge.
-    #[must_use]
-    pub fn parse(s: &str) -> Option<Self> {
-        match s {
-            "child" => Some(Self::Child),
-            "adult" => Some(Self::Adult),
-            "random" => Some(Self::Random),
-            _ => None,
-        }
-    }
-}
-
-/// Blast mask cooldown duration.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub enum BlastMaskCooldown {
-    /// Default cooldown duration
-    #[default]
-    Default,
-    /// Short cooldown
-    Short,
-    /// Very short cooldown
-    VeryShort,
-    /// Instant (no cooldown)
-    Instant,
-}
-
-impl BlastMaskCooldown {
-    /// Returns the string identifier used in logic expressions.
-    #[must_use]
-    pub const fn as_str(&self) -> &'static str {
-        match self {
-            Self::Default => "default",
-            Self::Short => "short",
-            Self::VeryShort => "veryShort",
-            Self::Instant => "instant",
-        }
-    }
-
-    /// Parses a logic string identifier into a BlastMaskCooldown.
-    #[must_use]
-    pub fn parse(s: &str) -> Option<Self> {
-        match s {
-            "default" => Some(Self::Default),
-            "short" => Some(Self::Short),
-            "veryShort" => Some(Self::VeryShort),
-            "instant" => Some(Self::Instant),
-            _ => None,
-        }
-    }
-}
-
-/// In-game clock speed.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub enum ClockSpeed {
-    /// Default clock speed
-    #[default]
-    Default,
-    /// Slow clock
-    Slow,
-    /// Very slow clock
-    VerySlow,
-    /// Fast clock
-    Fast,
-    /// Very fast clock
-    VeryFast,
-    /// Super fast clock
-    SuperFast,
-}
-
-impl ClockSpeed {
-    /// Returns the string identifier used in logic expressions.
-    #[must_use]
-    pub const fn as_str(&self) -> &'static str {
-        match self {
-            Self::Default => "default",
-            Self::Slow => "slow",
-            Self::VerySlow => "verySlow",
-            Self::Fast => "fast",
-            Self::VeryFast => "veryFast",
-            Self::SuperFast => "superFast",
-        }
-    }
-
-    /// Parses a logic string identifier into a ClockSpeed.
-    #[must_use]
-    pub fn parse(s: &str) -> Option<Self> {
-        match s {
-            "default" => Some(Self::Default),
-            "slow" => Some(Self::Slow),
-            "verySlow" => Some(Self::VerySlow),
-            "fast" => Some(Self::Fast),
-            "veryFast" => Some(Self::VeryFast),
-            "superFast" => Some(Self::SuperFast),
-            _ => None,
-        }
-    }
-}
-
-/// Damage multiplier for the player.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub enum DamageMultiplier {
-    /// Normal damage
-    #[default]
-    Normal,
-    /// Double damage
-    Double,
-    /// Quadruple damage
-    Quadruple,
-    /// One-hit KO
-    Ohko,
-}
-
-impl DamageMultiplier {
-    /// Returns the string identifier used in logic expressions.
-    #[must_use]
-    pub const fn as_str(&self) -> &'static str {
-        match self {
-            Self::Normal => "normal",
-            Self::Double => "double",
-            Self::Quadruple => "quadruple",
-            Self::Ohko => "ohko",
-        }
-    }
-
-    /// Parses a logic string identifier into a DamageMultiplier.
-    #[must_use]
-    pub fn parse(s: &str) -> Option<Self> {
-        match s {
-            "normal" => Some(Self::Normal),
-            "double" => Some(Self::Double),
-            "quadruple" => Some(Self::Quadruple),
-            "ohko" => Some(Self::Ohko),
-            _ => None,
-        }
-    }
-}
-
-/// Zora King behavior mode.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub enum ZoraKingMode {
-    /// Vanilla Zora King behavior
-    #[default]
-    Vanilla,
-    /// Zora King is open (no requirements)
-    Open,
-}
-
-impl ZoraKingMode {
-    /// Returns the string identifier used in logic expressions.
-    #[must_use]
-    pub const fn as_str(&self) -> &'static str {
-        match self {
-            Self::Vanilla => "vanilla",
-            Self::Open => "open",
-        }
-    }
-
-    /// Parses a logic string identifier into a ZoraKingMode.
-    #[must_use]
-    pub fn parse(s: &str) -> Option<Self> {
-        match s {
-            "vanilla" => Some(Self::Vanilla),
-            "open" => Some(Self::Open),
-            _ => None,
-        }
-    }
-}
-
-/// Gerudo Fortress behavior mode.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub enum GerudoFortressMode {
-    /// Vanilla Gerudo Fortress (rescue all carpenters)
-    #[default]
-    Vanilla,
-    /// Fast mode (rescue one carpenter)
-    Fast,
-    /// Open mode (no requirements)
-    Open,
-}
-
-impl GerudoFortressMode {
-    /// Returns the string identifier used in logic expressions.
-    #[must_use]
-    pub const fn as_str(&self) -> &'static str {
-        match self {
-            Self::Vanilla => "vanilla",
-            Self::Fast => "fast",
-            Self::Open => "open",
-        }
-    }
-
-    /// Parses a logic string identifier into a GerudoFortressMode.
-    #[must_use]
-    pub fn parse(s: &str) -> Option<Self> {
-        match s {
-            "vanilla" => Some(Self::Vanilla),
-            "fast" => Some(Self::Fast),
-            "open" => Some(Self::Open),
-            _ => None,
-        }
-    }
-}
-
-/// Item pool quantity mode.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub enum ItemPool {
-    /// Plentiful items
-    Plentiful,
-    /// Balanced item pool
-    #[default]
-    Balanced,
-    /// Scarce items
-    Scarce,
-    /// Minimal items
-    Minimal,
-}
-
-impl ItemPool {
-    /// Returns the string identifier used in logic expressions.
-    #[must_use]
-    pub const fn as_str(&self) -> &'static str {
-        match self {
-            Self::Plentiful => "plentiful",
-            Self::Balanced => "balanced",
-            Self::Scarce => "scarce",
-            Self::Minimal => "minimal",
-        }
-    }
-
-    /// Parses a logic string identifier into an ItemPool.
-    #[must_use]
-    pub fn parse(s: &str) -> Option<Self> {
-        match s {
-            "plentiful" => Some(Self::Plentiful),
-            "balanced" => Some(Self::Balanced),
-            "scarce" => Some(Self::Scarce),
-            "minimal" => Some(Self::Minimal),
-            _ => None,
-        }
-    }
-}
-
-/// Quantity of traps in the item pool.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub enum TrapsQuantity {
-    /// No traps
+pub enum OwlShuffle {
+    /// No owl shuffling
     #[default]
     None,
-    /// Small amount of traps
-    Small,
-    /// Medium amount of traps
-    Medium,
-    /// Large amount of traps
-    Large,
-    /// Maximum traps (onslaught)
-    Onslaught,
+    /// Owl statues can be anywhere
+    Anywhere,
 }
 
-impl TrapsQuantity {
+impl OwlShuffle {
     /// Returns the string identifier used in logic expressions.
     #[must_use]
     pub const fn as_str(&self) -> &'static str {
         match self {
             Self::None => "none",
-            Self::Small => "small",
-            Self::Medium => "medium",
-            Self::Large => "large",
-            Self::Onslaught => "onslaught",
+            Self::Anywhere => "anywhere",
         }
     }
 
-    /// Parses a logic string identifier into a TrapsQuantity.
+    /// Parses a logic string identifier into an OwlShuffle.
     #[must_use]
     pub fn parse(s: &str) -> Option<Self> {
         match s {
             "none" => Some(Self::None),
-            "small" => Some(Self::Small),
-            "medium" => Some(Self::Medium),
-            "large" => Some(Self::Large),
-            "onslaught" => Some(Self::Onslaught),
+            "anywhere" => Some(Self::Anywhere),
             _ => None,
         }
+    }
+}
+
+/// Skulltula token shuffle mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum SkulltulaTokenShuffle {
+    /// No token shuffling
+    #[default]
+    None,
+    /// Dungeon tokens only
+    Dungeons,
+    /// Overworld tokens only
+    Overworld,
+    /// All tokens shuffled
+    All,
+}
+
+impl SkulltulaTokenShuffle {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::None => "none",
+            Self::Dungeons => "dungeons",
+            Self::Overworld => "overworld",
+            Self::All => "all",
+        }
+    }
+
+    /// Parses a logic string identifier into a SkulltulaTokenShuffle.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "none" => Some(Self::None),
+            "dungeons" => Some(Self::Dungeons),
+            "overworld" => Some(Self::Overworld),
+            "all" => Some(Self::All),
+            _ => None,
+        }
+    }
+}
+
+/// Key shuffle mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum KeyShuffle {
+    /// Vanilla key locations
+    #[default]
+    Vanilla,
+    /// Keys within their own dungeon
+    OwnDungeon,
+    /// Keys can be anywhere
+    Anywhere,
+    /// Keys removed (not required)
+    Removed,
+}
+
+impl KeyShuffle {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Vanilla => "vanilla",
+            Self::OwnDungeon => "ownDungeon",
+            Self::Anywhere => "anywhere",
+            Self::Removed => "removed",
+        }
+    }
+
+    /// Parses a logic string identifier into a KeyShuffle.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "vanilla" => Some(Self::Vanilla),
+            "ownDungeon" => Some(Self::OwnDungeon),
+            "anywhere" => Some(Self::Anywhere),
+            "removed" => Some(Self::Removed),
+            _ => None,
+        }
+    }
+
+    /// Returns true if keys are shuffled from vanilla locations.
+    ///
+    /// OwnDungeon and Anywhere are considered shuffled since keys are moved
+    /// from their vanilla locations. Vanilla and Removed are not shuffled.
+    #[must_use]
+    pub const fn is_shuffled(&self) -> bool {
+        !matches!(self, Self::Vanilla | Self::Removed)
+    }
+}
+
+/// Map and compass shuffle mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum MapCompassShuffle {
+    /// Vanilla locations
+    #[default]
+    Vanilla,
+    /// Start with maps/compasses
+    Starting,
+    /// Maps/compasses within their own dungeon
+    OwnDungeon,
+    /// Maps/compasses can be anywhere
+    Anywhere,
+    /// Maps/compasses removed
+    Removed,
+}
+
+impl MapCompassShuffle {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Vanilla => "vanilla",
+            Self::Starting => "starting",
+            Self::OwnDungeon => "ownDungeon",
+            Self::Anywhere => "anywhere",
+            Self::Removed => "removed",
+        }
+    }
+
+    /// Parses a logic string identifier into a MapCompassShuffle.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "vanilla" => Some(Self::Vanilla),
+            "starting" => Some(Self::Starting),
+            "ownDungeon" => Some(Self::OwnDungeon),
+            "anywhere" => Some(Self::Anywhere),
+            "removed" => Some(Self::Removed),
+            _ => None,
+        }
+    }
+
+    /// Returns true if maps/compasses are shuffled from vanilla locations.
+    ///
+    /// OwnDungeon and Anywhere are considered shuffled since items are moved
+    /// from their vanilla locations. Vanilla, Starting, and Removed are not shuffled.
+    #[must_use]
+    pub const fn is_shuffled(&self) -> bool {
+        !matches!(self, Self::Vanilla | Self::Starting | Self::Removed)
     }
 }
 
@@ -2566,437 +2334,274 @@ mod tests {
         }
     }
 
-    // === CrossWarpMode Tests ===
+    // === ShuffleMode Tests ===
 
     #[test]
-    fn test_cross_warp_mode_as_str() {
-        assert_eq!(CrossWarpMode::None.as_str(), "none");
-        assert_eq!(CrossWarpMode::ChildDungeons.as_str(), "childDungeons");
-        assert_eq!(CrossWarpMode::Full.as_str(), "full");
+    fn test_shuffle_mode_default() {
+        let mode = ShuffleMode::default();
+        assert_eq!(mode, ShuffleMode::None);
     }
 
     #[test]
-    fn test_cross_warp_mode_parse() {
-        assert_eq!(CrossWarpMode::parse("none"), Some(CrossWarpMode::None));
+    fn test_shuffle_mode_as_str() {
+        assert_eq!(ShuffleMode::None.as_str(), "none");
+        assert_eq!(ShuffleMode::Overworld.as_str(), "overworld");
+        assert_eq!(ShuffleMode::Dungeon.as_str(), "dungeon");
+        assert_eq!(ShuffleMode::All.as_str(), "all");
+    }
+
+    #[test]
+    fn test_shuffle_mode_parse() {
+        assert_eq!(ShuffleMode::parse("none"), Some(ShuffleMode::None));
         assert_eq!(
-            CrossWarpMode::parse("childDungeons"),
-            Some(CrossWarpMode::ChildDungeons)
+            ShuffleMode::parse("overworld"),
+            Some(ShuffleMode::Overworld)
         );
-        assert_eq!(CrossWarpMode::parse("full"), Some(CrossWarpMode::Full));
-        assert_eq!(CrossWarpMode::parse("invalid"), None);
+        assert_eq!(ShuffleMode::parse("dungeon"), Some(ShuffleMode::Dungeon));
+        assert_eq!(ShuffleMode::parse("all"), Some(ShuffleMode::All));
+        assert_eq!(ShuffleMode::parse("invalid"), None);
     }
 
     #[test]
-    fn test_cross_warp_mode_default() {
-        assert_eq!(CrossWarpMode::default(), CrossWarpMode::None);
-    }
-
-    // === CsmcMode Tests ===
-
-    #[test]
-    fn test_csmc_mode_as_str() {
-        assert_eq!(CsmcMode::Never.as_str(), "never");
-        assert_eq!(CsmcMode::Always.as_str(), "always");
-        assert_eq!(CsmcMode::MajorOnly.as_str(), "majorOnly");
+    fn test_shuffle_mode_is_shuffled() {
+        assert!(!ShuffleMode::None.is_shuffled());
+        assert!(ShuffleMode::Overworld.is_shuffled());
+        assert!(ShuffleMode::Dungeon.is_shuffled());
+        assert!(ShuffleMode::All.is_shuffled());
     }
 
     #[test]
-    fn test_csmc_mode_parse() {
-        assert_eq!(CsmcMode::parse("never"), Some(CsmcMode::Never));
-        assert_eq!(CsmcMode::parse("always"), Some(CsmcMode::Always));
-        assert_eq!(CsmcMode::parse("majorOnly"), Some(CsmcMode::MajorOnly));
-        assert_eq!(CsmcMode::parse("invalid"), None);
+    fn test_shuffle_mode_serde_roundtrip() {
+        let mode = ShuffleMode::Overworld;
+        let json = serde_json::to_string(&mode).unwrap();
+        let parsed: ShuffleMode = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, mode);
+    }
+
+    // === TingleShuffle Tests ===
+
+    #[test]
+    fn test_tingle_shuffle_default() {
+        let mode = TingleShuffle::default();
+        assert_eq!(mode, TingleShuffle::Vanilla);
     }
 
     #[test]
-    fn test_csmc_mode_default() {
-        assert_eq!(CsmcMode::default(), CsmcMode::Never);
-    }
-
-    // === ProgressiveMode Tests ===
-
-    #[test]
-    fn test_progressive_mode_as_str() {
-        assert_eq!(ProgressiveMode::Separate.as_str(), "separate");
-        assert_eq!(ProgressiveMode::Progressive.as_str(), "progressive");
-        assert_eq!(ProgressiveMode::Goron.as_str(), "goron");
+    fn test_tingle_shuffle_as_str() {
+        assert_eq!(TingleShuffle::Vanilla.as_str(), "vanilla");
+        assert_eq!(TingleShuffle::Starting.as_str(), "starting");
+        assert_eq!(TingleShuffle::Removed.as_str(), "removed");
+        assert_eq!(TingleShuffle::Anywhere.as_str(), "anywhere");
+        assert_eq!(TingleShuffle::OwnRegion.as_str(), "ownRegion");
     }
 
     #[test]
-    fn test_progressive_mode_parse() {
+    fn test_tingle_shuffle_parse() {
         assert_eq!(
-            ProgressiveMode::parse("separate"),
-            Some(ProgressiveMode::Separate)
-        );
-        assert_eq!(
-            ProgressiveMode::parse("progressive"),
-            Some(ProgressiveMode::Progressive)
-        );
-        assert_eq!(
-            ProgressiveMode::parse("goron"),
-            Some(ProgressiveMode::Goron)
-        );
-        assert_eq!(ProgressiveMode::parse("invalid"), None);
-    }
-
-    #[test]
-    fn test_progressive_mode_default() {
-        assert_eq!(ProgressiveMode::default(), ProgressiveMode::Separate);
-    }
-
-    // === BombchuBehavior Tests ===
-
-    #[test]
-    fn test_bombchu_behavior_as_str() {
-        assert_eq!(BombchuBehavior::Vanilla.as_str(), "vanilla");
-        assert_eq!(BombchuBehavior::BagSeparate.as_str(), "bagSeparate");
-        assert_eq!(BombchuBehavior::BagShared.as_str(), "bagShared");
-    }
-
-    #[test]
-    fn test_bombchu_behavior_parse() {
-        assert_eq!(
-            BombchuBehavior::parse("vanilla"),
-            Some(BombchuBehavior::Vanilla)
+            TingleShuffle::parse("vanilla"),
+            Some(TingleShuffle::Vanilla)
         );
         assert_eq!(
-            BombchuBehavior::parse("bagSeparate"),
-            Some(BombchuBehavior::BagSeparate)
+            TingleShuffle::parse("starting"),
+            Some(TingleShuffle::Starting)
         );
         assert_eq!(
-            BombchuBehavior::parse("bagShared"),
-            Some(BombchuBehavior::BagShared)
-        );
-        assert_eq!(BombchuBehavior::parse("invalid"), None);
-    }
-
-    #[test]
-    fn test_bombchu_behavior_default() {
-        assert_eq!(BombchuBehavior::default(), BombchuBehavior::Vanilla);
-    }
-
-    // === AutoInvertMode Tests ===
-
-    #[test]
-    fn test_auto_invert_mode_as_str() {
-        assert_eq!(AutoInvertMode::Never.as_str(), "never");
-        assert_eq!(AutoInvertMode::Always.as_str(), "always");
-        assert_eq!(AutoInvertMode::FirstPerson.as_str(), "firstPerson");
-    }
-
-    #[test]
-    fn test_auto_invert_mode_parse() {
-        assert_eq!(AutoInvertMode::parse("never"), Some(AutoInvertMode::Never));
-        assert_eq!(
-            AutoInvertMode::parse("always"),
-            Some(AutoInvertMode::Always)
+            TingleShuffle::parse("removed"),
+            Some(TingleShuffle::Removed)
         );
         assert_eq!(
-            AutoInvertMode::parse("firstPerson"),
-            Some(AutoInvertMode::FirstPerson)
-        );
-        assert_eq!(AutoInvertMode::parse("invalid"), None);
-    }
-
-    #[test]
-    fn test_auto_invert_mode_default() {
-        assert_eq!(AutoInvertMode::default(), AutoInvertMode::Never);
-    }
-
-    // === StartingAge Tests ===
-
-    #[test]
-    fn test_starting_age_as_str() {
-        assert_eq!(StartingAge::Child.as_str(), "child");
-        assert_eq!(StartingAge::Adult.as_str(), "adult");
-        assert_eq!(StartingAge::Random.as_str(), "random");
-    }
-
-    #[test]
-    fn test_starting_age_parse() {
-        assert_eq!(StartingAge::parse("child"), Some(StartingAge::Child));
-        assert_eq!(StartingAge::parse("adult"), Some(StartingAge::Adult));
-        assert_eq!(StartingAge::parse("random"), Some(StartingAge::Random));
-        assert_eq!(StartingAge::parse("invalid"), None);
-    }
-
-    #[test]
-    fn test_starting_age_default() {
-        assert_eq!(StartingAge::default(), StartingAge::Child);
-    }
-
-    // === BlastMaskCooldown Tests ===
-
-    #[test]
-    fn test_blast_mask_cooldown_as_str() {
-        assert_eq!(BlastMaskCooldown::Default.as_str(), "default");
-        assert_eq!(BlastMaskCooldown::Short.as_str(), "short");
-        assert_eq!(BlastMaskCooldown::VeryShort.as_str(), "veryShort");
-        assert_eq!(BlastMaskCooldown::Instant.as_str(), "instant");
-    }
-
-    #[test]
-    fn test_blast_mask_cooldown_parse() {
-        assert_eq!(
-            BlastMaskCooldown::parse("default"),
-            Some(BlastMaskCooldown::Default)
+            TingleShuffle::parse("anywhere"),
+            Some(TingleShuffle::Anywhere)
         );
         assert_eq!(
-            BlastMaskCooldown::parse("short"),
-            Some(BlastMaskCooldown::Short)
+            TingleShuffle::parse("ownRegion"),
+            Some(TingleShuffle::OwnRegion)
+        );
+        assert_eq!(TingleShuffle::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_tingle_shuffle_serde_roundtrip() {
+        let mode = TingleShuffle::OwnRegion;
+        let json = serde_json::to_string(&mode).unwrap();
+        let parsed: TingleShuffle = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, mode);
+    }
+
+    // === OwlShuffle Tests ===
+
+    #[test]
+    fn test_owl_shuffle_default() {
+        let mode = OwlShuffle::default();
+        assert_eq!(mode, OwlShuffle::None);
+    }
+
+    #[test]
+    fn test_owl_shuffle_as_str() {
+        assert_eq!(OwlShuffle::None.as_str(), "none");
+        assert_eq!(OwlShuffle::Anywhere.as_str(), "anywhere");
+    }
+
+    #[test]
+    fn test_owl_shuffle_parse() {
+        assert_eq!(OwlShuffle::parse("none"), Some(OwlShuffle::None));
+        assert_eq!(OwlShuffle::parse("anywhere"), Some(OwlShuffle::Anywhere));
+        assert_eq!(OwlShuffle::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_owl_shuffle_serde_roundtrip() {
+        let mode = OwlShuffle::Anywhere;
+        let json = serde_json::to_string(&mode).unwrap();
+        let parsed: OwlShuffle = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, mode);
+    }
+
+    // === SkulltulaTokenShuffle Tests ===
+
+    #[test]
+    fn test_skulltula_token_shuffle_default() {
+        let mode = SkulltulaTokenShuffle::default();
+        assert_eq!(mode, SkulltulaTokenShuffle::None);
+    }
+
+    #[test]
+    fn test_skulltula_token_shuffle_as_str() {
+        assert_eq!(SkulltulaTokenShuffle::None.as_str(), "none");
+        assert_eq!(SkulltulaTokenShuffle::Dungeons.as_str(), "dungeons");
+        assert_eq!(SkulltulaTokenShuffle::Overworld.as_str(), "overworld");
+        assert_eq!(SkulltulaTokenShuffle::All.as_str(), "all");
+    }
+
+    #[test]
+    fn test_skulltula_token_shuffle_parse() {
+        assert_eq!(
+            SkulltulaTokenShuffle::parse("none"),
+            Some(SkulltulaTokenShuffle::None)
         );
         assert_eq!(
-            BlastMaskCooldown::parse("veryShort"),
-            Some(BlastMaskCooldown::VeryShort)
+            SkulltulaTokenShuffle::parse("dungeons"),
+            Some(SkulltulaTokenShuffle::Dungeons)
         );
         assert_eq!(
-            BlastMaskCooldown::parse("instant"),
-            Some(BlastMaskCooldown::Instant)
-        );
-        assert_eq!(BlastMaskCooldown::parse("invalid"), None);
-    }
-
-    #[test]
-    fn test_blast_mask_cooldown_default() {
-        assert_eq!(BlastMaskCooldown::default(), BlastMaskCooldown::Default);
-    }
-
-    // === ClockSpeed Tests ===
-
-    #[test]
-    fn test_clock_speed_as_str() {
-        assert_eq!(ClockSpeed::Default.as_str(), "default");
-        assert_eq!(ClockSpeed::Slow.as_str(), "slow");
-        assert_eq!(ClockSpeed::VerySlow.as_str(), "verySlow");
-        assert_eq!(ClockSpeed::Fast.as_str(), "fast");
-        assert_eq!(ClockSpeed::VeryFast.as_str(), "veryFast");
-        assert_eq!(ClockSpeed::SuperFast.as_str(), "superFast");
-    }
-
-    #[test]
-    fn test_clock_speed_parse() {
-        assert_eq!(ClockSpeed::parse("default"), Some(ClockSpeed::Default));
-        assert_eq!(ClockSpeed::parse("slow"), Some(ClockSpeed::Slow));
-        assert_eq!(ClockSpeed::parse("verySlow"), Some(ClockSpeed::VerySlow));
-        assert_eq!(ClockSpeed::parse("fast"), Some(ClockSpeed::Fast));
-        assert_eq!(ClockSpeed::parse("veryFast"), Some(ClockSpeed::VeryFast));
-        assert_eq!(ClockSpeed::parse("superFast"), Some(ClockSpeed::SuperFast));
-        assert_eq!(ClockSpeed::parse("invalid"), None);
-    }
-
-    #[test]
-    fn test_clock_speed_default() {
-        assert_eq!(ClockSpeed::default(), ClockSpeed::Default);
-    }
-
-    // === DamageMultiplier Tests ===
-
-    #[test]
-    fn test_damage_multiplier_as_str() {
-        assert_eq!(DamageMultiplier::Normal.as_str(), "normal");
-        assert_eq!(DamageMultiplier::Double.as_str(), "double");
-        assert_eq!(DamageMultiplier::Quadruple.as_str(), "quadruple");
-        assert_eq!(DamageMultiplier::Ohko.as_str(), "ohko");
-    }
-
-    #[test]
-    fn test_damage_multiplier_parse() {
-        assert_eq!(
-            DamageMultiplier::parse("normal"),
-            Some(DamageMultiplier::Normal)
+            SkulltulaTokenShuffle::parse("overworld"),
+            Some(SkulltulaTokenShuffle::Overworld)
         );
         assert_eq!(
-            DamageMultiplier::parse("double"),
-            Some(DamageMultiplier::Double)
+            SkulltulaTokenShuffle::parse("all"),
+            Some(SkulltulaTokenShuffle::All)
+        );
+        assert_eq!(SkulltulaTokenShuffle::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_skulltula_token_shuffle_serde_roundtrip() {
+        let mode = SkulltulaTokenShuffle::Dungeons;
+        let json = serde_json::to_string(&mode).unwrap();
+        let parsed: SkulltulaTokenShuffle = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, mode);
+    }
+
+    // === KeyShuffle Tests ===
+
+    #[test]
+    fn test_key_shuffle_default() {
+        let mode = KeyShuffle::default();
+        assert_eq!(mode, KeyShuffle::Vanilla);
+    }
+
+    #[test]
+    fn test_key_shuffle_as_str() {
+        assert_eq!(KeyShuffle::Vanilla.as_str(), "vanilla");
+        assert_eq!(KeyShuffle::OwnDungeon.as_str(), "ownDungeon");
+        assert_eq!(KeyShuffle::Anywhere.as_str(), "anywhere");
+        assert_eq!(KeyShuffle::Removed.as_str(), "removed");
+    }
+
+    #[test]
+    fn test_key_shuffle_parse() {
+        assert_eq!(KeyShuffle::parse("vanilla"), Some(KeyShuffle::Vanilla));
+        assert_eq!(
+            KeyShuffle::parse("ownDungeon"),
+            Some(KeyShuffle::OwnDungeon)
+        );
+        assert_eq!(KeyShuffle::parse("anywhere"), Some(KeyShuffle::Anywhere));
+        assert_eq!(KeyShuffle::parse("removed"), Some(KeyShuffle::Removed));
+        assert_eq!(KeyShuffle::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_key_shuffle_serde_roundtrip() {
+        let mode = KeyShuffle::OwnDungeon;
+        let json = serde_json::to_string(&mode).unwrap();
+        let parsed: KeyShuffle = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, mode);
+    }
+
+    #[test]
+    fn test_key_shuffle_is_shuffled() {
+        assert!(!KeyShuffle::Vanilla.is_shuffled());
+        assert!(KeyShuffle::OwnDungeon.is_shuffled());
+        assert!(KeyShuffle::Anywhere.is_shuffled());
+        assert!(!KeyShuffle::Removed.is_shuffled());
+    }
+
+    // === MapCompassShuffle Tests ===
+
+    #[test]
+    fn test_map_compass_shuffle_default() {
+        let mode = MapCompassShuffle::default();
+        assert_eq!(mode, MapCompassShuffle::Vanilla);
+    }
+
+    #[test]
+    fn test_map_compass_shuffle_as_str() {
+        assert_eq!(MapCompassShuffle::Vanilla.as_str(), "vanilla");
+        assert_eq!(MapCompassShuffle::Starting.as_str(), "starting");
+        assert_eq!(MapCompassShuffle::OwnDungeon.as_str(), "ownDungeon");
+        assert_eq!(MapCompassShuffle::Anywhere.as_str(), "anywhere");
+        assert_eq!(MapCompassShuffle::Removed.as_str(), "removed");
+    }
+
+    #[test]
+    fn test_map_compass_shuffle_parse() {
+        assert_eq!(
+            MapCompassShuffle::parse("vanilla"),
+            Some(MapCompassShuffle::Vanilla)
         );
         assert_eq!(
-            DamageMultiplier::parse("quadruple"),
-            Some(DamageMultiplier::Quadruple)
+            MapCompassShuffle::parse("starting"),
+            Some(MapCompassShuffle::Starting)
         );
         assert_eq!(
-            DamageMultiplier::parse("ohko"),
-            Some(DamageMultiplier::Ohko)
-        );
-        assert_eq!(DamageMultiplier::parse("invalid"), None);
-    }
-
-    #[test]
-    fn test_damage_multiplier_default() {
-        assert_eq!(DamageMultiplier::default(), DamageMultiplier::Normal);
-    }
-
-    // === ZoraKingMode Tests ===
-
-    #[test]
-    fn test_zora_king_mode_as_str() {
-        assert_eq!(ZoraKingMode::Vanilla.as_str(), "vanilla");
-        assert_eq!(ZoraKingMode::Open.as_str(), "open");
-    }
-
-    #[test]
-    fn test_zora_king_mode_parse() {
-        assert_eq!(ZoraKingMode::parse("vanilla"), Some(ZoraKingMode::Vanilla));
-        assert_eq!(ZoraKingMode::parse("open"), Some(ZoraKingMode::Open));
-        assert_eq!(ZoraKingMode::parse("invalid"), None);
-    }
-
-    #[test]
-    fn test_zora_king_mode_default() {
-        assert_eq!(ZoraKingMode::default(), ZoraKingMode::Vanilla);
-    }
-
-    // === GerudoFortressMode Tests ===
-
-    #[test]
-    fn test_gerudo_fortress_mode_as_str() {
-        assert_eq!(GerudoFortressMode::Vanilla.as_str(), "vanilla");
-        assert_eq!(GerudoFortressMode::Fast.as_str(), "fast");
-        assert_eq!(GerudoFortressMode::Open.as_str(), "open");
-    }
-
-    #[test]
-    fn test_gerudo_fortress_mode_parse() {
-        assert_eq!(
-            GerudoFortressMode::parse("vanilla"),
-            Some(GerudoFortressMode::Vanilla)
+            MapCompassShuffle::parse("ownDungeon"),
+            Some(MapCompassShuffle::OwnDungeon)
         );
         assert_eq!(
-            GerudoFortressMode::parse("fast"),
-            Some(GerudoFortressMode::Fast)
+            MapCompassShuffle::parse("anywhere"),
+            Some(MapCompassShuffle::Anywhere)
         );
         assert_eq!(
-            GerudoFortressMode::parse("open"),
-            Some(GerudoFortressMode::Open)
+            MapCompassShuffle::parse("removed"),
+            Some(MapCompassShuffle::Removed)
         );
-        assert_eq!(GerudoFortressMode::parse("invalid"), None);
+        assert_eq!(MapCompassShuffle::parse("invalid"), None);
     }
 
     #[test]
-    fn test_gerudo_fortress_mode_default() {
-        assert_eq!(GerudoFortressMode::default(), GerudoFortressMode::Vanilla);
-    }
-
-    // === ItemPool Tests ===
-
-    #[test]
-    fn test_item_pool_as_str() {
-        assert_eq!(ItemPool::Plentiful.as_str(), "plentiful");
-        assert_eq!(ItemPool::Balanced.as_str(), "balanced");
-        assert_eq!(ItemPool::Scarce.as_str(), "scarce");
-        assert_eq!(ItemPool::Minimal.as_str(), "minimal");
+    fn test_map_compass_shuffle_serde_roundtrip() {
+        let mode = MapCompassShuffle::OwnDungeon;
+        let json = serde_json::to_string(&mode).unwrap();
+        let parsed: MapCompassShuffle = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, mode);
     }
 
     #[test]
-    fn test_item_pool_parse() {
-        assert_eq!(ItemPool::parse("plentiful"), Some(ItemPool::Plentiful));
-        assert_eq!(ItemPool::parse("balanced"), Some(ItemPool::Balanced));
-        assert_eq!(ItemPool::parse("scarce"), Some(ItemPool::Scarce));
-        assert_eq!(ItemPool::parse("minimal"), Some(ItemPool::Minimal));
-        assert_eq!(ItemPool::parse("invalid"), None);
-    }
-
-    #[test]
-    fn test_item_pool_default() {
-        assert_eq!(ItemPool::default(), ItemPool::Balanced);
-    }
-
-    // === TrapsQuantity Tests ===
-
-    #[test]
-    fn test_traps_quantity_as_str() {
-        assert_eq!(TrapsQuantity::None.as_str(), "none");
-        assert_eq!(TrapsQuantity::Small.as_str(), "small");
-        assert_eq!(TrapsQuantity::Medium.as_str(), "medium");
-        assert_eq!(TrapsQuantity::Large.as_str(), "large");
-        assert_eq!(TrapsQuantity::Onslaught.as_str(), "onslaught");
-    }
-
-    #[test]
-    fn test_traps_quantity_parse() {
-        assert_eq!(TrapsQuantity::parse("none"), Some(TrapsQuantity::None));
-        assert_eq!(TrapsQuantity::parse("small"), Some(TrapsQuantity::Small));
-        assert_eq!(TrapsQuantity::parse("medium"), Some(TrapsQuantity::Medium));
-        assert_eq!(TrapsQuantity::parse("large"), Some(TrapsQuantity::Large));
-        assert_eq!(
-            TrapsQuantity::parse("onslaught"),
-            Some(TrapsQuantity::Onslaught)
-        );
-        assert_eq!(TrapsQuantity::parse("invalid"), None);
-    }
-
-    #[test]
-    fn test_traps_quantity_default() {
-        assert_eq!(TrapsQuantity::default(), TrapsQuantity::None);
-    }
-
-    // === Serde roundtrip tests for new enums ===
-
-    #[test]
-    fn test_new_enums_serde_roundtrip() {
-        // Test JSON roundtrip for each enum
-        let cross_warp = CrossWarpMode::ChildDungeons;
-        let json = serde_json::to_string(&cross_warp).unwrap();
-        let parsed: CrossWarpMode = serde_json::from_str(&json).unwrap();
-        assert_eq!(parsed, CrossWarpMode::ChildDungeons);
-
-        let csmc = CsmcMode::MajorOnly;
-        let json = serde_json::to_string(&csmc).unwrap();
-        let parsed: CsmcMode = serde_json::from_str(&json).unwrap();
-        assert_eq!(parsed, CsmcMode::MajorOnly);
-
-        let progressive = ProgressiveMode::Goron;
-        let json = serde_json::to_string(&progressive).unwrap();
-        let parsed: ProgressiveMode = serde_json::from_str(&json).unwrap();
-        assert_eq!(parsed, ProgressiveMode::Goron);
-
-        let bombchu = BombchuBehavior::BagShared;
-        let json = serde_json::to_string(&bombchu).unwrap();
-        let parsed: BombchuBehavior = serde_json::from_str(&json).unwrap();
-        assert_eq!(parsed, BombchuBehavior::BagShared);
-
-        let auto_invert = AutoInvertMode::FirstPerson;
-        let json = serde_json::to_string(&auto_invert).unwrap();
-        let parsed: AutoInvertMode = serde_json::from_str(&json).unwrap();
-        assert_eq!(parsed, AutoInvertMode::FirstPerson);
-
-        let starting_age = StartingAge::Random;
-        let json = serde_json::to_string(&starting_age).unwrap();
-        let parsed: StartingAge = serde_json::from_str(&json).unwrap();
-        assert_eq!(parsed, StartingAge::Random);
-
-        let blast_mask = BlastMaskCooldown::Instant;
-        let json = serde_json::to_string(&blast_mask).unwrap();
-        let parsed: BlastMaskCooldown = serde_json::from_str(&json).unwrap();
-        assert_eq!(parsed, BlastMaskCooldown::Instant);
-
-        let clock_speed = ClockSpeed::SuperFast;
-        let json = serde_json::to_string(&clock_speed).unwrap();
-        let parsed: ClockSpeed = serde_json::from_str(&json).unwrap();
-        assert_eq!(parsed, ClockSpeed::SuperFast);
-
-        let damage = DamageMultiplier::Ohko;
-        let json = serde_json::to_string(&damage).unwrap();
-        let parsed: DamageMultiplier = serde_json::from_str(&json).unwrap();
-        assert_eq!(parsed, DamageMultiplier::Ohko);
-
-        let zora_king = ZoraKingMode::Open;
-        let json = serde_json::to_string(&zora_king).unwrap();
-        let parsed: ZoraKingMode = serde_json::from_str(&json).unwrap();
-        assert_eq!(parsed, ZoraKingMode::Open);
-
-        let gerudo = GerudoFortressMode::Fast;
-        let json = serde_json::to_string(&gerudo).unwrap();
-        let parsed: GerudoFortressMode = serde_json::from_str(&json).unwrap();
-        assert_eq!(parsed, GerudoFortressMode::Fast);
-
-        let item_pool = ItemPool::Scarce;
-        let json = serde_json::to_string(&item_pool).unwrap();
-        let parsed: ItemPool = serde_json::from_str(&json).unwrap();
-        assert_eq!(parsed, ItemPool::Scarce);
-
-        let traps = TrapsQuantity::Onslaught;
-        let json = serde_json::to_string(&traps).unwrap();
-        let parsed: TrapsQuantity = serde_json::from_str(&json).unwrap();
-        assert_eq!(parsed, TrapsQuantity::Onslaught);
+    fn test_map_compass_shuffle_is_shuffled() {
+        assert!(!MapCompassShuffle::Vanilla.is_shuffled());
+        assert!(!MapCompassShuffle::Starting.is_shuffled());
+        assert!(MapCompassShuffle::OwnDungeon.is_shuffled());
+        assert!(MapCompassShuffle::Anywhere.is_shuffled());
+        assert!(!MapCompassShuffle::Removed.is_shuffled());
     }
 }
