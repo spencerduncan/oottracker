@@ -21,7 +21,7 @@
 //! ```
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 /// OoT dungeon identifiers for `openDungeonsOot` setting.
 ///
@@ -1104,290 +1104,497 @@ impl DungeonRewardShuffle {
     }
 }
 
-
-/// Special condition configuration for goal requirements.
-///
-/// This struct defines the types of items that count towards special conditions
-/// like LACS, Ganon Boss Key, or Majora's Child requirements.
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SpecialCondition {
-    /// Number of items required to meet the condition.
-    #[serde(default)]
-    pub count: u32,
-    /// Whether spiritual stones count towards the condition.
-    #[serde(default)]
-    pub stones: bool,
-    /// Whether medallions count towards the condition.
-    #[serde(default)]
-    pub medallions: bool,
-    /// Whether boss remains count towards the condition.
-    #[serde(default)]
-    pub remains: bool,
-    /// Whether gold skulltula tokens count towards the condition.
-    #[serde(default, rename = "skullsGold")]
-    pub skulls_gold: bool,
-    /// Whether swamp skulltula tokens count towards the condition.
-    #[serde(default, rename = "skullsSwamp")]
-    pub skulls_swamp: bool,
-    /// Whether ocean skulltula tokens count towards the condition.
-    #[serde(default, rename = "skullsOcean")]
-    pub skulls_ocean: bool,
-    /// Whether Woodfall stray fairies count towards the condition.
-    #[serde(default, rename = "fairiesWF")]
-    pub fairies_wf: bool,
-    /// Whether Snowhead stray fairies count towards the condition.
-    #[serde(default, rename = "fairiesSH")]
-    pub fairies_sh: bool,
-    /// Whether Great Bay stray fairies count towards the condition.
-    #[serde(default, rename = "fairiesGB")]
-    pub fairies_gb: bool,
-    /// Whether Stone Tower stray fairies count towards the condition.
-    #[serde(default, rename = "fairiesST")]
-    pub fairies_st: bool,
-    /// Whether Clock Town stray fairy counts towards the condition.
-    #[serde(default, rename = "fairyTown")]
-    pub fairy_town: bool,
-    /// Whether regular masks count towards the condition.
-    #[serde(default, rename = "masksRegular")]
-    pub masks_regular: bool,
-    /// Whether transformation masks count towards the condition.
-    #[serde(default, rename = "masksTransform")]
-    pub masks_transform: bool,
-    /// Whether OoT masks count towards the condition.
-    #[serde(default, rename = "masksOot")]
-    pub masks_oot: bool,
-    /// Whether triforce pieces count towards the condition.
-    #[serde(default)]
-    pub triforce: bool,
-    /// Whether red coins count towards the condition.
-    #[serde(default, rename = "coinsRed")]
-    pub coins_red: bool,
-    /// Whether green coins count towards the condition.
-    #[serde(default, rename = "coinsGreen")]
-    pub coins_green: bool,
-    /// Whether blue coins count towards the condition.
-    #[serde(default, rename = "coinsBlue")]
-    pub coins_blue: bool,
-    /// Whether yellow coins count towards the condition.
-    #[serde(default, rename = "coinsYellow")]
-    pub coins_yellow: bool,
-}
-
-/// A map of starting items and their quantities.
-///
-/// Keys are item names, values are the quantity of that item the player starts with.
-pub type StartingItems = HashMap<String, u32>;
-
-/// Extension trait for `StartingItems` providing convenience methods.
-pub trait StartingItemsExt {
-    /// Gets the quantity of an item, returning 0 if not present.
-    #[must_use]
-    fn get_quantity(&self, item: &str) -> u32;
-    /// Checks if the player has at least one of an item.
-    #[must_use]
-    fn has_item(&self, item: &str) -> bool;
-}
-
-impl StartingItemsExt for StartingItems {
-    fn get_quantity(&self, item: &str) -> u32 {
-        self.get(item).copied().unwrap_or(0)
-    }
-
-    fn has_item(&self, item: &str) -> bool {
-        self.get(item).map(|&q| q > 0).unwrap_or(false)
-    }
-}
-
-/// A set of locations that should be filled with junk items.
-pub type JunkLocations = HashSet<String>;
-
-/// Extension trait for `JunkLocations` providing convenience methods.
-pub trait JunkLocationsExt {
-    /// Checks if a location is marked as junk.
-    #[must_use]
-    fn is_junk(&self, location: &str) -> bool;
-}
-
-impl JunkLocationsExt for JunkLocations {
-    fn is_junk(&self, location: &str) -> bool {
-        self.contains(location)
-    }
-}
-
-/// Per-world configuration flags.
-///
-/// These flags control world-specific settings that can vary between
-/// different worlds in a multiworld seed.
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
-pub struct WorldFlags {
-    /// Ganon Trials configuration ("all", "none", or a number).
-    #[serde(default, rename = "Ganon Trials")]
-    pub ganon_trials: String,
-    /// Small Key Ring mode for OoT dungeons.
-    #[serde(default, rename = "Small Key Ring (OoT)")]
-    pub small_key_ring_oot: String,
-    /// Small Key Ring mode for MM dungeons.
-    #[serde(default, rename = "Small Key Ring (MM)")]
-    pub small_key_ring_mm: String,
-    /// Silver Rupee Pouches configuration.
-    #[serde(default, rename = "Silver Rupee Pouches")]
-    pub silver_rupee_pouches: String,
-}
-
-impl WorldFlags {
-    /// Checks if all Ganon trials are required.
-    #[must_use]
-    pub fn all_ganon_trials(&self) -> bool {
-        self.ganon_trials.eq_ignore_ascii_case("all")
-    }
-
-    /// Checks if no Ganon trials are required.
-    #[must_use]
-    pub fn no_ganon_trials(&self) -> bool {
-        self.ganon_trials.eq_ignore_ascii_case("none")
-    }
-}
-
-/// Shop shuffle mode.
+/// Cross warp mode for world transitions.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
-pub enum ShopShuffleMode {
-    /// No shop shuffle
+pub enum CrossWarpMode {
+    /// No cross warping allowed
     #[default]
     None,
-    /// Full shop shuffle
+    /// Cross warping only in child dungeons
+    ChildDungeons,
+    /// Full cross warping enabled
     Full,
 }
 
-impl ShopShuffleMode {
+impl CrossWarpMode {
     /// Returns the string identifier used in logic expressions.
     #[must_use]
     pub const fn as_str(&self) -> &'static str {
         match self {
             Self::None => "none",
+            Self::ChildDungeons => "childDungeons",
             Self::Full => "full",
         }
     }
 
-    /// Parses a logic string identifier into a ShopShuffleMode.
+    /// Parses a logic string identifier into a CrossWarpMode.
     #[must_use]
     pub fn parse(s: &str) -> Option<Self> {
         match s {
             "none" => Some(Self::None),
+            "childDungeons" => Some(Self::ChildDungeons),
             "full" => Some(Self::Full),
             _ => None,
         }
     }
 }
 
-/// Town fairy shuffle mode.
+/// Chest Size Matches Contents mode.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
-pub enum TownFairyShuffle {
-    /// Vanilla town fairy locations
+pub enum CsmcMode {
+    /// Never show chest size hints
     #[default]
-    Vanilla,
-    /// Town fairies can be anywhere
-    Anywhere,
+    Never,
+    /// Always show chest size hints
+    Always,
+    /// Only show hints for major items
+    MajorOnly,
 }
 
-impl TownFairyShuffle {
+impl CsmcMode {
     /// Returns the string identifier used in logic expressions.
     #[must_use]
     pub const fn as_str(&self) -> &'static str {
         match self {
-            Self::Vanilla => "vanilla",
-            Self::Anywhere => "anywhere",
+            Self::Never => "never",
+            Self::Always => "always",
+            Self::MajorOnly => "majorOnly",
         }
     }
 
-    /// Parses a logic string identifier into a TownFairyShuffle.
+    /// Parses a logic string identifier into a CsmcMode.
     #[must_use]
     pub fn parse(s: &str) -> Option<Self> {
         match s {
-            "vanilla" => Some(Self::Vanilla),
-            "anywhere" => Some(Self::Anywhere),
+            "never" => Some(Self::Never),
+            "always" => Some(Self::Always),
+            "majorOnly" => Some(Self::MajorOnly),
             _ => None,
         }
     }
 }
 
-/// Stray fairy shuffle mode.
+/// Progressive item mode.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
-pub enum StrayFairyShuffle {
-    /// Vanilla stray fairy locations
+pub enum ProgressiveMode {
+    /// Items are separate (non-progressive)
     #[default]
-    Vanilla,
-    /// Stray fairies in starting locations
-    Starting,
-    /// Stray fairies can be anywhere
-    Anywhere,
-    /// Stray fairies within their own dungeon
-    OwnDungeon,
+    Separate,
+    /// Items are progressive
+    Progressive,
+    /// Goron-specific progressive mode
+    Goron,
 }
 
-impl StrayFairyShuffle {
+impl ProgressiveMode {
     /// Returns the string identifier used in logic expressions.
     #[must_use]
     pub const fn as_str(&self) -> &'static str {
         match self {
-            Self::Vanilla => "vanilla",
-            Self::Starting => "starting",
-            Self::Anywhere => "anywhere",
-            Self::OwnDungeon => "ownDungeon",
+            Self::Separate => "separate",
+            Self::Progressive => "progressive",
+            Self::Goron => "goron",
         }
     }
 
-    /// Parses a logic string identifier into a StrayFairyShuffle.
+    /// Parses a logic string identifier into a ProgressiveMode.
     #[must_use]
     pub fn parse(s: &str) -> Option<Self> {
         match s {
-            "vanilla" => Some(Self::Vanilla),
-            "starting" => Some(Self::Starting),
-            "anywhere" => Some(Self::Anywhere),
-            "ownDungeon" => Some(Self::OwnDungeon),
+            "separate" => Some(Self::Separate),
+            "progressive" => Some(Self::Progressive),
+            "goron" => Some(Self::Goron),
             _ => None,
         }
     }
 }
 
-/// Price mode for shops and other purchases.
+/// Bombchu behavior mode.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
-pub enum PriceMode {
-    /// Vanilla prices
+pub enum BombchuBehavior {
+    /// Vanilla bombchu behavior
     #[default]
     Vanilla,
-    /// Affordable prices
-    Affordable,
-    /// Random prices
+    /// Bombchu bag is separate item
+    BagSeparate,
+    /// Bombchu bag is shared between games
+    BagShared,
+}
+
+impl BombchuBehavior {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Vanilla => "vanilla",
+            Self::BagSeparate => "bagSeparate",
+            Self::BagShared => "bagShared",
+        }
+    }
+
+    /// Parses a logic string identifier into a BombchuBehavior.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "vanilla" => Some(Self::Vanilla),
+            "bagSeparate" => Some(Self::BagSeparate),
+            "bagShared" => Some(Self::BagShared),
+            _ => None,
+        }
+    }
+}
+
+/// Auto-invert camera mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum AutoInvertMode {
+    /// Never auto-invert
+    #[default]
+    Never,
+    /// Always auto-invert
+    Always,
+    /// Auto-invert only in first person view
+    FirstPerson,
+}
+
+impl AutoInvertMode {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Never => "never",
+            Self::Always => "always",
+            Self::FirstPerson => "firstPerson",
+        }
+    }
+
+    /// Parses a logic string identifier into an AutoInvertMode.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "never" => Some(Self::Never),
+            "always" => Some(Self::Always),
+            "firstPerson" => Some(Self::FirstPerson),
+            _ => None,
+        }
+    }
+}
+
+/// Starting age for the player.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum StartingAge {
+    /// Start as child
+    #[default]
+    Child,
+    /// Start as adult
+    Adult,
+    /// Random starting age
     Random,
-    /// Weighted random prices
-    WeightedRandom,
 }
 
-impl PriceMode {
+impl StartingAge {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Child => "child",
+            Self::Adult => "adult",
+            Self::Random => "random",
+        }
+    }
+
+    /// Parses a logic string identifier into a StartingAge.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "child" => Some(Self::Child),
+            "adult" => Some(Self::Adult),
+            "random" => Some(Self::Random),
+            _ => None,
+        }
+    }
+}
+
+/// Blast mask cooldown duration.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum BlastMaskCooldown {
+    /// Default cooldown duration
+    #[default]
+    Default,
+    /// Short cooldown
+    Short,
+    /// Very short cooldown
+    VeryShort,
+    /// Instant (no cooldown)
+    Instant,
+}
+
+impl BlastMaskCooldown {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Default => "default",
+            Self::Short => "short",
+            Self::VeryShort => "veryShort",
+            Self::Instant => "instant",
+        }
+    }
+
+    /// Parses a logic string identifier into a BlastMaskCooldown.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "default" => Some(Self::Default),
+            "short" => Some(Self::Short),
+            "veryShort" => Some(Self::VeryShort),
+            "instant" => Some(Self::Instant),
+            _ => None,
+        }
+    }
+}
+
+/// In-game clock speed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum ClockSpeed {
+    /// Default clock speed
+    #[default]
+    Default,
+    /// Slow clock
+    Slow,
+    /// Very slow clock
+    VerySlow,
+    /// Fast clock
+    Fast,
+    /// Very fast clock
+    VeryFast,
+    /// Super fast clock
+    SuperFast,
+}
+
+impl ClockSpeed {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Default => "default",
+            Self::Slow => "slow",
+            Self::VerySlow => "verySlow",
+            Self::Fast => "fast",
+            Self::VeryFast => "veryFast",
+            Self::SuperFast => "superFast",
+        }
+    }
+
+    /// Parses a logic string identifier into a ClockSpeed.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "default" => Some(Self::Default),
+            "slow" => Some(Self::Slow),
+            "verySlow" => Some(Self::VerySlow),
+            "fast" => Some(Self::Fast),
+            "veryFast" => Some(Self::VeryFast),
+            "superFast" => Some(Self::SuperFast),
+            _ => None,
+        }
+    }
+}
+
+/// Damage multiplier for the player.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum DamageMultiplier {
+    /// Normal damage
+    #[default]
+    Normal,
+    /// Double damage
+    Double,
+    /// Quadruple damage
+    Quadruple,
+    /// One-hit KO
+    Ohko,
+}
+
+impl DamageMultiplier {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Normal => "normal",
+            Self::Double => "double",
+            Self::Quadruple => "quadruple",
+            Self::Ohko => "ohko",
+        }
+    }
+
+    /// Parses a logic string identifier into a DamageMultiplier.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "normal" => Some(Self::Normal),
+            "double" => Some(Self::Double),
+            "quadruple" => Some(Self::Quadruple),
+            "ohko" => Some(Self::Ohko),
+            _ => None,
+        }
+    }
+}
+
+/// Zora King behavior mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum ZoraKingMode {
+    /// Vanilla Zora King behavior
+    #[default]
+    Vanilla,
+    /// Zora King is open (no requirements)
+    Open,
+}
+
+impl ZoraKingMode {
     /// Returns the string identifier used in logic expressions.
     #[must_use]
     pub const fn as_str(&self) -> &'static str {
         match self {
             Self::Vanilla => "vanilla",
-            Self::Affordable => "affordable",
-            Self::Random => "random",
-            Self::WeightedRandom => "weightedRandom",
+            Self::Open => "open",
         }
     }
 
-    /// Parses a logic string identifier into a PriceMode.
+    /// Parses a logic string identifier into a ZoraKingMode.
     #[must_use]
     pub fn parse(s: &str) -> Option<Self> {
         match s {
             "vanilla" => Some(Self::Vanilla),
-            "affordable" => Some(Self::Affordable),
-            "random" => Some(Self::Random),
-            "weightedRandom" => Some(Self::WeightedRandom),
+            "open" => Some(Self::Open),
+            _ => None,
+        }
+    }
+}
+
+/// Gerudo Fortress behavior mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum GerudoFortressMode {
+    /// Vanilla Gerudo Fortress (rescue all carpenters)
+    #[default]
+    Vanilla,
+    /// Fast mode (rescue one carpenter)
+    Fast,
+    /// Open mode (no requirements)
+    Open,
+}
+
+impl GerudoFortressMode {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Vanilla => "vanilla",
+            Self::Fast => "fast",
+            Self::Open => "open",
+        }
+    }
+
+    /// Parses a logic string identifier into a GerudoFortressMode.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "vanilla" => Some(Self::Vanilla),
+            "fast" => Some(Self::Fast),
+            "open" => Some(Self::Open),
+            _ => None,
+        }
+    }
+}
+
+/// Item pool quantity mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum ItemPool {
+    /// Plentiful items
+    Plentiful,
+    /// Balanced item pool
+    #[default]
+    Balanced,
+    /// Scarce items
+    Scarce,
+    /// Minimal items
+    Minimal,
+}
+
+impl ItemPool {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Plentiful => "plentiful",
+            Self::Balanced => "balanced",
+            Self::Scarce => "scarce",
+            Self::Minimal => "minimal",
+        }
+    }
+
+    /// Parses a logic string identifier into an ItemPool.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "plentiful" => Some(Self::Plentiful),
+            "balanced" => Some(Self::Balanced),
+            "scarce" => Some(Self::Scarce),
+            "minimal" => Some(Self::Minimal),
+            _ => None,
+        }
+    }
+}
+
+/// Quantity of traps in the item pool.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum TrapsQuantity {
+    /// No traps
+    #[default]
+    None,
+    /// Small amount of traps
+    Small,
+    /// Medium amount of traps
+    Medium,
+    /// Large amount of traps
+    Large,
+    /// Maximum traps (onslaught)
+    Onslaught,
+}
+
+impl TrapsQuantity {
+    /// Returns the string identifier used in logic expressions.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::None => "none",
+            Self::Small => "small",
+            Self::Medium => "medium",
+            Self::Large => "large",
+            Self::Onslaught => "onslaught",
+        }
+    }
+
+    /// Parses a logic string identifier into a TrapsQuantity.
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "none" => Some(Self::None),
+            "small" => Some(Self::Small),
+            "medium" => Some(Self::Medium),
+            "large" => Some(Self::Large),
+            "onslaught" => Some(Self::Onslaught),
             _ => None,
         }
     }
@@ -2359,332 +2566,437 @@ mod tests {
         }
     }
 
-
-    // === SpecialCondition Tests ===
+    // === CrossWarpMode Tests ===
 
     #[test]
-    fn test_special_condition_default() {
-        let condition = SpecialCondition::default();
-        assert_eq!(condition.count, 0);
-        assert!(!condition.stones);
-        assert!(!condition.medallions);
-        assert!(!condition.remains);
-        assert!(!condition.skulls_gold);
-        assert!(!condition.triforce);
+    fn test_cross_warp_mode_as_str() {
+        assert_eq!(CrossWarpMode::None.as_str(), "none");
+        assert_eq!(CrossWarpMode::ChildDungeons.as_str(), "childDungeons");
+        assert_eq!(CrossWarpMode::Full.as_str(), "full");
     }
 
     #[test]
-    fn test_special_condition_with_values() {
-        let condition = SpecialCondition {
-            count: 5,
-            stones: true,
-            medallions: true,
-            remains: false,
-            skulls_gold: true,
-            skulls_swamp: false,
-            skulls_ocean: false,
-            fairies_wf: true,
-            fairies_sh: false,
-            fairies_gb: false,
-            fairies_st: false,
-            fairy_town: true,
-            masks_regular: false,
-            masks_transform: true,
-            masks_oot: false,
-            triforce: true,
-            coins_red: false,
-            coins_green: false,
-            coins_blue: false,
-            coins_yellow: false,
-        };
-
-        assert_eq!(condition.count, 5);
-        assert!(condition.stones);
-        assert!(condition.medallions);
-        assert!(!condition.remains);
-        assert!(condition.skulls_gold);
-        assert!(condition.fairies_wf);
-        assert!(condition.fairy_town);
-        assert!(condition.masks_transform);
-        assert!(condition.triforce);
-    }
-
-    #[test]
-    fn test_special_condition_serde_roundtrip() {
-        let condition = SpecialCondition {
-            count: 3,
-            stones: true,
-            medallions: true,
-            remains: true,
-            ..Default::default()
-        };
-
-        let json = serde_json::to_string(&condition).unwrap();
-        let parsed: SpecialCondition = serde_json::from_str(&json).unwrap();
-
-        assert_eq!(parsed.count, 3);
-        assert!(parsed.stones);
-        assert!(parsed.medallions);
-        assert!(parsed.remains);
-        assert!(!parsed.skulls_gold);
-    }
-
-    #[test]
-    fn test_special_condition_serde_camel_case() {
-        let json = r#"{"count": 2, "skullsGold": true, "fairiesWF": true, "coinsRed": true}"#;
-        let parsed: SpecialCondition = serde_json::from_str(json).unwrap();
-
-        assert_eq!(parsed.count, 2);
-        assert!(parsed.skulls_gold);
-        assert!(parsed.fairies_wf);
-        assert!(parsed.coins_red);
-        assert!(!parsed.stones);
-    }
-
-    // === StartingItems Tests ===
-
-    #[test]
-    fn test_starting_items_get_quantity() {
-        let mut items: StartingItems = HashMap::new();
-        items.insert("hookshot".to_string(), 1);
-        items.insert("bombs".to_string(), 20);
-
-        assert_eq!(items.get_quantity("hookshot"), 1);
-        assert_eq!(items.get_quantity("bombs"), 20);
-        assert_eq!(items.get_quantity("bow"), 0);
-    }
-
-    #[test]
-    fn test_starting_items_has_item() {
-        let mut items: StartingItems = HashMap::new();
-        items.insert("hookshot".to_string(), 1);
-        items.insert("bombs".to_string(), 0);
-        items.insert("arrows".to_string(), 30);
-
-        assert!(items.has_item("hookshot"));
-        assert!(!items.has_item("bombs")); // quantity is 0
-        assert!(items.has_item("arrows"));
-        assert!(!items.has_item("bow")); // not in map
-    }
-
-    #[test]
-    fn test_starting_items_empty() {
-        let items: StartingItems = HashMap::new();
-
-        assert_eq!(items.get_quantity("anything"), 0);
-        assert!(!items.has_item("anything"));
-    }
-
-    // === JunkLocations Tests ===
-
-    #[test]
-    fn test_junk_locations_is_junk() {
-        let mut locations: JunkLocations = HashSet::new();
-        locations.insert("oot_kokiri_forest_chest".to_string());
-        locations.insert("mm_clock_town_chest".to_string());
-
-        assert!(locations.is_junk("oot_kokiri_forest_chest"));
-        assert!(locations.is_junk("mm_clock_town_chest"));
-        assert!(!locations.is_junk("oot_temple_of_time_chest"));
-    }
-
-    #[test]
-    fn test_junk_locations_empty() {
-        let locations: JunkLocations = HashSet::new();
-
-        assert!(!locations.is_junk("anything"));
-    }
-
-    // === WorldFlags Tests ===
-
-    #[test]
-    fn test_world_flags_default() {
-        let flags = WorldFlags::default();
-        assert_eq!(flags.ganon_trials, "");
-        assert_eq!(flags.small_key_ring_oot, "");
-        assert_eq!(flags.small_key_ring_mm, "");
-        assert_eq!(flags.silver_rupee_pouches, "");
-    }
-
-    #[test]
-    fn test_world_flags_all_ganon_trials() {
-        let mut flags = WorldFlags::default();
-
-        assert!(!flags.all_ganon_trials());
-
-        flags.ganon_trials = "all".to_string();
-        assert!(flags.all_ganon_trials());
-
-        flags.ganon_trials = "ALL".to_string();
-        assert!(flags.all_ganon_trials());
-
-        flags.ganon_trials = "All".to_string();
-        assert!(flags.all_ganon_trials());
-    }
-
-    #[test]
-    fn test_world_flags_no_ganon_trials() {
-        let mut flags = WorldFlags::default();
-
-        assert!(!flags.no_ganon_trials());
-
-        flags.ganon_trials = "none".to_string();
-        assert!(flags.no_ganon_trials());
-
-        flags.ganon_trials = "NONE".to_string();
-        assert!(flags.no_ganon_trials());
-
-        flags.ganon_trials = "None".to_string();
-        assert!(flags.no_ganon_trials());
-    }
-
-    #[test]
-    fn test_world_flags_ganon_trials_numeric() {
-        let mut flags = WorldFlags::default();
-        flags.ganon_trials = "3".to_string();
-
-        assert!(!flags.all_ganon_trials());
-        assert!(!flags.no_ganon_trials());
-    }
-
-    #[test]
-    fn test_world_flags_serde_roundtrip() {
-        let flags = WorldFlags {
-            ganon_trials: "all".to_string(),
-            small_key_ring_oot: "on".to_string(),
-            small_key_ring_mm: "off".to_string(),
-            silver_rupee_pouches: "anywhere".to_string(),
-        };
-
-        let json = serde_json::to_string(&flags).unwrap();
-        let parsed: WorldFlags = serde_json::from_str(&json).unwrap();
-
-        assert_eq!(parsed.ganon_trials, "all");
-        assert_eq!(parsed.small_key_ring_oot, "on");
-        assert_eq!(parsed.small_key_ring_mm, "off");
-        assert_eq!(parsed.silver_rupee_pouches, "anywhere");
-    }
-
-    #[test]
-    fn test_world_flags_serde_with_spaces_in_keys() {
-        let json = r#"{"Ganon Trials": "none", "Small Key Ring (OoT)": "on"}"#;
-        let parsed: WorldFlags = serde_json::from_str(json).unwrap();
-
-        assert_eq!(parsed.ganon_trials, "none");
-        assert!(parsed.no_ganon_trials());
-        assert_eq!(parsed.small_key_ring_oot, "on");
-    }
-
-    // === ShopShuffleMode Tests ===
-
-    #[test]
-    fn test_shop_shuffle_mode_default() {
-        let mode = ShopShuffleMode::default();
-        assert_eq!(mode, ShopShuffleMode::None);
-    }
-
-    #[test]
-    fn test_shop_shuffle_mode_as_str() {
-        assert_eq!(ShopShuffleMode::None.as_str(), "none");
-        assert_eq!(ShopShuffleMode::Full.as_str(), "full");
-    }
-
-    #[test]
-    fn test_shop_shuffle_mode_parse() {
-        assert_eq!(ShopShuffleMode::parse("none"), Some(ShopShuffleMode::None));
-        assert_eq!(ShopShuffleMode::parse("full"), Some(ShopShuffleMode::Full));
-        assert_eq!(ShopShuffleMode::parse("invalid"), None);
-    }
-
-    // === TownFairyShuffle Tests ===
-
-    #[test]
-    fn test_town_fairy_shuffle_default() {
-        let mode = TownFairyShuffle::default();
-        assert_eq!(mode, TownFairyShuffle::Vanilla);
-    }
-
-    #[test]
-    fn test_town_fairy_shuffle_as_str() {
-        assert_eq!(TownFairyShuffle::Vanilla.as_str(), "vanilla");
-        assert_eq!(TownFairyShuffle::Anywhere.as_str(), "anywhere");
-    }
-
-    #[test]
-    fn test_town_fairy_shuffle_parse() {
+    fn test_cross_warp_mode_parse() {
+        assert_eq!(CrossWarpMode::parse("none"), Some(CrossWarpMode::None));
         assert_eq!(
-            TownFairyShuffle::parse("vanilla"),
-            Some(TownFairyShuffle::Vanilla)
+            CrossWarpMode::parse("childDungeons"),
+            Some(CrossWarpMode::ChildDungeons)
+        );
+        assert_eq!(CrossWarpMode::parse("full"), Some(CrossWarpMode::Full));
+        assert_eq!(CrossWarpMode::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_cross_warp_mode_default() {
+        assert_eq!(CrossWarpMode::default(), CrossWarpMode::None);
+    }
+
+    // === CsmcMode Tests ===
+
+    #[test]
+    fn test_csmc_mode_as_str() {
+        assert_eq!(CsmcMode::Never.as_str(), "never");
+        assert_eq!(CsmcMode::Always.as_str(), "always");
+        assert_eq!(CsmcMode::MajorOnly.as_str(), "majorOnly");
+    }
+
+    #[test]
+    fn test_csmc_mode_parse() {
+        assert_eq!(CsmcMode::parse("never"), Some(CsmcMode::Never));
+        assert_eq!(CsmcMode::parse("always"), Some(CsmcMode::Always));
+        assert_eq!(CsmcMode::parse("majorOnly"), Some(CsmcMode::MajorOnly));
+        assert_eq!(CsmcMode::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_csmc_mode_default() {
+        assert_eq!(CsmcMode::default(), CsmcMode::Never);
+    }
+
+    // === ProgressiveMode Tests ===
+
+    #[test]
+    fn test_progressive_mode_as_str() {
+        assert_eq!(ProgressiveMode::Separate.as_str(), "separate");
+        assert_eq!(ProgressiveMode::Progressive.as_str(), "progressive");
+        assert_eq!(ProgressiveMode::Goron.as_str(), "goron");
+    }
+
+    #[test]
+    fn test_progressive_mode_parse() {
+        assert_eq!(
+            ProgressiveMode::parse("separate"),
+            Some(ProgressiveMode::Separate)
         );
         assert_eq!(
-            TownFairyShuffle::parse("anywhere"),
-            Some(TownFairyShuffle::Anywhere)
-        );
-        assert_eq!(TownFairyShuffle::parse("invalid"), None);
-    }
-
-    // === StrayFairyShuffle Tests ===
-
-    #[test]
-    fn test_stray_fairy_shuffle_default() {
-        let mode = StrayFairyShuffle::default();
-        assert_eq!(mode, StrayFairyShuffle::Vanilla);
-    }
-
-    #[test]
-    fn test_stray_fairy_shuffle_as_str() {
-        assert_eq!(StrayFairyShuffle::Vanilla.as_str(), "vanilla");
-        assert_eq!(StrayFairyShuffle::Starting.as_str(), "starting");
-        assert_eq!(StrayFairyShuffle::Anywhere.as_str(), "anywhere");
-        assert_eq!(StrayFairyShuffle::OwnDungeon.as_str(), "ownDungeon");
-    }
-
-    #[test]
-    fn test_stray_fairy_shuffle_parse() {
-        assert_eq!(
-            StrayFairyShuffle::parse("vanilla"),
-            Some(StrayFairyShuffle::Vanilla)
+            ProgressiveMode::parse("progressive"),
+            Some(ProgressiveMode::Progressive)
         );
         assert_eq!(
-            StrayFairyShuffle::parse("starting"),
-            Some(StrayFairyShuffle::Starting)
+            ProgressiveMode::parse("goron"),
+            Some(ProgressiveMode::Goron)
         );
-        assert_eq!(
-            StrayFairyShuffle::parse("anywhere"),
-            Some(StrayFairyShuffle::Anywhere)
-        );
-        assert_eq!(
-            StrayFairyShuffle::parse("ownDungeon"),
-            Some(StrayFairyShuffle::OwnDungeon)
-        );
-        assert_eq!(StrayFairyShuffle::parse("invalid"), None);
-    }
-
-    // === PriceMode Tests ===
-
-    #[test]
-    fn test_price_mode_default() {
-        let mode = PriceMode::default();
-        assert_eq!(mode, PriceMode::Vanilla);
+        assert_eq!(ProgressiveMode::parse("invalid"), None);
     }
 
     #[test]
-    fn test_price_mode_as_str() {
-        assert_eq!(PriceMode::Vanilla.as_str(), "vanilla");
-        assert_eq!(PriceMode::Affordable.as_str(), "affordable");
-        assert_eq!(PriceMode::Random.as_str(), "random");
-        assert_eq!(PriceMode::WeightedRandom.as_str(), "weightedRandom");
+    fn test_progressive_mode_default() {
+        assert_eq!(ProgressiveMode::default(), ProgressiveMode::Separate);
+    }
+
+    // === BombchuBehavior Tests ===
+
+    #[test]
+    fn test_bombchu_behavior_as_str() {
+        assert_eq!(BombchuBehavior::Vanilla.as_str(), "vanilla");
+        assert_eq!(BombchuBehavior::BagSeparate.as_str(), "bagSeparate");
+        assert_eq!(BombchuBehavior::BagShared.as_str(), "bagShared");
     }
 
     #[test]
-    fn test_price_mode_parse() {
-        assert_eq!(PriceMode::parse("vanilla"), Some(PriceMode::Vanilla));
-        assert_eq!(PriceMode::parse("affordable"), Some(PriceMode::Affordable));
-        assert_eq!(PriceMode::parse("random"), Some(PriceMode::Random));
+    fn test_bombchu_behavior_parse() {
         assert_eq!(
-            PriceMode::parse("weightedRandom"),
-            Some(PriceMode::WeightedRandom)
+            BombchuBehavior::parse("vanilla"),
+            Some(BombchuBehavior::Vanilla)
         );
-        assert_eq!(PriceMode::parse("invalid"), None);
+        assert_eq!(
+            BombchuBehavior::parse("bagSeparate"),
+            Some(BombchuBehavior::BagSeparate)
+        );
+        assert_eq!(
+            BombchuBehavior::parse("bagShared"),
+            Some(BombchuBehavior::BagShared)
+        );
+        assert_eq!(BombchuBehavior::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_bombchu_behavior_default() {
+        assert_eq!(BombchuBehavior::default(), BombchuBehavior::Vanilla);
+    }
+
+    // === AutoInvertMode Tests ===
+
+    #[test]
+    fn test_auto_invert_mode_as_str() {
+        assert_eq!(AutoInvertMode::Never.as_str(), "never");
+        assert_eq!(AutoInvertMode::Always.as_str(), "always");
+        assert_eq!(AutoInvertMode::FirstPerson.as_str(), "firstPerson");
+    }
+
+    #[test]
+    fn test_auto_invert_mode_parse() {
+        assert_eq!(AutoInvertMode::parse("never"), Some(AutoInvertMode::Never));
+        assert_eq!(
+            AutoInvertMode::parse("always"),
+            Some(AutoInvertMode::Always)
+        );
+        assert_eq!(
+            AutoInvertMode::parse("firstPerson"),
+            Some(AutoInvertMode::FirstPerson)
+        );
+        assert_eq!(AutoInvertMode::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_auto_invert_mode_default() {
+        assert_eq!(AutoInvertMode::default(), AutoInvertMode::Never);
+    }
+
+    // === StartingAge Tests ===
+
+    #[test]
+    fn test_starting_age_as_str() {
+        assert_eq!(StartingAge::Child.as_str(), "child");
+        assert_eq!(StartingAge::Adult.as_str(), "adult");
+        assert_eq!(StartingAge::Random.as_str(), "random");
+    }
+
+    #[test]
+    fn test_starting_age_parse() {
+        assert_eq!(StartingAge::parse("child"), Some(StartingAge::Child));
+        assert_eq!(StartingAge::parse("adult"), Some(StartingAge::Adult));
+        assert_eq!(StartingAge::parse("random"), Some(StartingAge::Random));
+        assert_eq!(StartingAge::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_starting_age_default() {
+        assert_eq!(StartingAge::default(), StartingAge::Child);
+    }
+
+    // === BlastMaskCooldown Tests ===
+
+    #[test]
+    fn test_blast_mask_cooldown_as_str() {
+        assert_eq!(BlastMaskCooldown::Default.as_str(), "default");
+        assert_eq!(BlastMaskCooldown::Short.as_str(), "short");
+        assert_eq!(BlastMaskCooldown::VeryShort.as_str(), "veryShort");
+        assert_eq!(BlastMaskCooldown::Instant.as_str(), "instant");
+    }
+
+    #[test]
+    fn test_blast_mask_cooldown_parse() {
+        assert_eq!(
+            BlastMaskCooldown::parse("default"),
+            Some(BlastMaskCooldown::Default)
+        );
+        assert_eq!(
+            BlastMaskCooldown::parse("short"),
+            Some(BlastMaskCooldown::Short)
+        );
+        assert_eq!(
+            BlastMaskCooldown::parse("veryShort"),
+            Some(BlastMaskCooldown::VeryShort)
+        );
+        assert_eq!(
+            BlastMaskCooldown::parse("instant"),
+            Some(BlastMaskCooldown::Instant)
+        );
+        assert_eq!(BlastMaskCooldown::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_blast_mask_cooldown_default() {
+        assert_eq!(BlastMaskCooldown::default(), BlastMaskCooldown::Default);
+    }
+
+    // === ClockSpeed Tests ===
+
+    #[test]
+    fn test_clock_speed_as_str() {
+        assert_eq!(ClockSpeed::Default.as_str(), "default");
+        assert_eq!(ClockSpeed::Slow.as_str(), "slow");
+        assert_eq!(ClockSpeed::VerySlow.as_str(), "verySlow");
+        assert_eq!(ClockSpeed::Fast.as_str(), "fast");
+        assert_eq!(ClockSpeed::VeryFast.as_str(), "veryFast");
+        assert_eq!(ClockSpeed::SuperFast.as_str(), "superFast");
+    }
+
+    #[test]
+    fn test_clock_speed_parse() {
+        assert_eq!(ClockSpeed::parse("default"), Some(ClockSpeed::Default));
+        assert_eq!(ClockSpeed::parse("slow"), Some(ClockSpeed::Slow));
+        assert_eq!(ClockSpeed::parse("verySlow"), Some(ClockSpeed::VerySlow));
+        assert_eq!(ClockSpeed::parse("fast"), Some(ClockSpeed::Fast));
+        assert_eq!(ClockSpeed::parse("veryFast"), Some(ClockSpeed::VeryFast));
+        assert_eq!(ClockSpeed::parse("superFast"), Some(ClockSpeed::SuperFast));
+        assert_eq!(ClockSpeed::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_clock_speed_default() {
+        assert_eq!(ClockSpeed::default(), ClockSpeed::Default);
+    }
+
+    // === DamageMultiplier Tests ===
+
+    #[test]
+    fn test_damage_multiplier_as_str() {
+        assert_eq!(DamageMultiplier::Normal.as_str(), "normal");
+        assert_eq!(DamageMultiplier::Double.as_str(), "double");
+        assert_eq!(DamageMultiplier::Quadruple.as_str(), "quadruple");
+        assert_eq!(DamageMultiplier::Ohko.as_str(), "ohko");
+    }
+
+    #[test]
+    fn test_damage_multiplier_parse() {
+        assert_eq!(
+            DamageMultiplier::parse("normal"),
+            Some(DamageMultiplier::Normal)
+        );
+        assert_eq!(
+            DamageMultiplier::parse("double"),
+            Some(DamageMultiplier::Double)
+        );
+        assert_eq!(
+            DamageMultiplier::parse("quadruple"),
+            Some(DamageMultiplier::Quadruple)
+        );
+        assert_eq!(
+            DamageMultiplier::parse("ohko"),
+            Some(DamageMultiplier::Ohko)
+        );
+        assert_eq!(DamageMultiplier::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_damage_multiplier_default() {
+        assert_eq!(DamageMultiplier::default(), DamageMultiplier::Normal);
+    }
+
+    // === ZoraKingMode Tests ===
+
+    #[test]
+    fn test_zora_king_mode_as_str() {
+        assert_eq!(ZoraKingMode::Vanilla.as_str(), "vanilla");
+        assert_eq!(ZoraKingMode::Open.as_str(), "open");
+    }
+
+    #[test]
+    fn test_zora_king_mode_parse() {
+        assert_eq!(ZoraKingMode::parse("vanilla"), Some(ZoraKingMode::Vanilla));
+        assert_eq!(ZoraKingMode::parse("open"), Some(ZoraKingMode::Open));
+        assert_eq!(ZoraKingMode::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_zora_king_mode_default() {
+        assert_eq!(ZoraKingMode::default(), ZoraKingMode::Vanilla);
+    }
+
+    // === GerudoFortressMode Tests ===
+
+    #[test]
+    fn test_gerudo_fortress_mode_as_str() {
+        assert_eq!(GerudoFortressMode::Vanilla.as_str(), "vanilla");
+        assert_eq!(GerudoFortressMode::Fast.as_str(), "fast");
+        assert_eq!(GerudoFortressMode::Open.as_str(), "open");
+    }
+
+    #[test]
+    fn test_gerudo_fortress_mode_parse() {
+        assert_eq!(
+            GerudoFortressMode::parse("vanilla"),
+            Some(GerudoFortressMode::Vanilla)
+        );
+        assert_eq!(
+            GerudoFortressMode::parse("fast"),
+            Some(GerudoFortressMode::Fast)
+        );
+        assert_eq!(
+            GerudoFortressMode::parse("open"),
+            Some(GerudoFortressMode::Open)
+        );
+        assert_eq!(GerudoFortressMode::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_gerudo_fortress_mode_default() {
+        assert_eq!(GerudoFortressMode::default(), GerudoFortressMode::Vanilla);
+    }
+
+    // === ItemPool Tests ===
+
+    #[test]
+    fn test_item_pool_as_str() {
+        assert_eq!(ItemPool::Plentiful.as_str(), "plentiful");
+        assert_eq!(ItemPool::Balanced.as_str(), "balanced");
+        assert_eq!(ItemPool::Scarce.as_str(), "scarce");
+        assert_eq!(ItemPool::Minimal.as_str(), "minimal");
+    }
+
+    #[test]
+    fn test_item_pool_parse() {
+        assert_eq!(ItemPool::parse("plentiful"), Some(ItemPool::Plentiful));
+        assert_eq!(ItemPool::parse("balanced"), Some(ItemPool::Balanced));
+        assert_eq!(ItemPool::parse("scarce"), Some(ItemPool::Scarce));
+        assert_eq!(ItemPool::parse("minimal"), Some(ItemPool::Minimal));
+        assert_eq!(ItemPool::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_item_pool_default() {
+        assert_eq!(ItemPool::default(), ItemPool::Balanced);
+    }
+
+    // === TrapsQuantity Tests ===
+
+    #[test]
+    fn test_traps_quantity_as_str() {
+        assert_eq!(TrapsQuantity::None.as_str(), "none");
+        assert_eq!(TrapsQuantity::Small.as_str(), "small");
+        assert_eq!(TrapsQuantity::Medium.as_str(), "medium");
+        assert_eq!(TrapsQuantity::Large.as_str(), "large");
+        assert_eq!(TrapsQuantity::Onslaught.as_str(), "onslaught");
+    }
+
+    #[test]
+    fn test_traps_quantity_parse() {
+        assert_eq!(TrapsQuantity::parse("none"), Some(TrapsQuantity::None));
+        assert_eq!(TrapsQuantity::parse("small"), Some(TrapsQuantity::Small));
+        assert_eq!(TrapsQuantity::parse("medium"), Some(TrapsQuantity::Medium));
+        assert_eq!(TrapsQuantity::parse("large"), Some(TrapsQuantity::Large));
+        assert_eq!(
+            TrapsQuantity::parse("onslaught"),
+            Some(TrapsQuantity::Onslaught)
+        );
+        assert_eq!(TrapsQuantity::parse("invalid"), None);
+    }
+
+    #[test]
+    fn test_traps_quantity_default() {
+        assert_eq!(TrapsQuantity::default(), TrapsQuantity::None);
+    }
+
+    // === Serde roundtrip tests for new enums ===
+
+    #[test]
+    fn test_new_enums_serde_roundtrip() {
+        // Test JSON roundtrip for each enum
+        let cross_warp = CrossWarpMode::ChildDungeons;
+        let json = serde_json::to_string(&cross_warp).unwrap();
+        let parsed: CrossWarpMode = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, CrossWarpMode::ChildDungeons);
+
+        let csmc = CsmcMode::MajorOnly;
+        let json = serde_json::to_string(&csmc).unwrap();
+        let parsed: CsmcMode = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, CsmcMode::MajorOnly);
+
+        let progressive = ProgressiveMode::Goron;
+        let json = serde_json::to_string(&progressive).unwrap();
+        let parsed: ProgressiveMode = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, ProgressiveMode::Goron);
+
+        let bombchu = BombchuBehavior::BagShared;
+        let json = serde_json::to_string(&bombchu).unwrap();
+        let parsed: BombchuBehavior = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, BombchuBehavior::BagShared);
+
+        let auto_invert = AutoInvertMode::FirstPerson;
+        let json = serde_json::to_string(&auto_invert).unwrap();
+        let parsed: AutoInvertMode = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, AutoInvertMode::FirstPerson);
+
+        let starting_age = StartingAge::Random;
+        let json = serde_json::to_string(&starting_age).unwrap();
+        let parsed: StartingAge = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, StartingAge::Random);
+
+        let blast_mask = BlastMaskCooldown::Instant;
+        let json = serde_json::to_string(&blast_mask).unwrap();
+        let parsed: BlastMaskCooldown = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, BlastMaskCooldown::Instant);
+
+        let clock_speed = ClockSpeed::SuperFast;
+        let json = serde_json::to_string(&clock_speed).unwrap();
+        let parsed: ClockSpeed = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, ClockSpeed::SuperFast);
+
+        let damage = DamageMultiplier::Ohko;
+        let json = serde_json::to_string(&damage).unwrap();
+        let parsed: DamageMultiplier = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, DamageMultiplier::Ohko);
+
+        let zora_king = ZoraKingMode::Open;
+        let json = serde_json::to_string(&zora_king).unwrap();
+        let parsed: ZoraKingMode = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, ZoraKingMode::Open);
+
+        let gerudo = GerudoFortressMode::Fast;
+        let json = serde_json::to_string(&gerudo).unwrap();
+        let parsed: GerudoFortressMode = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, GerudoFortressMode::Fast);
+
+        let item_pool = ItemPool::Scarce;
+        let json = serde_json::to_string(&item_pool).unwrap();
+        let parsed: ItemPool = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, ItemPool::Scarce);
+
+        let traps = TrapsQuantity::Onslaught;
+        let json = serde_json::to_string(&traps).unwrap();
+        let parsed: TrapsQuantity = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, TrapsQuantity::Onslaught);
     }
 }
