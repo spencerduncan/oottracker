@@ -14,6 +14,7 @@
 #![forbid(unsafe_code)]
 
 pub mod checks;
+pub mod config_parser;
 pub mod embedded_data;
 pub mod error;
 pub mod events;
@@ -51,6 +52,9 @@ pub use settings::{
     MajoraChildMode, MmDungeon, MoonCrashMode, OotDungeon, RandomizerSettings, ShufflePotsMm,
     SmallKeyShuffleOot,
 };
+
+// Re-export config parser types
+pub use config_parser::{ConfigError, OotmmConfigFile};
 
 // Re-export OoT event types
 pub use events::{
