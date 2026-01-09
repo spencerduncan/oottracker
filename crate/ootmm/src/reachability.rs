@@ -490,7 +490,10 @@ mod tests {
         // Test MM reachability
         let mm_reachable = compute_reachable_regions(&db, &ctx, Game::Mm);
         assert!(mm_reachable.contains(MM_SPAWN));
-        assert!(mm_reachable.len() >= 1, "Should reach at least spawn region");
+        assert!(
+            mm_reachable.len() >= 1,
+            "Should reach at least spawn region"
+        );
     }
 
     #[test]
