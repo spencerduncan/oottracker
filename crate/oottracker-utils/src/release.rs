@@ -66,9 +66,6 @@ const MACOS_ADDR: &str = "192.168.178.63";
 enum Error {
     #[cfg(windows)]
     #[error(transparent)]
-    BizHawkVersionCheck(#[from] version::BizHawkError),
-    #[cfg(windows)]
-    #[error(transparent)]
     BroadcastRecv(#[from] broadcast::error::RecvError),
     #[error(transparent)]
     DirLock(#[from] dir_lock::Error),
@@ -110,12 +107,6 @@ enum Error {
     #[error(transparent)]
     Zip(#[from] ZipError),
     #[cfg(windows)]
-    #[error("BizHawk is outdated ({local} installed, {latest} available)")]
-    BizHawkOutdated { latest: Version, local: Version },
-    #[cfg(windows)]
-    #[error("locally installed BizHawk is newer than latest release")]
-    BizHawkVersionRegression,
-    #[cfg(windows)]
     #[error("aborting due to empty release notes")]
     EmptyReleaseNotes,
     #[cfg(windows)]
@@ -133,9 +124,8 @@ enum Error {
 enum Setup {
     CreateReqwestClient,
     CheckVersion(reqwest::Client),
-    CheckBizHawkVersion(reqwest::Client, Repo),
-    LockRust(reqwest::Client, Repo, Version),
-    UpdateRust(reqwest::Client, Repo, Version, DirLock),
+    LockRust(reqwest::Client, Repo),
+    UpdateRust(reqwest::Client, Repo, DirLock),
 }
 
 #[cfg(windows)]
@@ -151,7 +141,6 @@ impl fmt::Display for Setup {
         match self {
             Self::CreateReqwestClient => write!(f, "creating reqwest client"),
             Self::CheckVersion(..) => write!(f, "checking version"),
-            Self::CheckBizHawkVersion(..) => write!(f, "checking BizHawk version"),
             Self::LockRust(..) => write!(f, "waiting for Rust lock"),
             Self::UpdateRust(..) => write!(f, "updating Rust for x86_64"),
         }
@@ -165,19 +154,18 @@ impl Progress for Setup {
             match self {
                 Self::CreateReqwestClient => 0,
                 Self::CheckVersion(..) => 1,
-                Self::CheckBizHawkVersion(..) => 2,
-                Self::LockRust(..) => 3,
-                Self::UpdateRust(..) => 4,
+                Self::LockRust(..) => 2,
+                Self::UpdateRust(..) => 3,
             },
-            5,
+            4,
         )
     }
 }
 
 #[cfg(windows)]
 #[async_trait]
-impl Task<Result<(reqwest::Client, Repo, Version), Error>> for Setup {
-    async fn run(self) -> Result<Result<(reqwest::Client, Repo, Version), Error>, Self> {
+impl Task<Result<(reqwest::Client, Repo), Error>> for Setup {
+    async fn run(self) -> Result<Result<(reqwest::Client, Repo), Error>, Self> {
         match self {
             Self::CreateReqwestClient => {
                 gres::transpose(async move {
@@ -220,41 +208,22 @@ impl Task<Result<(reqwest::Client, Repo, Version), Error>> for Setup {
                             Greater => {}
                         }
                     }
-                    Ok(Err(Self::CheckBizHawkVersion(client, repo)))
+                    Ok(Err(Self::LockRust(client, repo)))
                 })
                 .await
             }
-            Self::CheckBizHawkVersion(client, repo) => {
-                gres::transpose(async move {
-                    let [major, minor, patch, _] = oottracker_bizhawk::bizhawk_version();
-                    let local_version = Version::new(major.into(), minor.into(), patch.into());
-                    let remote_version = version::bizhawk_latest(&client).await?;
-                    match local_version.cmp(&remote_version) {
-                        Less => {
-                            return Err(Error::BizHawkOutdated {
-                                local: local_version,
-                                latest: remote_version,
-                            })
-                        }
-                        Equal => {}
-                        Greater => return Err(Error::BizHawkVersionRegression),
-                    }
-                    Ok(Err(Self::LockRust(client, repo, local_version)))
-                })
-                .await
-            }
-            Self::LockRust(client, repo, local_version) => {
+            Self::LockRust(client, repo) => {
                 gres::transpose(async move {
                     let lock_dir =
                         Path::new(&env::var_os("TEMP").ok_or(Error::MissingEnvar("TEMP"))?)
                             .join("syncbin-startup-rust.lock");
                     let lock = DirLock::new(&lock_dir).await?;
-                    Ok(Err(Self::UpdateRust(client, repo, local_version, lock)))
+                    Ok(Err(Self::UpdateRust(client, repo, lock)))
                     //TODO update rustup first?
                 })
                 .await
             }
-            Self::UpdateRust(client, repo, local_version, lock) => {
+            Self::UpdateRust(client, repo, lock) => {
                 gres::transpose(async move {
                     Command::new("rustup")
                         .arg("update")
@@ -262,108 +231,10 @@ impl Task<Result<(reqwest::Client, Repo, Version), Error>> for Setup {
                         .check("rustup")
                         .await?;
                     lock.drop_async().await?;
-                    Ok(Ok((client, repo, local_version)))
+                    Ok(Ok((client, repo)))
                 })
                 .await
             }
-        }
-    }
-}
-
-#[cfg(windows)]
-enum BuildBizHawk {
-    Updater(reqwest::Client, Repo, broadcast::Receiver<Release>, Version),
-    CSharp(reqwest::Client, Repo, broadcast::Receiver<Release>, Version),
-    BizHawk(reqwest::Client, Repo, broadcast::Receiver<Release>, Version),
-    Zip(reqwest::Client, Repo, broadcast::Receiver<Release>, Version),
-    WaitRelease(reqwest::Client, Repo, broadcast::Receiver<Release>, Vec<u8>),
-    Upload(reqwest::Client, Repo, Release, Vec<u8>),
-}
-
-#[cfg(windows)]
-impl BuildBizHawk {
-    fn new(
-        client: reqwest::Client,
-        repo: Repo,
-        release_rx: broadcast::Receiver<Release>,
-        version: Version,
-    ) -> Self {
-        Self::Updater(client, repo, release_rx, version)
-    }
-}
-
-#[cfg(windows)]
-impl fmt::Display for BuildBizHawk {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Updater(..) => write!(f, "building oottracker-updater-bizhawk.exe"),
-            Self::CSharp(..) => write!(f, "building oottracker-csharp"),
-            Self::BizHawk(..) => write!(f, "building oottracker-bizhawk"),
-            Self::Zip(..) => write!(f, "creating oottracker-bizhawk-win64.zip"),
-            Self::WaitRelease(..) => write!(f, "waiting for GitHub release to be created"),
-            Self::Upload(..) => write!(f, "uploading oottracker-bizhawk-win64.zip"),
-        }
-    }
-}
-
-#[cfg(windows)]
-impl Progress for BuildBizHawk {
-    fn progress(&self) -> Percent {
-        Percent::fraction(
-            match self {
-                Self::Updater(..) => 0,
-                Self::CSharp(..) => 1,
-                Self::BizHawk(..) => 2,
-                Self::Zip(..) => 3,
-                Self::WaitRelease(..) => 4,
-                Self::Upload(..) => 5,
-            },
-            6,
-        )
-    }
-}
-
-#[cfg(windows)]
-#[async_trait]
-impl Task<Result<(), Error>> for BuildBizHawk {
-    async fn run(self) -> Result<Result<(), Error>, Self> {
-        match self {
-            Self::Updater(client, repo, release_rx, version) => gres::transpose(async move {
-                Command::new("cargo").arg("build").arg("--release").arg("--target=x86_64-pc-windows-msvc").arg("--package=oottracker-updater-bizhawk").check("cargo build --package=oottracker-updater-bizhawk").await?;
-                Ok(Err(Self::CSharp(client, repo, release_rx, version)))
-            }).await,
-            Self::CSharp(client, repo, release_rx, version) => gres::transpose(async move {
-                Command::new("cargo").arg("build").arg("--release").arg("--package=oottracker-csharp").check("cargo build --package=oottracker-csharp").await?;
-                Ok(Err(Self::BizHawk(client, repo, release_rx, version)))
-            }).await,
-            Self::BizHawk(client, repo, release_rx, version) => gres::transpose(async move {
-                Command::new("cargo").arg("build").arg("--release").arg("--package=oottracker-bizhawk").check("cargo build --package=oottracker-bizhawk").await?;
-                Ok(Err(Self::Zip(client, repo, release_rx, version)))
-            }).await,
-            Self::Zip(client, repo, release_rx, version) => gres::transpose(async move {
-                let zip_data = tokio::task::spawn_blocking(move || {
-                    let mut buf = Cursor::<Vec<_>>::default();
-                    {
-                        let mut zip = ZipWriter::new(&mut buf); //TODO replace with an async zip writer
-                        zip.start_file("README.txt", FileOptions::default())?;
-                        write!(&mut zip, include_str!("../../../assets/bizhawk-readme.txt"), version)?;
-                        zip.start_file("OotAutoTracker.dll", FileOptions::default())?;
-                        std::io::copy(&mut std::fs::File::open("crate/oottracker-bizhawk/OotAutoTracker/BizHawk/ExternalTools/OotAutoTracker.dll")?, &mut zip)?;
-                        zip.start_file("oottracker.dll", FileOptions::default())?;
-                        std::io::copy(&mut std::fs::File::open("crate/oottracker-bizhawk/OotAutoTracker/BizHawk/ExternalTools/oottracker.dll")?, &mut zip)?;
-                    }
-                    Ok::<_, Error>(buf.into_inner())
-                }).await??;
-                Ok(Err(Self::WaitRelease(client, repo, release_rx, zip_data)))
-            }).await,
-            Self::WaitRelease(client, repo, mut release_rx, zip_data) => gres::transpose(async move {
-                let release = release_rx.recv().await?;
-                Ok(Err(Self::Upload(client, repo, release, zip_data)))
-            }).await,
-            Self::Upload(client, repo, release, zip_data) => gres::transpose(async move {
-                repo.release_attach(&client, &release, "oottracker-bizhawk-win64.zip", "application/zip", zip_data).await?;
-                Ok(Ok(()))
-            }).await,
         }
     }
 }
@@ -1108,11 +979,10 @@ async fn main(args: Args) -> Result<(), Error> {
     let cli = Arc::new(Cli::new()?);
     let create_release_cli = Arc::clone(&cli);
     let release_notes_cli = Arc::clone(&cli);
-    let (client, repo, bizhawk_version) = cli
+    let (client, repo) = cli
         .run(Setup::default(), "pre-release checks passed")
         .await??; // don't show release notes editor if version check could still fail
-    let (release_tx, release_rx_bizhawk) = broadcast::channel(1);
-    let release_rx_gui = release_tx.subscribe();
+    let (release_tx, release_rx_gui) = broadcast::channel(1);
     let release_rx_macos = release_tx.subscribe();
     let release_rx_pj64em = release_tx.subscribe();
     let create_release_args = args.clone();
@@ -1144,21 +1014,6 @@ async fn main(args: Args) -> Result<(), Error> {
     }
 
     build_tasks![
-        {
-            let cli = Arc::clone(&cli);
-            let client = client.clone();
-            let repo = repo.clone();
-            async move {
-                tokio::spawn(async move {
-                    cli.run(
-                        BuildBizHawk::new(client, repo, release_rx_bizhawk, bizhawk_version),
-                        "BizHawk build done",
-                    )
-                    .await?
-                })
-                .await?
-            }
-        },
         {
             let cli = Arc::clone(&cli);
             let client = client.clone();
