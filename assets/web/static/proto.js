@@ -834,13 +834,103 @@ function handleWebSocketMessage(event) {
     }
 }
 
+// ========== Polling Fallback ==========
+// When WebSocket is unreliable, poll for updates periodically
+
+let pollingInterval = null;
+const POLLING_INTERVAL_MS = 2000; // Poll every 2 seconds
+let pollingEnabled = localStorage.getItem('oottracker_polling_enabled') === 'true';
+
+function startPolling() {
+    if (pollingInterval) return;
+    console.log('Starting polling fallback for tracker updates');
+    pollingInterval = setInterval(pollForUpdates, POLLING_INTERVAL_MS);
+}
+
+function stopPolling() {
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+        pollingInterval = null;
+        console.log('Stopped polling fallback');
+    }
+}
+
+async function pollForUpdates() {
+    try {
+        // Fetch the current page HTML and extract cell states
+        const response = await fetch(window.location.href);
+        if (!response.ok) return;
+
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        // Update each cell by comparing with fetched HTML
+        let updatesApplied = 0;
+        for (let i = 0; i < 200; i++) {
+            const cellId = `cell${i}`;
+            const currentCell = document.getElementById(cellId);
+            const newCell = doc.getElementById(cellId);
+
+            if (!currentCell || !newCell) continue;
+
+            // Compare and update if different
+            if (currentCell.innerHTML !== newCell.innerHTML) {
+                currentCell.innerHTML = newCell.innerHTML;
+                updatesApplied++;
+            }
+        }
+
+        if (updatesApplied > 0) {
+            console.log(`Polling: applied ${updatesApplied} cell updates`);
+            window.dispatchEvent(new CustomEvent('trackerStateChanged', { detail: { type: 'poll' } }));
+        }
+    } catch (e) {
+        console.warn('Polling error:', e);
+    }
+}
+
+function togglePolling() {
+    pollingEnabled = !pollingEnabled;
+    localStorage.setItem('oottracker_polling_enabled', pollingEnabled);
+    if (pollingEnabled) {
+        startPolling();
+    } else {
+        stopPolling();
+    }
+    updatePollingIndicator();
+}
+
+function updatePollingIndicator() {
+    const indicator = document.getElementById('polling-indicator');
+    if (!indicator) return;
+    indicator.textContent = pollingEnabled ? '⟳ Polling ON' : '⟳ Polling OFF';
+    indicator.style.color = pollingEnabled ? '#4a4' : '#888';
+}
+
+function createPollingIndicator() {
+    const indicator = document.createElement('div');
+    indicator.id = 'polling-indicator';
+    indicator.style.cssText = 'position:fixed;bottom:5px;right:5px;cursor:pointer;font-size:12px;padding:4px 8px;background:rgba(0,0,0,0.7);border-radius:4px;z-index:1000;';
+    indicator.title = 'Click to toggle polling fallback (use if live updates not working)';
+    indicator.addEventListener('click', togglePolling);
+    document.body.appendChild(indicator);
+    updatePollingIndicator();
+}
+
+// ========== End Polling Fallback ==========
+
 // Initialize connection indicator and WebSocket on page load
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
         createConnectionIndicator();
+        createPollingIndicator();
         connectWebSocket();
+        if (pollingEnabled) startPolling();
     });
 } else {
     createConnectionIndicator();
+    createPollingIndicator();
     connectWebSocket();
+    if (pollingEnabled) startPolling();
 }
