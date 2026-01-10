@@ -74,6 +74,32 @@ impl ReachableRegions {
     }
 }
 
+/// Checks if a specific region is reachable from the spawn point.
+///
+/// This is a convenience function that computes full reachability and checks
+/// if the specified region is in the reachable set.
+///
+/// # Arguments
+///
+/// * `db` - The world database containing all regions and exits
+/// * `ctx` - The evaluation context providing item/event state for logic checks
+/// * `game` - Which game (OoT or MM) to compute reachability for
+/// * `region_id` - The region ID to check for reachability
+///
+/// # Returns
+///
+/// `true` if the region is reachable from spawn, `false` otherwise.
+#[must_use]
+pub fn is_region_reachable<C: EvalContext>(
+    db: &WorldDatabase,
+    ctx: &C,
+    game: Game,
+    region_id: &str,
+) -> bool {
+    let reachable = compute_reachable_regions(db, ctx, game);
+    reachable.contains(region_id)
+}
+
 /// Computes the set of reachable regions from the spawn point using BFS.
 ///
 /// Starting from the spawn region for the given game, this function performs

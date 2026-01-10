@@ -13,6 +13,12 @@
 //! let mut db = WorldDatabase::new();
 //! db.load_from_str(r#"
 //! regions:
+//!   - id: "oot_links_house"
+//!     name: "Link's House"
+//!     game: oot
+//!     exits:
+//!       - target: "kokiri_forest"
+//!         exitType: overworld
 //!   - id: "kokiri_forest"
 //!     name: "Kokiri Forest"
 //!     game: oot
@@ -40,6 +46,7 @@ use async_proto::Protocol;
 use serde::{Deserialize, Serialize};
 
 use crate::expr::{eval_str, EvalContext, EvalError};
+use crate::reachability::is_region_reachable;
 use crate::region::Game;
 use crate::world_database::WorldDatabase;
 
@@ -397,9 +404,19 @@ impl CheckTracker {
         world: &WorldDatabase,
         context: &GameContext,
     ) -> Result<bool, CheckError> {
-        let (loc, _region_id) = world
+        let (loc, region_id) = world
             .get_location(location)
             .ok_or_else(|| CheckError::LocationNotFound(location.to_string()))?;
+
+        // Get the region to determine the game
+        let region = world
+            .get_region(region_id)
+            .ok_or_else(|| CheckError::LocationNotFound(location.to_string()))?;
+
+        // First check if the region is reachable from spawn
+        if !is_region_reachable(world, context, region.game, region_id) {
+            return Ok(false);
+        }
 
         // If no logic is defined, the location is always accessible
         let Some(logic) = &loc.logic else {
@@ -546,6 +563,17 @@ mod tests {
         db.load_from_str(
             r#"
 regions:
+  # OoT spawn region with exits to test regions
+  - id: "oot_links_house"
+    name: "Link's House"
+    game: oot
+    exits:
+      - target: "kokiri_forest"
+        exitType: overworld
+      - target: "lost_woods"
+        exitType: overworld
+      - target: "forest_temple"
+        exitType: dungeon
   - id: "kokiri_forest"
     name: "Kokiri Forest"
     game: oot
@@ -581,6 +609,13 @@ regions:
         name: "First Chest"
         locationType: chest
         logic: "is_adult && has(HOOKSHOT)"
+  # MM spawn region with exit to test region
+  - id: "mm_clock_tower"
+    name: "Clock Tower"
+    game: mm
+    exits:
+      - target: "clock_town"
+        exitType: overworld
   - id: "clock_town"
     name: "Clock Town"
     game: mm
