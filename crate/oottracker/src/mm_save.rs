@@ -70,31 +70,32 @@ pub mod mm_item_ids {
     pub const BOTTLE_CHATEAU_ROMANI: u8 = 0x25;
     pub const BOTTLE_MYSTERY_MILK: u8 = 0x26;
     pub const BOTTLE_MYSTERY_MILK_SPOILED: u8 = 0x27;
-    // Masks start at 0x32
-    pub const MASK_POSTMAN: u8 = 0x32;
-    pub const MASK_ALL_NIGHT: u8 = 0x33;
-    pub const MASK_BLAST: u8 = 0x34;
-    pub const MASK_STONE: u8 = 0x35;
-    pub const MASK_GREAT_FAIRY: u8 = 0x36;
-    pub const MASK_DEKU: u8 = 0x37;
-    pub const MASK_KEATON: u8 = 0x38;
-    pub const MASK_BREMEN: u8 = 0x39;
-    pub const MASK_BUNNY: u8 = 0x3A;
-    pub const MASK_DON_GERO: u8 = 0x3B;
-    pub const MASK_SCENTS: u8 = 0x3C;
-    pub const MASK_GORON: u8 = 0x3D;
-    pub const MASK_ROMANI: u8 = 0x3E;
-    pub const MASK_CIRCUS_LEADER: u8 = 0x3F;
-    pub const MASK_KAFEI: u8 = 0x40;
-    pub const MASK_COUPLES: u8 = 0x41;
-    pub const MASK_TRUTH: u8 = 0x42;
-    pub const MASK_ZORA: u8 = 0x43;
-    pub const MASK_KAMARO: u8 = 0x44;
-    pub const MASK_GIBDO: u8 = 0x45;
-    pub const MASK_GARO: u8 = 0x46;
-    pub const MASK_CAPTAIN: u8 = 0x47;
-    pub const MASK_GIANT: u8 = 0x48;
-    pub const MASK_FIERCE_DEITY: u8 = 0x49;
+    // Masks start at 0x32 - IDs match zeldaret/mm decomp project
+    // https://github.com/zeldaret/mm/blob/main/include/z64item.h
+    pub const MASK_DEKU: u8 = 0x32;
+    pub const MASK_GORON: u8 = 0x33;
+    pub const MASK_ZORA: u8 = 0x34;
+    pub const MASK_FIERCE_DEITY: u8 = 0x35;
+    pub const MASK_TRUTH: u8 = 0x36;
+    pub const MASK_KAFEI: u8 = 0x37;
+    pub const MASK_ALL_NIGHT: u8 = 0x38;
+    pub const MASK_BUNNY: u8 = 0x39;
+    pub const MASK_KEATON: u8 = 0x3A;
+    pub const MASK_GARO: u8 = 0x3B;
+    pub const MASK_ROMANI: u8 = 0x3C;
+    pub const MASK_CIRCUS_LEADER: u8 = 0x3D;
+    pub const MASK_POSTMAN: u8 = 0x3E;
+    pub const MASK_COUPLES: u8 = 0x3F;
+    pub const MASK_GREAT_FAIRY: u8 = 0x40;
+    pub const MASK_GIBDO: u8 = 0x41;
+    pub const MASK_DON_GERO: u8 = 0x42;
+    pub const MASK_KAMARO: u8 = 0x43;
+    pub const MASK_CAPTAIN: u8 = 0x44;
+    pub const MASK_STONE: u8 = 0x45;
+    pub const MASK_BREMEN: u8 = 0x46;
+    pub const MASK_BLAST: u8 = 0x47;
+    pub const MASK_SCENTS: u8 = 0x48;
+    pub const MASK_GIANT: u8 = 0x49;
     pub const NONE: u8 = 0xFF;
 }
 
@@ -490,6 +491,90 @@ impl MmQuestItems {
     /// Returns the heart piece count (0-3)
     pub fn heart_pieces(&self) -> u8 {
         ((self.bits() >> 28) & 0xF) as u8
+    }
+
+    /// Convert from OoTMM quest item bit layout to our internal format.
+    ///
+    /// OoTMM uses a different bit layout than vanilla MM:
+    /// - Heart pieces: bits 0-3 (same as our format but at different position)
+    /// - songLullabyIntro: bit 7
+    /// - notebook: bit 13
+    /// - songSun: bit 14, songStorms: bit 15, songSoaring: bit 16
+    /// - songEpona: bit 17, songHealing: bit 18, songTime: bit 19
+    /// - songSaria: bit 20, songOrder: bit 21, songEmpty: bit 22
+    /// - songNewWave: bit 23, songLullaby: bit 24, songAwakening: bit 25
+    /// - remainsTwinmold: bit 28, remainsGyorg: bit 29
+    /// - remainsGoht: bit 30, remainsOdolwa: bit 31
+    pub fn from_ootmm_bits(ootmm_bits: u32) -> Self {
+        let mut result = MmQuestItems::empty();
+
+        // Convert boss remains (OoTMM bits 28-31 -> our bits 0-3)
+        if ootmm_bits & (1 << 31) != 0 {
+            result.insert(Self::REMAINS_ODOLWA);
+        }
+        if ootmm_bits & (1 << 30) != 0 {
+            result.insert(Self::REMAINS_GOHT);
+        }
+        if ootmm_bits & (1 << 29) != 0 {
+            result.insert(Self::REMAINS_GYORG);
+        }
+        if ootmm_bits & (1 << 28) != 0 {
+            result.insert(Self::REMAINS_TWINMOLD);
+        }
+
+        // Convert songs (OoTMM -> our format)
+        if ootmm_bits & (1 << 25) != 0 {
+            result.insert(Self::SONG_AWAKENING);
+        } // Sonata of Awakening
+        if ootmm_bits & (1 << 24) != 0 {
+            result.insert(Self::SONG_GORON);
+        } // Goron Lullaby
+        if ootmm_bits & (1 << 23) != 0 {
+            result.insert(Self::SONG_ZORA);
+        } // New Wave Bossa Nova
+        if ootmm_bits & (1 << 22) != 0 {
+            result.insert(Self::SONG_EMPTINESS);
+        } // Elegy of Emptiness
+        if ootmm_bits & (1 << 21) != 0 {
+            result.insert(Self::SONG_ORDER);
+        } // Oath to Order
+        if ootmm_bits & (1 << 20) != 0 {
+            result.insert(Self::SONG_SARIA);
+        } // Saria's Song
+        if ootmm_bits & (1 << 19) != 0 {
+            result.insert(Self::SONG_TIME);
+        } // Song of Time
+        if ootmm_bits & (1 << 18) != 0 {
+            result.insert(Self::SONG_HEALING);
+        } // Song of Healing
+        if ootmm_bits & (1 << 17) != 0 {
+            result.insert(Self::SONG_EPONA);
+        } // Epona's Song
+        if ootmm_bits & (1 << 16) != 0 {
+            result.insert(Self::SONG_SOARING);
+        } // Song of Soaring
+        if ootmm_bits & (1 << 15) != 0 {
+            result.insert(Self::SONG_STORMS);
+        } // Song of Storms
+        if ootmm_bits & (1 << 14) != 0 {
+            result.insert(Self::SONG_SUN);
+        } // Sun's Song
+
+        // Notebook (OoTMM bit 13 -> our bit 18)
+        if ootmm_bits & (1 << 13) != 0 {
+            result.insert(Self::NOTEBOOK);
+        }
+
+        // Lullaby intro (OoTMM bit 7 -> our bit 24)
+        if ootmm_bits & (1 << 7) != 0 {
+            result.insert(Self::SONG_LULLABY_INTRO);
+        }
+
+        // Heart pieces (OoTMM bits 0-3 -> our bits 28-31)
+        let heart_pieces = ootmm_bits & 0xF;
+        result |= MmQuestItems::from_bits_truncate(heart_pieces << 28);
+
+        result
     }
 }
 
@@ -1281,8 +1366,8 @@ impl MmSave {
         // Parse masks (OoTMM has masks in same array as items, starting at index 24)
         let masks = Self::parse_masks_ootmm(save_data)?;
 
-        // Parse quest items (different offset in OoTMM)
-        let quest_items = MmQuestItems::from_bits_truncate(get_u32!(QUEST_ITEMS));
+        // Parse quest items (OoTMM uses completely different bit layout)
+        let quest_items = MmQuestItems::from_ootmm_bits(get_u32!(QUEST_ITEMS));
 
         // Parse upgrades (different offset in OoTMM)
         let upgrades = MmUpgrades::from_bits_truncate(get_u32!(UPGRADES));

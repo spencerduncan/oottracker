@@ -1054,10 +1054,10 @@ mod tests {
         let save_start = MM_SAVE_ADDR as usize;
 
         // Set masks at offset 0x88
-        // Deku = 0x37, Goron = 0x3D, Bunny = 0x3A
-        ram[save_start + 0x88] = 0x37; // Deku mask in slot 0
-        ram[save_start + 0x89] = 0x3D; // Goron mask in slot 1
-        ram[save_start + 0x8A] = 0x3A; // Bunny mask in slot 2
+        // Deku = 0x32, Goron = 0x33, Bunny = 0x39 (per zeldaret/mm decomp)
+        ram[save_start + 0x88] = 0x32; // Deku mask in slot 0
+        ram[save_start + 0x89] = 0x33; // Goron mask in slot 1
+        ram[save_start + 0x8A] = 0x39; // Bunny mask in slot 2
 
         let save = decode_mm_ranges(&ram).expect("Failed to decode");
 
