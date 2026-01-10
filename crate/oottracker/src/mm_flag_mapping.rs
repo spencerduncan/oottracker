@@ -3768,4 +3768,56 @@ mod tests {
             "Unimplemented global flags should return Unknown status"
         );
     }
+
+    // === Location Count Parity Tests ===
+
+    /// Test that all MM locations from WorldDatabase are enumerable in the flag mapping.
+    ///
+    /// This verifies that the mm_flag_mapping module correctly loads all MM locations
+    /// from the embedded world data without losing any. The mm_flag_mapping module may
+    /// have additional hardcoded entries, but all YAML locations must be present.
+    #[test]
+    fn test_mm_location_count_matches_world_database() {
+        use ootmm::embedded_data;
+
+        // Get MM locations from WorldDatabase
+        let db = embedded_data::create_world_database()
+            .expect("Failed to create world database from embedded data");
+
+        let world_db_mm_count = db.locations_for_game(Game::Mm).count();
+
+        // Verify the WorldDatabase has the expected MM location count from YAML
+        // MM has: 46 (bosses) + 934 (dungeons) + 1785 (overworld) + 2 (us_variant) = 2767
+        const EXPECTED_YAML_MM_LOCATIONS: usize = 2767;
+        assert_eq!(
+            world_db_mm_count, EXPECTED_YAML_MM_LOCATIONS,
+            "WorldDatabase should have {} MM locations from YAML, got {}",
+            EXPECTED_YAML_MM_LOCATIONS, world_db_mm_count
+        );
+
+        // Verify that every location from WorldDatabase exists in the flag mapping
+        // (i.e., the pipeline doesn't lose any locations)
+        let mut missing_locations = Vec::new();
+        for (location, _region_id) in db.locations_for_game(Game::Mm) {
+            if get_mm_mapping(&location.id).is_none() {
+                missing_locations.push(location.id.clone());
+            }
+        }
+
+        assert!(
+            missing_locations.is_empty(),
+            "MM flag mapping is missing {} locations from WorldDatabase: {:?}",
+            missing_locations.len(),
+            missing_locations
+        );
+
+        // Verify the mm_flag_mapping count is at least the WorldDatabase count
+        let flag_mapping_count = mm_location_count();
+        assert!(
+            flag_mapping_count >= world_db_mm_count,
+            "mm_location_count() ({}) should be >= WorldDatabase MM locations ({})",
+            flag_mapping_count,
+            world_db_mm_count
+        );
+    }
 }

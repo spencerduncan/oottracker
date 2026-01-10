@@ -5151,4 +5151,54 @@ mod tests {
         // Other vanilla dungeons should still be active
         assert!(get_active_mapping("oot_forest_temple_compass", &settings).is_some());
     }
+
+    // === Location Count Parity Tests ===
+
+    /// Test that all OoT locations from WorldDatabase are enumerable in the flag mapping.
+    ///
+    /// This verifies that the flag_mapping module correctly loads all OoT locations
+    /// from the embedded world data without losing any. The flag_mapping module may
+    /// have additional hardcoded entries, but all YAML locations must be present.
+    #[test]
+    fn test_oot_location_count_matches_world_database() {
+        // Get OoT locations from WorldDatabase
+        let db = embedded_data::create_world_database()
+            .expect("Failed to create world database from embedded data");
+
+        let world_db_oot_count = db.locations_for_game(Game::Oot).count();
+
+        // Verify the WorldDatabase has the expected OoT location count from YAML
+        // OoT has: 31 (bosses) + 744 (dungeons) + 926 (dungeons_mq) + 1397 (overworld) = 3098
+        const EXPECTED_YAML_OOT_LOCATIONS: usize = 3098;
+        assert_eq!(
+            world_db_oot_count, EXPECTED_YAML_OOT_LOCATIONS,
+            "WorldDatabase should have {} OoT locations from YAML, got {}",
+            EXPECTED_YAML_OOT_LOCATIONS, world_db_oot_count
+        );
+
+        // Verify that every location from WorldDatabase exists in the flag mapping
+        // (i.e., the pipeline doesn't lose any locations)
+        let mut missing_locations = Vec::new();
+        for (location, _region_id) in db.locations_for_game(Game::Oot) {
+            if get_mapping(&location.id).is_none() {
+                missing_locations.push(location.id.clone());
+            }
+        }
+
+        assert!(
+            missing_locations.is_empty(),
+            "Flag mapping is missing {} OoT locations from WorldDatabase: {:?}",
+            missing_locations.len(),
+            missing_locations
+        );
+
+        // Verify the flag_mapping count is at least the WorldDatabase count
+        let flag_mapping_count = oot_location_count();
+        assert!(
+            flag_mapping_count >= world_db_oot_count,
+            "oot_location_count() ({}) should be >= WorldDatabase OoT locations ({})",
+            flag_mapping_count,
+            world_db_oot_count
+        );
+    }
 }
