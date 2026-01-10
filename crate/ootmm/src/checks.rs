@@ -13,6 +13,12 @@
 //! let mut db = WorldDatabase::new();
 //! db.load_from_str(r#"
 //! regions:
+//!   - id: "oot_links_house"
+//!     name: "Link's House"
+//!     game: oot
+//!     exits:
+//!       - target: "kokiri_forest"
+//!         exitType: overworld
 //!   - id: "kokiri_forest"
 //!     name: "Kokiri Forest"
 //!     game: oot
@@ -557,6 +563,17 @@ mod tests {
         db.load_from_str(
             r#"
 regions:
+  # OoT spawn region with exits to test regions
+  - id: "oot_links_house"
+    name: "Link's House"
+    game: oot
+    exits:
+      - target: "kokiri_forest"
+        exitType: overworld
+      - target: "lost_woods"
+        exitType: overworld
+      - target: "forest_temple"
+        exitType: dungeon
   - id: "kokiri_forest"
     name: "Kokiri Forest"
     game: oot
@@ -592,6 +609,13 @@ regions:
         name: "First Chest"
         locationType: chest
         logic: "is_adult && has(HOOKSHOT)"
+  # MM spawn region with exit to test region
+  - id: "mm_clock_tower"
+    name: "Clock Tower"
+    game: mm
+    exits:
+      - target: "clock_town"
+        exitType: overworld
   - id: "clock_town"
     name: "Clock Town"
     game: mm
