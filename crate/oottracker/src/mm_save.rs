@@ -70,31 +70,32 @@ pub mod mm_item_ids {
     pub const BOTTLE_CHATEAU_ROMANI: u8 = 0x25;
     pub const BOTTLE_MYSTERY_MILK: u8 = 0x26;
     pub const BOTTLE_MYSTERY_MILK_SPOILED: u8 = 0x27;
-    // Masks start at 0x32
-    pub const MASK_POSTMAN: u8 = 0x32;
-    pub const MASK_ALL_NIGHT: u8 = 0x33;
-    pub const MASK_BLAST: u8 = 0x34;
-    pub const MASK_STONE: u8 = 0x35;
-    pub const MASK_GREAT_FAIRY: u8 = 0x36;
-    pub const MASK_DEKU: u8 = 0x37;
-    pub const MASK_KEATON: u8 = 0x38;
-    pub const MASK_BREMEN: u8 = 0x39;
-    pub const MASK_BUNNY: u8 = 0x3A;
-    pub const MASK_DON_GERO: u8 = 0x3B;
-    pub const MASK_SCENTS: u8 = 0x3C;
-    pub const MASK_GORON: u8 = 0x3D;
-    pub const MASK_ROMANI: u8 = 0x3E;
-    pub const MASK_CIRCUS_LEADER: u8 = 0x3F;
-    pub const MASK_KAFEI: u8 = 0x40;
-    pub const MASK_COUPLES: u8 = 0x41;
-    pub const MASK_TRUTH: u8 = 0x42;
-    pub const MASK_ZORA: u8 = 0x43;
-    pub const MASK_KAMARO: u8 = 0x44;
-    pub const MASK_GIBDO: u8 = 0x45;
-    pub const MASK_GARO: u8 = 0x46;
-    pub const MASK_CAPTAIN: u8 = 0x47;
-    pub const MASK_GIANT: u8 = 0x48;
-    pub const MASK_FIERCE_DEITY: u8 = 0x49;
+    // Masks start at 0x32 - IDs match zeldaret/mm decomp project
+    // https://github.com/zeldaret/mm/blob/main/include/z64item.h
+    pub const MASK_DEKU: u8 = 0x32;
+    pub const MASK_GORON: u8 = 0x33;
+    pub const MASK_ZORA: u8 = 0x34;
+    pub const MASK_FIERCE_DEITY: u8 = 0x35;
+    pub const MASK_TRUTH: u8 = 0x36;
+    pub const MASK_KAFEI: u8 = 0x37;
+    pub const MASK_ALL_NIGHT: u8 = 0x38;
+    pub const MASK_BUNNY: u8 = 0x39;
+    pub const MASK_KEATON: u8 = 0x3A;
+    pub const MASK_GARO: u8 = 0x3B;
+    pub const MASK_ROMANI: u8 = 0x3C;
+    pub const MASK_CIRCUS_LEADER: u8 = 0x3D;
+    pub const MASK_POSTMAN: u8 = 0x3E;
+    pub const MASK_COUPLES: u8 = 0x3F;
+    pub const MASK_GREAT_FAIRY: u8 = 0x40;
+    pub const MASK_GIBDO: u8 = 0x41;
+    pub const MASK_DON_GERO: u8 = 0x42;
+    pub const MASK_KAMARO: u8 = 0x43;
+    pub const MASK_CAPTAIN: u8 = 0x44;
+    pub const MASK_STONE: u8 = 0x45;
+    pub const MASK_BREMEN: u8 = 0x46;
+    pub const MASK_BLAST: u8 = 0x47;
+    pub const MASK_SCENTS: u8 = 0x48;
+    pub const MASK_GIANT: u8 = 0x49;
     pub const NONE: u8 = 0xFF;
 }
 
