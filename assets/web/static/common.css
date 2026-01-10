@@ -116,10 +116,20 @@ table td {
 
 .items > div,
 .items > a,
-.items > form,
-a:hover {
+.items > form {
     position: relative;
     text-decoration: none;
+}
+
+/* Reset button styling for tracker cells to prevent interference with grid items */
+.items > form button {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
 }
 
 .items > div > img,
