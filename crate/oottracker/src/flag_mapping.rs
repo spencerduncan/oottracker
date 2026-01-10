@@ -48,6 +48,7 @@ use once_cell::sync::Lazy;
 
 use ootmm::embedded_data;
 use ootmm::expr::{eval_str, EvalContext};
+use ootmm::is_region_reachable;
 use ootmm::region::Game;
 use ootmm::settings::RandomizerSettings;
 use ootmm::world_database::WorldDatabase;
@@ -4096,16 +4097,26 @@ fn evaluate_accessibility(location_id: &str, save: &Save) -> Accessibility {
         return Accessibility::Unknown;
     };
 
-    let Some((location, _region_id)) = db.get_location(location_id) else {
+    let Some((location, region_id)) = db.get_location(location_id) else {
         return Accessibility::Unknown;
     };
+
+    // Get the region to determine which game this location belongs to
+    let Some(region) = db.get_region(region_id) else {
+        return Accessibility::Unknown;
+    };
+
+    let ctx = OotEvalContext::new(save);
+
+    // Check if the region is reachable before evaluating location logic
+    if !is_region_reachable(db, &ctx, region.game, region_id) {
+        return Accessibility::Unavailable;
+    }
 
     let Some(logic) = &location.logic else {
         // No logic defined means always accessible
         return Accessibility::Available;
     };
-
-    let ctx = OotEvalContext::new(save);
 
     match eval_str(logic, &ctx) {
         Ok(true) => Accessibility::Available,
