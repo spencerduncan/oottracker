@@ -177,9 +177,12 @@ mod offsets {
     /// Ocean skulltula count (u16)
     pub const SKULL_OCEAN: usize = 0x00DA;
     /// Permanent scene flags start
-    pub const PERM_SCENE_FLAGS: usize = 0x00F0;
+    /// Decomp: SaveInfo at 0x24 + permanentSceneFlags at 0xD4 = 0xF8
+    /// Reference: https://github.com/zeldaret/mm/blob/main/include/z64save.h
+    pub const PERM_SCENE_FLAGS: usize = 0x00F8;
     /// Cycle scene flags start (after perm flags)
-    pub const CYCLE_SCENE_FLAGS: usize = 0x0DF0;
+    /// Decomp: Cycle flags follow perm flags after additional save data
+    pub const CYCLE_SCENE_FLAGS: usize = 0x0DF8;
     /// Current day (u32)
     pub const DAY: usize = 0x0048;
     /// Current time (u16)
@@ -222,8 +225,9 @@ mod ootmm_offsets {
     /// Combined inventory array (48 slots: items 0-23, masks 24-47)
     /// SaveInfo(0x24) + inventory(0x4a) + items(0x00)
     pub const INVENTORY: usize = 0x006E;
-    /// Masks are in the same array as items, starting at index 32
-    /// (INVENTORY + 32 = 0x8E)
+    /// Masks are in the same array as items, starting at index 32 (0x20)
+    /// OoTMM masks are at items[32-55], so INVENTORY + 32 = 0x8E
+    /// Note: Not index 24 - the mask slots start at 32 in OoTMM
     pub const MASKS: usize = 0x008E;
     /// Ammo array (24 slots)
     #[allow(dead_code)] // Documented for reference
@@ -245,10 +249,16 @@ mod ootmm_offsets {
     pub const SKULL_SWAMP: usize = 0x00DC;
     /// Ocean skulltula count - need to verify this offset
     pub const SKULL_OCEAN: usize = 0x00DE;
-    /// Permanent scene flags start - need to verify
-    pub const PERM_SCENE_FLAGS: usize = 0x00F0;
-    /// Cycle scene flags start - need to verify
-    pub const CYCLE_SCENE_FLAGS: usize = 0x0DF0;
+    /// Permanent scene flags start
+    /// OoTMM: SaveInfo(0x24) + after inventory = 0xE4 from info start
+    /// Calculation: MmSavePlayerData(0x28) + MmItemEquips(0x14) + MmInventory(0xA8) = 0xE4
+    /// Absolute: 0x24 + 0xE4 = 0x108
+    /// Reference: https://github.com/OoTMM/OoTMM/blob/master/packages/core/include/combo/mm/save.h
+    pub const PERM_SCENE_FLAGS: usize = 0x0108;
+    /// Cycle scene flags start
+    /// OoTMM places cycle flags at 0x3F68 within MmSaveContext
+    /// Reference: https://github.com/OoTMM/OoTMM/blob/master/packages/core/include/combo/mm/save.h
+    pub const CYCLE_SCENE_FLAGS: usize = 0x3F68;
     /// Current day (u32)
     pub const DAY: usize = 0x0018;
     /// Days elapsed (u32)
