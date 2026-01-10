@@ -916,7 +916,8 @@ function updateLocationsList(data) {
         for (const loc of group.available.sort()) {
             const isPending = checkedLocationsState.pendingSkipToggles.has(loc);
             const pendingClass = isPending ? ' pending' : '';
-            html += `<div class="location-item location-available${pendingClass}" data-location="${escapeHtml(loc)}">`;
+            const tooltip = escapeHtml(getLocationTooltip(loc));
+            html += `<div class="location-item location-available${pendingClass}" data-location="${escapeHtml(loc)}" title="${tooltip}">`;
             html += `<span class="location-icon">&#9679;</span>`; // Filled circle (go get it!)
             html += `<span class="location-name">${escapeHtml(formatLocationName(loc))}</span>`;
             html += `<button class="skip-button" title="Skip this location" ${isPending ? 'disabled' : ''}>&#10006;</button>`;
@@ -927,7 +928,8 @@ function updateLocationsList(data) {
         for (const loc of group.unavailable.sort()) {
             const isPending = checkedLocationsState.pendingSkipToggles.has(loc);
             const pendingClass = isPending ? ' pending' : '';
-            html += `<div class="location-item location-unavailable${pendingClass}" data-location="${escapeHtml(loc)}">`;
+            const tooltip = escapeHtml(getLocationTooltip(loc));
+            html += `<div class="location-item location-unavailable${pendingClass}" data-location="${escapeHtml(loc)}" title="${tooltip}">`;
             html += `<span class="location-icon">&#9675;</span>`; // Empty circle (can't get yet)
             html += `<span class="location-name">${escapeHtml(formatLocationName(loc))}</span>`;
             html += `<button class="skip-button" title="Skip this location" ${isPending ? 'disabled' : ''}>&#10006;</button>`;
