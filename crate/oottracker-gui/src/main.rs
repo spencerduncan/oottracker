@@ -220,7 +220,6 @@ enum Message<R: Rando> {
     SetPasscode(String),
     SetConnection(Arc<dyn Connection>),
     SetConnectionKind(ConnectionKind),
-    SetPort(String),
     SetUrl(String),
     SetWarpSongOrder(ElementOrder),
     ToggleCheckPanel,
@@ -255,9 +254,8 @@ struct MenuState {
 #[derive(Derivative, Debug, Sequence, Clone, Copy, PartialEq, Eq)]
 #[derivative(Default)]
 enum ConnectionKind {
-    TcpListener,
     #[derivative(Default)]
-    RetroArch,
+    TcpListener,
     Web,
 }
 
@@ -265,7 +263,6 @@ impl fmt::Display for ConnectionKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ConnectionKind::TcpListener => write!(f, "Project64"),
-            ConnectionKind::RetroArch => write!(f, "RetroArch"),
             ConnectionKind::Web => write!(f, "web"),
         }
     }
@@ -274,13 +271,8 @@ impl fmt::Display for ConnectionKind {
 #[derive(Derivative, Debug, Clone)]
 #[derivative(Default)]
 enum ConnectionParams {
-    TcpListener,
     #[derivative(Default)]
-    RetroArch {
-        #[derivative(Default(value = "55355"))]
-        port: u16,
-        port_state: text_input::State,
-    },
+    TcpListener,
     Web {
         url: String,
         url_state: text_input::State,
@@ -293,7 +285,6 @@ impl ConnectionParams {
     fn kind(&self) -> ConnectionKind {
         match self {
             ConnectionParams::TcpListener => ConnectionKind::TcpListener,
-            ConnectionParams::RetroArch { .. } => ConnectionKind::RetroArch,
             ConnectionParams::Web { .. } => ConnectionKind::Web,
         }
     }
@@ -304,10 +295,6 @@ impl ConnectionParams {
         }
         *self = match kind {
             ConnectionKind::TcpListener => ConnectionParams::TcpListener,
-            ConnectionKind::RetroArch => ConnectionParams::RetroArch {
-                port: 55355,
-                port_state: text_input::State::default(),
-            },
             ConnectionKind::Web => ConnectionParams::Web {
                 url: String::default(),
                 url_state: text_input::State::default(),
@@ -320,15 +307,6 @@ impl ConnectionParams {
     fn view<R: Rando + 'static>(&mut self) -> Element<'_, Message<R>> {
         match self {
             ConnectionParams::TcpListener => Row::new().into(),
-            ConnectionParams::RetroArch { port, port_state } => Row::new()
-                .push(Text::new("Port: "))
-                .push(TextInput::new(
-                    port_state,
-                    "",
-                    &port.to_string(),
-                    Message::SetPort,
-                ))
-                .into(),
             ConnectionParams::Web {
                 url,
                 url_state,
@@ -819,17 +797,6 @@ impl Application for State<ootr_static::Rando> {
                     *passcode = new_passcode;
                 }
             }
-            Message::SetPort(new_port) => {
-                if let Some(MenuState {
-                    connection_params: ConnectionParams::RetroArch { ref mut port, .. },
-                    ..
-                }) = self.menu_state
-                {
-                    if let Ok(new_port) = new_port.parse() {
-                        *port = new_port;
-                    }
-                }
-            }
             Message::SetUrl(new_url) => {
                 if let Some(MenuState {
                     connection_params: ConnectionParams::Web { ref mut url, .. },
@@ -1237,7 +1204,6 @@ async fn connect(
 ) -> Result<Arc<dyn Connection>, ConnectionError> {
     let connection = match params {
         ConnectionParams::TcpListener => Arc::new(net::TcpConnection) as Arc<dyn Connection>,
-        ConnectionParams::RetroArch { port, .. } => Arc::new(net::RetroArchConnection { port }),
         ConnectionParams::Web { url, passcode, .. } => {
             let url = url.parse::<Url>()?;
 
@@ -1554,18 +1520,13 @@ mod tests {
     // ==========================================================================
 
     #[test]
-    fn test_connection_kind_default_is_retroarch() {
-        assert_eq!(ConnectionKind::default(), ConnectionKind::RetroArch);
+    fn test_connection_kind_default_is_tcp_listener() {
+        assert_eq!(ConnectionKind::default(), ConnectionKind::TcpListener);
     }
 
     #[test]
     fn test_connection_kind_display_tcp_listener() {
         assert_eq!(ConnectionKind::TcpListener.to_string(), "Project64");
-    }
-
-    #[test]
-    fn test_connection_kind_display_retroarch() {
-        assert_eq!(ConnectionKind::RetroArch.to_string(), "RetroArch");
     }
 
     #[test]
@@ -1576,10 +1537,7 @@ mod tests {
     #[test]
     fn test_connection_kind_equality() {
         assert_eq!(ConnectionKind::TcpListener, ConnectionKind::TcpListener);
-        assert_eq!(ConnectionKind::RetroArch, ConnectionKind::RetroArch);
         assert_eq!(ConnectionKind::Web, ConnectionKind::Web);
-        assert_ne!(ConnectionKind::TcpListener, ConnectionKind::RetroArch);
-        assert_ne!(ConnectionKind::RetroArch, ConnectionKind::Web);
         assert_ne!(ConnectionKind::TcpListener, ConnectionKind::Web);
     }
 
@@ -1588,24 +1546,15 @@ mod tests {
     // ==========================================================================
 
     #[test]
-    fn test_connection_params_default_is_retroarch() {
+    fn test_connection_params_default_is_tcp_listener() {
         let params = ConnectionParams::default();
-        assert_eq!(params.kind(), ConnectionKind::RetroArch);
+        assert_eq!(params.kind(), ConnectionKind::TcpListener);
     }
 
     #[test]
     fn test_connection_params_tcp_listener_kind() {
         let params = ConnectionParams::TcpListener;
         assert_eq!(params.kind(), ConnectionKind::TcpListener);
-    }
-
-    #[test]
-    fn test_connection_params_retroarch_kind() {
-        let params = ConnectionParams::RetroArch {
-            port: 55355,
-            port_state: text_input::State::default(),
-        };
-        assert_eq!(params.kind(), ConnectionKind::RetroArch);
     }
 
     #[test]
@@ -1620,24 +1569,7 @@ mod tests {
     }
 
     #[test]
-    fn test_connection_params_default_retroarch_port() {
-        let params = ConnectionParams::default();
-        if let ConnectionParams::RetroArch { port, .. } = params {
-            assert_eq!(port, 55355);
-        } else {
-            panic!("Expected RetroArch variant");
-        }
-    }
-
-    #[test]
-    fn test_connection_params_set_kind_retroarch_to_tcp() {
-        let mut params = ConnectionParams::default();
-        params.set_kind(ConnectionKind::TcpListener);
-        assert_eq!(params.kind(), ConnectionKind::TcpListener);
-    }
-
-    #[test]
-    fn test_connection_params_set_kind_retroarch_to_web() {
+    fn test_connection_params_set_kind_tcp_to_web() {
         let mut params = ConnectionParams::default();
         params.set_kind(ConnectionKind::Web);
         assert_eq!(params.kind(), ConnectionKind::Web);
@@ -1646,18 +1578,6 @@ mod tests {
             assert!(passcode.is_empty());
         } else {
             panic!("Expected Web variant");
-        }
-    }
-
-    #[test]
-    fn test_connection_params_set_kind_tcp_to_retroarch() {
-        let mut params = ConnectionParams::TcpListener;
-        params.set_kind(ConnectionKind::RetroArch);
-        assert_eq!(params.kind(), ConnectionKind::RetroArch);
-        if let ConnectionParams::RetroArch { port, .. } = params {
-            assert_eq!(port, 55355);
-        } else {
-            panic!("Expected RetroArch variant");
         }
     }
 
@@ -1671,21 +1591,6 @@ mod tests {
         };
         params.set_kind(ConnectionKind::TcpListener);
         assert_eq!(params.kind(), ConnectionKind::TcpListener);
-    }
-
-    #[test]
-    fn test_connection_params_set_kind_same_kind_noop() {
-        let mut params = ConnectionParams::RetroArch {
-            port: 12345, // Non-default port
-            port_state: text_input::State::default(),
-        };
-        params.set_kind(ConnectionKind::RetroArch);
-        // Should preserve the existing port since kind is the same
-        if let ConnectionParams::RetroArch { port, .. } = params {
-            assert_eq!(port, 12345);
-        } else {
-            panic!("Expected RetroArch variant");
-        }
     }
 
     #[test]
