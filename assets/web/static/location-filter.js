@@ -4,67 +4,10 @@
  * Search and filter component for tracker locations.
  * Fetches data from the real checked-locations API and derives
  * game/region/type metadata from location IDs.
+ *
+ * Note: REGION_NAMES and SORTED_REGION_KEYS are defined in checked-locations.js
+ * which is loaded before this file.
  */
-
-// ============================================================================
-// Region Data (shared with checked-locations.js)
-// ============================================================================
-
-/**
- * Region name mapping from location ID prefixes to human-readable names.
- * The order here determines display order (dungeons first, then overworld).
- */
-const REGION_NAMES = {
-    // Child Dungeons
-    'deku_tree': 'Deku Tree',
-    'dodongo_cavern': "Dodongo's Cavern",
-    'jabu_jabu': "Jabu Jabu's Belly",
-    // Adult Dungeons
-    'forest_temple': 'Forest Temple',
-    'fire_temple': 'Fire Temple',
-    'water_temple': 'Water Temple',
-    'spirit_temple': 'Spirit Temple',
-    'shadow_temple': 'Shadow Temple',
-    // Mini Dungeons
-    'bottom_of_the_well': 'Bottom of the Well',
-    'ice_cavern': 'Ice Cavern',
-    'gerudo_training': 'Gerudo Training Ground',
-    'ganon_castle': "Ganon's Castle",
-    'treasure_chest_game': 'Treasure Chest Game',
-    // Overworld - Kokiri/Forest
-    'kokiri_forest': 'Kokiri Forest',
-    'kf': 'Kokiri Forest',
-    'lw': 'Lost Woods',
-    'sfm': 'Sacred Forest Meadow',
-    // Overworld - Hyrule
-    'hf': 'Hyrule Field',
-    'lon_lon_ranch': 'Lon Lon Ranch',
-    'market': 'Market',
-    'hyrule_castle': 'Hyrule Castle',
-    'temple_of_time': 'Temple of Time',
-    // Overworld - Kakariko
-    'kak': 'Kakariko Village',
-    'graveyard': 'Graveyard',
-    // Overworld - Death Mountain
-    'dmt': 'Death Mountain Trail',
-    'death_mountain_trail': 'Death Mountain Trail',
-    'goron_city': 'Goron City',
-    'dmc': 'Death Mountain Crater',
-    'death_mountain_crater': 'Death Mountain Crater',
-    // Overworld - Zora
-    'zr': "Zora's River",
-    'zora_domain': "Zora's Domain",
-    'zora_fountain': "Zora's Fountain",
-    'lake_hylia': 'Lake Hylia',
-    // Overworld - Gerudo
-    'gerudo_valley': 'Gerudo Valley',
-    'gerudo_fortress': 'Gerudo Fortress',
-    'haunted_wasteland': 'Haunted Wasteland',
-    'desert_colossus': 'Desert Colossus'
-};
-
-// Pre-sorted region keys for efficient matching (longest first)
-const SORTED_REGION_KEYS = Object.keys(REGION_NAMES).sort((a, b) => b.length - a.length);
 
 // ============================================================================
 // Type Inference Patterns
@@ -132,9 +75,10 @@ let containerElement = null;
 
 /**
  * Get the current room name from the URL
+ * Supports both /room/<name> and /room/<name>/<layout> formats
  */
 function getRoomName() {
-    const match = window.location.pathname.match(/^\/room\/([0-9A-Za-z-]+)\/?$/);
+    const match = window.location.pathname.match(/^\/room\/([0-9A-Za-z-]+)(?:\/[0-9A-Za-z-]+)?\/?$/);
     return match ? match[1] : null;
 }
 
