@@ -5,10 +5,6 @@ authors = ["Fenhl <fenhl@fenhl.net>"]
 edition = "2021"
 
 [[bin]]
-name = "oottracker-check-bizhawk-version"
-path = "src/check_bizhawk_version.rs"
-
-[[bin]]
 name = "oottracker-format-ram"
 path = "src/format_ram.rs"
 
@@ -69,11 +65,6 @@ path = "../ootr-static"
 [target.'cfg(windows)'.dependencies.oottracker]
 path = "../oottracker"
 
-[target.'cfg(windows)'.dependencies.oottracker-bizhawk]
-path = "../oottracker-bizhawk"
-
-#[target.'cfg(windows)'.dependencies.oottracker-csharp] #TODO
-#path = "../oottracker-csharp"
 
 [target.'cfg(windows)'.dependencies.reqwest]
 version = "0.11"
