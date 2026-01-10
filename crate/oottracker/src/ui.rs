@@ -592,7 +592,6 @@ pub enum TrackerCellKind {
     OotCompass {
         active: Box<dyn Fn(&AllDungeonItems) -> bool>,
         toggle: Box<dyn Fn(&mut AllDungeonItems)>,
-        loc: ImageInfo,
         label: &'static str,
     },
     MmBossKey {
@@ -686,19 +685,14 @@ impl TrackerCellKind {
                 accessibility: None,
                 label: Some(label.to_string()),
             },
-            OotCompass {
-                active, loc, label, ..
-            } => CellRender {
+            OotCompass { active, label, .. } => CellRender {
                 img: ImageInfo::extra("compass"),
                 style: if active(&state.ram.save.dungeon_items) {
                     CellStyle::Normal
                 } else {
                     CellStyle::Dimmed
                 },
-                overlay: CellOverlay::Location {
-                    loc: loc.clone(),
-                    style: LocationStyle::Normal,
-                },
+                overlay: CellOverlay::None,
                 accessibility: None,
                 label: Some(label.to_string()),
             },
@@ -3069,61 +3063,51 @@ cells! {
     DekuCompass: OotCompass {
         active: Box::new(|keys| keys.deku_tree.contains(DungeonItems::COMPASS)),
         toggle: Box::new(|keys| keys.deku_tree.toggle(DungeonItems::COMPASS)),
-        loc: ImageInfo::new("deku_text"),
         label: "Deku",
     },
     DcCompass: OotCompass {
         active: Box::new(|keys| keys.dodongos_cavern.contains(DungeonItems::COMPASS)),
         toggle: Box::new(|keys| keys.dodongos_cavern.toggle(DungeonItems::COMPASS)),
-        loc: ImageInfo::new("dc_text"),
         label: "DC",
     },
     JabuCompass: OotCompass {
         active: Box::new(|keys| keys.jabu_jabu.contains(DungeonItems::COMPASS)),
         toggle: Box::new(|keys| keys.jabu_jabu.toggle(DungeonItems::COMPASS)),
-        loc: ImageInfo::new("jabu_text"),
         label: "Jabu",
     },
     ForestCompass: OotCompass {
         active: Box::new(|keys| keys.forest_temple.contains(DungeonItems::COMPASS)),
         toggle: Box::new(|keys| keys.forest_temple.toggle(DungeonItems::COMPASS)),
-        loc: ImageInfo::new("forest_text"),
         label: "Frst",
     },
     FireCompass: OotCompass {
         active: Box::new(|keys| keys.fire_temple.contains(DungeonItems::COMPASS)),
         toggle: Box::new(|keys| keys.fire_temple.toggle(DungeonItems::COMPASS)),
-        loc: ImageInfo::new("fire_text"),
         label: "Fire",
     },
     WaterCompass: OotCompass {
         active: Box::new(|keys| keys.water_temple.contains(DungeonItems::COMPASS)),
         toggle: Box::new(|keys| keys.water_temple.toggle(DungeonItems::COMPASS)),
-        loc: ImageInfo::new("water_text"),
         label: "Watr",
     },
     ShadowCompass: OotCompass {
         active: Box::new(|keys| keys.shadow_temple.contains(DungeonItems::COMPASS)),
         toggle: Box::new(|keys| keys.shadow_temple.toggle(DungeonItems::COMPASS)),
-        loc: ImageInfo::new("shadow_text"),
         label: "Shdw",
     },
     SpiritCompass: OotCompass {
         active: Box::new(|keys| keys.spirit_temple.contains(DungeonItems::COMPASS)),
         toggle: Box::new(|keys| keys.spirit_temple.toggle(DungeonItems::COMPASS)),
-        loc: ImageInfo::new("spirit_text"),
         label: "Sprt",
     },
     WellCompass: OotCompass {
         active: Box::new(|keys| keys.bottom_of_the_well.contains(DungeonItems::COMPASS)),
         toggle: Box::new(|keys| keys.bottom_of_the_well.toggle(DungeonItems::COMPASS)),
-        loc: ImageInfo::new("well_text"),
         label: "Well",
     },
     IceCompass: OotCompass {
         active: Box::new(|keys| keys.ice_cavern.contains(DungeonItems::COMPASS)),
         toggle: Box::new(|keys| keys.ice_cavern.toggle(DungeonItems::COMPASS)),
-        loc: ImageInfo::new("ice_text"),
         label: "Ice",
     },
 
