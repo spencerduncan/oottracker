@@ -672,4 +672,40 @@ regions:
         let mm_locs: Vec<_> = db.locations_for_game(Game::Mm).collect();
         assert_eq!(mm_locs.len(), 2);
     }
+
+    /// Test that WorldDatabase.locations().count() matches the raw YAML location count.
+    ///
+    /// This verifies that the parsing pipeline doesn't lose any locations.
+    /// The YAML files use `locationType:` as the marker for each location.
+    #[test]
+    fn test_yaml_location_count_matches_world_database() {
+        use crate::embedded_data;
+
+        // Count locations directly from raw YAML by counting `locationType:` markers
+        let mut yaml_location_count = 0;
+        for (_name, content) in embedded_data::world::all() {
+            yaml_location_count += content.matches("locationType:").count();
+        }
+
+        // Load all world data into WorldDatabase
+        let db = embedded_data::create_world_database()
+            .expect("Failed to create world database from embedded data");
+
+        // Compare counts
+        let db_location_count = db.locations().count();
+
+        assert_eq!(
+            yaml_location_count, db_location_count,
+            "YAML location count ({}) should match WorldDatabase.locations().count() ({})",
+            yaml_location_count, db_location_count
+        );
+
+        // Verify we have the expected total (5865 locations)
+        const EXPECTED_TOTAL_LOCATIONS: usize = 5865;
+        assert_eq!(
+            db_location_count, EXPECTED_TOTAL_LOCATIONS,
+            "Expected {} total locations, got {}",
+            EXPECTED_TOTAL_LOCATIONS, db_location_count
+        );
+    }
 }
