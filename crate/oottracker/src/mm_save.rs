@@ -222,9 +222,9 @@ mod ootmm_offsets {
     /// Combined inventory array (48 slots: items 0-23, masks 24-47)
     /// SaveInfo(0x24) + inventory(0x4a) + items(0x00)
     pub const INVENTORY: usize = 0x006E;
-    /// Masks are in the same array as items, starting at index 24
-    /// (INVENTORY + 24 = 0x86)
-    pub const MASKS: usize = 0x0086;
+    /// Masks are in the same array as items, starting at index 32
+    /// (INVENTORY + 32 = 0x8E)
+    pub const MASKS: usize = 0x008E;
     /// Ammo array (24 slots)
     #[allow(dead_code)] // Documented for reference
     pub const AMMO: usize = 0x009E;
