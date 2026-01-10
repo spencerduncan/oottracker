@@ -538,7 +538,8 @@ async fn retroarch_read_ram_with_detection(
                     .try_collect::<Vec<_>>()
                     .await?;
 
-            let mm_save = ram::decode_mm_range_bufs(mm_ranges)?;
+            // Standalone MM uses vanilla offsets (is_combo = false)
+            let mm_save = ram::decode_mm_range_bufs_with_type(mm_ranges, false)?;
 
             // For standalone MM, we still need to create a valid Ram struct
             // Read OoT ranges as well for the base structure (they may be zeroed/invalid)
@@ -578,7 +579,8 @@ async fn retroarch_read_ram_with_detection(
                     .try_collect::<Vec<_>>()
                     .await?;
 
-                let mm_save = ram::decode_mm_range_bufs(mm_ranges)?;
+                // OoTMM combo mode uses OoTMM offsets (is_combo = true)
+                let mm_save = ram::decode_mm_range_bufs_with_type(mm_ranges, true)?;
                 ram.mm_save = Some(mm_save);
             }
 
@@ -689,7 +691,8 @@ async fn retroarch_read_ram_with_combo_transitions(
                     .try_collect::<Vec<_>>()
                     .await?;
 
-                let mm_save = ram::decode_mm_range_bufs(mm_ranges)?;
+                // OoTMM combo mode uses OoTMM offsets (is_combo = true)
+                let mm_save = ram::decode_mm_range_bufs_with_type(mm_ranges, true)?;
 
                 // Only preserve MM state when we're stable (not during transition)
                 // During transitions, the data may be inconsistent/garbage

@@ -127,6 +127,19 @@ impl MmRomType {
             _ => MmRomType::Vanilla,
         }
     }
+
+    /// Determine if this is a combo ROM type.
+    ///
+    /// When `is_combo` is true, returns `OoTMM`, otherwise returns `Vanilla`.
+    /// This is used when the game type is detected automatically rather than
+    /// relying on environment variables.
+    pub fn from_combo_flag(is_combo: bool) -> Self {
+        if is_combo {
+            MmRomType::OoTMM
+        } else {
+            MmRomType::Vanilla
+        }
+    }
 }
 
 /// Memory offsets within MM SaveContext - vanilla MM structure
