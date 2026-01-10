@@ -339,6 +339,15 @@ struct ComboTransitionTracker {
     in_transition: bool,
     /// The transition direction (if transitioning)
     transition_direction: Option<TransitionState>,
+    /// Whether we've ever seen valid MM data (visited MM world at least once).
+    /// This prevents showing garbage MM data when starting in OoT world.
+    has_seen_valid_mm: bool,
+    /// Whether we've ever seen valid OoT data (visited OoT world at least once).
+    /// This prevents showing garbage OoT data when starting in MM world.
+    has_seen_valid_oot: bool,
+    /// Whether we've ever detected combo mode. Once true, we should always use
+    /// combo mode handling even if detection temporarily fails on some frames.
+    has_detected_combo_mode: bool,
 }
 
 impl ComboTransitionTracker {
@@ -375,6 +384,7 @@ impl ComboTransitionTracker {
     /// Preserve MM save data for later restoration
     fn preserve_mm_state(&mut self, mm_save: &MmSave) {
         self.last_mm_save = Some(mm_save.clone());
+        self.has_seen_valid_mm = true;
     }
 
     /// Get the preserved MM save data
@@ -385,11 +395,32 @@ impl ComboTransitionTracker {
     /// Preserve OoT save data for later restoration
     fn preserve_oot_state(&mut self, oot_save: &Save) {
         self.last_oot_save = Some(*oot_save);
+        self.has_seen_valid_oot = true;
     }
 
     /// Get the preserved OoT save data
     fn get_preserved_oot_save(&self) -> Option<&Save> {
         self.last_oot_save.as_ref()
+    }
+
+    /// Returns true if we have ever seen valid MM data (visited MM world).
+    fn has_seen_valid_mm(&self) -> bool {
+        self.has_seen_valid_mm
+    }
+
+    /// Returns true if we have ever seen valid OoT data (visited OoT world).
+    fn has_seen_valid_oot(&self) -> bool {
+        self.has_seen_valid_oot
+    }
+
+    /// Mark that we've detected combo mode.
+    fn set_combo_mode_detected(&mut self) {
+        self.has_detected_combo_mode = true;
+    }
+
+    /// Returns true if we've ever detected combo mode.
+    fn has_detected_combo_mode(&self) -> bool {
+        self.has_detected_combo_mode
     }
 }
 
@@ -612,8 +643,16 @@ async fn retroarch_read_ram_with_combo_transitions(
         detector.set_game_type(detected_game_type);
     }
 
-    // For non-combo modes, use the standard detection
-    if detected_game_type != GameType::OoTMMCombo {
+    // If we've detected combo mode, remember it permanently.
+    // This prevents flickering between combo and non-combo detection on unstable frames.
+    if detected_game_type == GameType::OoTMMCombo {
+        combo_tracker.set_combo_mode_detected();
+    }
+
+    // For non-combo modes, only use standard detection if we've NEVER detected combo mode.
+    // Once we know it's a combo ROM, we should always use combo handling to prevent
+    // reading garbage data when detection temporarily fails.
+    if detected_game_type != GameType::OoTMMCombo && !combo_tracker.has_detected_combo_mode() {
         return retroarch_read_ram_with_detection(sock, detector).await;
     }
 
@@ -672,10 +711,15 @@ async fn retroarch_read_ram_with_combo_transitions(
                     combo_tracker.preserve_oot_state(&ram.save);
                 }
 
-                // Use preserved MM data if available (MM address is garbage when OoT is active)
-                if let Some(preserved_mm) = combo_tracker.get_preserved_mm_save() {
-                    ram.mm_save = Some(preserved_mm.clone());
+                // Use preserved MM data ONLY if we have ever visited MM world.
+                // If we've never been to MM, don't show any MM data (it would be garbage).
+                // This fixes the bug where starting in OoT world shows garbage MM data.
+                if combo_tracker.has_seen_valid_mm() {
+                    if let Some(preserved_mm) = combo_tracker.get_preserved_mm_save() {
+                        ram.mm_save = Some(preserved_mm.clone());
+                    }
                 }
+                // If has_seen_valid_mm is false, mm_save stays None (no MM data to display)
 
                 ram
             }
@@ -700,16 +744,26 @@ async fn retroarch_read_ram_with_combo_transitions(
                     combo_tracker.preserve_mm_state(&mm_save);
                 }
 
-                // Use preserved OoT state (the OoT save address is garbage when MM is active)
-                let ram = if let Some(preserved_oot) = combo_tracker.get_preserved_oot_save() {
-                    // Create RAM with preserved OoT save and fresh MM save
-                    Ram {
-                        save: *preserved_oot,
-                        mm_save: Some(mm_save),
-                        ..Default::default()
+                // Use preserved OoT state ONLY if we have ever visited OoT world.
+                // The OoT save address is garbage when MM is active.
+                let ram = if combo_tracker.has_seen_valid_oot() {
+                    if let Some(preserved_oot) = combo_tracker.get_preserved_oot_save() {
+                        // Create RAM with preserved OoT save and fresh MM save
+                        Ram {
+                            save: *preserved_oot,
+                            mm_save: Some(mm_save),
+                            ..Default::default()
+                        }
+                    } else {
+                        // has_seen_valid_oot is true but no preserved data (shouldn't happen)
+                        // Fall back to default OoT save
+                        Ram {
+                            mm_save: Some(mm_save),
+                            ..Default::default()
+                        }
                     }
                 } else {
-                    // No preserved OoT data yet - this happens if user started in MM world
+                    // No valid OoT data yet - this happens if user started in MM world
                     // Create a default/empty OoT save to avoid showing garbage
                     Ram {
                         mm_save: Some(mm_save),
