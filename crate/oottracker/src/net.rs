@@ -348,7 +348,6 @@ impl ComboTransitionTracker {
     }
 
     /// Check if the current game state is considered stable
-    #[allow(dead_code)]
     fn is_stable(&self) -> bool {
         self.frames_stable >= TRANSITION_STABILITY_FRAMES && !self.in_transition
     }
@@ -665,8 +664,11 @@ async fn retroarch_read_ram_with_combo_transitions(
 
                 let mut ram = Ram::from_range_bufs(oot_ranges)?;
 
-                // Preserve the fresh OoT state for when we switch to MM
-                combo_tracker.preserve_oot_state(&ram.save);
+                // Only preserve OoT state when we're stable (not during transition)
+                // During transitions, the data may be inconsistent/garbage
+                if combo_tracker.is_stable() {
+                    combo_tracker.preserve_oot_state(&ram.save);
+                }
 
                 // Use preserved MM data if available (MM address is garbage when OoT is active)
                 if let Some(preserved_mm) = combo_tracker.get_preserved_mm_save() {
@@ -689,8 +691,11 @@ async fn retroarch_read_ram_with_combo_transitions(
 
                 let mm_save = ram::decode_mm_range_bufs(mm_ranges)?;
 
-                // Preserve the fresh MM state
-                combo_tracker.preserve_mm_state(&mm_save);
+                // Only preserve MM state when we're stable (not during transition)
+                // During transitions, the data may be inconsistent/garbage
+                if combo_tracker.is_stable() {
+                    combo_tracker.preserve_mm_state(&mm_save);
+                }
 
                 // Use preserved OoT state (the OoT save address is garbage when MM is active)
                 let ram = if let Some(preserved_oot) = combo_tracker.get_preserved_oot_save() {
