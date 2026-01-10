@@ -865,6 +865,21 @@ async function pollForUpdates() {
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
 
+        // Helper to extract style from a cell's main image
+        function getCellStyle(cell) {
+            const img = cell.querySelector('img');
+            if (!img) return null;
+            const className = img.getAttribute('class') || '';
+            if (className.includes('dimmed') && !className.includes('left-dimmed') && !className.includes('right-dimmed')) {
+                return 1; // Dimmed
+            } else if (className.includes('left-dimmed')) {
+                return 2; // LeftDimmed
+            } else if (className.includes('right-dimmed')) {
+                return 3; // RightDimmed
+            }
+            return 0; // Normal
+        }
+
         // Update each cell by comparing with fetched HTML
         let updatesApplied = 0;
         for (let i = 0; i < 200; i++) {
@@ -876,8 +891,23 @@ async function pollForUpdates() {
 
             // Compare and update if different
             if (currentCell.innerHTML !== newCell.innerHTML) {
+                // Get styles before and after to detect item collection
+                const prevStyle = getCellStyle(currentCell);
+                const newStyle = getCellStyle(newCell);
+
+                // Apply the update
                 currentCell.innerHTML = newCell.innerHTML;
                 updatesApplied++;
+
+                // Check for item collection: transition from dimmed (1) to normal (0)
+                if (prevStyle === 1 && newStyle === 0) {
+                    playFanfare();
+                }
+
+                // Update cellStates Map to keep it in sync
+                if (newStyle !== null) {
+                    cellStates.set(cellId, newStyle);
+                }
             }
         }
 
