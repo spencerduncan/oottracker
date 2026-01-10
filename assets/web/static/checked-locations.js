@@ -19,6 +19,7 @@ let checkedLocationsState = {
     collapsedRegions: new Set(), // Track which regions are collapsed
     pendingSkipToggles: new Set(), // Track locations with pending skip toggle requests
     hideUnavailable: false, // Filter to hide inaccessible locations
+    hideMqLocations: false, // Filter to hide Master Quest dungeon checks
     // Auto-scroll state
     lastSceneId: null,           // Track last seen scene ID for detecting changes
     lastGame: null,              // Track which game was active ('oot' or 'mm')
@@ -568,9 +569,45 @@ function toggleHideUnavailable() {
 }
 
 /**
+ * Toggle the hide MQ locations filter
+ */
+function toggleHideMqLocations() {
+    checkedLocationsState.hideMqLocations = !checkedLocationsState.hideMqLocations;
+    // Save preference to localStorage
+    localStorage.setItem('oottracker_hide_mq_locations', checkedLocationsState.hideMqLocations);
+    // Re-render the list
+    const data = {
+        locations: Object.entries(checkedLocationsState.locations).map(([id, locData]) => ({
+            location_id: id,
+            status: locData.status,
+            accessibility: locData.accessibility
+        }))
+    };
+    updateLocationsList(data);
+    // Update checkbox state
+    const checkbox = document.getElementById('hide-mq-checkbox');
+    if (checkbox) {
+        checkbox.checked = checkedLocationsState.hideMqLocations;
+    }
+}
+
+/**
+ * Check if a location ID represents a Master Quest dungeon check.
+ * MQ locations use the "mq_oot_mq_" prefix to distinguish from vanilla.
+ */
+function isMqLocation(locationId) {
+    return locationId.startsWith('mq_oot_mq_');
+}
+
+/**
  * Check if a location should be hidden based on current filter settings
  */
 function shouldHideLocation(locationId, status) {
+    // Check MQ filter first (applies regardless of check status)
+    if (checkedLocationsState.hideMqLocations && isMqLocation(locationId)) {
+        return true;
+    }
+
     if (!checkedLocationsState.hideUnavailable) {
         return false;
     }
@@ -649,6 +686,24 @@ function createCheckedLocationsPanel() {
     filterLabel.appendChild(filterCheckbox);
     filterLabel.appendChild(filterText);
     filterControls.appendChild(filterLabel);
+
+    // Hide MQ locations checkbox
+    const mqLabel = document.createElement('label');
+    mqLabel.className = 'filter-checkbox-label';
+
+    const mqCheckbox = document.createElement('input');
+    mqCheckbox.type = 'checkbox';
+    mqCheckbox.id = 'hide-mq-checkbox';
+    mqCheckbox.checked = checkedLocationsState.hideMqLocations;
+    mqCheckbox.addEventListener('change', toggleHideMqLocations);
+
+    const mqText = document.createElement('span');
+    mqText.textContent = 'Hide MQ checks';
+    mqText.title = 'Hide Master Quest dungeon checks (for vanilla dungeon playthroughs)';
+
+    mqLabel.appendChild(mqCheckbox);
+    mqLabel.appendChild(mqText);
+    filterControls.appendChild(mqLabel);
 
     const list = document.createElement('div');
     list.className = 'locations-list';
@@ -1142,10 +1197,15 @@ function initCheckedLocations() {
         return;
     }
 
-    // Load saved filter preference from localStorage
+    // Load saved filter preferences from localStorage
     const savedHideUnavailable = localStorage.getItem('oottracker_hide_unavailable');
     if (savedHideUnavailable !== null) {
         checkedLocationsState.hideUnavailable = savedHideUnavailable === 'true';
+    }
+
+    const savedHideMq = localStorage.getItem('oottracker_hide_mq_locations');
+    if (savedHideMq !== null) {
+        checkedLocationsState.hideMqLocations = savedHideMq === 'true';
     }
 
     // Create UI elements
