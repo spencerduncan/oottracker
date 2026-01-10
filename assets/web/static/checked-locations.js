@@ -261,6 +261,177 @@ const REGION_NAMES = {
 const SORTED_REGION_KEYS = Object.keys(REGION_NAMES).sort((a, b) => b.length - a.length);
 
 /**
+ * Mapping from subscene region keys to their parent region keys.
+ * Used to group interior locations (houses, shops) with their parent area.
+ * When a location is in a subscene, it will be displayed under the parent region.
+ */
+const SUBSCENE_PARENTS = {
+    // Kokiri Forest subscenes
+    'midos_house': 'kokiri_forest',
+    'sarias_house': 'kokiri_forest',
+    'know_it_all_house': 'kokiri_forest',
+    'house_of_twins': 'kokiri_forest',
+    'links_house': 'kokiri_forest',
+    'kokiri_shop': 'kokiri_forest',
+    'kokiri_shop_items': 'kokiri_forest',
+    // Lost Woods subscenes
+    'lost_woods_generic_grotto': 'lw',
+    'lost_woods_scrub_grotto': 'lw',
+    // Kakariko subscenes
+    'skulltula_house': 'kak',
+    'windmill': 'kak',
+    'impa_house_front': 'kak',
+    'impa_house_back': 'kak',
+    'kakariko_carpenter_house': 'kak',
+    'kakariko_granny_shop': 'kak',
+    'kakariko_potion_shop': 'kak',
+    'kakariko_potion_shop_back': 'kak',
+    'kakariko_potion_shop_junction': 'kak',
+    'kakariko_bazaar': 'kak',
+    'kakariko_generic_grotto': 'kak',
+    'redead_grotto': 'kak',
+    // Graveyard subscenes
+    'dampe_house': 'graveyard',
+    'dampe_grave': 'graveyard',
+    'graveyard_shield_grave': 'graveyard',
+    'graveyard_redead_grave': 'graveyard',
+    'graveyard_royal_tomb': 'graveyard',
+    // Market subscenes
+    'market_mask_shop': 'market',
+    'market_potion_shop': 'market',
+    'market_potion_shop_items': 'market',
+    'market_bombchu_shop': 'market',
+    'market_bombchu_shop_items': 'market',
+    'market_pot_house': 'market',
+    'market_pot_house_child': 'market',
+    'market_pot_house_adult': 'market',
+    'back_alley': 'market',
+    'dog_lady_house': 'market',
+    'market_bazaar': 'market',
+    'market_bazaar_items': 'market',
+    'bombchu_bowling_rewards': 'market',
+    'treasure_chest_game': 'market',
+    'treasure_chest_game_room_1': 'market',
+    'treasure_chest_game_room_2': 'market',
+    'treasure_chest_game_room_3': 'market',
+    'treasure_chest_game_room_4': 'market',
+    'treasure_chest_game_room_5': 'market',
+    'treasure_chest_game_room_6': 'market',
+    // Hyrule Castle subscenes
+    'hyrule_castle_courtyard': 'hyrule_castle',
+    'hyrule_castle_grotto': 'hyrule_castle',
+    // Lon Lon Ranch subscenes
+    'lon_lon_ranch_house': 'lon_lon_ranch',
+    'lon_lon_ranch_stables': 'lon_lon_ranch',
+    'lon_lon_ranch_silo': 'lon_lon_ranch',
+    'lon_lon_ranch_grotto': 'lon_lon_ranch',
+    // Goron City subscenes
+    'goron_city_grotto': 'goron_city',
+    'darunia_chamber': 'goron_city',
+    'goron_shop': 'goron_city',
+    // Zora's Domain subscenes
+    'zora_domain_grotto': 'zora_domain',
+    'zora_shop': 'zora_domain',
+    // Lake Hylia subscenes
+    'lake_hylia_grotto': 'lake_hylia',
+    'fishing_pond': 'lake_hylia',
+    'laboratory': 'lake_hylia',
+    // Gerudo Valley subscenes
+    'gerudo_valley_storms_grotto': 'gerudo_valley',
+    // Gerudo Fortress subscenes
+    'gerudo_fortress_grotto': 'gerudo_fortress',
+    // Desert Colossus subscenes
+    'desert_colossus_grotto': 'desert_colossus',
+    // Sacred Forest Meadow subscenes
+    'sacred_meadow_fairy_grotto': 'sfm',
+    'sacred_meadow_storms_grotto': 'sfm',
+    'wolfos_grotto': 'sfm',
+    // Hyrule Field subscenes (grottos)
+    'hyrule_field_fairy_grotto': 'hf',
+    'hyrule_field_grotto_near_gv': 'hf',
+    'hyrule_field_grotto_near_kak': 'hf',
+    'hyrule_field_grotto_near_market': 'hf',
+    'hyrule_field_open_grotto': 'hf',
+    'hyrule_field_scrub_grotto': 'hf',
+    'hyrule_field_southeast_grotto': 'hf',
+    'hyrule_field_tektite_grotto': 'hf',
+    // Zora's River subscenes
+    'zora_river_boulder_grotto': 'zr',
+    'zora_river_open_grotto': 'zr',
+    'zora_river_storms_grotto': 'zr',
+    // Death Mountain Trail subscenes
+    'death_mountain_storms_grotto': 'dmt',
+    'death_mountain_cow_grotto': 'dmt',
+    'dodongo_grotto': 'dmt',
+    // Death Mountain Crater subscenes
+    'death_mountain_crater_generic_grotto': 'dmc',
+    'death_mountain_crater_scrub_grotto': 'dmc',
+    // MM Clock Town subscenes
+    'bomb_shop': 'clock_town',
+    'trading_post': 'clock_town',
+    'trading_post_items': 'clock_town',
+    'clock_town_fairy_fountain': 'clock_town',
+    'town_archery': 'clock_town',
+    'honey_darling_game': 'clock_town',
+    'kafei_hideout': 'clock_town',
+    'laundry_pool': 'clock_town',
+    // MM Romani Ranch subscenes
+    'ranch_house': 'romani_ranch',
+    'stables': 'romani_ranch',
+    'cucco_shack': 'romani_ranch',
+    // MM Ikana subscenes
+    'music_box_house': 'ikana_canyon',
+    'ikana_fairy_fountain': 'ikana_canyon',
+    'sakon_hideout': 'ikana_canyon',
+    // MM Mountain Village subscenes
+    'mountain_village_grotto': 'mountain_village',
+    'blacksmith': 'mountain_village',
+    // MM Goron Village subscenes
+    'goron_graveyard': 'goron_village',
+    // MM Great Bay subscenes
+    'great_bay_fairy_fountain': 'great_bay_coast',
+    'great_bay_grotto': 'great_bay_coast',
+    'great_bay_cow_grotto': 'great_bay_coast',
+    // MM Zora Cape subscenes
+    'zora_cape_grotto': 'zora_cape',
+    // MM Zora Hall subscenes
+    'lulus_room': 'zora_hall',
+    'evans_room': 'zora_hall',
+    // MM Southern Swamp subscenes
+    'swamp_potion_shop': 'southern_swamp',
+    'swamp_archery': 'southern_swamp',
+    'woods_of_mystery': 'southern_swamp',
+    'woods_of_mystery_grotto': 'southern_swamp',
+    'southern_swamp_grotto': 'southern_swamp',
+    'deku_theater': 'southern_swamp',
+    // MM Termina Field subscenes
+    'termina_field_cow_grotto': 'termina_field',
+    'bio_baba_grotto': 'termina_field',
+    'grass_grotto': 'termina_field',
+    'peahat_grotto': 'termina_field',
+    'pillar_grotto': 'termina_field',
+    'scrub_grotto': 'termina_field',
+    'swamp_gossip_grotto': 'termina_field',
+    'ocean_gossip_grotto': 'termina_field',
+    'canyon_gossip_grotto': 'termina_field',
+    'mountain_gossip_grotto': 'termina_field',
+    // MM Ikana Graveyard subscenes
+    'ikana_graveyard_grotto': 'ikana_graveyard',
+    // Spider House subscenes
+    'swamp_spider_house_main': 'swamp_spider_house',
+    'ocean_spider_house_front': 'ocean_spider_house',
+    'ocean_spider_house_back': 'ocean_spider_house',
+};
+
+/**
+ * Get the effective region for grouping purposes.
+ * If the region is a subscene, returns the parent region.
+ */
+function getEffectiveRegion(region) {
+    return SUBSCENE_PARENTS[region] || region;
+}
+
+/**
  * Mapping from OoT scene IDs to region keys.
  * Scene IDs are from game_detection.rs.
  */
@@ -840,7 +1011,8 @@ function updateLocationsList(data) {
             continue;
         }
 
-        const region = extractRegion(loc.location_id);
+        const rawRegion = extractRegion(loc.location_id);
+        const region = getEffectiveRegion(rawRegion);
         if (!regionGroups[region]) {
             regionGroups[region] = {
                 checked: [],
