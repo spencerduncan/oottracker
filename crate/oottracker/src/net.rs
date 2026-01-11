@@ -3,8 +3,7 @@ use crate::firebase;
 use {
     crate::{
         proto::{self, Packet, TCP_PORT},
-        ram,
-        websocket, ModelState,
+        ram, websocket, ModelState,
     },
     async_proto::Protocol as _,
     derive_more::From,
