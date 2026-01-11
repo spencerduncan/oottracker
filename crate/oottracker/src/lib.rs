@@ -56,7 +56,7 @@ static WORLD_DATABASE: Lazy<WorldDatabase> =
 /// use oottracker::world_database;
 ///
 /// let db = world_database();
-/// assert!(db.has_region("kokiri_forest"));
+/// assert!(db.has_region("oot_kokiri_forest"));
 /// ```
 ///
 /// # Panics

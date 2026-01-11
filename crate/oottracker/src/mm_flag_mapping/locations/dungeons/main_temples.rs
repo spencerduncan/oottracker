@@ -1,0 +1,336 @@
+//! Main temple dungeon chest mappings.
+//!
+//! Woodfall Temple, Snowhead Temple, Great Bay Temple, and Stone Tower Temple.
+
+use std::collections::HashMap;
+
+use crate::mm_flag_mapping::{scenes, MmFlagMapping, MmFlagType};
+
+/// Registers main temple chest mappings into the provided map.
+pub fn register_main_temples(map: &mut HashMap<&'static str, MmFlagMapping>) {
+    register_woodfall_temple(map);
+    register_snowhead_temple(map);
+    register_great_bay_temple(map);
+    register_stone_tower_temple(map);
+    register_stone_tower_temple_inverted(map);
+}
+
+/// Woodfall Temple (Scene 0x1F)
+fn register_woodfall_temple(map: &mut HashMap<&'static str, MmFlagMapping>) {
+    add(
+        map,
+        "mm_woodfall_temple_entrance_chest",
+        scenes::WOODFALL_TEMPLE,
+        0x0000_0001,
+    );
+    add(
+        map,
+        "mm_woodfall_temple_water_chest",
+        scenes::WOODFALL_TEMPLE,
+        0x0000_0002,
+    );
+    add(
+        map,
+        "mm_woodfall_temple_dark_chest",
+        scenes::WOODFALL_TEMPLE,
+        0x0000_0004,
+    );
+    add(
+        map,
+        "mm_woodfall_temple_center_chest",
+        scenes::WOODFALL_TEMPLE,
+        0x0000_0008,
+    );
+    add(
+        map,
+        "mm_woodfall_temple_boss_key_chest",
+        scenes::WOODFALL_TEMPLE,
+        0x0000_0010,
+    );
+}
+
+/// Snowhead Temple (Scene 0x22)
+fn register_snowhead_temple(map: &mut HashMap<&'static str, MmFlagMapping>) {
+    add(
+        map,
+        "mm_snowhead_temple_map_chest",
+        scenes::SNOWHEAD_TEMPLE,
+        0x0000_0001,
+    );
+    add(
+        map,
+        "mm_snowhead_temple_compass_chest",
+        scenes::SNOWHEAD_TEMPLE,
+        0x0000_0002,
+    );
+    add(
+        map,
+        "mm_snowhead_temple_boss_key_chest",
+        scenes::SNOWHEAD_TEMPLE,
+        0x0000_0004,
+    );
+    add(
+        map,
+        "mm_snowhead_temple_fire_arrow_chest",
+        scenes::SNOWHEAD_TEMPLE,
+        0x0000_0008,
+    );
+    add(
+        map,
+        "mm_snowhead_temple_block_room_chest",
+        scenes::SNOWHEAD_TEMPLE,
+        0x0000_0010,
+    );
+    add(
+        map,
+        "mm_snowhead_temple_icicle_room_chest",
+        scenes::SNOWHEAD_TEMPLE,
+        0x0000_0020,
+    );
+    add(
+        map,
+        "mm_snowhead_temple_bridge_room_chest",
+        scenes::SNOWHEAD_TEMPLE,
+        0x0000_0040,
+    );
+}
+
+/// Great Bay Temple (Scene 0x1E)
+fn register_great_bay_temple(map: &mut HashMap<&'static str, MmFlagMapping>) {
+    add(
+        map,
+        "mm_great_bay_temple_entrance_chest",
+        scenes::GREAT_BAY_TEMPLE,
+        0x0000_0001,
+    );
+    add(
+        map,
+        "mm_great_bay_temple_baba_chest",
+        scenes::GREAT_BAY_TEMPLE,
+        0x0000_0002,
+    );
+    add(
+        map,
+        "mm_great_bay_temple_green_pipe_1_chest",
+        scenes::GREAT_BAY_TEMPLE,
+        0x0000_0004,
+    );
+    add(
+        map,
+        "mm_great_bay_temple_green_pipe_2_lower_chest",
+        scenes::GREAT_BAY_TEMPLE,
+        0x0000_0008,
+    );
+    add(
+        map,
+        "mm_great_bay_temple_green_pipe_2_upper_chest",
+        scenes::GREAT_BAY_TEMPLE,
+        0x0000_0010,
+    );
+    add(
+        map,
+        "mm_great_bay_temple_green_pipe_3_chest",
+        scenes::GREAT_BAY_TEMPLE,
+        0x0000_0020,
+    );
+    add(
+        map,
+        "mm_great_bay_temple_map_chest",
+        scenes::GREAT_BAY_TEMPLE,
+        0x0000_0040,
+    );
+    add(
+        map,
+        "mm_great_bay_temple_compass_chest",
+        scenes::GREAT_BAY_TEMPLE,
+        0x0000_0080,
+    );
+    add(
+        map,
+        "mm_great_bay_temple_boss_key_chest",
+        scenes::GREAT_BAY_TEMPLE,
+        0x0000_0100,
+    );
+    add(
+        map,
+        "mm_great_bay_temple_ice_arrow_chest",
+        scenes::GREAT_BAY_TEMPLE,
+        0x0000_0200,
+    );
+    add(
+        map,
+        "mm_great_bay_temple_hookshot_chest",
+        scenes::GREAT_BAY_TEMPLE,
+        0x0000_0400,
+    );
+    add(
+        map,
+        "mm_great_bay_temple_small_key_chest",
+        scenes::GREAT_BAY_TEMPLE,
+        0x0000_0800,
+    );
+}
+
+/// Stone Tower Temple (Scene 0x18)
+fn register_stone_tower_temple(map: &mut HashMap<&'static str, MmFlagMapping>) {
+    add(
+        map,
+        "mm_stone_tower_temple_entrance_chest",
+        scenes::STONE_TOWER_TEMPLE,
+        0x0000_0001,
+    );
+    add(
+        map,
+        "mm_stone_tower_temple_entrance_switch_chest",
+        scenes::STONE_TOWER_TEMPLE,
+        0x0000_0002,
+    );
+    add(
+        map,
+        "mm_stone_tower_temple_under_west_garden_ledge_chest",
+        scenes::STONE_TOWER_TEMPLE,
+        0x0000_0004,
+    );
+    add(
+        map,
+        "mm_stone_tower_temple_under_west_garden_lava_chest",
+        scenes::STONE_TOWER_TEMPLE,
+        0x0000_0008,
+    );
+    add(
+        map,
+        "mm_stone_tower_temple_center_sun_block_chest",
+        scenes::STONE_TOWER_TEMPLE,
+        0x0000_0010,
+    );
+    add(
+        map,
+        "mm_stone_tower_temple_center_across_water_chest",
+        scenes::STONE_TOWER_TEMPLE,
+        0x0000_0020,
+    );
+    add(
+        map,
+        "mm_stone_tower_temple_water_sun_switch_chest",
+        scenes::STONE_TOWER_TEMPLE,
+        0x0000_0040,
+    );
+    add(
+        map,
+        "mm_stone_tower_temple_mirrors_room_center_chest",
+        scenes::STONE_TOWER_TEMPLE,
+        0x0000_0080,
+    );
+    add(
+        map,
+        "mm_stone_tower_temple_mirrors_room_right_chest",
+        scenes::STONE_TOWER_TEMPLE,
+        0x0000_0100,
+    );
+    add(
+        map,
+        "mm_stone_tower_temple_wind_room_ledge_chest",
+        scenes::STONE_TOWER_TEMPLE,
+        0x0000_0200,
+    );
+    add(
+        map,
+        "mm_stone_tower_temple_wind_room_jail_chest",
+        scenes::STONE_TOWER_TEMPLE,
+        0x0000_0400,
+    );
+    add(
+        map,
+        "mm_stone_tower_temple_before_water_bridge_chest",
+        scenes::STONE_TOWER_TEMPLE,
+        0x0000_0800,
+    );
+    add(
+        map,
+        "mm_stone_tower_temple_water_bridge_chest",
+        scenes::STONE_TOWER_TEMPLE,
+        0x0000_1000,
+    );
+    add(
+        map,
+        "mm_stone_tower_temple_map_chest",
+        scenes::STONE_TOWER_TEMPLE,
+        0x0000_2000,
+    );
+    add(
+        map,
+        "mm_stone_tower_temple_compass_chest",
+        scenes::STONE_TOWER_TEMPLE,
+        0x0000_4000,
+    );
+    add(
+        map,
+        "mm_stone_tower_temple_boss_key_chest",
+        scenes::STONE_TOWER_TEMPLE,
+        0x0000_8000,
+    );
+    add(
+        map,
+        "mm_stone_tower_temple_light_arrow_chest",
+        scenes::STONE_TOWER_TEMPLE,
+        0x0001_0000,
+    );
+    add(
+        map,
+        "mm_stone_tower_temple_giants_mask_chest",
+        scenes::STONE_TOWER_TEMPLE,
+        0x0002_0000,
+    );
+}
+
+/// Stone Tower Temple Inverted (Scene 0x19)
+fn register_stone_tower_temple_inverted(map: &mut HashMap<&'static str, MmFlagMapping>) {
+    add(
+        map,
+        "mm_stone_tower_temple_inverted_entrance_chest",
+        scenes::STONE_TOWER_TEMPLE_INVERTED,
+        0x0000_0001,
+    );
+    add(
+        map,
+        "mm_stone_tower_temple_inverted_east_lower_chest",
+        scenes::STONE_TOWER_TEMPLE_INVERTED,
+        0x0000_0002,
+    );
+    add(
+        map,
+        "mm_stone_tower_temple_inverted_east_upper_chest",
+        scenes::STONE_TOWER_TEMPLE_INVERTED,
+        0x0000_0004,
+    );
+    add(
+        map,
+        "mm_stone_tower_temple_inverted_east_middle_chest",
+        scenes::STONE_TOWER_TEMPLE_INVERTED,
+        0x0000_0008,
+    );
+    add(
+        map,
+        "mm_stone_tower_temple_inverted_wizzrobe_chest",
+        scenes::STONE_TOWER_TEMPLE_INVERTED,
+        0x0000_0010,
+    );
+    add(
+        map,
+        "mm_stone_tower_temple_inverted_death_armos_chest",
+        scenes::STONE_TOWER_TEMPLE_INVERTED,
+        0x0000_0020,
+    );
+}
+
+fn add(
+    map: &mut HashMap<&'static str, MmFlagMapping>,
+    location_id: &'static str,
+    scene_id: u8,
+    flag_bit: u32,
+) {
+    map.insert(
+        location_id,
+        MmFlagMapping::mapped(location_id, scene_id, MmFlagType::Chest, flag_bit),
+    );
+}
