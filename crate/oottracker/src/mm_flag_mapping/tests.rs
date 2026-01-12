@@ -689,17 +689,82 @@ fn test_check_mm_location_status_switch0_checked() {
 }
 
 #[test]
-fn test_check_mm_location_status_global_flag_returns_unknown() {
-    // Global flags like EventInf are not yet implemented, should return Unknown
+fn test_check_mm_location_status_event_inf() {
+    // Test EventInf flag checking
     let mapping = MmFlagMapping::global("test_event_location", MmFlagType::EventInf, 0x01);
 
-    let mm_save = MmSave::default();
+    let mut mm_save = MmSave::default();
 
+    // Test unchecked state
     let status = check_mm_location_status(&mapping, &mm_save);
     assert_eq!(
         status,
-        CheckStatus::Unknown,
-        "Unimplemented global flags should return Unknown status"
+        CheckStatus::Unchecked,
+        "EventInf with flag not set should return Unchecked"
+    );
+
+    // Test checked state - set bit 0 in word 0
+    mm_save.event_inf[0] = 0x01;
+    let status = check_mm_location_status(&mapping, &mm_save);
+    assert_eq!(
+        status,
+        CheckStatus::Checked,
+        "EventInf with flag set should return Checked"
+    );
+
+    // Test EventInf with different word index (word 1, mask 0x0004)
+    let mapping_word1 = MmFlagMapping::global(
+        "test_event_word1",
+        MmFlagType::EventInf,
+        (1 << 16) | 0x0004, // word_index=1, mask=0x0004
+    );
+    mm_save.event_inf[1] = 0x0004;
+    let status = check_mm_location_status(&mapping_word1, &mm_save);
+    assert_eq!(
+        status,
+        CheckStatus::Checked,
+        "EventInf with word_index=1 flag set should return Checked"
+    );
+}
+
+#[test]
+fn test_check_mm_location_status_week_event_reg() {
+    // Test WeekEventReg flag checking
+    let mapping = MmFlagMapping::global("test_week_event", MmFlagType::WeekEventReg, 0x01);
+
+    let mut mm_save = MmSave::default();
+    // Initialize week_event_reg with 100 zeros (as it would be when parsing save data)
+    mm_save.week_event_reg = vec![0u8; 100];
+
+    // Test unchecked state
+    let status = check_mm_location_status(&mapping, &mm_save);
+    assert_eq!(
+        status,
+        CheckStatus::Unchecked,
+        "WeekEventReg with flag not set should return Unchecked"
+    );
+
+    // Test checked state - set bit 0 in byte 0
+    mm_save.week_event_reg[0] = 0x01;
+    let status = check_mm_location_status(&mapping, &mm_save);
+    assert_eq!(
+        status,
+        CheckStatus::Checked,
+        "WeekEventReg with flag set should return Checked"
+    );
+
+    // Test WeekEventReg with different byte index (byte 25, mask 0x02 - like boss flags)
+    let mapping_byte25 = MmFlagMapping::global(
+        "test_boss_flag",
+        MmFlagType::WeekEventReg,
+        (25 << 8) | 0x02, // byte_index=25, mask=0x02
+    );
+    mm_save.week_event_reg[25] = 0x02;
+    let status = check_mm_location_status(&mapping_byte25, &mm_save);
+    assert_eq!(
+        status,
+        CheckStatus::Checked,
+        "WeekEventReg with byte_index=25 flag set should return Checked"
     );
 }
 

@@ -48,10 +48,10 @@ pub fn check_mm_location_status(mapping: &MmFlagMapping, mm_save: &MmSave) -> Ch
         MmFlagType::Collectible => {
             check_scene_flag(mapping, mm_save, flag_bit, |flags| flags.collectible)
         }
+        MmFlagType::EventInf => check_event_inf(mm_save, flag_bit),
+        MmFlagType::WeekEventReg => check_week_event_reg(mm_save, flag_bit),
         // These flag types need special handling or are not yet implemented
         MmFlagType::GoldSkulltula
-        | MmFlagType::EventInf
-        | MmFlagType::WeekEventReg
         | MmFlagType::ItemGetInf
         | MmFlagType::Shop
         | MmFlagType::Scrub
@@ -63,6 +63,60 @@ pub fn check_mm_location_status(mapping: &MmFlagMapping, mm_save: &MmSave) -> Ch
         | MmFlagType::OwlStatue
         | MmFlagType::MoonsTear
         | MmFlagType::GossipStone => CheckStatus::Unknown,
+    }
+}
+
+/// Check an EventInf flag.
+///
+/// The flag_bit encodes both the word index and bit mask:
+/// - Bits 16-31: word_index (0-3)
+/// - Bits 0-15: bit_mask (u16)
+///
+/// If word_index is 0, the flag_bit is used directly as the mask (backward compatible).
+fn check_event_inf(mm_save: &MmSave, flag_bit: u32) -> CheckStatus {
+    // Extract word index and mask from flag_bit
+    // Format: (word_index << 16) | bit_mask
+    // If word_index would be 0, flag_bit is just the mask (backward compatible)
+    let word_index = (flag_bit >> 16) as usize;
+    let mask = (flag_bit & 0xFFFF) as u16;
+
+    // Validate word_index (0-3 for 4 u16 values)
+    if word_index >= 4 {
+        return CheckStatus::Unknown;
+    }
+
+    let value = mm_save.event_inf[word_index];
+    if value & mask != 0 {
+        CheckStatus::Checked
+    } else {
+        CheckStatus::Unchecked
+    }
+}
+
+/// Check a WeekEventReg flag.
+///
+/// The flag_bit encodes both the byte index and bit mask:
+/// - Bits 8-31: byte_index (0-99)
+/// - Bits 0-7: bit_mask (u8)
+///
+/// If byte_index is 0, the flag_bit is used directly as the mask (backward compatible).
+fn check_week_event_reg(mm_save: &MmSave, flag_bit: u32) -> CheckStatus {
+    // Extract byte index and mask from flag_bit
+    // Format: (byte_index << 8) | bit_mask
+    // If byte_index would be 0, flag_bit is just the mask (backward compatible)
+    let byte_index = (flag_bit >> 8) as usize;
+    let mask = (flag_bit & 0xFF) as u8;
+
+    // Safely access the byte at the given index
+    match mm_save.week_event_reg.get(byte_index) {
+        Some(&value) => {
+            if value & mask != 0 {
+                CheckStatus::Checked
+            } else {
+                CheckStatus::Unchecked
+            }
+        }
+        None => CheckStatus::Unknown,
     }
 }
 
