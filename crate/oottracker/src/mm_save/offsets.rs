@@ -88,6 +88,18 @@ pub mod ootmm_offsets {
     /// Is night flag (s32)
     pub const IS_NIGHT: usize = 0x0010;
 
+    /// EventInf offset (8 bytes)
+    /// In OoTMM, eventInf is in MmSave after MmSaveInfo
+    /// MmSaveInfo starts at 0x24, has size 0xFE8 (checksum at 0xFE6 + 2)
+    /// eventInf offset = 0x24 + 0xFE8 = 0x100C
+    /// Reference: https://github.com/OoTMM/OoTMM/blob/master/packages/core/include/combo/mm/save.h
+    pub const EVENT_INF: usize = 0x100C;
+    /// WeekEventReg offset (100 bytes)
+    /// Week event flags that reset each 3-day cycle
+    /// OoTMM: MmSaveInfo.weekEventReg at offset 0xEF8, absolute = 0x24 + 0xEF8 = 0xF1C
+    /// Reference: https://github.com/OoTMM/OoTMM/blob/master/packages/core/include/combo/mm/save.h
+    pub const WEEK_EVENT_REG: usize = 0x0F1C;
+
     // Size constants for arrays - OoTMM uses combined array
     pub const MASK_SLOTS: usize = 24;
     #[allow(dead_code)] // Documented for reference
