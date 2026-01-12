@@ -769,6 +769,84 @@ fn test_check_mm_location_status_week_event_reg() {
     );
 }
 
+// === Xflag Tests ===
+
+#[test]
+fn test_xflag_type_scene_offset() {
+    // Xflag should be a global flag type (not scene-based)
+    assert_eq!(MmFlagType::Xflag.scene_offset(), None);
+    assert!(!MmFlagType::Xflag.is_scene_based());
+}
+
+#[test]
+fn test_check_xflag_status() {
+    use crate::xflags::XFLAGS_BYTES_MM;
+
+    // Create a mapping for an xflag location
+    let mapping = MmFlagMapping::global("test_xflag_location", MmFlagType::Xflag, 42);
+
+    // Test with no xflags data (None) - should return Unknown
+    let mut mm_save = MmSave {
+        week_event_reg: vec![0u8; 100],
+        ..Default::default()
+    };
+    let status = check_mm_location_status(&mapping, &mm_save);
+    assert_eq!(
+        status,
+        CheckStatus::Unknown,
+        "Xflag with no xflags data should return Unknown"
+    );
+
+    // Set up xflags data with bit 42 NOT set
+    let mut xflags = [0u8; XFLAGS_BYTES_MM];
+    mm_save.xflags = Some(xflags);
+    let status = check_mm_location_status(&mapping, &mm_save);
+    assert_eq!(
+        status,
+        CheckStatus::Unchecked,
+        "Xflag bit 42 not set should return Unchecked"
+    );
+
+    // Set bit 42 (byte 5, bit 2)
+    xflags[42 / 8] |= 1 << (42 % 8);
+    mm_save.xflags = Some(xflags);
+    let status = check_mm_location_status(&mapping, &mm_save);
+    assert_eq!(
+        status,
+        CheckStatus::Checked,
+        "Xflag bit 42 set should return Checked"
+    );
+}
+
+#[test]
+fn test_check_xflag_various_bits() {
+    use crate::xflags::XFLAGS_BYTES_MM;
+
+    // Test various bit positions to ensure the bit manipulation is correct
+    let test_bits = [0, 7, 8, 15, 100, 500, 841]; // Edge cases and various positions
+
+    for &bit in &test_bits {
+        let mapping = MmFlagMapping::global("test_xflag", MmFlagType::Xflag, bit);
+        let mut mm_save = MmSave {
+            week_event_reg: vec![0u8; 100],
+            ..Default::default()
+        };
+
+        // Set the bit
+        let mut xflags = [0u8; XFLAGS_BYTES_MM];
+        xflags[bit as usize / 8] |= 1 << (bit % 8);
+        mm_save.xflags = Some(xflags);
+
+        let status = check_mm_location_status(&mapping, &mm_save);
+        assert_eq!(
+            status,
+            CheckStatus::Checked,
+            "Xflag bit {} should be Checked when set",
+            bit
+        );
+    }
+}
+
 // === Location Count Parity Tests ===
 
 /// Test that all MM locations from WorldDatabase are enumerable in the flag mapping.
