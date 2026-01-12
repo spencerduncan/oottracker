@@ -2,14 +2,14 @@
 
 use crate::mm_save::{
     constants::{MM_PERM_SCENE_SIZE, MM_SIZE},
-    offsets::{vanilla_offsets, MmRomType},
+    offsets::ootmm_offsets,
     save::MmSave,
 };
 
 impl MmSave {
     /// Convert the save state back to raw bytes
     pub fn to_save_data(&self) -> Vec<u8> {
-        use vanilla_offsets::*;
+        use ootmm_offsets::*;
 
         let mut buf = vec![0u8; MM_SIZE];
 
@@ -30,11 +30,13 @@ impl MmSave {
         // Write rupees
         buf[RUPEES..RUPEES + 2].copy_from_slice(&self.rupees.to_be_bytes());
 
-        // Write sword and shield
-        buf[SWORD_SHIELD] = (self.sword as u8) | ((self.shield as u8) << 4);
+        // Write sword and shield (OoTMM uses u16: sword in low nibble, shield in next nibble)
+        let equipment: u16 = (self.sword as u16) | ((self.shield as u16) << 4);
+        buf[SWORD_SHIELD..SWORD_SHIELD + 2].copy_from_slice(&equipment.to_be_bytes());
 
-        // Write quest items
-        buf[QUEST_ITEMS..QUEST_ITEMS + 4].copy_from_slice(&self.quest_items.bits().to_be_bytes());
+        // Write quest items (converted to OoTMM bit layout)
+        buf[QUEST_ITEMS..QUEST_ITEMS + 4]
+            .copy_from_slice(&self.quest_items.to_ootmm_bits().to_be_bytes());
 
         // Write upgrades
         buf[UPGRADES..UPGRADES + 4].copy_from_slice(&self.upgrades.bits().to_be_bytes());
@@ -62,10 +64,11 @@ impl MmSave {
         buf[SKULL_SWAMP..SKULL_SWAMP + 2].copy_from_slice(&self.skull_tokens_swamp.to_be_bytes());
         buf[SKULL_OCEAN..SKULL_OCEAN + 2].copy_from_slice(&self.skull_tokens_ocean.to_be_bytes());
 
-        // Write time state
+        // Write time state (IS_NIGHT is s32 in OoTMM)
         buf[DAY..DAY + 4].copy_from_slice(&self.day.to_be_bytes());
         buf[TIME..TIME + 2].copy_from_slice(&self.time.to_be_bytes());
-        buf[IS_NIGHT] = if self.is_night { 1 } else { 0 };
+        let is_night_val: u32 = if self.is_night { 1 } else { 0 };
+        buf[IS_NIGHT..IS_NIGHT + 4].copy_from_slice(&is_night_val.to_be_bytes());
 
         // Write permanent scene flags
         for (i, scene) in self.permanent_scene_flags.iter().enumerate() {
@@ -97,8 +100,7 @@ impl async_proto::Protocol for MmSave {
             use tokio::io::AsyncReadExt;
             let mut buf = vec![0u8; MM_SIZE];
             stream.read_exact(&mut buf).await?;
-            let rom_type = MmRomType::from_env();
-            MmSave::from_save_data_with_type(&buf, rom_type)
+            MmSave::from_save_data(&buf)
                 .map_err(|e| async_proto::ReadError::Custom(format!("MM decode error: {:?}", e)))
         })
     }
@@ -120,8 +122,7 @@ impl async_proto::Protocol for MmSave {
     fn read_sync(stream: &mut impl std::io::Read) -> Result<Self, async_proto::ReadError> {
         let mut buf = vec![0u8; MM_SIZE];
         stream.read_exact(&mut buf)?;
-        let rom_type = MmRomType::from_env();
-        MmSave::from_save_data_with_type(&buf, rom_type)
+        MmSave::from_save_data(&buf)
             .map_err(|e| async_proto::ReadError::Custom(format!("MM decode error: {:?}", e)))
     }
 

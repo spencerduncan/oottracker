@@ -29,7 +29,7 @@ pub use constants::{mm_item_ids, MM_ADDR, MM_PERM_SCENE_COUNT, MM_PERM_SCENE_SIZ
 pub use dungeon_progress::{MmAllDungeonItems, MmDungeonItems, MmSmallKeys, MmStrayFairies};
 pub use inventory::{MmBottle, MmInventory};
 pub use masks::{MmMasks, MmMasksHigh, MmMasksLow, MmTransformationMasks};
-pub use offsets::{ootmm_offsets, vanilla_offsets, MmRomType};
+pub use offsets::ootmm_offsets;
 pub use quest_items::MmQuestItems;
 pub use reader::MmSaveReader;
 pub use save::MmSave;

@@ -21,7 +21,7 @@ use {
     tokio::io::{AsyncRead, AsyncReadExt as _, AsyncWrite, AsyncWriteExt as _},
 };
 
-use crate::mm_save::{self, MmRomType, MmSave};
+use crate::mm_save::{self, MmSave};
 
 pub const SIZE: usize = 0x80_0000;
 pub const TEXT_LEN: usize = 0xc0;
@@ -582,8 +582,7 @@ impl Protocol for Delta {
                 None => None,
                 Some(None) => Some(None),
                 Some(Some(bytes)) => {
-                    let rom_type = MmRomType::from_env();
-                    let save = MmSave::from_save_data_with_type(&bytes, rom_type).map_err(|e| {
+                    let save = MmSave::from_save_data(&bytes).map_err(|e| {
                         ReadError::Custom(format!("failed to decode MM save: {e:?}"))
                     })?;
                     Some(Some(save))
@@ -632,8 +631,7 @@ impl Protocol for Delta {
             None => None,
             Some(None) => Some(None),
             Some(Some(bytes)) => {
-                let rom_type = MmRomType::from_env();
-                let save = MmSave::from_save_data_with_type(&bytes, rom_type)
+                let save = MmSave::from_save_data(&bytes)
                     .map_err(|e| ReadError::Custom(format!("failed to decode MM save: {e:?}")))?;
                 Some(Some(save))
             }
@@ -712,8 +710,7 @@ pub fn decode_mm_ranges(ram_data: &[u8]) -> Result<MmSave, DecodeError> {
 
     // Extract the save data slice and parse it
     let save_data = &ram_data[start..end];
-    let rom_type = MmRomType::from_env();
-    MmSave::from_save_data_with_type(save_data, rom_type).map_err(DecodeError::from)
+    MmSave::from_save_data(save_data).map_err(DecodeError::from)
 }
 
 /// Decodes Majora's Mask save data from pre-extracted range buffers.
@@ -742,8 +739,7 @@ pub fn decode_mm_range_bufs(
     }
 
     // Parse the save data
-    let rom_type = MmRomType::from_env();
-    MmSave::from_save_data_with_type(&save_data, rom_type).map_err(DecodeError::from)
+    MmSave::from_save_data(&save_data).map_err(DecodeError::from)
 }
 
 /// Decodes Majora's Mask save data from pre-extracted range slices.
@@ -772,8 +768,7 @@ where
     }
 
     // Parse the save data
-    let rom_type = MmRomType::from_env();
-    MmSave::from_save_data_with_type(save_data, rom_type).map_err(DecodeError::from)
+    MmSave::from_save_data(save_data).map_err(DecodeError::from)
 }
 
 /// Decodes Majora's Mask save data directly from a save data buffer.
@@ -788,40 +783,27 @@ where
 /// * `Ok(MmSave)` - Successfully decoded MM save data
 /// * `Err(DecodeError)` - If parsing fails
 pub fn decode_mm_save_data(save_data: &[u8]) -> Result<MmSave, DecodeError> {
-    let rom_type = MmRomType::from_env();
-    MmSave::from_save_data_with_type(save_data, rom_type).map_err(DecodeError::from)
+    MmSave::from_save_data(save_data).map_err(DecodeError::from)
 }
 
-/// Decodes Majora's Mask save data from pre-extracted range buffers with explicit combo mode flag.
+/// Decodes Majora's Mask save data from pre-extracted range buffers.
 ///
-/// This function is similar to `decode_mm_range_bufs` but accepts an explicit `is_combo` flag
-/// instead of relying on the `OOTTRACKER_MM_ROM_TYPE` environment variable. This should be
-/// used when the game type has been detected automatically (e.g., via context address polling).
+/// Note: The `is_combo` parameter is deprecated - this tracker only supports OoTMM combo mode.
+/// The parameter is kept for API compatibility but is ignored.
 ///
 /// # Arguments
 /// * `ranges` - Iterator yielding memory range buffers (expects exactly one buffer of `MM_SIZE` bytes)
-/// * `is_combo` - If true, uses OoTMM save offsets; if false, uses vanilla MM offsets
+/// * `_is_combo` - Deprecated, ignored (always uses OoTMM save offsets)
 ///
 /// # Returns
 /// * `Ok(MmSave)` - Successfully decoded MM save data
 /// * `Err(DecodeError)` - If the ranges are invalid or parsing fails
 pub fn decode_mm_range_bufs_with_type(
     ranges: impl IntoIterator<Item = Vec<u8>>,
-    is_combo: bool,
+    _is_combo: bool,
 ) -> Result<MmSave, DecodeError> {
-    let mut iter = ranges.into_iter();
-
-    // Get the first (and only) range - the SaveContext
-    let save_data = iter.next().ok_or(DecodeError::Ranges)?;
-
-    // Validate size
-    if save_data.len() != mm_save::MM_SIZE {
-        return Err(DecodeError::Size(save_data.len()));
-    }
-
-    // Parse the save data with the specified ROM type
-    let rom_type = MmRomType::from_combo_flag(is_combo);
-    MmSave::from_save_data_with_type(&save_data, rom_type).map_err(DecodeError::from)
+    // Delegate to the regular function - we only support OoTMM now
+    decode_mm_range_bufs(ranges)
 }
 
 #[cfg(test)]
@@ -1103,10 +1085,11 @@ mod tests {
         let save_start = MM_SAVE_ADDR as usize;
 
         // Set dungeon items at OoTMM offset 0xBE
-        // Woodfall: Map + Compass + Boss Key (0x07)
-        ram[save_start + ootmm_offsets::DUNGEON_ITEMS] = 0x07;
-        // Snowhead: Map only (0x04)
-        ram[save_start + ootmm_offsets::DUNGEON_ITEMS + 1] = 0x04;
+        // Woodfall: Map + Compass + Boss Key (0xE0 = 0x80 + 0x40 + 0x20)
+        // N64 big-endian: BOSS_KEY=0x80, COMPASS=0x40, MAP=0x20
+        ram[save_start + ootmm_offsets::DUNGEON_ITEMS] = 0xE0;
+        // Snowhead: Map only (0x20)
+        ram[save_start + ootmm_offsets::DUNGEON_ITEMS + 1] = 0x20;
 
         // Set small keys at OoTMM offset 0xC8
         ram[save_start + ootmm_offsets::SMALL_KEYS] = 2; // Woodfall: 2 keys
