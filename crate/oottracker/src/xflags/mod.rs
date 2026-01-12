@@ -3,12 +3,18 @@
 //! This module provides Rust implementations of the OoTMM combo randomizer's
 //! extended flag system and custom save structures.
 //!
+//! ## Submodules
+//!
+//! - [`mapping`]: Location ID to xflag bit position mappings
+//!
 //! Reference: OoTMM source
 //! - packages/core/include/combo/xflags.h - Xflag struct definition
 //! - packages/core/include/combo/xflags_data.h - XFLAGS_COUNT_OOT, XFLAGS_COUNT_MM
 //! - packages/core/include/combo/oot/save.h - OotCustomSave
 //! - packages/core/include/combo/mm/save.h - MmCustomSave
 //! - packages/core/include/combo/save.h - SharedCustomSave
+
+pub mod mapping;
 
 use serde::{Deserialize, Serialize};
 

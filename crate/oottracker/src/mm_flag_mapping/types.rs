@@ -83,6 +83,11 @@ pub enum MmFlagType {
     /// Gossip stone hint flags.
     /// Hints from gossip stones (if shuffled).
     GossipStone,
+
+    /// Extended flags (xflags) from OoTMM.
+    /// Used for actor-based collectibles like pots, grass, crates, etc.
+    /// The flag_bit field contains the xflag bit position.
+    Xflag,
 }
 
 impl MmFlagType {
@@ -111,7 +116,8 @@ impl MmFlagType {
             | MmFlagType::StrayFairy
             | MmFlagType::OwlStatue
             | MmFlagType::MoonsTear
-            | MmFlagType::GossipStone => None,
+            | MmFlagType::GossipStone
+            | MmFlagType::Xflag => None,
         }
     }
 

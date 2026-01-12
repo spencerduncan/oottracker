@@ -50,6 +50,7 @@ pub fn check_mm_location_status(mapping: &MmFlagMapping, mm_save: &MmSave) -> Ch
         }
         MmFlagType::EventInf => check_event_inf(mm_save, flag_bit),
         MmFlagType::WeekEventReg => check_week_event_reg(mm_save, flag_bit),
+        MmFlagType::Xflag => check_xflag(mm_save, flag_bit),
         // These flag types need special handling or are not yet implemented
         MmFlagType::GoldSkulltula
         | MmFlagType::ItemGetInf
@@ -116,6 +117,20 @@ fn check_week_event_reg(mm_save: &MmSave, flag_bit: u32) -> CheckStatus {
                 CheckStatus::Unchecked
             }
         }
+        None => CheckStatus::Unknown,
+    }
+}
+
+/// Check an xflag (extended flag) from OoTMM's SharedCustomSave.
+///
+/// The flag_bit is the xflag bit position (0-841 for MM).
+///
+/// XFlags are used for actor-based collectibles like pots, grass, crates, etc.
+fn check_xflag(mm_save: &MmSave, flag_bit: u32) -> CheckStatus {
+    // Use the MmSave helper method if xflags are available
+    match mm_save.is_xflag_set(flag_bit as usize) {
+        Some(true) => CheckStatus::Checked,
+        Some(false) => CheckStatus::Unchecked,
         None => CheckStatus::Unknown,
     }
 }
