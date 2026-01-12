@@ -1799,13 +1799,15 @@ cells! {
             state.ram.mm_save.as_ref().map_or(0, |mm| match mm.shield {
                 crate::mm_save::MmShield::None => 0,
                 crate::mm_save::MmShield::HeroShield => 1,
-                crate::mm_save::MmShield::MirrorShield => 2,
+                crate::mm_save::MmShield::HylianShield => 2,
+                crate::mm_save::MmShield::MirrorShield => 3,
             })
         }),
         img: Box::new(|state| {
             state.ram.mm_save.as_ref().map_or((false, ImageInfo::mm("hero_shield")), |mm| match mm.shield {
                 crate::mm_save::MmShield::None => (false, ImageInfo::mm("hero_shield")),
                 crate::mm_save::MmShield::HeroShield => (true, ImageInfo::mm("hero_shield")),
+                crate::mm_save::MmShield::HylianShield => (true, ImageInfo::mm("hero_shield")), // TODO: add hylian shield image
                 crate::mm_save::MmShield::MirrorShield => (true, ImageInfo::mm("mirror_shield")),
             })
         }),
@@ -1813,7 +1815,8 @@ cells! {
             if let Some(mm) = state.ram.mm_save.as_mut() {
                 mm.shield = match mm.shield {
                     crate::mm_save::MmShield::None => crate::mm_save::MmShield::HeroShield,
-                    crate::mm_save::MmShield::HeroShield => crate::mm_save::MmShield::MirrorShield,
+                    crate::mm_save::MmShield::HeroShield => crate::mm_save::MmShield::HylianShield,
+                    crate::mm_save::MmShield::HylianShield => crate::mm_save::MmShield::MirrorShield,
                     crate::mm_save::MmShield::MirrorShield => crate::mm_save::MmShield::None,
                 };
             }
@@ -1823,7 +1826,8 @@ cells! {
                 mm.shield = match mm.shield {
                     crate::mm_save::MmShield::None => crate::mm_save::MmShield::MirrorShield,
                     crate::mm_save::MmShield::HeroShield => crate::mm_save::MmShield::None,
-                    crate::mm_save::MmShield::MirrorShield => crate::mm_save::MmShield::HeroShield,
+                    crate::mm_save::MmShield::HylianShield => crate::mm_save::MmShield::HeroShield,
+                    crate::mm_save::MmShield::MirrorShield => crate::mm_save::MmShield::HylianShield,
                 };
             }
         }),

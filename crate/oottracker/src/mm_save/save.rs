@@ -417,10 +417,12 @@ impl MmSave {
         // Parse rupees
         let rupees = get_u16!(RUPEES);
 
-        // Parse sword and shield from equipment byte (different offset in OoTMM)
-        let sword_shield_byte = get_u8!(SWORD_SHIELD);
-        let sword = MmSword::try_from(sword_shield_byte & 0x0F).unwrap_or(MmSword::None);
-        let shield = MmShield::try_from((sword_shield_byte >> 4) & 0x0F).unwrap_or(MmShield::None);
+        // Parse sword and shield from equipment u16 bitfield (OoTMM format)
+        // On BIG-ENDIAN (N64), bitfields are packed from MSB to LSB:
+        // bits 15-12: boots, bits 11-8: tunic, bits 7-4: shield, bits 3-0: sword
+        let equipment = get_u16!(SWORD_SHIELD);
+        let sword = MmSword::try_from((equipment & 0x0F) as u8).unwrap_or(MmSword::None);
+        let shield = MmShield::try_from(((equipment >> 4) & 0x0F) as u8).unwrap_or(MmShield::None);
 
         // Parse inventory (OoTMM uses different offset)
         let inventory = Self::parse_inventory_ootmm(save_data)?;

@@ -11,19 +11,13 @@ pub enum MmRomType {
 }
 
 impl MmRomType {
-    /// Get the ROM type from the `OOTTRACKER_MM_ROM_TYPE` environment variable.
+    /// Get the ROM type - always returns OoTMM since we only support Combomizer now.
     ///
-    /// Set to "ootmm" or "OoTMM" for OoTMM combo ROM support.
-    /// Defaults to `Vanilla` if not set or unrecognized.
+    /// Previously checked `OOTTRACKER_MM_ROM_TYPE` env var, but vanilla MM support
+    /// has been removed as Combomizer is the only supported mode.
     pub fn from_env() -> Self {
-        match std::env::var("OOTTRACKER_MM_ROM_TYPE")
-            .unwrap_or_default()
-            .to_lowercase()
-            .as_str()
-        {
-            "ootmm" | "combo" => MmRomType::OoTMM,
-            _ => MmRomType::Vanilla,
-        }
+        // Always use OoTMM parsing - vanilla MM support removed
+        MmRomType::OoTMM
     }
 
     /// Determine if this is a combo ROM type.
@@ -143,9 +137,9 @@ pub mod ootmm_offsets {
     pub const DEFENSE_HEARTS: usize = 0x00D1;
     /// Stray fairy counts (10 areas × 1 byte each)
     pub const STRAY_FAIRIES: usize = 0x00D2;
-    /// Swamp skulltula count - need to verify this offset
+    /// Swamp skulltula count
     pub const SKULL_SWAMP: usize = 0x00DC;
-    /// Ocean skulltula count - need to verify this offset
+    /// Ocean skulltula count
     pub const SKULL_OCEAN: usize = 0x00DE;
     /// Permanent scene flags start
     /// OoTMM: SaveInfo(0x24) + after inventory = 0xE4 from info start

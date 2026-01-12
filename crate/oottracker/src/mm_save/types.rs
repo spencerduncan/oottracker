@@ -139,8 +139,12 @@ impl TryFrom<u8> for MmSword {
 pub enum MmShield {
     #[default]
     None = 0,
+    /// Deku Shield (OoT) / Hero's Shield (MM) - value 1
     HeroShield = 1,
-    MirrorShield = 2,
+    /// Hylian Shield (OoT only) - value 2
+    HylianShield = 2,
+    /// Mirror Shield - value 3
+    MirrorShield = 3,
 }
 
 impl TryFrom<u8> for MmShield {
@@ -150,7 +154,8 @@ impl TryFrom<u8> for MmShield {
         match value {
             0 => Ok(MmShield::None),
             1 => Ok(MmShield::HeroShield),
-            2 => Ok(MmShield::MirrorShield),
+            2 => Ok(MmShield::HylianShield),
+            3 => Ok(MmShield::MirrorShield),
             _ => Err(value),
         }
     }

@@ -24,6 +24,12 @@ MM_RAM_RANGES = {
     0x1ef670, 0x48d0   -- MM save context
 }
 
+-- COMBO_MM_RAM_RANGES: {addr1, len1}
+-- OoTMM combo uses a different address for MM save context
+COMBO_MM_RAM_RANGES = {
+    0x98280, 0x48d0    -- MM save context in OoTMM combo
+}
+
 -- The constants above are generated from Rust code in crate/oottracker-utils/src/release.rs. If they're missing, you have the wrong file.
 -- Generated constants include: TCP_PORT, SAVE_ADDR, SAVE_SIZE, RAM_RANGES, MM_SAVE_ADDR, MM_SAVE_SIZE, MM_RAM_RANGES, OOT_COMBO_CONTEXT_ADDR, MM_COMBO_CONTEXT_ADDR
 
@@ -489,24 +495,26 @@ local function main()
         if detectedGame == GAME_TYPE_OOT or detectedGame == GAME_TYPE_COMBO then
             -- For combo mode, check if we're in MM world
             if detectedGame == GAME_TYPE_COMBO and comboActiveWorld == COMBO_WORLD_MM then
-                -- In MM world of combo - handle MM data instead
-                if MM_RAM_RANGES ~= nil then
+                -- In MM world of combo - handle MM data from COMBO_MM_RAM_RANGES
+                -- (OoTMM uses a different memory address than vanilla MM)
+                local mmRanges = COMBO_MM_RAM_RANGES or MM_RAM_RANGES
+                if mmRanges ~= nil then
                     local mmChanged = true
                     if rawMmRam == nil then
                         rawMmRam = {}
                         local rangeIdx = 1
-                        for i = 1, #MM_RAM_RANGES, 2 do
-                            local addr = MM_RAM_RANGES[i]
-                            local size = MM_RAM_RANGES[i + 1]
+                        for i = 1, #mmRanges, 2 do
+                            local addr = mmRanges[i]
+                            local size = mmRanges[i + 1]
                             rawMmRam[rangeIdx] = readMemoryBlock(RDRAM_BASE + addr, size)
                             rangeIdx = rangeIdx + 1
                         end
                     else
                         mmChanged = false
                         local rangeIdx = 1
-                        for i = 1, #MM_RAM_RANGES, 2 do
-                            local addr = MM_RAM_RANGES[i]
-                            local size = MM_RAM_RANGES[i + 1]
+                        for i = 1, #mmRanges, 2 do
+                            local addr = mmRanges[i]
+                            local size = mmRanges[i + 1]
                             local newRange = readMemoryBlock(RDRAM_BASE + addr, size)
                             if not arraysEqual(newRange, rawMmRam[rangeIdx]) then
                                 rawMmRam[rangeIdx] = newRange
@@ -531,13 +539,31 @@ local function main()
             -- Send OoT RAM data
             sendOotRamData(sock, rawRam)
 
-            -- For combo mode, also read and send MM data
+            -- For combo mode, also read and send MM data from combo address
             if detectedGame == GAME_TYPE_COMBO then
-                rawMmRam, _ = readMmRamRanges(rawMmRam)
-                -- In combo mode, always send MM data when OoT data is sent
-                -- (since they share the same save file)
-                if rawMmRam ~= nil then
-                    sendMmRamData(sock, rawMmRam)
+                -- OoTMM uses a different memory address for MM save context
+                local mmRanges = COMBO_MM_RAM_RANGES or MM_RAM_RANGES
+                if mmRanges ~= nil then
+                    local mmChanged = rawMmRam == nil
+                    if rawMmRam == nil then
+                        rawMmRam = {}
+                    end
+                    local rangeIdx = 1
+                    for i = 1, #mmRanges, 2 do
+                        local addr = mmRanges[i]
+                        local size = mmRanges[i + 1]
+                        local newRange = readMemoryBlock(RDRAM_BASE + addr, size)
+                        if rawMmRam[rangeIdx] == nil or not arraysEqual(newRange, rawMmRam[rangeIdx]) then
+                            rawMmRam[rangeIdx] = newRange
+                            mmChanged = true
+                        end
+                        rangeIdx = rangeIdx + 1
+                    end
+                    -- In combo mode, always send MM data when OoT data is sent
+                    -- (since they share the same save file)
+                    if mmChanged and rawMmRam ~= nil then
+                        sendMmRamData(sock, rawMmRam)
+                    end
                 end
             end
         end

@@ -7,7 +7,7 @@ mod tests {
         dungeon_progress::{MmAllDungeonItems, MmDungeonItems, MmSmallKeys, MmStrayFairies},
         inventory::MmBottle,
         masks::{MmMasks, MmMasksHigh, MmMasksLow, MmTransformationMasks},
-        offsets::vanilla_offsets,
+        offsets::{ootmm_offsets, vanilla_offsets},
         quest_items::MmQuestItems,
         reader::MmSaveReader,
         save::MmSave,
@@ -248,9 +248,10 @@ mod tests {
 
         let mut data = vec![0u8; MM_SIZE];
 
-        // Set Gilded Sword (3) and Mirror Shield (2)
+        // Set Gilded Sword (3) and Mirror Shield (3)
         // Shield is in high nibble, sword in low nibble
-        data[SWORD_SHIELD] = 0x03 | (0x02 << 4);
+        // Note: MirrorShield is value 3 (HylianShield is 2 for OoTMM support)
+        data[SWORD_SHIELD] = 0x03 | (0x03 << 4);
 
         let save = MmSave::from_save_data(&data).unwrap();
         assert_eq!(save.sword, MmSword::GildedSword);
@@ -462,12 +463,12 @@ mod tests {
 
     #[test]
     fn test_mm_save_reader_update() {
-        use vanilla_offsets::*;
+        use ootmm_offsets::*;
 
         let data = vec![0u8; MM_SIZE];
         let mut reader = MmSaveReader::from_bytes(&data).unwrap();
 
-        // Update with new data containing different rupees
+        // Update with new data containing different rupees (at OoTMM offset 0x3A)
         let mut new_data = vec![0u8; MM_SIZE];
         new_data[RUPEES..RUPEES + 2].copy_from_slice(&200u16.to_be_bytes());
 
@@ -1691,8 +1692,9 @@ mod tests {
     fn test_shield_try_from_all_variants() {
         assert_eq!(MmShield::try_from(0), Ok(MmShield::None));
         assert_eq!(MmShield::try_from(1), Ok(MmShield::HeroShield));
-        assert_eq!(MmShield::try_from(2), Ok(MmShield::MirrorShield));
-        assert_eq!(MmShield::try_from(3), Err(3));
+        assert_eq!(MmShield::try_from(2), Ok(MmShield::HylianShield));
+        assert_eq!(MmShield::try_from(3), Ok(MmShield::MirrorShield));
+        assert_eq!(MmShield::try_from(4), Err(4));
         assert_eq!(MmShield::try_from(255), Err(255));
     }
 
