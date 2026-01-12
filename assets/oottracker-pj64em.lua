@@ -6,6 +6,10 @@ MM_SAVE_ADDR = 0x1ef670
 MM_SAVE_SIZE = 0x48d0
 OOT_COMBO_CONTEXT_ADDR = 0x6584
 MM_COMBO_CONTEXT_ADDR = 0x98280
+OOT_SHARED_CUSTOM_SAVE_ADDR = 0x6768
+MM_SHARED_CUSTOM_SAVE_ADDR = 0x98464
+SHARED_CUSTOM_SAVE_XFLAGS_SIZE = 200
+SHARED_CUSTOM_SAVE_MM_XFLAGS_OFFSET = 94
 
 -- RAM_RANGES: {addr1, len1, addr2, len2, ...}
 RAM_RANGES = {
@@ -25,9 +29,8 @@ MM_RAM_RANGES = {
 }
 
 -- The constants above are generated from Rust code in crate/oottracker-utils/src/release.rs. If they're missing, you have the wrong file.
--- Generated constants include: TCP_PORT, SAVE_ADDR, SAVE_SIZE, RAM_RANGES, MM_SAVE_ADDR, MM_SAVE_SIZE, MM_RAM_RANGES, OOT_COMBO_CONTEXT_ADDR, MM_COMBO_CONTEXT_ADDR
--- Note: In combo mode, MM save data is only accessible when the MM engine is running (i.e., when in MM world).
--- The MM_COMBO_CONTEXT_ADDR is only used for detecting combo mode, NOT for reading MM save data.
+-- Generated constants include: TCP_PORT, SAVE_ADDR, SAVE_SIZE, RAM_RANGES, MM_SAVE_ADDR, MM_SAVE_SIZE, MM_RAM_RANGES, OOT_COMBO_CONTEXT_ADDR, MM_COMBO_CONTEXT_ADDR, OOT_SHARED_CUSTOM_SAVE_ADDR, MM_SHARED_CUSTOM_SAVE_ADDR, SHARED_CUSTOM_SAVE_XFLAGS_SIZE, SHARED_CUSTOM_SAVE_MM_XFLAGS_OFFSET
+-- Note: In combo mode, xflags are read from SharedCustomSave for tracking randomized items.
 
 local VERSION = 6 -- do not rename this variable, the build script checks against it
 
@@ -156,6 +159,58 @@ local function sendMmRamData(sock, rawMmRam)
     end
 
     sock:send(packet)
+end
+
+-- Send xflags data as XflagsInit packet (variant 9)
+-- This is only sent in combo mode to track OoTMM randomized items
+local function sendXflagsData(sock, xflagsData)
+    if xflagsData == nil then return end
+
+    local packet = binary.pack_u8(9) -- Packet variant: XflagsInit
+
+    for j = 1, #xflagsData do
+        packet = packet .. binary.pack_u8(xflagsData[j])
+    end
+
+    sock:send(packet)
+end
+
+-- Read xflags from SharedCustomSave and check for changes
+-- Returns: xflagsData, changed
+local function readXflagsData(prevXflags, isOotWorld)
+    -- Determine which address to use based on active world
+    local addr = nil
+    if isOotWorld then
+        if OOT_SHARED_CUSTOM_SAVE_ADDR ~= nil then
+            addr = OOT_SHARED_CUSTOM_SAVE_ADDR
+        end
+    else
+        if MM_SHARED_CUSTOM_SAVE_ADDR ~= nil then
+            addr = MM_SHARED_CUSTOM_SAVE_ADDR
+        end
+    end
+
+    if addr == nil or SHARED_CUSTOM_SAVE_XFLAGS_SIZE == nil then
+        return nil, false
+    end
+
+    local success, xflagsData = pcall(function()
+        return readMemoryBlock(RDRAM_BASE + addr, SHARED_CUSTOM_SAVE_XFLAGS_SIZE)
+    end)
+
+    if not success then
+        return nil, false
+    end
+
+    -- Check if data changed
+    local changed = false
+    if prevXflags == nil then
+        changed = true
+    else
+        changed = not arraysEqual(xflagsData, prevXflags)
+    end
+
+    return xflagsData, changed
 end
 
 -- Read MM RAM ranges and check for changes
@@ -419,6 +474,7 @@ local function main()
     -- State for tracking RAM changes
     local rawRam = nil
     local rawMmRam = nil
+    local rawXflags = nil -- SharedCustomSave xflags for combo mode
     local lastActiveWorld = COMBO_WORLD_UNKNOWN -- Track world changes
 
     -- Main loop function to be called each frame
@@ -523,6 +579,13 @@ local function main()
                     if mmChanged and rawMmRam ~= nil then
                         sendMmRamData(sock, rawMmRam)
                     end
+
+                    -- Read and send xflags from SharedCustomSave (using MM address)
+                    local newXflags, xflagsChanged = readXflagsData(rawXflags, false)
+                    if xflagsChanged and newXflags ~= nil then
+                        rawXflags = newXflags
+                        sendXflagsData(sock, rawXflags)
+                    end
                 end
                 -- Also still read OoT ranges to keep save data updated for combo tracking
                 -- (save data persists across world switches in OoTMM)
@@ -535,10 +598,16 @@ local function main()
             -- Send OoT RAM data
             sendOotRamData(sock, rawRam)
 
-            -- Note: In combo mode, MM save data is only accessible when in MM world
-            -- (handled above in the comboActiveWorld == COMBO_WORLD_MM block).
-            -- When in OoT world, the MM save is stored in gMmSave at a dynamic address
-            -- that isn't accessible from the emulator, so we don't try to read it here.
+            -- For combo mode, also read and send xflags
+            if detectedGame == GAME_TYPE_COMBO then
+                -- Read and send xflags from SharedCustomSave
+                local isOotWorld = (comboActiveWorld == COMBO_WORLD_OOT)
+                local newXflags, xflagsChanged = readXflagsData(rawXflags, isOotWorld)
+                if xflagsChanged and newXflags ~= nil then
+                    rawXflags = newXflags
+                    sendXflagsData(sock, rawXflags)
+                end
+            end
         end
     end
 

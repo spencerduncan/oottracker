@@ -366,6 +366,75 @@ impl SharedCustomSave {
     pub fn total_set_xflags(&self) -> usize {
         self.oot.count_set_xflags() + self.mm.count_set_xflags()
     }
+
+    /// Creates a SharedCustomSave from raw bytes.
+    ///
+    /// Expects OOT xflags (94 bytes) followed by MM xflags (106 bytes) = 200 bytes total.
+    /// If fewer bytes are provided, remaining xflags are zero-filled.
+    pub fn from_bytes(bytes: &[u8]) -> Self {
+        let oot = OotCustomSave::from_bytes(&bytes[..bytes.len().min(XFLAGS_BYTES_OOT)]);
+        let mm = if bytes.len() > XFLAGS_BYTES_OOT {
+            MmCustomSave::from_bytes(&bytes[XFLAGS_BYTES_OOT..])
+        } else {
+            MmCustomSave::default()
+        };
+        Self { oot, mm }
+    }
+
+    /// Returns the combined xflags data as a byte vector.
+    ///
+    /// Returns OOT xflags (94 bytes) followed by MM xflags (106 bytes) = 200 bytes.
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::with_capacity(XFLAGS_BYTES_OOT + XFLAGS_BYTES_MM);
+        bytes.extend_from_slice(&self.oot.xflags);
+        bytes.extend_from_slice(&self.mm.xflags);
+        bytes
+    }
+}
+
+// Protocol implementation for SharedCustomSave
+// Serializes as OOT xflags (94 bytes) + MM xflags (106 bytes) = 200 bytes total
+impl async_proto::Protocol for SharedCustomSave {
+    fn read<'a, R: tokio::io::AsyncRead + Unpin + Send + 'a>(
+        stream: &'a mut R,
+    ) -> std::pin::Pin<
+        Box<dyn std::future::Future<Output = Result<Self, async_proto::ReadError>> + Send + 'a>,
+    > {
+        Box::pin(async move {
+            use tokio::io::AsyncReadExt;
+            const TOTAL_SIZE: usize = XFLAGS_BYTES_OOT + XFLAGS_BYTES_MM;
+            let mut buf = [0u8; TOTAL_SIZE];
+            stream.read_exact(&mut buf).await?;
+            Ok(Self::from_bytes(&buf))
+        })
+    }
+
+    fn write<'a, W: tokio::io::AsyncWrite + Unpin + Send + 'a>(
+        &'a self,
+        sink: &'a mut W,
+    ) -> std::pin::Pin<
+        Box<dyn std::future::Future<Output = Result<(), async_proto::WriteError>> + Send + 'a>,
+    > {
+        Box::pin(async move {
+            use tokio::io::AsyncWriteExt;
+            sink.write_all(&self.oot.xflags).await?;
+            sink.write_all(&self.mm.xflags).await?;
+            Ok(())
+        })
+    }
+
+    fn read_sync(stream: &mut impl std::io::Read) -> Result<Self, async_proto::ReadError> {
+        const TOTAL_SIZE: usize = XFLAGS_BYTES_OOT + XFLAGS_BYTES_MM;
+        let mut buf = [0u8; TOTAL_SIZE];
+        stream.read_exact(&mut buf)?;
+        Ok(Self::from_bytes(&buf))
+    }
+
+    fn write_sync(&self, sink: &mut impl std::io::Write) -> Result<(), async_proto::WriteError> {
+        sink.write_all(&self.oot.xflags)?;
+        sink.write_all(&self.mm.xflags)?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]

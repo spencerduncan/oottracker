@@ -548,6 +548,27 @@ impl Task<Result<(), Error>> for BuildPj64Em {
                         "local MM_COMBO_CONTEXT_ADDR = {}",
                         oottracker::ram::MM_COMBO_CONTEXT_ADDR
                     )?;
+                    // SharedCustomSave addresses (for OoTMM xflags)
+                    writeln!(
+                        &mut buf,
+                        "local OOT_SHARED_CUSTOM_SAVE_ADDR = {}",
+                        oottracker::ram::OOT_SHARED_CUSTOM_SAVE_ADDR
+                    )?;
+                    writeln!(
+                        &mut buf,
+                        "local MM_SHARED_CUSTOM_SAVE_ADDR = {}",
+                        oottracker::ram::MM_SHARED_CUSTOM_SAVE_ADDR
+                    )?;
+                    writeln!(
+                        &mut buf,
+                        "local SHARED_CUSTOM_SAVE_XFLAGS_SIZE = {}",
+                        oottracker::ram::SHARED_CUSTOM_SAVE_XFLAGS_SIZE
+                    )?;
+                    writeln!(
+                        &mut buf,
+                        "local SHARED_CUSTOM_SAVE_MM_XFLAGS_OFFSET = {}",
+                        oottracker::ram::SHARED_CUSTOM_SAVE_MM_XFLAGS_OFFSET
+                    )?;
                     writeln!(&mut buf)?; // Empty line before base script
                     let mut base =
                         BufReader::new(File::open("assets/oottracker-pj64em-base.lua").await?)
