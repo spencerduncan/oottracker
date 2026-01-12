@@ -304,14 +304,16 @@ mod tests {
 
         let mut data = vec![0u8; MM_SIZE];
 
-        // Woodfall: Map + Compass + Boss Key (0x07)
-        data[DUNGEON_ITEMS] = 0x07;
-        // Snowhead: Map only (0x04)
-        data[DUNGEON_ITEMS + 1] = 0x04;
-        // Great Bay: Compass only (0x02)
-        data[DUNGEON_ITEMS + 2] = 0x02;
-        // Stone Tower: Boss Key only (0x01)
-        data[DUNGEON_ITEMS + 3] = 0x01;
+        // N64 big-endian bitfield layout:
+        // bit 7: bossKey (0x80), bit 6: compass (0x40), bit 5: map (0x20)
+        // Woodfall: Map + Compass + Boss Key (0xE0)
+        data[DUNGEON_ITEMS] = 0xE0;
+        // Snowhead: Map only (0x20)
+        data[DUNGEON_ITEMS + 1] = 0x20;
+        // Great Bay: Compass only (0x40)
+        data[DUNGEON_ITEMS + 2] = 0x40;
+        // Stone Tower: Boss Key only (0x80)
+        data[DUNGEON_ITEMS + 3] = 0x80;
 
         let save = MmSave::from_save_data(&data).unwrap();
         assert!(save.dungeon_items.woodfall.contains(MmDungeonItems::MAP));
