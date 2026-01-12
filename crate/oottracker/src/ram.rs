@@ -67,10 +67,21 @@ pub static MM_RANGES: [u32; MM_NUM_RANGES * 2] = [
 // ============================================================================
 // Combo Context Addresses (for OoTMM game detection)
 // ============================================================================
+//
+// IMPORTANT: These addresses are for the ComboContext struct (24 bytes) used
+// for world-switch coordination and combo mode detection ONLY.
+// They should NOT be used for reading MM save data.
+//
+// In OoTMM combo mode:
+// - MM save data at MM_SAVE_ADDR (0x1ef670) is only valid when MM engine runs
+// - When OoT engine runs, MM save is in gMmSave (dynamic address, not accessible)
 
 /// OoT combo context address offset (0x80006584 - 0x80000000)
+/// Used for detecting if OoTMM combo mode is active (non-zero = combo detected)
 pub const OOT_COMBO_CONTEXT_ADDR: u32 = 0x6584;
 /// MM combo context address offset (0x80098280 - 0x80000000)
+/// Used for detecting if OoTMM combo mode is active (non-zero = combo detected)
+/// NOTE: This is NOT the MM save context address - do not use for reading MM save data.
 pub const MM_COMBO_CONTEXT_ADDR: u32 = 0x98280;
 
 // ============================================================================
