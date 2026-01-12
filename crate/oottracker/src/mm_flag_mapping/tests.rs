@@ -732,9 +732,10 @@ fn test_check_mm_location_status_week_event_reg() {
     // Test WeekEventReg flag checking
     let mapping = MmFlagMapping::global("test_week_event", MmFlagType::WeekEventReg, 0x01);
 
-    let mut mm_save = MmSave::default();
-    // Initialize week_event_reg with 100 zeros (as it would be when parsing save data)
-    mm_save.week_event_reg = vec![0u8; 100];
+    let mut mm_save = MmSave {
+        week_event_reg: vec![0u8; 100],
+        ..Default::default()
+    };
 
     // Test unchecked state
     let status = check_mm_location_status(&mapping, &mm_save);

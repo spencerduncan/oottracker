@@ -1,6 +1,7 @@
 use {
     crate::{
-        knowledge, mm_save::MmSave, ram::Ram, save, ui::TrackerCellId, ModelDelta, ModelState,
+        knowledge, mm_save::MmSave, ram::Ram, save, ui::TrackerCellId, xflags, ModelDelta,
+        ModelState,
     },
     async_proto::Protocol,
     async_stream::try_stream,
@@ -27,6 +28,10 @@ pub enum Packet {
     /// MM-only RAM initialization packet (variant 8)
     /// Sent when only Majora's Mask is loaded (standalone MM or MM-only context)
     MmRamInit(MmSave),
+    /// OoTMM xflags initialization packet (variant 9)
+    /// Sent when in OoTMM combo mode to track randomized item collection.
+    /// Contains the full SharedCustomSave xflags (OOT + MM = 200 bytes).
+    XflagsInit(xflags::SharedCustomSave),
 }
 
 #[derive(Debug, FromArc, Clone)]

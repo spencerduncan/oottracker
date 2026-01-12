@@ -85,6 +85,38 @@ pub const OOT_COMBO_CONTEXT_ADDR: u32 = 0x6584;
 pub const MM_COMBO_CONTEXT_ADDR: u32 = 0x98280;
 
 // ============================================================================
+// SharedCustomSave Addresses (for OoTMM xflags)
+// ============================================================================
+//
+// The SharedCustomSave structure contains extended tracking data for OoTMM,
+// including xflags (extended flags) for tracking randomized items.
+//
+// Structure layout:
+// - Offset 0x00: OotCustomSave.xflags[94 bytes] - OOT xflags
+// - Offset 0x5E: MmCustomSave.xflags[106 bytes] - MM xflags
+// - Additional fields follow...
+//
+// These addresses are determined at OoTMM build time and placed in the BSS section.
+// The values here are extracted from the OoTMM linker symbol table.
+//
+// Reference: OoTMM packages/core/include/combo/save.h
+
+/// OoT SharedCustomSave address offset (gSharedCustomSave when OoT engine is running)
+/// This is where xflags data is stored in OoTMM combo mode.
+pub const OOT_SHARED_CUSTOM_SAVE_ADDR: u32 = 0x6768;
+
+/// MM SharedCustomSave address offset (gSharedCustomSave when MM engine is running)
+/// This is where xflags data is stored in OoTMM combo mode.
+pub const MM_SHARED_CUSTOM_SAVE_ADDR: u32 = 0x98464;
+
+/// Size of the xflags portion of SharedCustomSave that we read
+/// This includes both OOT (94 bytes) and MM (106 bytes) xflags = 200 bytes
+pub const SHARED_CUSTOM_SAVE_XFLAGS_SIZE: usize = 200;
+
+/// Offset within SharedCustomSave where MM xflags start (after OOT xflags)
+pub const SHARED_CUSTOM_SAVE_MM_XFLAGS_OFFSET: usize = 94;
+
+// ============================================================================
 // Game Type Detection
 // ============================================================================
 

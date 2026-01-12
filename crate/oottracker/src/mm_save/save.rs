@@ -13,6 +13,7 @@ use crate::mm_save::{
     types::{MmDecodeError, MmMagicCapacity, MmShield, MmSword, PlayerForm},
     upgrades::MmUpgrades,
 };
+use crate::xflags::XFLAGS_BYTES_MM;
 
 /// Complete MM save state
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
@@ -58,6 +59,13 @@ pub struct MmSave {
     pub day: u32,
     pub time: u16,
     pub is_night: bool,
+
+    // OoTMM Extended Flags (xflags)
+    // These are only populated when running in OoTMM combo mode.
+    // Xflags track randomized item collection in OoTMM.
+    /// MM xflags from SharedCustomSave (106 bytes, one bit per flag)
+    /// None if not in combo mode or xflags data not yet received.
+    pub xflags: Option<[u8; XFLAGS_BYTES_MM]>,
 }
 
 impl MmSave {
@@ -241,6 +249,56 @@ impl MmSave {
             day,
             time,
             is_night,
+            xflags: None,
+        })
+    }
+
+    /// Sets xflags from SharedCustomSave data.
+    ///
+    /// The xflags data should be the MM portion of SharedCustomSave.xflags
+    /// (106 bytes starting at offset 94 in SharedCustomSave).
+    ///
+    /// # Arguments
+    /// * `xflags_data` - The 106-byte MM xflags array from SharedCustomSave
+    pub fn set_xflags(&mut self, xflags_data: &[u8]) {
+        if xflags_data.len() >= XFLAGS_BYTES_MM {
+            let mut xflags = [0u8; XFLAGS_BYTES_MM];
+            xflags.copy_from_slice(&xflags_data[..XFLAGS_BYTES_MM]);
+            self.xflags = Some(xflags);
+        }
+    }
+
+    /// Sets xflags from the full SharedCustomSave data.
+    ///
+    /// Extracts the MM xflags portion (bytes 94-199) from SharedCustomSave.
+    ///
+    /// # Arguments
+    /// * `shared_save_data` - The full SharedCustomSave xflags data (200 bytes)
+    pub fn set_xflags_from_shared_save(&mut self, shared_save_data: &[u8]) {
+        const MM_OFFSET: usize = 94; // OOT xflags size
+        if shared_save_data.len() >= MM_OFFSET + XFLAGS_BYTES_MM {
+            self.set_xflags(&shared_save_data[MM_OFFSET..]);
+        }
+    }
+
+    /// Checks if a specific xflag is set.
+    ///
+    /// # Arguments
+    /// * `index` - The xflag bit index (0 to XFLAGS_COUNT_MM - 1)
+    ///
+    /// # Returns
+    /// * `Some(true)` if the flag is set
+    /// * `Some(false)` if the flag is not set
+    /// * `None` if xflags data is not available
+    pub fn is_xflag_set(&self, index: usize) -> Option<bool> {
+        self.xflags.map(|flags| {
+            let byte_index = index / 8;
+            let bit_index = index % 8;
+            if byte_index < flags.len() {
+                (flags[byte_index] & (1 << bit_index)) != 0
+            } else {
+                false
+            }
         })
     }
 
