@@ -137,10 +137,22 @@ pub mod ootmm_offsets {
     pub const DEFENSE_HEARTS: usize = 0x00D1;
     /// Stray fairy counts (10 areas × 1 byte each)
     pub const STRAY_FAIRIES: usize = 0x00D2;
-    /// Swamp skulltula count
-    pub const SKULL_SWAMP: usize = 0x00DC;
-    /// Ocean skulltula count
-    pub const SKULL_OCEAN: usize = 0x00DE;
+    /// Swamp skulltula count (u16)
+    ///
+    /// Offset calculation from MmSaveContext start:
+    /// - MmSaveInfo starts at 0x24 within MmSave (ASSERT_OFFSET verified in OoTMM save.h)
+    /// - skullCountSwamp is at 0xEC0 within MmSaveInfo (after permanentSceneFlags[120])
+    /// - Absolute offset: 0x24 + 0xEC0 = 0x0EE4
+    ///
+    /// Note: permanentSceneFlags[120] is 120 × 0x1C = 0xD20 bytes, and skull counts
+    /// come after this array plus additional fields (dekuPlaygroundHighScores, pictoFlags, etc.)
+    ///
+    /// Reference: https://github.com/OoTMM/OoTMM/blob/master/packages/core/include/combo/mm/save.h
+    pub const SKULL_SWAMP: usize = 0x0EE4;
+    /// Ocean skulltula count (u16)
+    ///
+    /// Offset calculation: MmSaveInfo(0x24) + skullCountOcean(0xEC2) = 0x0EE6
+    pub const SKULL_OCEAN: usize = 0x0EE6;
     /// Permanent scene flags start
     /// OoTMM: SaveInfo(0x24) + after inventory = 0xE4 from info start
     /// Calculation: MmSavePlayerData(0x28) + MmItemEquips(0x14) + MmInventory(0xA8) = 0xE4
