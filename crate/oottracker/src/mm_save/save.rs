@@ -430,7 +430,7 @@ impl MmSave {
         // Parse masks (OoTMM has masks in same array as items, starting at index 24)
         let masks = Self::parse_masks_ootmm(save_data)?;
 
-        // Parse quest items (OoTMM uses completely different bit layout)
+        // Parse quest items (OoTMM uses same bit layout as vanilla MM)
         let quest_items = MmQuestItems::from_ootmm_bits(get_u32!(QUEST_ITEMS));
 
         // Parse upgrades (different offset in OoTMM)
