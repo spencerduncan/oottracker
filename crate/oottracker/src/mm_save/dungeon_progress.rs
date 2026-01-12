@@ -8,12 +8,17 @@ use bitflags::bitflags;
 
 bitflags! {
     /// Dungeon items for a single dungeon
+    ///
+    /// N64 big-endian bitfield layout (from OoTMM MmDungeonItems):
+    /// - bits 4-0: maxKeys (5 bits, handled separately)
+    /// - bit 5: map
+    /// - bit 6: compass
+    /// - bit 7: bossKey (MSB)
     #[derive(Default)]
     pub struct MmDungeonItems: u8 {
-        const BOSS_KEY = 0x01;
-        const COMPASS = 0x02;
-        const MAP = 0x04;
-        // Note: maxKeys is stored in bits 3-7 but we handle that separately
+        const BOSS_KEY = 0x80;  // bit 7 (MSB)
+        const COMPASS = 0x40;   // bit 6
+        const MAP = 0x20;       // bit 5
     }
 }
 
