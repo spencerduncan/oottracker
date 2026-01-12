@@ -76,78 +76,11 @@ impl MmQuestItems {
         Self::from_bits_truncate(ootmm_bits)
     }
 
-    /// Convert our internal format to OoTMM quest item bit layout.
+    /// Convert our internal format to OoTMM quest item bits.
     ///
-    /// This is the inverse of `from_ootmm_bits`.
+    /// OoTMM uses the same bit layout as vanilla MM, so we can return
+    /// our internal bits directly.
     pub fn to_ootmm_bits(&self) -> u32 {
-        let mut result = 0u32;
-
-        // Convert boss remains (our bits 0-3 -> OoTMM bits 28-31)
-        if self.contains(Self::REMAINS_ODOLWA) {
-            result |= 1 << 31;
-        }
-        if self.contains(Self::REMAINS_GOHT) {
-            result |= 1 << 30;
-        }
-        if self.contains(Self::REMAINS_GYORG) {
-            result |= 1 << 29;
-        }
-        if self.contains(Self::REMAINS_TWINMOLD) {
-            result |= 1 << 28;
-        }
-
-        // Convert songs (our format -> OoTMM)
-        if self.contains(Self::SONG_AWAKENING) {
-            result |= 1 << 25;
-        }
-        if self.contains(Self::SONG_GORON) {
-            result |= 1 << 24;
-        }
-        if self.contains(Self::SONG_ZORA) {
-            result |= 1 << 23;
-        }
-        if self.contains(Self::SONG_EMPTINESS) {
-            result |= 1 << 22;
-        }
-        if self.contains(Self::SONG_ORDER) {
-            result |= 1 << 21;
-        }
-        if self.contains(Self::SONG_SARIA) {
-            result |= 1 << 20;
-        }
-        if self.contains(Self::SONG_TIME) {
-            result |= 1 << 19;
-        }
-        if self.contains(Self::SONG_HEALING) {
-            result |= 1 << 18;
-        }
-        if self.contains(Self::SONG_EPONA) {
-            result |= 1 << 17;
-        }
-        if self.contains(Self::SONG_SOARING) {
-            result |= 1 << 16;
-        }
-        if self.contains(Self::SONG_STORMS) {
-            result |= 1 << 15;
-        }
-        if self.contains(Self::SONG_SUN) {
-            result |= 1 << 14;
-        }
-
-        // Notebook (our bit 18 -> OoTMM bit 13)
-        if self.contains(Self::NOTEBOOK) {
-            result |= 1 << 13;
-        }
-
-        // Lullaby intro (our bit 24 -> OoTMM bit 7)
-        if self.contains(Self::SONG_LULLABY_INTRO) {
-            result |= 1 << 7;
-        }
-
-        // Heart pieces (our bits 28-31 -> OoTMM bits 0-3)
-        let heart_pieces = (self.bits() >> 28) & 0xF;
-        result |= heart_pieces;
-
-        result
+        self.bits()
     }
 }

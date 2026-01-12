@@ -262,11 +262,11 @@ fn test_from_save_data_parses_quest_items() {
 
     let mut data = vec![0u8; MM_SIZE];
 
-    // OoTMM quest item bit layout:
-    // - Odolwa remains: bit 31
-    // - Goht remains: bit 30
-    // - Song of Time: bit 19
-    let quest_bits: u32 = (1 << 31) | (1 << 30) | (1 << 19);
+    // Quest item bit layout (same as vanilla MM, used directly with from_bits_truncate):
+    // - Odolwa remains: bit 0
+    // - Goht remains: bit 1
+    // - Song of Time: bit 12
+    let quest_bits: u32 = (1 << 0) | (1 << 1) | (1 << 12);
     data[QUEST_ITEMS..QUEST_ITEMS + 4].copy_from_slice(&quest_bits.to_be_bytes());
 
     let save = MmSave::from_save_data(&data).unwrap();

@@ -48,6 +48,12 @@ pub struct MmSave {
     pub permanent_scene_flags: Vec<MmPermanentSceneFlags>,
     pub cycle_scene_flags: Vec<MmCycleSceneFlags>,
 
+    // Event flags
+    /// EventInf: Main event flags that persist across cycles (4 u16 values)
+    pub event_inf: [u16; 4],
+    /// WeekEventReg: Week event flags that reset each 3-day cycle (100 bytes)
+    pub week_event_reg: Vec<u8>,
+
     // Time state
     pub day: u32,
     pub time: u16,
@@ -194,6 +200,22 @@ impl MmSave {
         let time = get_u16!(TIME);
         let is_night = get_u32!(IS_NIGHT) != 0; // Note: IS_NIGHT is s32 in OoTMM
 
+        // Parse event flags
+        let event_inf = [
+            get_u16!(EVENT_INF),
+            get_u16!(EVENT_INF + 2),
+            get_u16!(EVENT_INF + 4),
+            get_u16!(EVENT_INF + 6),
+        ];
+
+        let week_event_reg = save_data
+            .get(WEEK_EVENT_REG..WEEK_EVENT_REG + 100)
+            .ok_or(MmDecodeError::IndexRange {
+                start: WEEK_EVENT_REG as u16,
+                end: (WEEK_EVENT_REG + 100) as u16,
+            })?
+            .to_vec();
+
         Ok(MmSave {
             player_form,
             health_capacity,
@@ -214,6 +236,8 @@ impl MmSave {
             skull_tokens_ocean,
             permanent_scene_flags,
             cycle_scene_flags,
+            event_inf,
+            week_event_reg,
             day,
             time,
             is_night,
