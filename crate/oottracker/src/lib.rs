@@ -113,6 +113,7 @@ mod scene;
 mod text;
 pub mod ui;
 pub mod websocket;
+pub mod xflags;
 
 #[cfg(test)]
 pub mod test_utils;
