@@ -117,10 +117,10 @@ pub mod ootmm_offsets {
     /// Combined inventory array (48 slots: items 0-23, masks 24-47)
     /// SaveInfo(0x24) + inventory(0x4a) + items(0x00)
     pub const INVENTORY: usize = 0x006E;
-    /// Masks are in the same array as items, starting at index 32 (0x20)
-    /// OoTMM masks are at items[32-55], so INVENTORY + 32 = 0x8E
-    /// Note: Not index 24 - the mask slots start at 32 in OoTMM
-    pub const MASKS: usize = 0x008E;
+    /// Masks are in the same array as items, starting at index 24 (0x18)
+    /// OoTMM masks are at items[24-47], so INVENTORY + 24 = 0x86
+    /// Reference: OoTMM ITS_MM_MASK_POSTMAN = 0x18 (24 decimal)
+    pub const MASKS: usize = 0x0086;
     /// Ammo array (24 slots)
     #[allow(dead_code)] // Documented for reference
     pub const AMMO: usize = 0x009E;
