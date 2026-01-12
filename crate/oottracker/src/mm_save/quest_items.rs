@@ -64,88 +64,16 @@ impl MmQuestItems {
         ((self.bits() >> 28) & 0xF) as u8
     }
 
-    /// Convert from OoTMM quest item bit layout to our internal format.
+    /// Convert from OoTMM quest item bits to our internal format.
     ///
-    /// OoTMM uses a different bit layout than vanilla MM:
-    /// - Heart pieces: bits 0-3 (same as our format but at different position)
-    /// - songLullabyIntro: bit 7
-    /// - notebook: bit 13
-    /// - songSun: bit 14, songStorms: bit 15, songSoaring: bit 16
-    /// - songEpona: bit 17, songHealing: bit 18, songTime: bit 19
-    /// - songSaria: bit 20, songOrder: bit 21, songEmpty: bit 22
-    /// - songNewWave: bit 23, songLullaby: bit 24, songAwakening: bit 25
-    /// - remainsTwinmold: bit 28, remainsGyorg: bit 29
-    /// - remainsGoht: bit 30, remainsOdolwa: bit 31
+    /// OoTMM uses the same bit layout as vanilla MM:
+    /// - Remains: bits 0-3 (Odolwa=0, Goht=1, Gyorg=2, Twinmold=3)
+    /// - Songs: bits 6-17
+    /// - Notebook: bit 18
+    /// - Lullaby intro: bit 24
+    /// - Heart pieces: bits 28-31
     pub fn from_ootmm_bits(ootmm_bits: u32) -> Self {
-        let mut result = MmQuestItems::empty();
-
-        // Convert boss remains (OoTMM bits 28-31 -> our bits 0-3)
-        if ootmm_bits & (1 << 31) != 0 {
-            result.insert(Self::REMAINS_ODOLWA);
-        }
-        if ootmm_bits & (1 << 30) != 0 {
-            result.insert(Self::REMAINS_GOHT);
-        }
-        if ootmm_bits & (1 << 29) != 0 {
-            result.insert(Self::REMAINS_GYORG);
-        }
-        if ootmm_bits & (1 << 28) != 0 {
-            result.insert(Self::REMAINS_TWINMOLD);
-        }
-
-        // Convert songs (OoTMM -> our format)
-        if ootmm_bits & (1 << 25) != 0 {
-            result.insert(Self::SONG_AWAKENING);
-        } // Sonata of Awakening
-        if ootmm_bits & (1 << 24) != 0 {
-            result.insert(Self::SONG_GORON);
-        } // Goron Lullaby
-        if ootmm_bits & (1 << 23) != 0 {
-            result.insert(Self::SONG_ZORA);
-        } // New Wave Bossa Nova
-        if ootmm_bits & (1 << 22) != 0 {
-            result.insert(Self::SONG_EMPTINESS);
-        } // Elegy of Emptiness
-        if ootmm_bits & (1 << 21) != 0 {
-            result.insert(Self::SONG_ORDER);
-        } // Oath to Order
-        if ootmm_bits & (1 << 20) != 0 {
-            result.insert(Self::SONG_SARIA);
-        } // Saria's Song
-        if ootmm_bits & (1 << 19) != 0 {
-            result.insert(Self::SONG_TIME);
-        } // Song of Time
-        if ootmm_bits & (1 << 18) != 0 {
-            result.insert(Self::SONG_HEALING);
-        } // Song of Healing
-        if ootmm_bits & (1 << 17) != 0 {
-            result.insert(Self::SONG_EPONA);
-        } // Epona's Song
-        if ootmm_bits & (1 << 16) != 0 {
-            result.insert(Self::SONG_SOARING);
-        } // Song of Soaring
-        if ootmm_bits & (1 << 15) != 0 {
-            result.insert(Self::SONG_STORMS);
-        } // Song of Storms
-        if ootmm_bits & (1 << 14) != 0 {
-            result.insert(Self::SONG_SUN);
-        } // Sun's Song
-
-        // Notebook (OoTMM bit 13 -> our bit 18)
-        if ootmm_bits & (1 << 13) != 0 {
-            result.insert(Self::NOTEBOOK);
-        }
-
-        // Lullaby intro (OoTMM bit 7 -> our bit 24)
-        if ootmm_bits & (1 << 7) != 0 {
-            result.insert(Self::SONG_LULLABY_INTRO);
-        }
-
-        // Heart pieces (OoTMM bits 0-3 -> our bits 28-31)
-        let heart_pieces = ootmm_bits & 0xF;
-        result |= MmQuestItems::from_bits_truncate(heart_pieces << 28);
-
-        result
+        Self::from_bits_truncate(ootmm_bits)
     }
 
     /// Convert our internal format to OoTMM quest item bit layout.

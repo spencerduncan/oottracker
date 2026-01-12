@@ -1016,15 +1016,13 @@ mod tests {
         let mut save_data = vec![0u8; mm_save::MM_SIZE];
 
         // Set quest items at OoTMM offset 0xBA
-        // OoTMM uses different bit layout - use from_ootmm_bits to understand
-        // For this test, we'll just set raw bits and check what we get
+        // OoTMM uses the same bit layout as vanilla MM
         let quest_bits: u32 = 0x00001001;
         save_data[ootmm_offsets::QUEST_ITEMS..ootmm_offsets::QUEST_ITEMS + 4]
             .copy_from_slice(&quest_bits.to_be_bytes());
 
         let save = decode_mm_save_data(&save_data).expect("Failed to decode save data");
 
-        // The bits are interpreted via from_ootmm_bits which maps them differently
         // Just verify parsing works without errors
         assert!(save.quest_items.bits() != 0 || quest_bits == 0);
     }
