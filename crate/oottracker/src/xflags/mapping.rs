@@ -176,14 +176,23 @@ pub fn is_xflag_eligible_location(location_id: &str) -> bool {
         "_rupee_",
         "_rupee", // Freestanding rupees
         "_hive_",
-        "_beehive_",   // Beehives
-        "_butterfly_", // Butterflies
+        "_hive",
+        "_beehive_",
+        "_beehive", // Beehives
+        "_butterfly_",
+        "_butterfly", // Butterflies
         "_wonderitem_",
-        "_wonder_", // Wonder items
+        "_wonderitem",
+        "_wonder_",
+        "_wonder", // Wonder items
         "_soil_",
-        "_bean_",     // Bean patches
-        "_snowball_", // Snowballs (MM)
-        "_barrel_",   // Barrels (MM)
+        "_soil",
+        "_bean_",
+        "_bean", // Bean patches
+        "_snowball_",
+        "_snowball", // Snowballs (MM)
+        "_barrel_",
+        "_barrel", // Barrels (MM)
     ];
 
     let loc_lower = location_id.to_lowercase();
@@ -238,13 +247,25 @@ pub fn categorize_oot_xflag_location(location_id: &str) -> Option<OotXflagCatego
         Some(OotXflagCategory::Rock)
     } else if loc.contains("_rupee_") || loc.ends_with("_rupee") {
         Some(OotXflagCategory::Rupee)
-    } else if loc.contains("_hive_") || loc.contains("_beehive_") {
+    } else if loc.contains("_hive_")
+        || loc.ends_with("_hive")
+        || loc.contains("_beehive_")
+        || loc.ends_with("_beehive")
+    {
         Some(OotXflagCategory::Beehive)
-    } else if loc.contains("_butterfly_") {
+    } else if loc.contains("_butterfly_") || loc.ends_with("_butterfly") {
         Some(OotXflagCategory::Butterfly)
-    } else if loc.contains("_soil_") || loc.contains("_bean_") {
+    } else if loc.contains("_soil_")
+        || loc.ends_with("_soil")
+        || loc.contains("_bean_")
+        || loc.ends_with("_bean")
+    {
         Some(OotXflagCategory::Soil)
-    } else if loc.contains("_wonderitem_") || loc.contains("_wonder_") {
+    } else if loc.contains("_wonderitem_")
+        || loc.ends_with("_wonderitem")
+        || loc.contains("_wonder_")
+        || loc.ends_with("_wonder")
+    {
         Some(OotXflagCategory::WonderItem)
     } else if is_xflag_eligible_location(location_id) {
         Some(OotXflagCategory::Other)
@@ -567,6 +588,15 @@ mod tests {
         );
         assert_eq!(
             categorize_oot_xflag_location("oot_grotto_hive_1"),
+            Some(OotXflagCategory::Beehive)
+        );
+        // Unnumbered hive locations (real examples from world data)
+        assert_eq!(
+            categorize_oot_xflag_location("oot_death_mountain_trail_cow_grotto_hive"),
+            Some(OotXflagCategory::Beehive)
+        );
+        assert_eq!(
+            categorize_oot_xflag_location("oot_gerudo_valley_grotto_hive"),
             Some(OotXflagCategory::Beehive)
         );
     }
