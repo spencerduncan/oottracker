@@ -69,6 +69,11 @@ pub enum FlagType {
     /// Gossip stone flags.
     /// Hints from gossip stones (if shuffled).
     GossipStone,
+
+    /// Extended flags (xflags) from OoTMM.
+    /// Used for actor-based collectibles like pots, grass, crates, etc.
+    /// The flag_bit field contains the xflag bit position.
+    Xflag,
 }
 
 impl FlagType {
@@ -94,7 +99,8 @@ impl FlagType {
             | FlagType::Song
             | FlagType::Fishing
             | FlagType::Cow
-            | FlagType::GossipStone => None,
+            | FlagType::GossipStone
+            | FlagType::Xflag => None,
         }
     }
 

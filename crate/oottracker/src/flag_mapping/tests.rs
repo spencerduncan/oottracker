@@ -606,3 +606,178 @@ fn test_oot_location_count_matches_world_database() {
         world_db_oot_count
     );
 }
+
+// === OoT XFlag Checking Tests ===
+
+#[test]
+fn test_flag_type_xflag_is_not_scene_based() {
+    assert!(!FlagType::Xflag.is_scene_based());
+    assert!(FlagType::Xflag.scene_offset().is_none());
+}
+
+#[test]
+fn test_xflag_checking_without_xflags_returns_unknown() {
+    use super::checking::check_location_status;
+
+    // Create a model without xflags (default state)
+    let model = ModelState::default();
+    assert!(
+        model.ram.oot_xflags.is_none(),
+        "Default model should not have xflags"
+    );
+
+    // Create an xflag mapping
+    let mapping = FlagMapping {
+        location_id: "test_xflag_location",
+        scene_id: None,
+        flag_type: Some(FlagType::Xflag),
+        flag_bit: Some(42), // arbitrary bit position
+    };
+
+    // Without xflags, status should be Unknown
+    let status = check_location_status(&mapping, &model);
+    assert_eq!(
+        status,
+        super::types::CheckStatus::Unknown,
+        "Xflag checking without oot_xflags should return Unknown"
+    );
+}
+
+#[test]
+fn test_xflag_checking_unchecked() {
+    use super::checking::check_location_status;
+    use crate::xflags::XFLAGS_BYTES_OOT;
+
+    // Create a model with xflags (all zeros)
+    let mut model = ModelState::default();
+    model.ram.oot_xflags = Some([0u8; XFLAGS_BYTES_OOT]);
+
+    // Create an xflag mapping for bit 42
+    let mapping = FlagMapping {
+        location_id: "test_xflag_location",
+        scene_id: None,
+        flag_type: Some(FlagType::Xflag),
+        flag_bit: Some(42),
+    };
+
+    // Status should be Unchecked since all bits are 0
+    let status = check_location_status(&mapping, &model);
+    assert_eq!(
+        status,
+        super::types::CheckStatus::Unchecked,
+        "Xflag with bit not set should return Unchecked"
+    );
+}
+
+#[test]
+fn test_xflag_checking_checked() {
+    use super::checking::check_location_status;
+    use crate::xflags::XFLAGS_BYTES_OOT;
+
+    // Create a model with xflags
+    let mut model = ModelState::default();
+    let mut xflags = [0u8; XFLAGS_BYTES_OOT];
+
+    // Set bit 42 (byte 5, bit 2)
+    let bit_pos = 42usize;
+    let byte_index = bit_pos / 8;
+    let bit_index = bit_pos % 8;
+    xflags[byte_index] |= 1 << bit_index;
+
+    model.ram.oot_xflags = Some(xflags);
+
+    // Create an xflag mapping for bit 42
+    let mapping = FlagMapping {
+        location_id: "test_xflag_location",
+        scene_id: None,
+        flag_type: Some(FlagType::Xflag),
+        flag_bit: Some(42),
+    };
+
+    // Status should be Checked since bit 42 is set
+    let status = check_location_status(&mapping, &model);
+    assert_eq!(
+        status,
+        super::types::CheckStatus::Checked,
+        "Xflag with bit set should return Checked"
+    );
+}
+
+#[test]
+fn test_xflag_checking_out_of_bounds() {
+    use super::checking::check_location_status;
+    use crate::xflags::{XFLAGS_BYTES_OOT, XFLAGS_COUNT_OOT};
+
+    // Create a model with xflags
+    let mut model = ModelState::default();
+    model.ram.oot_xflags = Some([0xFFu8; XFLAGS_BYTES_OOT]); // All bits set
+
+    // Create a mapping with out-of-bounds bit position
+    let mapping = FlagMapping {
+        location_id: "test_oob_xflag",
+        scene_id: None,
+        flag_type: Some(FlagType::Xflag),
+        flag_bit: Some((XFLAGS_COUNT_OOT + 100) as u32), // Beyond valid range
+    };
+
+    // Status should be Unknown for out-of-bounds
+    let status = check_location_status(&mapping, &model);
+    assert_eq!(
+        status,
+        super::types::CheckStatus::Unknown,
+        "Xflag with out-of-bounds bit should return Unknown"
+    );
+}
+
+#[test]
+fn test_xflag_checking_various_bits() {
+    use super::checking::check_location_status;
+    use crate::xflags::XFLAGS_BYTES_OOT;
+
+    // Create a model with specific bits set
+    let mut model = ModelState::default();
+    let mut xflags = [0u8; XFLAGS_BYTES_OOT];
+
+    // Set bits 0, 7, 8, 100, 500
+    for bit_pos in [0, 7, 8, 100, 500] {
+        let byte_index = bit_pos / 8;
+        let bit_index = bit_pos % 8;
+        xflags[byte_index] |= 1 << bit_index;
+    }
+
+    model.ram.oot_xflags = Some(xflags);
+
+    // Test each set bit
+    for bit_pos in [0, 7, 8, 100, 500] {
+        let mapping = FlagMapping {
+            location_id: "test_xflag",
+            scene_id: None,
+            flag_type: Some(FlagType::Xflag),
+            flag_bit: Some(bit_pos),
+        };
+        let status = check_location_status(&mapping, &model);
+        assert_eq!(
+            status,
+            super::types::CheckStatus::Checked,
+            "Xflag bit {} should be Checked",
+            bit_pos
+        );
+    }
+
+    // Test unset bits
+    for bit_pos in [1, 2, 50, 200, 600] {
+        let mapping = FlagMapping {
+            location_id: "test_xflag",
+            scene_id: None,
+            flag_type: Some(FlagType::Xflag),
+            flag_bit: Some(bit_pos),
+        };
+        let status = check_location_status(&mapping, &model);
+        assert_eq!(
+            status,
+            super::types::CheckStatus::Unchecked,
+            "Xflag bit {} should be Unchecked",
+            bit_pos
+        );
+    }
+}

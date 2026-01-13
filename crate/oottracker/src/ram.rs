@@ -226,6 +226,9 @@ pub struct Ram {
     pub pause_screen_idx: u16,
     /// Majora's Mask save data (populated when tracking MM or combo rando)
     pub mm_save: Option<MmSave>,
+    /// OoT xflags from SharedCustomSave (populated in OoTMM combo mode)
+    /// These track actor-based collectibles like pots, grass, crates, etc.
+    pub oot_xflags: Option<[u8; crate::xflags::XFLAGS_BYTES_OOT]>,
 }
 
 impl Default for Ram {
@@ -243,6 +246,7 @@ impl Default for Ram {
             pause_changing: false,
             pause_screen_idx: 0,
             mm_save: None,
+            oot_xflags: None,
         }
     }
 }
@@ -282,6 +286,7 @@ impl Ram {
             pause_changing: BigEndian::read_u16(data.pause_changing) != 0,
             pause_screen_idx: BigEndian::read_u16(data.pause_screen_idx),
             mm_save: None,
+            oot_xflags: None,
         })
     }
 
@@ -544,6 +549,7 @@ impl Sub<&Ram> for &Ram {
             pause_changing,
             pause_screen_idx,
             ref mm_save,
+            oot_xflags: _, // OoT xflags don't contribute to Delta
         } = *self;
         Delta {
             save: save - &rhs.save,
