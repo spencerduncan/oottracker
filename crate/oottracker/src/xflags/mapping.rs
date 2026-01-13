@@ -6,20 +6,37 @@
 //!
 //! ## Mapping Sources
 //!
-//! OoTMM generates these mappings in `packages/core/scripts/xsanity.ts`.
-//! The mappings here should match the output of that build process.
+//! OoTMM generates these mappings internally during its build process.
+//! The mappings here need to match OoTMM's xflag assignments.
 //!
-//! ## Location Types Using XFlags
+//! ## XFlag Capacity
 //!
-//! XFlags are used for actor-based collectibles:
-//! - Freestanding items (EN_ITEM00): Rupees, hearts, fairies
-//! - Pots (POT, FLYING_POT): With randomized contents
-//! - Grass/bushes (EN_KUSA, EN_KUSA2, OBJ_GRASS): With randomized drops
-//! - Crates (OBJ_KIBAKO, OBJ_KIBAKO2, OBJ_TARU): With randomized contents
-//! - Beehives (OBJ_COMB): With randomized rewards
-//! - Snowballs (OBJ_SNOWBALL, OBJ_SNOWBALL2)
-//! - Wonder items (EN_HIT_TAG, EN_INVISIBLE_RUPPE)
-//! - Fairies (EN_ELF)
+//! - OoT: 745 bits (XFLAGS_COUNT_OOT = 0x2e9)
+//! - MM: 842 bits (XFLAGS_COUNT_MM = 0x34a)
+//!
+//! ## OoT Actors Using XFlags (from OoTMM source)
+//!
+//! - EN_ITEM00: Freestanding items (rupees, hearts)
+//! - POT, FLYING_POT: Pots with randomized contents
+//! - EN_KUSA: Grass/bushes with randomized drops
+//! - OBJ_KIBAKO, OBJ_KIBAKO2: Crates
+//! - OBJ_COMB: Beehives
+//! - EN_ELF: Fairies
+//! - OBJ_MURE, OBJ_MURE2, OBJ_MURE3: Groups (grass, rupee circles)
+//! - EN_WONDER_ITEM, SHOT_SUN: Wonder items, sun's song spots
+//! - OBJ_HAMISHI, EN_ISHI: Rocks
+//! - BG_ICICLE, BG_ICE_SHELTER: Ice
+//! - OBJ_BEAN: Bean patches
+//!
+//! ## MM Actors Using XFlags (from OoTMM source)
+//!
+//! - EN_ITEM00, POT, FLYING_POT: Items, pots
+//! - EN_KUSA, EN_KUSA2, OBJ_GRASS: All grass types
+//! - OBJ_KIBAKO, OBJ_KIBAKO2, OBJ_TARU: Crates, barrels
+//! - OBJ_COMB, OBJ_FLOWERPOT: Beehives, potted plants
+//! - OBJ_SNOWBALL, OBJ_SNOWBALL2: Snowballs
+//! - EN_HIT_TAG, EN_INVISIBLE_RUPPE: Wonder items, invisible rupees
+//! - EN_ELF: Fairies
 //!
 //! ## Location Types NOT Using XFlags
 //!
@@ -29,6 +46,20 @@
 //! - Boss defeats: Quest items bitfield
 //! - Songs: Quest items bitfield
 //! - Shop/scrub purchases: Specific flags
+//!
+//! ## World Data Location Types
+//!
+//! From YAML world data, these `locationType` values are xflag candidates:
+//! - `freestanding`: Actor-based collectibles (pots, grass, rocks, rupees, etc.)
+//!
+//! Non-xflag location types:
+//! - `chest`: Scene chest flags
+//! - `npc`: EventInf/WeekEventReg
+//! - `boss`: Quest items
+//! - `song`: Quest items
+//! - `shop`, `scrub`: Purchase flags
+//! - `collectible`: Usually Gold Skulltulas (separate flag system)
+//! - `cow`, `fishing`, `fairy`, `event`: Various special handlers
 
 use std::collections::HashMap;
 
@@ -120,6 +151,127 @@ pub fn is_mm_xflag_location(location_id: &str) -> bool {
 #[must_use]
 pub fn is_oot_xflag_location(location_id: &str) -> bool {
     OOT_XFLAG_LOCATIONS.contains_key(location_id)
+}
+
+/// Returns true if a location ID appears to be an xflag-eligible location
+/// based on naming patterns from world data.
+///
+/// This checks if the location name contains keywords indicating it's a
+/// freestanding actor-based collectible (pots, grass, crates, rocks, etc.).
+///
+/// Note: This is a heuristic based on naming conventions. The actual xflag
+/// tracking is determined by OoTMM's build process.
+#[must_use]
+pub fn is_xflag_eligible_location(location_id: &str) -> bool {
+    // Keywords indicating xflag-eligible actors
+    let xflag_keywords = [
+        "_pot_",
+        "_pot", // Pots
+        "_grass_",
+        "_grass", // Grass
+        "_crate_",
+        "_crate", // Crates
+        "_rock_",
+        "_rock", // Rocks
+        "_rupee_",
+        "_rupee", // Freestanding rupees
+        "_hive_",
+        "_hive",
+        "_beehive_",
+        "_beehive", // Beehives
+        "_butterfly_",
+        "_butterfly", // Butterflies
+        "_wonderitem_",
+        "_wonderitem",
+        "_wonder_",
+        "_wonder", // Wonder items
+        "_soil_",
+        "_soil",
+        "_bean_",
+        "_bean", // Bean patches
+        "_snowball_",
+        "_snowball", // Snowballs (MM)
+        "_barrel_",
+        "_barrel", // Barrels (MM)
+    ];
+
+    let loc_lower = location_id.to_lowercase();
+    xflag_keywords.iter().any(|kw| loc_lower.contains(kw))
+}
+
+/// OoT xflag location categories based on world data analysis.
+///
+/// From analyzing oot_overworld.yaml, oot_dungeons.yaml, oot_dungeons_mq.yaml:
+/// - Pots: 574 locations
+/// - Grass: 341 locations
+/// - Crates: 230 locations
+/// - Rocks: 127 locations
+/// - Rupees/freestanding: 115 locations
+/// - Butterflies: 59 locations
+/// - Soil/bean: 30 locations
+/// - Beehives: 21 locations
+/// - Wonder items: 7 locations
+/// - Other: 192 locations
+///
+/// Total freestanding: 1696 locations
+/// XFlag capacity: 745 bits
+///
+/// Not all freestanding locations use xflags - only those that are
+/// actually randomized in OoTMM.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OotXflagCategory {
+    Pot,
+    Grass,
+    Crate,
+    Rock,
+    Rupee,
+    Beehive,
+    Butterfly,
+    Soil,
+    WonderItem,
+    Other,
+}
+
+/// Categorize an OoT location ID by its xflag type.
+#[must_use]
+pub fn categorize_oot_xflag_location(location_id: &str) -> Option<OotXflagCategory> {
+    let loc = location_id.to_lowercase();
+
+    if loc.contains("_pot_") || loc.ends_with("_pot") {
+        Some(OotXflagCategory::Pot)
+    } else if loc.contains("_grass_") || loc.ends_with("_grass") {
+        Some(OotXflagCategory::Grass)
+    } else if loc.contains("_crate_") || loc.ends_with("_crate") {
+        Some(OotXflagCategory::Crate)
+    } else if loc.contains("_rock_") || loc.ends_with("_rock") {
+        Some(OotXflagCategory::Rock)
+    } else if loc.contains("_rupee_") || loc.ends_with("_rupee") {
+        Some(OotXflagCategory::Rupee)
+    } else if loc.contains("_hive_")
+        || loc.ends_with("_hive")
+        || loc.contains("_beehive_")
+        || loc.ends_with("_beehive")
+    {
+        Some(OotXflagCategory::Beehive)
+    } else if loc.contains("_butterfly_") || loc.ends_with("_butterfly") {
+        Some(OotXflagCategory::Butterfly)
+    } else if loc.contains("_soil_")
+        || loc.ends_with("_soil")
+        || loc.contains("_bean_")
+        || loc.ends_with("_bean")
+    {
+        Some(OotXflagCategory::Soil)
+    } else if loc.contains("_wonderitem_")
+        || loc.ends_with("_wonderitem")
+        || loc.contains("_wonder_")
+        || loc.ends_with("_wonder")
+    {
+        Some(OotXflagCategory::WonderItem)
+    } else if is_xflag_eligible_location(location_id) {
+        Some(OotXflagCategory::Other)
+    } else {
+        None
+    }
 }
 
 // =============================================================================
@@ -328,5 +480,163 @@ mod tests {
                 XFLAGS_COUNT_OOT
             );
         }
+    }
+
+    // === XFlag Eligibility Tests ===
+
+    #[test]
+    fn test_is_xflag_eligible_location_pots() {
+        assert!(is_xflag_eligible_location("oot_kokiri_shop_pot_1"));
+        assert!(is_xflag_eligible_location("mm_south_clock_town_pot_2"));
+        assert!(is_xflag_eligible_location("oot_deku_tree_pot"));
+    }
+
+    #[test]
+    fn test_is_xflag_eligible_location_grass() {
+        assert!(is_xflag_eligible_location("oot_kokiri_forest_grass_1"));
+        assert!(is_xflag_eligible_location("mm_termina_field_grass"));
+    }
+
+    #[test]
+    fn test_is_xflag_eligible_location_crates() {
+        assert!(is_xflag_eligible_location("oot_lon_lon_ranch_crate_1"));
+        assert!(is_xflag_eligible_location("mm_milk_bar_crate"));
+    }
+
+    #[test]
+    fn test_is_xflag_eligible_location_rocks() {
+        assert!(is_xflag_eligible_location(
+            "oot_death_mountain_trail_rock_1"
+        ));
+        assert!(is_xflag_eligible_location("oot_zora_river_rock"));
+    }
+
+    #[test]
+    fn test_is_xflag_eligible_location_other() {
+        assert!(is_xflag_eligible_location("oot_forest_temple_beehive_1"));
+        assert!(is_xflag_eligible_location("oot_sacred_meadow_butterfly_1"));
+        assert!(is_xflag_eligible_location("oot_lost_woods_soil_1"));
+    }
+
+    #[test]
+    fn test_is_xflag_eligible_location_non_xflag() {
+        // Chests don't use xflags
+        assert!(!is_xflag_eligible_location("oot_deku_tree_compass_chest"));
+        assert!(!is_xflag_eligible_location(
+            "mm_woodfall_temple_boss_key_chest"
+        ));
+
+        // NPCs don't use xflags
+        assert!(!is_xflag_eligible_location("oot_malon_epona_song"));
+        assert!(!is_xflag_eligible_location("mm_postman_freedom_reward"));
+
+        // Skulltulas don't use xflags (separate system)
+        assert!(!is_xflag_eligible_location("oot_deku_tree_gs_basement"));
+    }
+
+    // === Category Tests ===
+
+    #[test]
+    fn test_categorize_oot_xflag_location_pot() {
+        assert_eq!(
+            categorize_oot_xflag_location("oot_kokiri_shop_pot_1"),
+            Some(OotXflagCategory::Pot)
+        );
+        assert_eq!(
+            categorize_oot_xflag_location("oot_deku_tree_pot"),
+            Some(OotXflagCategory::Pot)
+        );
+    }
+
+    #[test]
+    fn test_categorize_oot_xflag_location_grass() {
+        assert_eq!(
+            categorize_oot_xflag_location("oot_kokiri_forest_grass_1"),
+            Some(OotXflagCategory::Grass)
+        );
+    }
+
+    #[test]
+    fn test_categorize_oot_xflag_location_crate() {
+        assert_eq!(
+            categorize_oot_xflag_location("oot_lon_lon_ranch_crate_1"),
+            Some(OotXflagCategory::Crate)
+        );
+    }
+
+    #[test]
+    fn test_categorize_oot_xflag_location_rock() {
+        assert_eq!(
+            categorize_oot_xflag_location("oot_death_mountain_trail_rock_1"),
+            Some(OotXflagCategory::Rock)
+        );
+    }
+
+    #[test]
+    fn test_categorize_oot_xflag_location_rupee() {
+        assert_eq!(
+            categorize_oot_xflag_location("oot_hyrule_field_rupee_1"),
+            Some(OotXflagCategory::Rupee)
+        );
+    }
+
+    #[test]
+    fn test_categorize_oot_xflag_location_beehive() {
+        assert_eq!(
+            categorize_oot_xflag_location("oot_forest_temple_beehive_1"),
+            Some(OotXflagCategory::Beehive)
+        );
+        assert_eq!(
+            categorize_oot_xflag_location("oot_grotto_hive_1"),
+            Some(OotXflagCategory::Beehive)
+        );
+        // Unnumbered hive locations (real examples from world data)
+        assert_eq!(
+            categorize_oot_xflag_location("oot_death_mountain_trail_cow_grotto_hive"),
+            Some(OotXflagCategory::Beehive)
+        );
+        assert_eq!(
+            categorize_oot_xflag_location("oot_gerudo_valley_grotto_hive"),
+            Some(OotXflagCategory::Beehive)
+        );
+    }
+
+    #[test]
+    fn test_categorize_oot_xflag_location_butterfly() {
+        assert_eq!(
+            categorize_oot_xflag_location("oot_sacred_meadow_butterfly_1"),
+            Some(OotXflagCategory::Butterfly)
+        );
+    }
+
+    #[test]
+    fn test_categorize_oot_xflag_location_soil() {
+        assert_eq!(
+            categorize_oot_xflag_location("oot_lost_woods_soil_1"),
+            Some(OotXflagCategory::Soil)
+        );
+        assert_eq!(
+            categorize_oot_xflag_location("oot_kokiri_forest_bean_1"),
+            Some(OotXflagCategory::Soil)
+        );
+    }
+
+    #[test]
+    fn test_categorize_oot_xflag_location_wonderitem() {
+        assert_eq!(
+            categorize_oot_xflag_location("oot_zora_river_wonderitem_1"),
+            Some(OotXflagCategory::WonderItem)
+        );
+    }
+
+    #[test]
+    fn test_categorize_oot_xflag_location_non_xflag() {
+        // Chests return None
+        assert_eq!(
+            categorize_oot_xflag_location("oot_deku_tree_compass_chest"),
+            None
+        );
+        // NPCs return None
+        assert_eq!(categorize_oot_xflag_location("oot_malon_epona_song"), None);
     }
 }
