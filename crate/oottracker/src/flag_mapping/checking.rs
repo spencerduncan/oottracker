@@ -191,6 +191,24 @@ pub fn check_location_status(mapping: &FlagMapping, model: &ModelState) -> Check
                 CheckStatus::Unchecked
             }
         }
+        FlagType::Xflag => {
+            // Check the OoT xflags bitmap from SharedCustomSave
+            if let Some(ref xflags) = model.ram.oot_xflags {
+                let bit_pos = flag_bit as usize;
+                if bit_pos >= crate::xflags::XFLAGS_COUNT_OOT {
+                    return CheckStatus::Unknown;
+                }
+                let byte_index = bit_pos / 8;
+                let bit_index = bit_pos % 8;
+                if xflags[byte_index] & (1 << bit_index) != 0 {
+                    CheckStatus::Checked
+                } else {
+                    CheckStatus::Unchecked
+                }
+            } else {
+                CheckStatus::Unknown
+            }
+        }
         // These flag types need special handling or are not yet implemented
         FlagType::Shop
         | FlagType::Scrub
