@@ -26,6 +26,7 @@ An item tracker for [the *Ocarina of Time* Randomizer](https://ootrandomizer.com
 
 **Technical Documentation:**
 - [Randomizer Tracking System](docs/RANDOMIZER_TRACKING.md) - Architecture, flag mapping, and development
+- [Error Handling Policy](docs/error-handling.md) - Error handling patterns and guidelines
 
 ## Racing Rules Notice
 
