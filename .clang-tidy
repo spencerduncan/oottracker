@@ -1,0 +1,33 @@
+# Clang-tidy configuration for combo/ sources
+# Start with reasonable defaults for game/embedded C code
+
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-reserved-identifier,
+  clang-analyzer-*,
+  misc-*,
+  -misc-unused-parameters,
+  performance-*,
+  portability-*,
+  readability-braces-around-statements,
+  readability-inconsistent-declaration-parameter-name,
+  readability-misleading-indentation,
+  readability-redundant-*,
+
+# Treat warnings as errors in CI
+WarningsAsErrors: ''
+
+# Header filter - only check headers in combo/
+HeaderFilterRegex: 'combo/.*'
+
+CheckOptions:
+  # Allow C-style casts (common in game code)
+  - key: bugprone-macro-parentheses
+    value: true
+  # Reasonable function size limits
+  - key: readability-function-size.LineThreshold
+    value: 200
+  - key: readability-function-size.StatementThreshold
+    value: 100

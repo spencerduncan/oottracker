@@ -1,0 +1,44 @@
+name: Static Analysis
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'combo/**'
+      - '.clang-tidy'
+      - '.github/workflows/static-analysis.yml'
+
+jobs:
+  clang-tidy:
+    name: clang-tidy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install clang-tidy
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-tidy
+
+      - name: Check for combo sources
+        id: check-sources
+        run: |
+          if [ -d "combo" ] && find combo -name "*.c" -o -name "*.cpp" | grep -q .; then
+            echo "has_sources=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_sources=false" >> $GITHUB_OUTPUT
+            echo "No C/C++ sources found in combo/"
+          fi
+
+      - name: Run clang-tidy on combo/
+        if: steps.check-sources.outputs.has_sources == 'true'
+        run: |
+          # Find all C/C++ source files in combo/
+          find combo -type f \( -name "*.c" -o -name "*.cpp" \) | \
+            xargs -r clang-tidy --config-file=.clang-tidy 2>&1 | tee clang-tidy-output.txt
+
+          # Check for errors (clang-tidy exits 0 even with warnings)
+          if grep -q "error:" clang-tidy-output.txt; then
+            echo "clang-tidy found errors"
+            exit 1
+          fi
